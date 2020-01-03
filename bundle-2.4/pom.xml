@@ -922,7 +922,7 @@
             <dependency>
                 <groupId>org.apache.mesos</groupId>
                 <artifactId>mesos</artifactId>
-                <version>1.4.0</version>
+                <version>1.4.3</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
