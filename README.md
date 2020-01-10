@@ -11,8 +11,8 @@ All commands inherit from `org.apache.spark.sql.catalyst.plans.logical.Command`.
 You can see how to produce unimplemented commands in `za.co.absa.spline.harvester.SparkUnimplementedCommandsSpec`.
 ### Implemented
 
-- `CreateDataSourceTableAsSelectCommand` (org.apache.spark.sql.execution.command)
-- `CÍreateHiveTableAsSelectCommand`  (org.apache.spark.sql.hive.execution)
+- `CreateDataSourceTableAsSelectCommand`  (org.apache.spark.sql.execution.command)
+- `CreateHiveTableAsSelectCommand`  (org.apache.spark.sql.hive.execution)
 - `CreateTableCommand`  (org.apache.spark.sql.execution.command)
 - `DropTableCommand`  (org.apache.spark.sql.execution.command)
 - `InsertIntoDataSourceDirCommand`  (org.apache.spark.sql.execution.command)
