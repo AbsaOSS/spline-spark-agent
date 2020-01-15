@@ -78,8 +78,10 @@ class HttpLineageDispatcher(splineServerRESTEndpointBaseURL: String, http: BaseH
       .isSuccess)
 
     tryStatusOk match {
-      case Success(false) => throw new SplineNotInitializedException("Spline is not initialized properly!")
-      case Failure(e) if NonFatal(e) => throw new SplineNotInitializedException("Producer is not accessible!", e)
+      case Success(false) => throw new SplineNotInitializedException(
+        "Connection to Spline Gateway: OK, but the Gateway is not initialized properly! Check Gateway's logs.")
+      case Failure(e) if NonFatal(e) => throw new SplineNotInitializedException(
+        "Spark Agent was not able to establish connection to Spline Gateway.", e)
       case _ => Unit
     }
   }
