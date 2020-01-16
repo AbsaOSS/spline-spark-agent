@@ -24,10 +24,9 @@ import org.scalatest.Assertion
 import org.scalatest.Inside._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.spline.common.ConditionalTestTags.ignoreIf
-import za.co.absa.spline.common.TempDirectory
-import za.co.absa.spline.common.Version.VersionOrdering._
-import za.co.absa.spline.common.Version._
+import za.co.absa.commons.io.TempDirectory
+import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
+import za.co.absa.commons.version.Version._
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder.Schema
 import za.co.absa.spline.model.{Attribute, dt}
 import za.co.absa.spline.producer.model._

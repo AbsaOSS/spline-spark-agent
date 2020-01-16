@@ -20,12 +20,12 @@ import java.util.UUID
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark
+import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.execution.{LeafExecNode, SparkPlan}
 import org.apache.spark.sql.{SaveMode, SparkSession}
-import org.slf4s.LoggerFactory
 import scalaz.Scalaz._
-import za.co.absa.spline.common.SplineBuildInfo
+import za.co.absa.commons.BuildInfo
 import za.co.absa.spline.harvester.LineageHarvester._
 import za.co.absa.spline.harvester.ModelConstants.{AppMetaInfo, ExecutionEventExtra, ExecutionPlanExtra}
 import za.co.absa.spline.harvester.builder.read.{ReadCommandExtractor, ReadNodeBuilder}
@@ -39,9 +39,8 @@ import za.co.absa.spline.producer.model._
 import scala.util.{Failure, Success, Try}
 
 class LineageHarvester(logicalPlan: LogicalPlan, executedPlanOpt: Option[SparkPlan], session: SparkSession)
-  (hadoopConfiguration: Configuration, splineMode: SplineMode) {
-
-  private val logger = LoggerFactory.getLogger(getClass.getSimpleName)
+  (hadoopConfiguration: Configuration, splineMode: SplineMode)
+  extends Logging {
 
   implicit private val componentCreatorFactory: ComponentCreatorFactory = new ComponentCreatorFactory
 
@@ -60,7 +59,7 @@ class LineageHarvester(logicalPlan: LogicalPlan, executedPlanOpt: Option[SparkPl
         case SplineMode.REQUIRED =>
           throw e
         case SplineMode.BEST_EFFORT =>
-          logger.warn(e.getMessage)
+          log.warn(e.getMessage)
           None
       }
     }
@@ -84,7 +83,7 @@ class LineageHarvester(logicalPlan: LogicalPlan, executedPlanOpt: Option[SparkPl
         id = UUID.randomUUID,
         operations = Operations(writeOp, opReads, opOthers),
         systemInfo = SystemInfo(AppMetaInfo.Spark, spark.SPARK_VERSION),
-        agentInfo = Some(AgentInfo(AppMetaInfo.Spline, SplineBuildInfo.Version)),
+        agentInfo = Some(AgentInfo(AppMetaInfo.Spline, BuildInfo.Version)),
         extraInfo = Map(
           ExecutionPlanExtra.AppName -> session.sparkContext.appName,
           ExecutionPlanExtra.DataTypes -> componentCreatorFactory.dataTypeConverter.values,

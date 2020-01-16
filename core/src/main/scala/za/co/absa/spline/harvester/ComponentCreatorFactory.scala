@@ -18,7 +18,7 @@ package za.co.absa.spline.harvester
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import za.co.absa.spline.common.transformations.CachingConverter
+import za.co.absa.commons.lang.CachingConverter
 import za.co.absa.spline.harvester.converter.{AttributeConverter, DataConverter, DataTypeConverter, ExpressionConverter, OperationParamsConverter}
 
 class ComponentCreatorFactory {

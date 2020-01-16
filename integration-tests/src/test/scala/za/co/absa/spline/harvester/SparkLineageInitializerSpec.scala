@@ -25,15 +25,14 @@ import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.matchers.should.Matchers._
 import org.scalatestplus.mockito.MockitoSugar
-import za.co.absa.spline.common.ConditionalTestTags._
-import za.co.absa.spline.common.ReflectionUtils.extractFieldValue
-import za.co.absa.spline.common.Version.VersionOrdering._
-import za.co.absa.spline.common.Version._
+import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
+import za.co.absa.commons.scalatest.ConditionalTestTags._
+import za.co.absa.commons.version.Version._
 import za.co.absa.spline.harvester.SparkLineageInitializer._
 import za.co.absa.spline.harvester.SparkLineageInitializerSpec._
 import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer.ConfProperty._
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode._
-import za.co.absa.spline.harvester.conf.{StandardSplineConfigurationStack, DefaultSplineConfigurer}
+import za.co.absa.spline.harvester.conf.{DefaultSplineConfigurer, StandardSplineConfigurationStack}
 import za.co.absa.spline.harvester.dispatcher.HttpLineageDispatcher.producerUrlProperty
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.listener.SplineQueryExecutionListener

@@ -17,19 +17,19 @@
 package za.co.absa.spline.harvester
 
 import org.apache.spark
+import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
-import org.slf4s.Logging
-import za.co.absa.spline.common.SplineBuildInfo
+import za.co.absa.commons.BuildInfo
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode._
-import za.co.absa.spline.harvester.conf.{StandardSplineConfigurationStack, DefaultSplineConfigurer, SplineConfigurer}
+import za.co.absa.spline.harvester.conf.{DefaultSplineConfigurer, SplineConfigurer, StandardSplineConfigurationStack}
 import za.co.absa.spline.harvester.listener.SplineQueryExecutionListener
 
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 
 /**
-  * The object contains logic needed for initialization of the library
-  */
+ * The object contains logic needed for initialization of the library
+ */
 object SparkLineageInitializer extends Logging {
 
   def enableLineageTracking(sparkSession: SparkSession): SparkSession =
@@ -48,11 +48,11 @@ object SparkLineageInitializer extends Logging {
     private def defaultSplineConfigurer = new DefaultSplineConfigurer(StandardSplineConfigurationStack(sparkSession), sparkSession)
 
     /**
-      * The method performs all necessary registrations and procedures for initialization of the library.
-      *
-      * @param configurer A collection of settings for the library initialization
-      * @return An original Spark session
-      */
+     * The method performs all necessary registrations and procedures for initialization of the library.
+     *
+     * @param configurer A collection of settings for the library initialization
+     * @return An original Spark session
+     */
     def enableLineageTracking(configurer: SplineConfigurer = defaultSplineConfigurer): SparkSession = {
       val splineConfiguredForCodelessInit = sparkSession.sparkContext.getConf
         .getOption(sparkQueryExecutionListenersKey).toSeq
@@ -97,7 +97,7 @@ object SparkLineageInitializer extends Logging {
     private def createEventHandler(configurer: SplineConfigurer): Option[QueryExecutionEventHandler] = {
       if (configurer.splineMode != DISABLED) {
         if (!getOrSetIsInitialized()) {
-          log.info(s"Spline v${SplineBuildInfo.Version} is initializing...")
+          log.info(s"Spline v${BuildInfo.Version} is initializing...")
           try {
             val eventHandler = configurer.queryExecutionEventHandler
             log.info(s"Spline successfully initialized. Spark Lineage tracking is ENABLED.")

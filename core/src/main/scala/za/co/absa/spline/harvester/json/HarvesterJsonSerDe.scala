@@ -16,13 +16,16 @@
 
 package za.co.absa.spline.harvester.json
 
-import za.co.absa.spline.common.json.AbstractJsonSerDe
-import za.co.absa.spline.common.json.format.{JavaTypesSupport, NoEmptyValuesSupport}
+import org.json4s.jackson.JsonMethods
+import za.co.absa.commons.json.AbstractJsonSerDe
+import za.co.absa.commons.json.format.{JavaTypesSupport, NoEmptyValuesSupport}
+
 
 object HarvesterJsonSerDe extends HarvesterJsonSerDe
 
 trait HarvesterJsonSerDe
   extends AbstractJsonSerDe
+    with JsonMethods
     with ShortTypeHintForSpline03ModelSupport
     with NoEmptyValuesSupport
     with JavaTypesSupport

@@ -19,11 +19,11 @@ package za.co.absa.spline.harvester.converter
 import java.util.UUID.randomUUID
 
 import org.apache.spark.sql.catalyst.expressions.{Attribute => SparkAttribute}
-import za.co.absa.spline.common.transformations.AbstractConverter
+import za.co.absa.commons.lang.Converter
 import za.co.absa.spline.model.Attribute
 
 class AttributeConverter(dataTypeConverter: DataTypeConverter)
-  extends AbstractConverter {
+  extends Converter {
   override type From = SparkAttribute
   override type To = Attribute
 
