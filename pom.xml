@@ -57,12 +57,22 @@
         <module>bundle-2.2</module>
         <module>bundle-2.3</module>
         <module>bundle-2.4</module>
-
-        <module>examples</module>
-        <module>integration-tests</module>
     </modules>
 
     <profiles>
+        <profile>
+            <id>non-deploy</id>
+            <activation>
+                <property>
+                    <name>!deploy</name>
+                </property>
+            </activation>
+            <modules>
+                <module>examples</module>
+                <module>integration-tests</module>
+            </modules>
+        </profile>
+
         <profile>
             <id>release</id>
             <build>
