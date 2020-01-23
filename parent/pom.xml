@@ -77,7 +77,9 @@
         <scala.version>2.11.12</scala.version>
         <scala.compat.version>2.11</scala.compat.version>
         <slf4j.version>1.7.25</slf4j.version>
-        <json4s.version>3.2.11</json4s.version>
+        <json4s-32.version>3.2.11</json4s-32.version>
+        <json4s-35.version>3.5.3</json4s-35.version>
+        <json4s.version>${json4s-32.version}</json4s.version>
     </properties>
 
     <build>
@@ -222,18 +224,21 @@
             </activation>
             <properties>
                 <spark.version>2.2.2</spark.version>
+                <json4s.version>${json4s-32.version}</json4s.version>
             </properties>
         </profile>
         <profile>
             <id>spark-2.3</id>
             <properties>
                 <spark.version>2.3.2</spark.version>
+                <json4s.version>${json4s-32.version}</json4s.version>
             </properties>
         </profile>
         <profile>
             <id>spark-2.4</id>
             <properties>
                 <spark.version>2.4.2</spark.version>
+                <json4s.version>${json4s-35.version}</json4s.version>
             </properties>
         </profile>
         <profile>
@@ -522,5 +527,5 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-    
+
 </project>

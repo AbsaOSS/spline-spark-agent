@@ -26,6 +26,7 @@ import org.apache.spark.sql.execution.{LeafExecNode, SparkPlan}
 import org.apache.spark.sql.{SaveMode, SparkSession}
 import scalaz.Scalaz._
 import za.co.absa.commons.BuildInfo
+import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.harvester.LineageHarvester._
 import za.co.absa.spline.harvester.ModelConstants.{AppMetaInfo, ExecutionEventExtra, ExecutionPlanExtra}
 import za.co.absa.spline.harvester.builder.read.{ReadCommandExtractor, ReadNodeBuilder}
@@ -74,21 +75,21 @@ class LineageHarvester(logicalPlan: LogicalPlan, executedPlanOpt: Option[SparkPl
       val restOps = restOpBuilders.map(_.build())
 
       val (opReads, opOthers) =
-        ((Vector.empty[ReadOperation], Vector.empty[DataOperation]) /: restOps) {
+        ((List.empty[ReadOperation], List.empty[DataOperation]) /: restOps) {
           case ((accRead, accOther), opRead: ReadOperation) => (accRead :+ opRead, accOther)
           case ((accRead, accOther), opOther: DataOperation) => (accRead, accOther :+ opOther)
         }
 
       val plan = ExecutionPlan(
         id = UUID.randomUUID,
-        operations = Operations(writeOp, opReads, opOthers),
+        operations = Operations(writeOp, opReads.asOption, opOthers.asOption),
         systemInfo = SystemInfo(AppMetaInfo.Spark, spark.SPARK_VERSION),
         agentInfo = Some(AgentInfo(AppMetaInfo.Spline, BuildInfo.Version)),
         extraInfo = Map(
           ExecutionPlanExtra.AppName -> session.sparkContext.appName,
           ExecutionPlanExtra.DataTypes -> componentCreatorFactory.dataTypeConverter.values,
           ExecutionPlanExtra.Attributes -> componentCreatorFactory.attributeConverter.values
-        )
+        ).asOption
       )
 
       if (writeCommand.mode == SaveMode.Ignore) None
@@ -100,7 +101,7 @@ class LineageHarvester(logicalPlan: LogicalPlan, executedPlanOpt: Option[SparkPl
           ExecutionEventExtra.AppId -> session.sparkContext.applicationId,
           ExecutionEventExtra.ReadMetrics -> readMetrics,
           ExecutionEventExtra.WriteMetrics -> writeMetrics
-        )))
+        ).asOption))
     })
   }
 

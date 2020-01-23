@@ -60,7 +60,7 @@ class InsertIntoHiveTest
 
             plan1.operations.write.append should be(true)
             plan1.operations.write.outputSource should be(s"file:$warehouseDir/${databaseName.toLowerCase}.db/path_archive")
-            plan2.operations.reads.head.inputSources.head shouldEqual plan1.operations.write.outputSource
+            plan2.operations.reads.get.head.inputSources.head shouldEqual plan1.operations.write.outputSource
           }
           }
         }

@@ -59,7 +59,7 @@ class SQLCommandsSpec extends AnyFlatSpec
                 | WHERE id > 1""".stripMargin))
 
           plan1.operations.write.outputSource should be(s"file:$warehouseDir/sourcetable")
-          plan2.operations.reads.head.inputSources.head should be(plan1.operations.write.outputSource)
+          plan2.operations.reads.get.head.inputSources.head should be(plan1.operations.write.outputSource)
           plan2.operations.write.outputSource should be(s"file:$warehouseDir/targettable")
         })
       }
@@ -88,7 +88,7 @@ class SQLCommandsSpec extends AnyFlatSpec
                  | FROM sourceTable
                  | WHERE id > 1""".stripMargin))
 
-          plan.operations.reads.head.inputSources.head should be(s"file:$warehouseDir/sourcetable")
+          plan.operations.reads.get.head.inputSources.head should be(s"file:$warehouseDir/sourcetable")
           plan.operations.write.outputSource should be(dir.toUri.toString.init)
         })
       }
@@ -118,7 +118,7 @@ class SQLCommandsSpec extends AnyFlatSpec
                  | FROM sourceTable
                  | WHERE id > 1""".stripMargin))
 
-          plan.operations.reads.head.inputSources.head should be(s"file:$warehouseDir/sourcetable")
+          plan.operations.reads.get.head.inputSources.head should be(s"file:$warehouseDir/sourcetable")
           plan.operations.write.outputSource should be(csvFile.toUri.toString.init)
         })
       }

@@ -21,11 +21,10 @@ import java.util.UUID
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.spline.harvester.ComponentCreatorFactory
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder.Schema
-import za.co.absa.spline.producer.model.OperationLike
 
 trait OperationNodeBuilder {
 
-  protected type R <: OperationLike
+  protected type R
 
   val id: Int = componentCreatorFactory.nextId
 

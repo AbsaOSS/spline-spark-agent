@@ -43,10 +43,10 @@ class BuilderSpec extends AnyFlatSpec with Matchers with MockitoSugar {
 
     val readNode = new ReadNodeBuilder(command).build()
 
-    readNode.params.keySet should contain("caseSensitiveKey")
-    readNode.extra.keySet should contain("sourceType")
-    readNode.params.keySet shouldNot contain("casesensitivekey")
-    readNode.extra.keySet shouldNot contain("sourcetype")
+    readNode.params.get.keySet should contain("caseSensitiveKey")
+    readNode.extra.get.keySet should contain("sourceType")
+    readNode.params.get.keySet shouldNot contain("casesensitivekey")
+    readNode.extra.get.keySet shouldNot contain("sourcetype")
   }
 
 }
