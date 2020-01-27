@@ -25,7 +25,7 @@ import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.execution.{LeafExecNode, SparkPlan}
 import org.apache.spark.sql.{SaveMode, SparkSession}
 import scalaz.Scalaz._
-import za.co.absa.commons.BuildInfo
+import za.co.absa.commons.buildinfo.BuildInfo
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.harvester.LineageHarvester._
 import za.co.absa.spline.harvester.ModelConstants.{AppMetaInfo, ExecutionEventExtra, ExecutionPlanExtra}

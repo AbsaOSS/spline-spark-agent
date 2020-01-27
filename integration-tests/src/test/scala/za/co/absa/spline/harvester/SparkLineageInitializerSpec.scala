@@ -38,13 +38,20 @@ import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.listener.SplineQueryExecutionListener
 import za.co.absa.spline.test.fixture.SparkFixture
 
+import scala.util.Try
+
 object SparkLineageInitializerSpec {
 
   private[this] def getSparkQueryExecutionListenerClasses(session: SparkSession): Seq[Class[_ <: QueryExecutionListener]] = {
-    extractFieldValue[Seq[QueryExecutionListener]](
-      session.listenerManager.clone(),
-      "org$apache$spark$sql$util$ExecutionListenerManager$$listeners")
-      .map(_.getClass)
+    val fieldNames = Seq(
+      "listeners", // Scala 2.11
+      "org$apache$spark$sql$util$ExecutionListenerManager$$listeners" // Scala 2.12
+    )
+    val listeners = fieldNames
+      .view
+      .flatMap(field => Try(extractFieldValue[Seq[QueryExecutionListener]](session.listenerManager, field)).toOption)
+      .head
+    listeners.map(_.getClass)
   }
 
   private def assertSplineIsDisabled(session: SparkSession = SparkSession.builder().getOrCreate()) =

@@ -1,8 +1,19 @@
-# Spark Agent / Harvester
+Spark Agent / Harvester
+===
 
 This module is responsible for listening to spark command events and converting them to spline lineage.
 
-## Spark commands
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/za.co.absa.spline.agent.spark/spline-spark-agent/badge.svg)](https://search.maven.org/search?q=g:za.co.absa.spline.agent.spark)
+
+## Spark / Scala version compatibility matrix
+
+|            | Scala 2.11                   | Scala 2.12 |
+|------------|:----------------------------:|:----------:|
+|**Spark 2.2** | (no SQL; no codeless init) | &mdash;    |
+|**Spark 2.3** | (no Delta support)         | &mdash;    |
+|**Spark 2.4** | Yes                        | Yes        |
+
+## Spark commands support
 Some events provided by Spark are not yet implemented. Some of them will be implemented in future 
 and some of them bear no lineage information and should be ignored.
 

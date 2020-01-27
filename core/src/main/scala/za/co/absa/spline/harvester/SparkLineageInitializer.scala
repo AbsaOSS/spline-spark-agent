@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester
 import org.apache.spark
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
-import za.co.absa.commons.BuildInfo
+import za.co.absa.commons.buildinfo.BuildInfo
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode._
 import za.co.absa.spline.harvester.conf.{DefaultSplineConfigurer, SplineConfigurer, StandardSplineConfigurationStack}
 import za.co.absa.spline.harvester.listener.SplineQueryExecutionListener

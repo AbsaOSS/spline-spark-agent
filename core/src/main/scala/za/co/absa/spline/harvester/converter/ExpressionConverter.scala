@@ -96,7 +96,7 @@ object ExpressionConverter {
 
     val renderedParams =
       for {
-        (p, v) <- ReflectionUtils.extractProductElementsWithNames(e)
+        (p, v) <- ReflectionUtils.extractProperties(e)
         if !basicProperties(p)
         if !isChildExpression(v)
         w <- ValueDecomposer.decompose(v, Unit)

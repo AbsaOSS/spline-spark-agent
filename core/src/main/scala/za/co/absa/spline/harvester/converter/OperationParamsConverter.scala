@@ -51,7 +51,7 @@ class OperationParamsConverter(
     }
 
     for {
-      (p, v) <- ReflectionUtils.extractProductElementsWithNames(operation)
+      (p, v) <- ReflectionUtils.extractProperties(operation)
       if !knownPropNames(p)
       if !isChildOperation(v)
     } yield
