@@ -16,10 +16,10 @@
 
 package za.co.absa.spline.harvester.conf
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-trait ReadOnlyConfigurationTest extends FunSuite with Matchers {
+trait ReadOnlyConfigurationTest extends AnyFunSuite with Matchers {
   protected val givenConf: ReadOnlyConfiguration
   protected val emptyConf: ReadOnlyConfiguration
 

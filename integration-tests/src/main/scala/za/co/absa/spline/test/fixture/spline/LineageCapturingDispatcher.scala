@@ -21,7 +21,7 @@ import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
 class LineageCapturingDispatcher(lineageCaptor: LineageCaptor.Setter) extends LineageDispatcher {
 
-  import HarvesterJsonSerDe._
+  import HarvesterJsonSerDe.impl._
 
   override def send(plan: ExecutionPlan): String = {
     lineageCaptor.capture(plan)

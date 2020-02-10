@@ -16,8 +16,8 @@
 
 package za.co.absa.spline.harvester.converter
 
-import za.co.absa.spline.common.OptionImplicits._
-import za.co.absa.spline.common.ReflectionUtils.ModuleClassSymbolExtractor
+import za.co.absa.commons.lang.OptionImplicits._
+import za.co.absa.commons.reflect.ReflectionUtils.ModuleClassSymbolExtractor
 
 sealed trait ValueDecomposer {
   outer =>

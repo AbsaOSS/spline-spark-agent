@@ -17,6 +17,7 @@
 package za.co.absa.spline.harvester.builder.read
 
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.harvester.ComponentCreatorFactory
 import za.co.absa.spline.harvester.ModelConstants.OperationExtras
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder
@@ -31,12 +32,13 @@ class ReadNodeBuilder
   override val operation: LogicalPlan = command.operation
 
   override def build(): ReadOperation = ReadOperation(
-    inputSources = command.sourceIdentifier.uris,
+    childIds = Nil,
+    inputSources = command.sourceIdentifier.uris.toList,
     id = id,
     schema = Some(outputSchema),
-    params = Map(command.params.toSeq: _*),
+    params = Map(command.params.toSeq: _*).asOption,
     extra = Map(
       OperationExtras.Name -> operation.nodeName,
       OperationExtras.SourceType -> command.sourceIdentifier.format
-    ))
+    ).asOption)
 }

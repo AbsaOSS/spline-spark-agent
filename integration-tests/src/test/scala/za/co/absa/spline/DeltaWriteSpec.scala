@@ -23,10 +23,9 @@ import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructT
 import org.apache.spark.sql.{DataFrame, Row}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.spline.common.ConditionalTestTags._
-import za.co.absa.spline.common.TempDirectory
-import za.co.absa.spline.common.Version.VersionOrdering._
-import za.co.absa.spline.common.Version._
+import za.co.absa.commons.io.TempDirectory
+import za.co.absa.commons.scalatest.ConditionalTestTags._
+import za.co.absa.commons.version.Version._
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 
@@ -55,10 +54,10 @@ class DeltaWriteSpec extends AnyFlatSpec
         )
 
         plan1.operations.write.append shouldBe false
-        plan1.operations.write.extra("destinationType") shouldBe Some("delta")
+        plan1.operations.write.extra.get("destinationType") shouldBe Some("delta")
         plan1.operations.write.outputSource shouldBe s"file:$deltaPath"
-        plan2.operations.reads.head.inputSources.head shouldBe plan1.operations.write.outputSource
-        plan2.operations.reads.head.extra("sourceType") shouldBe Some("Parquet")
+        plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
+        plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("Parquet")
       })
     })
 }

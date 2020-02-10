@@ -16,14 +16,14 @@
 
 package za.co.absa.spline
 
+import org.apache.spark.internal.Logging
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SaveMode._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{IntegerType, StructField, StructType}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.slf4s.Logging
-import za.co.absa.spline.common.TempDirectory
+import za.co.absa.commons.io.TempDirectory
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 
@@ -44,8 +44,8 @@ class BasicIntegrationTests extends AnyFlatSpec
           spark.sql("drop table if exists someTable")
           val (plan, _) = lineageCaptor.lineageOf(df.write.saveAsTable("someTable"))
 
-          plan.operations.reads should be(empty)
-          plan.operations.other should have length 2
+          plan.operations.reads should be(None)
+          plan.operations.other.get should have length 2
           plan.operations.write should not be null
         }
       })
@@ -60,8 +60,8 @@ class BasicIntegrationTests extends AnyFlatSpec
           val df = Seq((1, 2), (3, 4)).toDF().agg(concat(sum('_1), min('_2)) as "forty_two")
           val (plan, _) = lineageCaptor.lineageOf(df.write.save(path))
 
-          plan.operations.reads should be(empty)
-          plan.operations.other should have length 2
+          plan.operations.reads should be(None)
+          plan.operations.other.get should have length 2
           plan.operations.write should not be null
         }
       })
@@ -115,7 +115,7 @@ class BasicIntegrationTests extends AnyFlatSpec
             .write.mode(Overwrite).saveAsTable("somewhere"))
 
           val writeUri = plan1.operations.write.outputSource
-          val readUri = plan2.operations.reads.head.inputSources.head
+          val readUri = plan2.operations.reads.get.head.inputSources.head
 
           writeUri shouldEqual readUri
         }

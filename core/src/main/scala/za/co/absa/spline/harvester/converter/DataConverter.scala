@@ -19,11 +19,11 @@ package za.co.absa.spline.harvester.converter
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.{ArrayData, MapData}
 import org.apache.spark.sql.types.{ArrayType, DataType, MapType, StructType}
-import za.co.absa.spline.common.OptionImplicits._
-import za.co.absa.spline.common.transformations.AbstractConverter
+import za.co.absa.commons.lang.Converter
+import za.co.absa.commons.lang.OptionImplicits._
 
 class DataConverter
-  extends AbstractConverter {
+  extends Converter {
 
   override type From = (Any, DataType)
   override type To = Any

@@ -17,12 +17,12 @@ package za.co.absa.spline.harvester.dispatcher
 
 
 import org.apache.commons.configuration.Configuration
+import org.apache.spark.internal.Logging
 import scalaj.http.{BaseHttp, Http}
-import za.co.absa.spline.common.ConfigurationImplicits._
-import za.co.absa.spline.common.logging.Logging
+import za.co.absa.commons.config.ConfigurationImplicits._
 import za.co.absa.spline.harvester.dispatcher.HttpLineageDispatcher.RESTResource
 import za.co.absa.spline.harvester.exception.SplineNotInitializedException
-import za.co.absa.spline.harvester.json.HarvesterJsonSerDe._
+import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
 import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
 import scala.util.control.NonFatal

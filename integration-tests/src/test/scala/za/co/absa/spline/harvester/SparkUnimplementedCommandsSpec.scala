@@ -24,8 +24,7 @@ import org.apache.spark.sql.{DataFrame, Row}
 import org.scalatest.Ignore
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.spline.common.TempDirectory
-import za.co.absa.spline.common.Version.VersionOrdering.{max => _, min => _}
+import za.co.absa.commons.io.TempDirectory
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{JDBCFixture, SparkDatabaseFixture, SparkFixture}
 
@@ -94,7 +93,8 @@ class SparkUnimplementedCommandsSpec extends AnyFlatSpec
         withLineageTracking(spark) { lineageCaptor =>
           val (plan, _) = lineageCaptor.lineageOf {
             // CreateDataSourceTableCommand (but actually CreateTableCommand)
-            spark.sql(s"""
+            spark.sql(
+              s"""
               CREATE TABLE $tableName (x String, ymd int) USING hive OPTIONS (
                 INPUTFORMAT 'org.apache.hadoop.mapred.SequenceFileInputFormat',
                 OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat'
@@ -250,7 +250,8 @@ class SparkUnimplementedCommandsSpec extends AnyFlatSpec
 
       testData.write.jdbc(jdbcConnectionString, "atable", new Properties)
 
-      spark.sql(s"""
+      spark.sql(
+        s"""
           CREATE TABLE jdbcTable USING org.apache.spark.sql.jdbc OPTIONS (
             url '$jdbcConnectionString',
             dbtable 'atable',

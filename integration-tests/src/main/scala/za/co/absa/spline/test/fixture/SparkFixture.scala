@@ -21,7 +21,7 @@ import java.sql.DriverManager
 
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.SparkSession
-import za.co.absa.spline.common.TempDirectory
+import za.co.absa.commons.io.TempDirectory
 
 import scala.util.Try
 

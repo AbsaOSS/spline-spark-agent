@@ -21,14 +21,14 @@ import org.apache.spark.sql.catalyst.expressions.{Expression, SortOrder}
 import org.apache.spark.sql.catalyst.plans.JoinType
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.types.DataType
-import za.co.absa.spline.common.ReflectionUtils
-import za.co.absa.spline.common.transformations.AbstractConverter
+import za.co.absa.commons.lang.Converter
+import za.co.absa.commons.reflect.ReflectionUtils
 import za.co.absa.spline.harvester.converter.OperationParamsConverter._
 
 class OperationParamsConverter(
   dataConverter: DataConverter,
   expressionConverter: ExpressionConverter
-) extends AbstractConverter {
+) extends Converter {
   override type From = LogicalPlan
   override type To = Map[String, _]
 
@@ -51,7 +51,7 @@ class OperationParamsConverter(
     }
 
     for {
-      (p, v) <- ReflectionUtils.extractProductElementsWithNames(operation)
+      (p, v) <- ReflectionUtils.extractProperties(operation)
       if !knownPropNames(p)
       if !isChildOperation(v)
     } yield

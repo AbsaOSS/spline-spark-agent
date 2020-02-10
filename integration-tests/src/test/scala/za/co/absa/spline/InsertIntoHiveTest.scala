@@ -20,7 +20,7 @@ import org.apache.spark.sql.functions._
 import org.scalatest.OneInstancePerTest
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.spline.common.TempDirectory
+import za.co.absa.commons.io.TempDirectory
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 
@@ -60,7 +60,7 @@ class InsertIntoHiveTest
 
             plan1.operations.write.append should be(true)
             plan1.operations.write.outputSource should be(s"file:$warehouseDir/${databaseName.toLowerCase}.db/path_archive")
-            plan2.operations.reads.head.inputSources.head shouldEqual plan1.operations.write.outputSource
+            plan2.operations.reads.get.head.inputSources.head shouldEqual plan1.operations.write.outputSource
           }
           }
         }

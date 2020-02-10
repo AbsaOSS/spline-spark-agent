@@ -17,9 +17,9 @@
 package za.co.absa.spline.harvester.conf
 
 import org.apache.commons.configuration.{CompositeConfiguration, Configuration, PropertiesConfiguration}
+import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
-import org.slf4s.Logging
-import za.co.absa.spline.common.ConfigurationImplicits
+import za.co.absa.commons.config.ConfigurationImplicits
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.{LineageHarvesterFactory, QueryExecutionEventHandler}
@@ -30,20 +30,23 @@ object DefaultSplineConfigurer {
   object ConfProperty {
 
     /**
-      * How Spline should behave.
-      *
-      * @see [[SplineMode]]
-      */
+     * How Spline should behave.
+     *
+     * @see [[SplineMode]]
+     */
     val MODE = "spline.mode"
 
     /**
-      * Which lineage dispatcher should be used to report lineages
-      */
+     * Which lineage dispatcher should be used to report lineages
+     */
     val LINEAGE_DISPATCHER_CLASS = "spline.lineage_dispatcher.className"
   }
+
 }
 
-class DefaultSplineConfigurer(userConfiguration: Configuration, sparkSession: SparkSession) extends SplineConfigurer with Logging {
+class DefaultSplineConfigurer(userConfiguration: Configuration, sparkSession: SparkSession)
+  extends SplineConfigurer
+    with Logging {
 
   import ConfigurationImplicits._
   import DefaultSplineConfigurer.ConfProperty._

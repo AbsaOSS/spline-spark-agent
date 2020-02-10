@@ -20,16 +20,84 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>za.co.absa.spline.agent.spark</groupId>
-    <artifactId>spline-spark-agent</artifactId>
+    <artifactId>spline-spark-agent_2.11</artifactId>
     <name>Spline Spark Agent</name>
     <version>0.5.0-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
+    <inceptionYear>2017</inceptionYear>
+
+    <url>https://absaoss.github.io/spline-spark-agent/</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <organization>
+        <name>ABSA Group Limited</name>
+        <url>https://www.absa.africa</url>
+    </organization>
+
+    <developers>
+        <developer>
+            <id>wajda</id>
+            <name>Oleksandr Vayda</name>
+            <roles>
+                <role>Tech Lead</role>
+                <role>Full-stack developer</role>
+            </roles>
+            <timezone>Europe/Prague</timezone>
+            <url>https://github.com/wajda</url>
+        </developer>
+        <developer>
+            <id>cerveada</id>
+            <name>Adam Červenka</name>
+            <roles>
+                <role>Back-end developer</role>
+            </roles>
+            <timezone>Europe/Prague</timezone>
+            <url>https://github.com/cerveada</url>
+        </developer>
+    </developers>
+
     <properties>
         <scm.url>http://github.com/AbsaOSS/spline-spark-agent/tree/master</scm.url>
         <scm.connection>scm:git:git://github.com/AbsaOSS/spline-spark-agent.git</scm.connection>
         <scm.developerConnection>scm:git:ssh://github.com/AbsaOSS/spline-spark-agent.git</scm.developerConnection>
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.version>1.8</java.version>
+        <slf4j.version>1.7.25</slf4j.version>
+
+        <!-- json4s -->
+
+        <json4s.version>${json4s-35.version}</json4s.version>
+        <json4s-32.version>3.2.11</json4s-32.version>
+        <json4s-35.version>3.5.3</json4s-35.version>
+
+        <!-- Spark -->
+
+        <spark.version>${spark-24.version}</spark.version>
+        <spark-22.version>2.2.2</spark-22.version>
+        <spark-23.version>2.3.2</spark-23.version>
+        <spark-24.version>2.4.2</spark-24.version>
+
+        <!-- Cross build properties -->
+
+        <default.scala.binary.version>2.11</default.scala.binary.version>
+        <default.scala.version>${scala_2.11.version}</default.scala.version>
+
+        <scala_2.11.version>2.11.12</scala_2.11.version>
+        <scala_2.12.version>2.12.10</scala_2.12.version>
+
+        <!-- Controlled by `scala-cross-build` plugin -->
+        <scala.version>2.11.12</scala.version>
+        <scala.binary.version>2.11</scala.binary.version>
     </properties>
 
     <scm>
@@ -51,18 +119,472 @@
     </distributionManagement>
 
     <modules>
-        <module>parent</module>
-
         <module>core</module>
-        <module>bundle-2.2</module>
-        <module>bundle-2.3</module>
         <module>bundle-2.4</module>
-
-        <module>examples</module>
-        <module>integration-tests</module>
     </modules>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.github.wajda</groupId>
+                <artifactId>scala-cross-build-maven-plugin</artifactId>
+                <version>0.2.1</version>
+                <configuration>
+                    <defaultScalaBinaryVersion>${default.scala.binary.version}</defaultScalaBinaryVersion>
+                    <defaultScalaVersion>${default.scala.version}</defaultScalaVersion>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <configuration>
+                    <scalaVersion>${scala.version}</scalaVersion>
+                    <args>
+                        <arg>-target:jvm-${java.version}</arg>
+                        <arg>-feature</arg>
+                        <arg>-deprecation</arg>
+                        <arg>-unchecked</arg>
+                        <arg>-Ywarn-numeric-widen</arg>
+                        <!--<arg>-Ywarn-dead-code</arg>-->
+                        <!--<arg>-Ywarn-value-discard</arg>-->
+                    </args>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>scala-compile</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>scala-test-compile</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- disable surefire -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <skipTests>true</skipTests>
+                </configuration>
+            </plugin>
+            <!-- enable scalatest -->
+            <plugin>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest-maven-plugin</artifactId>
+                <configuration>
+                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+                    <junitxml>.</junitxml>
+                    <filereports>WDF TestSuite.txt</filereports>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>net.alchim31.maven</groupId>
+                    <artifactId>scala-maven-plugin</artifactId>
+                    <version>4.2.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.8.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.scalatest</groupId>
+                    <artifactId>scalatest-maven-plugin</artifactId>
+                    <version>2.0.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.22.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.2.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.rat</groupId>
+                    <artifactId>apache-rat-plugin</artifactId>
+                    <version>0.13</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>3.2.1</version>
+                    <configuration>
+                        <createDependencyReducedPom>false</createDependencyReducedPom>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.2.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>1.6</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.sonatype.plugins</groupId>
+                    <artifactId>nexus-staging-maven-plugin</artifactId>
+                    <version>1.6.8</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-antrun-plugin</artifactId>
+                    <version>1.8</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.binary.version}</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.scalatestplus</groupId>
+            <artifactId>mockito-1-10_${scala.binary.version}</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.2</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+
+            <!-- Scala -->
+
+            <dependency>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala-compiler</artifactId>
+                <version>${scala.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala-reflect</artifactId>
+                <version>${scala.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala-actors</artifactId>
+                <version>${scala.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala-library</artifactId>
+                <version>${scala.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scalap</artifactId>
+                <version>${scala.version}</version>
+            </dependency>
+
+            <!-- Spark -->
+
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-core_${scala.binary.version}</artifactId>
+                <version>${spark.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-sql_${scala.binary.version}</artifactId>
+                <version>${spark.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-hive_${scala.binary.version}</artifactId>
+                <version>${spark.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-sql-kafka-0-10_${scala.binary.version}</artifactId>
+                <version>${spark.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.databricks</groupId>
+                <artifactId>spark-xml_${scala.binary.version}</artifactId>
+                <version>0.5.0</version>
+            </dependency>
+
+            <!-- Json4s -->
+
+            <dependency>
+                <groupId>org.json4s</groupId>
+                <artifactId>json4s-ast_${scala.binary.version}</artifactId>
+                <version>${json4s.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.json4s</groupId>
+                <artifactId>json4s-core_${scala.binary.version}</artifactId>
+                <version>${json4s.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.json4s</groupId>
+                <artifactId>json4s-jackson_${scala.binary.version}</artifactId>
+                <version>${json4s.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.json4s</groupId>
+                <artifactId>json4s-native_${scala.binary.version}</artifactId>
+                <version>${json4s.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.json4s</groupId>
+                <artifactId>json4s-scalap_${scala.binary.version}</artifactId>
+                <version>${json4s.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.json4s</groupId>
+                <artifactId>json4s-ext_${scala.binary.version}</artifactId>
+                <version>${json4s.version}</version>
+            </dependency>
+
+            <!-- Commons -->
+
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>1.13</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-lang</groupId>
+                <artifactId>commons-lang</artifactId>
+                <version>2.6</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.9</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-configuration</groupId>
+                <artifactId>commons-configuration</artifactId>
+                <version>1.10</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>2.6</version>
+            </dependency>
+
+            <!-- Logging -->
+
+            <dependency>
+                <groupId>org.slf4s</groupId>
+                <artifactId>slf4s-api_${scala.binary.version}</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-simple</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-jcl</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j13</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-nop</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+
+            <!-- Others -->
+
+            <dependency>
+                <groupId>org.scalaz</groupId>
+                <artifactId>scalaz-core_${scala.binary.version}</artifactId>
+                <version>7.2.29</version>
+            </dependency>
+
+            <!-- Test scope dependencies -->
+
+            <dependency>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest_${scala.binary.version}</artifactId>
+                <version>3.1.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.scalatestplus</groupId>
+                <artifactId>mockito-1-10_${scala.binary.version}</artifactId>
+                <version>3.1.0.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>3.2.0</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <profiles>
+        <!-- Cross-building profiles -->
+
+        <profile>
+            <id>scala-2.11</id>
+            <properties>
+                <scala.binary.version>2.11</scala.binary.version>
+                <scala.version>${scala_2.11.version}</scala.version>
+            </properties>
+            <modules>
+                <module>bundle-2.2</module>
+                <module>bundle-2.3</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>scala-2.12</id>
+            <properties>
+                <scala.binary.version>2.12</scala.binary.version>
+                <scala.version>${scala_2.12.version}</scala.version>
+            </properties>
+        </profile>
+
+        <!-- Spark profiles -->
+
+        <profile>
+            <id>spark-2.2</id>
+            <properties>
+                <spark.version>${spark-22.version}</spark.version>
+                <json4s.version>${json4s-32.version}</json4s.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>spark-2.3</id>
+            <properties>
+                <spark.version>${spark-23.version}</spark.version>
+                <json4s.version>${json4s-32.version}</json4s.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>spark-2.4</id>
+            <properties>
+                <spark.version>${spark-24.version}</spark.version>
+                <json4s.version>${json4s-35.version}</json4s.version>
+            </properties>
+        </profile>
+
+        <!-- Deployment profiles -->
+
+        <profile>
+            <id>non-deploy</id>
+            <activation>
+                <property>
+                    <name>!deploy</name>
+                </property>
+            </activation>
+            <modules>
+                <module>examples</module>
+                <module>integration-tests</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>deploy</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>doc-jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                            <autoDropAfterRelease>true</autoDropAfterRelease>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Release profile -->
+
         <profile>
             <id>release</id>
             <build>
@@ -93,14 +615,33 @@
             </build>
         </profile>
 
-        <profile>
-            <id>deploy</id>
-            <!-- defined in parent/pom.xml -->
-        </profile>
+        <!-- Licence check profile -->
 
         <profile>
             <id>license-check</id>
-            <!-- defined in parent/pom.xml -->
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.rat</groupId>
+                        <artifactId>apache-rat-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/*.json</exclude>
+                                <exclude>**/*.log</exclude>
+                                <exclude>dependency-reduced-pom.xml</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
 
     </profiles>

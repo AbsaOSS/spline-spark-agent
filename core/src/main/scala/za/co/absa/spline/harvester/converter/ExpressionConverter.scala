@@ -19,16 +19,16 @@ package za.co.absa.spline.harvester.converter
 import org.apache.commons.lang3.StringUtils.substringAfter
 import org.apache.spark.sql.catalyst.expressions
 import org.apache.spark.sql.catalyst.expressions.{Expression => SparkExpression}
-import za.co.absa.spline.common.OptionImplicits._
-import za.co.absa.spline.common.ReflectionUtils
-import za.co.absa.spline.common.transformations.AbstractConverter
+import za.co.absa.commons.lang.Converter
+import za.co.absa.commons.lang.OptionImplicits._
+import za.co.absa.commons.reflect.ReflectionUtils
 import za.co.absa.spline.model.expr
 
 class ExpressionConverter(
   dataConverter: DataConverter,
   dataTypeConverter: DataTypeConverter,
   attributeConverter: AttributeConverter)
-  extends AbstractConverter {
+  extends Converter {
 
   import ExpressionConverter._
 
@@ -96,7 +96,7 @@ object ExpressionConverter {
 
     val renderedParams =
       for {
-        (p, v) <- ReflectionUtils.extractProductElementsWithNames(e)
+        (p, v) <- ReflectionUtils.extractProperties(e)
         if !basicProperties(p)
         if !isChildExpression(v)
         w <- ValueDecomposer.decompose(v, Unit)

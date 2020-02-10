@@ -17,20 +17,20 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>spark-2.4-agent-bundle</artifactId>
+    <artifactId>spark-2.4-spline-agent-bundle_2.11</artifactId>
     <packaging>jar</packaging>
 
     <parent>
         <groupId>za.co.absa.spline.agent.spark</groupId>
-        <artifactId>parent</artifactId>
-        <relativePath>../parent/pom.xml</relativePath>
+        <artifactId>spline-spark-agent_2.11</artifactId>
+        <relativePath>../pom.xml</relativePath>
         <version>0.5.0-SNAPSHOT</version>
     </parent>
 
     <dependencies>
         <dependency>
             <groupId>za.co.absa.spline.agent.spark</groupId>
-            <artifactId>agent-core</artifactId>
+            <artifactId>agent-core_${scala.binary.version}</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
@@ -165,13 +165,13 @@
             </dependency>
             <dependency>
                 <groupId>org.scalanlp</groupId>
-                <artifactId>breeze-macros_2.11</artifactId>
+                <artifactId>breeze-macros_${scala.binary.version}</artifactId>
                 <version>0.13.2</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.scalanlp</groupId>
-                <artifactId>breeze_2.11</artifactId>
+                <artifactId>breeze_${scala.binary.version}</artifactId>
                 <version>0.13.2</version>
                 <scope>provided</scope>
             </dependency>
@@ -201,7 +201,7 @@
             </dependency>
             <dependency>
                 <groupId>com.twitter</groupId>
-                <artifactId>chill_2.11</artifactId>
+                <artifactId>chill_${scala.binary.version}</artifactId>
                 <version>0.9.3</version>
                 <scope>provided</scope>
             </dependency>
@@ -633,7 +633,7 @@
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.module</groupId>
-                <artifactId>jackson-module-scala_2.11</artifactId>
+                <artifactId>jackson-module-scala_${scala.binary.version}</artifactId>
                 <version>2.6.7.1</version>
                 <scope>provided</scope>
             </dependency>
@@ -795,25 +795,25 @@
             </dependency>
             <dependency>
                 <groupId>org.json4s</groupId>
-                <artifactId>json4s-ast_2.11</artifactId>
+                <artifactId>json4s-ast_${scala.binary.version}</artifactId>
                 <version>3.5.3</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.json4s</groupId>
-                <artifactId>json4s-core_2.11</artifactId>
+                <artifactId>json4s-core_${scala.binary.version}</artifactId>
                 <version>3.5.3</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.json4s</groupId>
-                <artifactId>json4s-jackson_2.11</artifactId>
+                <artifactId>json4s-jackson_${scala.binary.version}</artifactId>
                 <version>3.5.3</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.json4s</groupId>
-                <artifactId>json4s-scalap_2.11</artifactId>
+                <artifactId>json4s-scalap_${scala.binary.version}</artifactId>
                 <version>3.5.3</version>
                 <scope>provided</scope>
             </dependency>
@@ -909,13 +909,13 @@
             </dependency>
             <dependency>
                 <groupId>org.typelevel</groupId>
-                <artifactId>machinist_2.11</artifactId>
+                <artifactId>machinist_${scala.binary.version}</artifactId>
                 <version>0.6.1</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.typelevel</groupId>
-                <artifactId>macro-compat_2.11</artifactId>
+                <artifactId>macro-compat_${scala.binary.version}</artifactId>
                 <version>1.1.1</version>
                 <scope>provided</scope>
             </dependency>
@@ -1107,7 +1107,7 @@
             </dependency>
             <dependency>
                 <groupId>org.scala-lang.modules</groupId>
-                <artifactId>scala-parser-combinators_2.11</artifactId>
+                <artifactId>scala-parser-combinators_${scala.binary.version}</artifactId>
                 <version>1.1.0</version>
                 <scope>provided</scope>
             </dependency>
@@ -1119,13 +1119,13 @@
             </dependency>
             <dependency>
                 <groupId>org.scala-lang.modules</groupId>
-                <artifactId>scala-xml_2.11</artifactId>
+                <artifactId>scala-xml_${scala.binary.version}</artifactId>
                 <version>1.0.5</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.chuusai</groupId>
-                <artifactId>shapeless_2.11</artifactId>
+                <artifactId>shapeless_${scala.binary.version}</artifactId>
                 <version>2.3.2</version>
                 <scope>provided</scope>
             </dependency>
@@ -1167,133 +1167,133 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-catalyst_2.11</artifactId>
+                <artifactId>spark-catalyst_${scala.binary.version}</artifactId>
                 <version>2.4.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-core_2.11</artifactId>
+                <artifactId>spark-core_${scala.binary.version}</artifactId>
                 <version>2.4.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-graphx_2.11</artifactId>
+                <artifactId>spark-graphx_${scala.binary.version}</artifactId>
                 <version>2.4.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-hive-thriftserver_2.11</artifactId>
+                <artifactId>spark-hive-thriftserver_${scala.binary.version}</artifactId>
                 <version>2.4.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-hive_2.11</artifactId>
+                <artifactId>spark-hive_${scala.binary.version}</artifactId>
                 <version>2.4.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-kubernetes_2.11</artifactId>
+                <artifactId>spark-kubernetes_${scala.binary.version}</artifactId>
                 <version>2.4.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-kvstore_2.11</artifactId>
+                <artifactId>spark-kvstore_${scala.binary.version}</artifactId>
                 <version>2.4.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-launcher_2.11</artifactId>
+                <artifactId>spark-launcher_${scala.binary.version}</artifactId>
                 <version>2.4.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-mesos_2.11</artifactId>
+                <artifactId>spark-mesos_${scala.binary.version}</artifactId>
                 <version>2.4.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-mllib-local_2.11</artifactId>
+                <artifactId>spark-mllib-local_${scala.binary.version}</artifactId>
                 <version>2.4.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-mllib_2.11</artifactId>
+                <artifactId>spark-mllib_${scala.binary.version}</artifactId>
                 <version>2.4.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-network-common_2.11</artifactId>
+                <artifactId>spark-network-common_${scala.binary.version}</artifactId>
                 <version>2.4.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-network-shuffle_2.11</artifactId>
+                <artifactId>spark-network-shuffle_${scala.binary.version}</artifactId>
                 <version>2.4.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-repl_2.11</artifactId>
+                <artifactId>spark-repl_${scala.binary.version}</artifactId>
                 <version>2.4.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-sketch_2.11</artifactId>
+                <artifactId>spark-sketch_${scala.binary.version}</artifactId>
                 <version>2.4.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-sql_2.11</artifactId>
+                <artifactId>spark-sql_${scala.binary.version}</artifactId>
                 <version>2.4.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-streaming_2.11</artifactId>
+                <artifactId>spark-streaming_${scala.binary.version}</artifactId>
                 <version>2.4.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-tags_2.11</artifactId>
+                <artifactId>spark-tags_${scala.binary.version}</artifactId>
                 <version>2.4.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-unsafe_2.11</artifactId>
+                <artifactId>spark-unsafe_${scala.binary.version}</artifactId>
                 <version>2.4.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-yarn_2.11</artifactId>
+                <artifactId>spark-yarn_${scala.binary.version}</artifactId>
                 <version>2.4.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.spire-math</groupId>
-                <artifactId>spire-macros_2.11</artifactId>
+                <artifactId>spire-macros_${scala.binary.version}</artifactId>
                 <version>0.13.0</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.spire-math</groupId>
-                <artifactId>spire_2.11</artifactId>
+                <artifactId>spire_${scala.binary.version}</artifactId>
                 <version>0.13.0</version>
                 <scope>provided</scope>
             </dependency>
@@ -1391,8 +1391,14 @@
     </dependencyManagement>
 
     <build>
-        <finalName>spline-spark-2.4-agent-bundle-${project.version}</finalName>
         <plugins>
+            <plugin>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest-maven-plugin</artifactId>
+                <configuration>
+                    <skipTests>true</skipTests>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>

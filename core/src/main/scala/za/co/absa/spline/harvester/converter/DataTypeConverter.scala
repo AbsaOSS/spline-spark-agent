@@ -17,10 +17,10 @@
 package za.co.absa.spline.harvester.converter
 
 import org.apache.spark.sql.{types => st}
-import za.co.absa.spline.common.transformations.AbstractConverter
+import za.co.absa.commons.lang.Converter
 import za.co.absa.spline.model.dt._
 
-class DataTypeConverter extends AbstractConverter {
+class DataTypeConverter extends Converter {
   override type From = (st.DataType, Boolean)
   override type To = DataType
 

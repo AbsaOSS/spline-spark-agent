@@ -16,13 +16,23 @@
 
 package za.co.absa.spline.harvester.json
 
-import za.co.absa.spline.common.json.AbstractJsonSerDe
-import za.co.absa.spline.common.json.format.{JavaTypesSupport, NoEmptyValuesSupport}
+import za.co.absa.commons.json.AbstractJsonSerDe
+import za.co.absa.commons.reflect.ReflectionUtils
 
-object HarvesterJsonSerDe extends HarvesterJsonSerDe
+import scala.reflect.runtime.universe._
 
-trait HarvesterJsonSerDe
-  extends AbstractJsonSerDe
-    with ShortTypeHintForSpline03ModelSupport
-    with NoEmptyValuesSupport
-    with JavaTypesSupport
+object HarvesterJsonSerDe {
+  val impl: AbstractJsonSerDe = ReflectionUtils.compile(
+    q"""
+      import org.json4s.jackson._
+      import za.co.absa.commons.json._
+      import za.co.absa.commons.json.format._
+      import za.co.absa.spline.harvester.json._
+
+      new AbstractJsonSerDe
+        with JsonMethods
+        with ShortTypeHintForSpline03ModelSupport
+        with NoEmptyValuesSupport
+        with JavaTypesSupport
+    """)(Map.empty)
+}

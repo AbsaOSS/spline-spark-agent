@@ -18,6 +18,7 @@ package za.co.absa.spline.harvester.builder.write
 
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.harvester.ComponentCreatorFactory
 import za.co.absa.spline.harvester.ModelConstants.OperationExtras
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder
@@ -36,12 +37,13 @@ class WriteNodeBuilder(command: WriteCommand)
       outputSource = uri,
       append = command.mode == SaveMode.Append,
       id = id,
-      childIds = childIds,
-      params = Map(command.params.toSeq: _*),
+      childIds = childIds.toList,
+      schema = None,
+      params = Map(command.params.toSeq: _*).asOption,
       extra = Map(
         OperationExtras.Name -> command.name,
         OperationExtras.DestinationType -> command.sourceIdentifier.format
-      )
+      ).asOption
     )
   }
 }

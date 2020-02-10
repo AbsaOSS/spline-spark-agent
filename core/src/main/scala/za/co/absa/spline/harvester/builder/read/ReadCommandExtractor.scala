@@ -27,8 +27,8 @@ import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.execution.datasources.{HadoopFsRelation, LogicalRelation}
 import org.apache.spark.sql.kafka010.{AssignStrategy, ConsumerStrategy, SubscribePatternStrategy, SubscribeStrategy}
 import org.apache.spark.sql.sources.BaseRelation
-import za.co.absa.spline.common.ReflectionUtils.extractFieldValue
-import za.co.absa.spline.common.extractors.{AccessorMethodValueExtractor, SafeTypeMatchingExtractor}
+import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
+import za.co.absa.commons.reflect.extractors.{AccessorMethodValueExtractor, SafeTypeMatchingExtractor}
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.builder.read.ReadCommandExtractor._
 import za.co.absa.spline.harvester.qualifier.PathQualifier
