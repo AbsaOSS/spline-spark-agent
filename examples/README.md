@@ -6,7 +6,7 @@
     ```shell script
     git clone git@github.com:AbsaOSS/spline-spark-agent.git
     cd spline-spark-agent
-    git chechout release/${project.version}
+    git chechout master
     cd examples
     ```
 
@@ -15,7 +15,7 @@
 1. Execute `pyspark` with a _Spline Spark Agent Bundle_ corresponding to the _Spark_ and _Scala_ versions in use:
     ```shell script
       pyspark \
-        --packages za.co.absa.spline.agent.spark:spark-2.4-spline-agent-bundle_2.11:${project.version} \
+        --packages za.co.absa.spline.agent.spark:spark-2.4-spline-agent-bundle_2.11:0.5.0 \
         --conf spark.sql.queryExecutionListeners=za.co.absa.spline.harvester.listener.SplineQueryExecutionListener \
         --conf spark.spline.producer.url=http://localhost:8080/producer
     ```
