@@ -4,6 +4,11 @@ Spark Agent / Harvester
 This module is responsible for listening to spark command events and converting them to spline lineage.
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/za.co.absa.spline.agent.spark/spline-spark-agent/badge.svg)](https://search.maven.org/search?q=g:za.co.absa.spline.agent.spark)
+[![TeamCity build](https://teamcity.jetbrains.com/app/rest/builds/aggregated/strob:%28locator:%28buildType:%28id:OpenSourceProjects_AbsaOSS_SplineAgentSpark_AutoBuildSpark24scala212%29,branch:develop%29%29/statusIcon.svg)](https://teamcity.jetbrains.com/viewType.html?buildTypeId=OpenSourceProjects_AbsaOSS_SplineAgentSpark_AutoBuildSpark24scala212&branch=develop&tab=buildTypeStatusDiv)
+[![Sonarcloud Status](https://sonarcloud.io/api/project_badges/measure?project=AbsaOSS_spline-spark-agent&metric=alert_status)](https://sonarcloud.io/dashboard?id=AbsaOSS_spline-spark-agent)
+[![SonarCloud Maintainability](https://sonarcloud.io/api/project_badges/measure?project=AbsaOSS_spline-spark-agent&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=AbsaOSS_spline-spark-agent)
+[![SonarCloud Reliability](https://sonarcloud.io/api/project_badges/measure?project=AbsaOSS_spline-spark-agent&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=AbsaOSS_spline-spark-agent)
+[![SonarCloud Security](https://sonarcloud.io/api/project_badges/measure?project=AbsaOSS_spline-spark-agent&metric=security_rating)](https://sonarcloud.io/dashboard?id=AbsaOSS_spline-spark-agent)
 
 ## Spark / Scala version compatibility matrix
 
