@@ -346,6 +346,11 @@
                 <artifactId>spark-xml_${scala.binary.version}</artifactId>
                 <version>0.5.0</version>
             </dependency>
+            <dependency>
+                <groupId>com.crealytics</groupId>
+                <artifactId>spark-excel_${scala.binary.version}</artifactId>
+                <version>0.12.5</version>
+            </dependency>
 
             <!-- Json4s -->
 
