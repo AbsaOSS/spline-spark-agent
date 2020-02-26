@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.builder.read
 import java.io.InputStream
 import java.util.Properties
 
-import com.crealytics.spark.excel.{DefaultWorkbookReader, ExcelRelation, StreamingWorkbookReader}
+import com.crealytics.spark.excel.{ExcelRelation, WorkbookReader}
 import com.databricks.spark.xml.XmlRelation
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.spark.sql.SparkSession
@@ -37,6 +37,7 @@ import za.co.absa.spline.harvester.qualifier.PathQualifier
 
 import scala.PartialFunction.condOpt
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 
 class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) {
@@ -73,8 +74,7 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
 
         case `_: ExcelRelation`(exr) => {
           val reader = exr.asInstanceOf[ExcelRelation].workbookReader
-          val inputStreamLazy = extractFieldValue[() => InputStream](reader, excelInputStreamProviderClass)
-          val inputStream = inputStreamLazy.apply()
+          val inputStream = extractExcelInputStream(reader)
           val path = extractFieldValue[org.apache.hadoop.fs.Path](inputStream, "file")
           val qualifiedPath = pathQualifier.qualify(path.toString())
           ReadCommand(SourceIdentifier.forExcel(qualifiedPath), operation)
@@ -101,8 +101,6 @@ object ReadCommandExtractor {
 
   object TableOrQueryFromJDBCOptionsExtractor extends AccessorMethodValueExtractor[String]("table", "tableOrQuery")
 
-  private val excelInputStreamProviderClass = "com$crealytics$spark$excel$DefaultWorkbookReader$$inputStreamProvider"
-
   private def kafkaTopics(bootstrapServers: String): Seq[String] = {
     val kc = new KafkaConsumer(new Properties {
       put("bootstrap.servers", bootstrapServers)
@@ -111,6 +109,22 @@ object ReadCommandExtractor {
     })
     try kc.listTopics.keySet.asScala.toSeq
     finally kc.close()
+  }
+
+  private def extractExcelInputStream(reader: WorkbookReader)  = {
+
+    val streamFieldName_Scala_2_12 = "inputStreamProvider"
+    val streamFieldName_Scala_2_11_default = "com$crealytics$spark$excel$DefaultWorkbookReader$$inputStreamProvider"
+    val streamFieldName_Scala_2_11_streaming = "com$crealytics$spark$excel$StreamingWorkbookReader$$inputStreamProvider"
+
+    def extract(fieldName: String) = extractFieldValue[() => InputStream](reader, fieldName)
+
+    val lazyStream = Try(extract(streamFieldName_Scala_2_12))
+      .orElse(Try(extract(streamFieldName_Scala_2_11_default)))
+      .orElse(Try(extract(streamFieldName_Scala_2_11_streaming)))
+      .getOrElse(sys.error("Unable to extract Excel input stream"))
+
+    lazyStream.apply()
   }
 }
 

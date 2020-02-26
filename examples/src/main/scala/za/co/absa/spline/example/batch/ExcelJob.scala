@@ -27,7 +27,7 @@ object ExcelJob extends SparkApp("Excel Job", conf = Seq("spark.sql.shuffle.part
 
   val df = spark.read
     .format("com.crealytics.spark.excel")
-    .option("useHeader", "true")
+    .option("header", "true")
     .load("data/input/batch/test.xlsx")
 
   val res = df.select($"number" + 1, $"text")
@@ -35,7 +35,7 @@ object ExcelJob extends SparkApp("Excel Job", conf = Seq("spark.sql.shuffle.part
   res.write
     .format("com.crealytics.spark.excel")
     .option("dataAddress", "'My Sheet'!B3:C35")
-    .option("useHeader", "true")
+    .option("header", "true")
     .mode("overwrite")
     .save("data/output/batch/result.xlsx")
 }

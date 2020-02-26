@@ -349,7 +349,7 @@
             <dependency>
                 <groupId>com.crealytics</groupId>
                 <artifactId>spark-excel_${scala.binary.version}</artifactId>
-                <version>0.12.5</version>
+                <version>0.13.0</version>
             </dependency>
 
             <!-- Json4s -->

@@ -47,7 +47,7 @@ class ExcelSpec extends AnyFlatSpec
         val (plan1, _) = lineageCaptor.lineageOf(testData
           .write
           .format("com.crealytics.spark.excel")
-          .option("useHeader", "true")
+          .option("header", "true")
           .mode("overwrite")
           .save(filePath1)
         )
@@ -56,13 +56,13 @@ class ExcelSpec extends AnyFlatSpec
           val df = spark
             .read
             .format("com.crealytics.spark.excel")
-            .option("useHeader", "true")
+            .option("header", "true")
             .load(filePath1)
 
           // write again just to generate the lineage
           df.write
             .format("com.crealytics.spark.excel")
-            .option("useHeader", "true")
+            .option("header", "true")
             .mode("overwrite")
             .save(filePath2)
         }
