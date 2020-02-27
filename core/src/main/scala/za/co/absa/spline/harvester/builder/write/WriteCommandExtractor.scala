@@ -103,7 +103,7 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
 
   private def asExcelWriteCommand(cmd: SaveIntoDataSourceCommand) = {
     val path = pathQualifier.qualify(cmd.options("path"))
-    WriteCommand(cmd.nodeName, SourceIdentifier.forExcel(path), cmd.mode, cmd.query)
+    WriteCommand(cmd.nodeName, SourceIdentifier.forExcel(path), cmd.mode, cmd.query, cmd.options)
   }
 
   private def asDirWriteCommand(name: String, storage: CatalogStorageFormat, provider: String, overwrite: Boolean, query: LogicalPlan) = {

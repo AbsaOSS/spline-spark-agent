@@ -73,11 +73,12 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
           ))
 
         case `_: ExcelRelation`(exr) => {
-          val reader = exr.asInstanceOf[ExcelRelation].workbookReader
-          val inputStream = extractExcelInputStream(reader)
+          val excelRelation = exr.asInstanceOf[ExcelRelation]
+          val inputStream = extractExcelInputStream(excelRelation.workbookReader)
           val path = extractFieldValue[org.apache.hadoop.fs.Path](inputStream, "file")
           val qualifiedPath = pathQualifier.qualify(path.toString())
-          ReadCommand(SourceIdentifier.forExcel(qualifiedPath), operation)
+          ReadCommand(SourceIdentifier.forExcel(qualifiedPath), operation,
+            extractExcelParams(excelRelation) + ("header" -> excelRelation.header.toString))
         }
 
         case br: BaseRelation =>
@@ -111,7 +112,7 @@ object ReadCommandExtractor {
     finally kc.close()
   }
 
-  private def extractExcelInputStream(reader: WorkbookReader)  = {
+  private def extractExcelInputStream(reader: WorkbookReader) = {
 
     val streamFieldName_Scala_2_12 = "inputStreamProvider"
     val streamFieldName_Scala_2_11_default = "com$crealytics$spark$excel$DefaultWorkbookReader$$inputStreamProvider"
@@ -126,5 +127,18 @@ object ReadCommandExtractor {
 
     lazyStream.apply()
   }
+
+  private def extractExcelParams(excelRelation: ExcelRelation): Map[String, Any] = {
+    val locator = excelRelation.dataLocator
+
+    def extract(fieldName: String) = Try(extractFieldValue[Any](locator, fieldName))
+      .map(_.toString)
+      .getOrElse("")
+
+    val fieldNames = locator.getClass.getDeclaredFields.map(_.getName)
+
+    fieldNames.map(fn => fn -> extract(fn)).toMap
+  }
+
 }
 
