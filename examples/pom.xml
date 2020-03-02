@@ -44,6 +44,10 @@
             <artifactId>spark-xml_${scala.binary.version}</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.crealytics</groupId>
+            <artifactId>spark-excel_${scala.binary.version}</artifactId>
+        </dependency>
+        <dependency>
             <groupId>za.co.absa.spline.agent.spark</groupId>
             <artifactId>agent-core_${scala.binary.version}</artifactId>
             <version>${project.version}</version>

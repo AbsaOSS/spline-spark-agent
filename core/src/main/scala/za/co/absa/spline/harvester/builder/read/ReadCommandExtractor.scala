@@ -16,8 +16,10 @@
 
 package za.co.absa.spline.harvester.builder.read
 
+import java.io.InputStream
 import java.util.Properties
 
+import com.crealytics.spark.excel.{ExcelRelation, WorkbookReader}
 import com.databricks.spark.xml.XmlRelation
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.spark.sql.SparkSession
@@ -35,6 +37,7 @@ import za.co.absa.spline.harvester.qualifier.PathQualifier
 
 import scala.PartialFunction.condOpt
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 
 class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) {
@@ -69,6 +72,15 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
             "endingOffsets" -> extractFieldValue[AnyRef](kr, "endingOffsets")
           ))
 
+        case `_: ExcelRelation`(exr) => {
+          val excelRelation = exr.asInstanceOf[ExcelRelation]
+          val inputStream = extractExcelInputStream(excelRelation.workbookReader)
+          val path = extractFieldValue[org.apache.hadoop.fs.Path](inputStream, "file")
+          val qualifiedPath = pathQualifier.qualify(path.toString())
+          ReadCommand(SourceIdentifier.forExcel(qualifiedPath), operation,
+            extractExcelParams(excelRelation) + ("header" -> excelRelation.header.toString))
+        }
+
         case br: BaseRelation =>
           sys.error(s"Relation is not supported: $br")
       }
@@ -86,6 +98,8 @@ object ReadCommandExtractor {
 
   object `_: KafkaRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.kafka010.KafkaRelation")
 
+  object `_: ExcelRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.crealytics.spark.excel.ExcelRelation")
+
   object TableOrQueryFromJDBCOptionsExtractor extends AccessorMethodValueExtractor[String]("table", "tableOrQuery")
 
   private def kafkaTopics(bootstrapServers: String): Seq[String] = {
@@ -97,5 +111,34 @@ object ReadCommandExtractor {
     try kc.listTopics.keySet.asScala.toSeq
     finally kc.close()
   }
+
+  private def extractExcelInputStream(reader: WorkbookReader) = {
+
+    val streamFieldName_Scala_2_12 = "inputStreamProvider"
+    val streamFieldName_Scala_2_11_default = "com$crealytics$spark$excel$DefaultWorkbookReader$$inputStreamProvider"
+    val streamFieldName_Scala_2_11_streaming = "com$crealytics$spark$excel$StreamingWorkbookReader$$inputStreamProvider"
+
+    def extract(fieldName: String) = extractFieldValue[() => InputStream](reader, fieldName)
+
+    val lazyStream = Try(extract(streamFieldName_Scala_2_12))
+      .orElse(Try(extract(streamFieldName_Scala_2_11_default)))
+      .orElse(Try(extract(streamFieldName_Scala_2_11_streaming)))
+      .getOrElse(sys.error("Unable to extract Excel input stream"))
+
+    lazyStream.apply()
+  }
+
+  private def extractExcelParams(excelRelation: ExcelRelation): Map[String, Any] = {
+    val locator = excelRelation.dataLocator
+
+    def extract(fieldName: String) = Try(extractFieldValue[Any](locator, fieldName))
+      .map(_.toString)
+      .getOrElse("")
+
+    val fieldNames = locator.getClass.getDeclaredFields.map(_.getName)
+
+    fieldNames.map(fn => fn -> extract(fn)).toMap
+  }
+
 }
 

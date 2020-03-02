@@ -44,45 +44,52 @@
             <artifactId>mockito-core</artifactId>
         </dependency>
 
-        <!-- Runtime scope -->
+        <!-- Test scope -->
 
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-hive_${scala.binary.version}</artifactId>
-            <scope>runtime</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql-kafka-0-10_${scala.binary.version}</artifactId>
-            <scope>runtime</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
             <version>2.3.1</version>
-            <scope>runtime</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.zookeeper</groupId>
             <artifactId>zookeeper</artifactId>
             <version>3.5.6</version>
-            <scope>runtime</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
             <version>3.28.0</version>
-            <scope>runtime</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.delta</groupId>
             <artifactId>delta-core_${scala.binary.version}</artifactId>
-            <scope>runtime</scope>
+            <scope>test</scope>
             <version>0.3.0</version>
         </dependency>
-
-        <!-- Test scope -->
-
+        <dependency>
+            <groupId>com.databricks</groupId>
+            <artifactId>spark-xml_${scala.binary.version}</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.crealytics</groupId>
+            <artifactId>spark-excel_${scala.binary.version}</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>io.github.embeddedkafka</groupId>
             <artifactId>embedded-kafka_${scala.binary.version}</artifactId>

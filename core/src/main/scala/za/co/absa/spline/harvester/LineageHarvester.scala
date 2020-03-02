@@ -27,6 +27,8 @@ import org.apache.spark.sql.{SaveMode, SparkSession}
 import scalaz.Scalaz._
 import za.co.absa.commons.buildinfo.BuildInfo
 import za.co.absa.commons.lang.OptionImplicits._
+import za.co.absa.commons.reflect.ReflectionUtils
+import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.LineageHarvester._
 import za.co.absa.spline.harvester.ModelConstants.{AppMetaInfo, ExecutionEventExtra, ExecutionPlanExtra}
 import za.co.absa.spline.harvester.builder.read.{ReadCommandExtractor, ReadNodeBuilder}
@@ -122,7 +124,7 @@ class LineageHarvester(logicalPlan: LogicalPlan, executedPlanOpt: Option[SparkPl
 
           if (maybeExistingBuilder.isEmpty) {
 
-            val newNodesToProcess = curOpNode.children
+            val newNodesToProcess = extractChildren(curOpNode)
 
             traverseAndCollect(
               curBuilder +: accBuilders,
@@ -142,6 +144,15 @@ class LineageHarvester(logicalPlan: LogicalPlan, executedPlanOpt: Option[SparkPl
     readCommandExtractor.asReadCommand(op)
       .map(new ReadNodeBuilder(_))
       .getOrElse(new GenericNodeBuilder(op))
+
+  private def extractChildren(plan: LogicalPlan) = plan match {
+    case AnalysisBarrierExtractor(_) => {
+      // special handling - spark 2.3 sometimes includes AnalysisBarrier in the plan
+      val child = ReflectionUtils.extractFieldValue[LogicalPlan](plan, "child")
+      Seq(child)
+    }
+    case _ => plan.children
+  }
 }
 
 object LineageHarvester {
@@ -168,4 +179,8 @@ object LineageHarvester {
 
     (cumulatedReadMetrics, getNodeMetrics(executedPlan))
   }
+
+  object AnalysisBarrierExtractor extends SafeTypeMatchingExtractor[LogicalPlan](
+    "org.apache.spark.sql.catalyst.plans.logical.AnalysisBarrier")
+
 }
