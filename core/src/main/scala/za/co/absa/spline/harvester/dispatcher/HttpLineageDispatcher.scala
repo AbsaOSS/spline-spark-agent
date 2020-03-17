@@ -44,6 +44,8 @@ class HttpLineageDispatcher(splineServerRESTEndpointBaseURL: String, http: BaseH
 
   def this(configuration: Configuration) = this(configuration.getRequiredString(HttpLineageDispatcher.producerUrlProperty), Http)
 
+  log.info(s"spline.producer.url is set to:'${splineServerRESTEndpointBaseURL}'")
+
   val executionPlansUrl = s"$splineServerRESTEndpointBaseURL/${RESTResource.ExecutionPlans}"
   val executionEventsUrl = s"$splineServerRESTEndpointBaseURL/${RESTResource.ExecutionEvents}"
   val statusUrl = s"$splineServerRESTEndpointBaseURL/${RESTResource.Status}"
