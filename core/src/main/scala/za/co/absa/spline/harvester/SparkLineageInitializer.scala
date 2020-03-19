@@ -101,6 +101,7 @@ object SparkLineageInitializer extends Logging {
           try {
             val eventHandler = configurer.queryExecutionEventHandler
             log.info(s"Spline successfully initialized. Spark Lineage tracking is ENABLED.")
+            log.info(s"Spline is running in ${configurer.splineMode} mode.")
             Some(eventHandler)
           } catch {
             case NonFatal(e) if configurer.splineMode == BEST_EFFORT =>
