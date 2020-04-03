@@ -16,7 +16,7 @@
 
 package za.co.absa.spline
 
-import com.datastax.spark.connector._
+
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode}
 import org.scalatest.flatspec.AnyFlatSpec
@@ -25,7 +25,6 @@ import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import com.datastax.driver.core.Cluster
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper
-import org.junit.Ignore
 
 class CassandraSpec
   extends AnyFlatSpec
@@ -64,10 +63,10 @@ class CassandraSpec
 
         val (plan2, _) = lineageCaptor.lineageOf{
           val df =spark
-          .read
-          .format("org.apache.spark.sql.cassandra")
-          .options(Map( "table" -> table, "keyspace" -> keyspace))
-          .load()
+            .read
+            .format("org.apache.spark.sql.cassandra")
+            .options(Map( "table" -> table, "keyspace" -> keyspace))
+            .load()
 
           df.write
             .mode(SaveMode.Append)
