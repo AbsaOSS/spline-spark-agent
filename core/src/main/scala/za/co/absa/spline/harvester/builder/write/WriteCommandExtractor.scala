@@ -54,6 +54,8 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
           case Some(ExcelSourceExtractor(_)) => asExcelWriteCommand(cmd)
           case Some("com.crealytics.spark.excel") => asExcelWriteCommand(cmd)
 
+          case Some("org.apache.spark.sql.cassandra") => asCassandarWriteCommand(cmd) //for spark 2.2
+
           case _ =>
             val maybeFormat = maybeSourceType.map {
               case dsr: DataSourceRegister => dsr.shortName
