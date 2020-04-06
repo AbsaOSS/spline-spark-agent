@@ -48,8 +48,13 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
             val tableName = cmd.options("dbtable")
             WriteCommand(cmd.nodeName, SourceIdentifier.forJDBC(jdbcConnectionString, tableName), cmd.mode, cmd.query)
 
+          case Some(sourceType) if sourceType == "cassandra" || sourceType.isInstanceOf[org.apache.spark.sql.cassandra.DefaultSource] =>
+            asCassandarWriteCommand(cmd)
+
           case Some(ExcelSourceExtractor(_)) => asExcelWriteCommand(cmd)
           case Some("com.crealytics.spark.excel") => asExcelWriteCommand(cmd)
+
+          case Some("org.apache.spark.sql.cassandra") => asCassandarWriteCommand(cmd) //for spark 2.2
 
           case _ =>
             val maybeFormat = maybeSourceType.map {
@@ -106,6 +111,12 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
     WriteCommand(cmd.nodeName, SourceIdentifier.forExcel(path), cmd.mode, cmd.query, cmd.options)
   }
 
+  private def asCassandarWriteCommand(cmd: SaveIntoDataSourceCommand) = {
+    val keyspace = cmd.options("keyspace")
+    val table = cmd.options("table")
+    WriteCommand(cmd.nodeName, SourceIdentifier.forCassandra(keyspace, table), cmd.mode, cmd.query, cmd.options)
+  }
+
   private def asDirWriteCommand(name: String, storage: CatalogStorageFormat, provider: String, overwrite: Boolean, query: LogicalPlan) = {
     val uri = storage.locationUri.getOrElse(sys.error(s"Cannot determine the data source location: $storage"))
     val mode = if (overwrite) Overwrite else Append
@@ -146,6 +157,8 @@ object WriteCommandExtractor {
   private object `_: InsertIntoDataSourceDirCommand` extends SafeTypeMatchingExtractor[InsertIntoDataSourceDirCommand]("org.apache.spark.sql.execution.command.InsertIntoDataSourceDirCommand")
 
   private object ExcelSourceExtractor extends SafeTypeMatchingExtractor(classOf[DefaultSource])
+
+  private object CassandraSourceExtractor extends SafeTypeMatchingExtractor(classOf[DefaultSource])
 
   private object DataSourceTypeExtractor extends AccessorMethodValueExtractor[AnyRef]("provider", "dataSource")
 

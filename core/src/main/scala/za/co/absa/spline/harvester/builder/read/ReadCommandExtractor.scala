@@ -81,6 +81,12 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
             extractExcelParams(excelRelation) + ("header" -> excelRelation.header.toString))
         }
 
+        case `_: CassandraSourceRelation`(casr) =>
+          val tableRef = extractFieldValue[AnyRef](casr,"tableRef")
+          val table = extractFieldValue[AnyRef](tableRef, "table")
+          val keyspace = extractFieldValue[AnyRef](tableRef, "keyspace")
+          ReadCommand(SourceIdentifier.forCassandra(keyspace.asInstanceOf[String], table.asInstanceOf[String]), operation)
+
         case br: BaseRelation =>
           sys.error(s"Relation is not supported: $br")
       }
@@ -99,6 +105,8 @@ object ReadCommandExtractor {
   object `_: KafkaRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.kafka010.KafkaRelation")
 
   object `_: ExcelRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.crealytics.spark.excel.ExcelRelation")
+
+  object `_: CassandraSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.cassandra.CassandraSourceRelation")
 
   object TableOrQueryFromJDBCOptionsExtractor extends AccessorMethodValueExtractor[String]("table", "tableOrQuery")
 
@@ -139,6 +147,5 @@ object ReadCommandExtractor {
 
     fieldNames.map(fn => fn -> extract(fn)).toMap
   }
-
 }
 
