@@ -34,11 +34,12 @@ class HttpLineageDispatcherSpec extends AnyFlatSpec with MockitoSugar {
 
   when(httpMock.apply(s"$dummyUrl/status")) thenReturn httpRequestMock
   when(httpRequestMock.method("HEAD")) thenReturn httpRequestMock
-  when(httpRequestMock.asString) thenReturn httpResponseMock
 
   it should "not do anything when producer is ready" in {
 
-    when(httpResponseMock.isSuccess) thenReturn true
+    when(httpRequestMock.asString) thenReturn httpResponseMock
+    when(httpResponseMock.is2xx) thenReturn true
+    when(httpResponseMock.headers) thenReturn Map.empty[String, IndexedSeq[String]]
 
     val dispatcher = new HttpLineageDispatcher(dummyUrl, httpMock)
 
@@ -47,7 +48,9 @@ class HttpLineageDispatcherSpec extends AnyFlatSpec with MockitoSugar {
 
   it should "throw when producer is not ready" in {
 
-    when(httpResponseMock.isSuccess) thenReturn false
+    when(httpRequestMock.asString) thenReturn httpResponseMock
+    when(httpResponseMock.is2xx) thenReturn false
+    when(httpResponseMock.is5xx) thenReturn true
 
     val dispatcher = new HttpLineageDispatcher(dummyUrl, httpMock)
 
@@ -58,7 +61,7 @@ class HttpLineageDispatcherSpec extends AnyFlatSpec with MockitoSugar {
 
   it should "throw when connection to producer was not successful" in {
 
-    when(httpResponseMock.isSuccess) thenThrow new RuntimeException
+    when(httpRequestMock.asString) thenThrow new RuntimeException
 
     val dispatcher = new HttpLineageDispatcher(dummyUrl, httpMock)
 
