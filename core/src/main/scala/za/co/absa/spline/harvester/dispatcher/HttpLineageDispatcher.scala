@@ -161,6 +161,7 @@ class HttpLineageDispatcher(
         case response => throw new SplineNotInitializedException(s"$unableToConnectMsg. Http Status: ${response.code}")
       }
       .recover {
+        case e: SplineNotInitializedException => throw e
         case NonFatal(e) => throw new SplineNotInitializedException(unableToConnectMsg, e)
         case _ => throw new SplineNotInitializedException(unableToConnectMsg)
       }
