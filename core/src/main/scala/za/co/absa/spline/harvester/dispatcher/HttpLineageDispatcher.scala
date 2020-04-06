@@ -19,7 +19,10 @@ package za.co.absa.spline.harvester.dispatcher
 import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPOutputStream
 
+import javax.ws.rs.HttpMethod
+import javax.ws.rs.core.MediaType
 import org.apache.commons.configuration.Configuration
+import org.apache.http.HttpHeaders
 import org.apache.spark.internal.Logging
 import scalaj.http.{BaseHttp, Http}
 import za.co.absa.commons.config.ConfigurationImplicits._
@@ -29,6 +32,7 @@ import za.co.absa.spline.harvester.exception.SplineNotInitializedException
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
 import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
+import scala.concurrent.duration._
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
@@ -37,8 +41,8 @@ object HttpLineageDispatcher {
   val ConnectionTimeoutMsKey = "spline.timeout.connection"
   val ReadTimeoutMsKey = "spline.timeout.read"
 
-  val defaultConnectionTimeout = 1000
-  val defaultReadTimeout = 20000
+  val DefaultConnectionTimeout: Duration = 1.second
+  val DefaultReadTimeout: Duration = 20.second
 
   object RESTResource {
     val ExecutionPlans = "execution-plans"
@@ -46,44 +50,49 @@ object HttpLineageDispatcher {
     val Status = "status"
   }
 
-  object HttpHeaders {
-    val SupportsRequestDecompression = "supports-request-decompression"
+  object SplineHttpHeaders {
+    val AcceptRequestEncoding = "ABSA-Spline-Accept-Request-Encoding"
   }
+
+  object Encoding {
+    val GZIP = "gzip"
+  }
+
 }
 
 /**
  * HttpLineageDispatcher is responsible for sending the lineage data to spline gateway through producer API
  *
  * @param splineServerRESTEndpointBaseURL spline producer API url
- * @param baseHttp http client
- * @param connectionTimeoutMs timeout for establishing TCP connection
- * @param readTimeoutMs timeout for each individual TCP packet (in already established connection)
+ * @param baseHttp                        http client
+ * @param connectionTimeout               timeout for establishing TCP connection
+ * @param readTimeout                     timeout for each individual TCP packet (in already established connection)
  */
 class HttpLineageDispatcher(
   splineServerRESTEndpointBaseURL: String,
   baseHttp: BaseHttp,
-  connectionTimeoutMs: Int,
-  readTimeoutMs: Int)
+  connectionTimeout: Duration,
+  readTimeout: Duration)
   extends LineageDispatcher
-  with Logging {
+    with Logging {
 
   def this(splineServerRESTEndpointBaseURL: String, http: BaseHttp) = this(
     splineServerRESTEndpointBaseURL: String,
     http: BaseHttp,
-    defaultConnectionTimeout,
-    defaultReadTimeout
+    DefaultConnectionTimeout,
+    DefaultReadTimeout
   )
 
   def this(configuration: Configuration) = this(
     configuration.getRequiredString(ProducerUrlProperty),
     Http,
-    configuration.getInt(ConnectionTimeoutMsKey, defaultConnectionTimeout),
-    configuration.getInt(ReadTimeoutMsKey, defaultReadTimeout)
+    configuration.getLong(ConnectionTimeoutMsKey, DefaultConnectionTimeout.toMillis).millis,
+    configuration.getLong(ReadTimeoutMsKey, DefaultReadTimeout.toMillis).millis
   )
 
-  log.info(s"spline.producer.url is set to:'${splineServerRESTEndpointBaseURL}'")
-  log.info(s"spline.timeout.connection is set to:'${connectionTimeoutMs}' ms")
-  log.info(s"spline.timeout.read is set to:'${readTimeoutMs}' ms")
+  log.info(s"spline.producer.url is set to:'$splineServerRESTEndpointBaseURL'")
+  log.info(s"spline.timeout.connection is set to:'$connectionTimeout' ms")
+  log.info(s"spline.timeout.read is set to:'$readTimeout' ms")
 
   val executionPlansUrl = s"$splineServerRESTEndpointBaseURL/${RESTResource.ExecutionPlans}"
   val executionEventsUrl = s"$splineServerRESTEndpointBaseURL/${RESTResource.ExecutionEvents}"
@@ -107,19 +116,19 @@ class HttpLineageDispatcher(
         if (useRequestCompression) {
           baseHttp(url)
             .postData(compressData(json))
-            .header("content-encoding", "gzip")
+            .header(HttpHeaders.CONTENT_ENCODING, Encoding.GZIP)
         } else {
           baseHttp(url)
             .postData(json)
         }
 
       http
-      .compress(true) // response compression
-      .header("content-type", "application/json")
-      .timeout(connectionTimeoutMs, readTimeoutMs)
-      .asString
-      .throwError
-      .body
+        .compress(true) // response compression
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .timeout(connectionTimeout.toMillis.toInt, readTimeout.toMillis.toInt)
+        .asString
+        .throwError
+        .body
 
     } catch {
       case NonFatal(e) => throw new RuntimeException(s"Cannot send lineage data to $url", e)
@@ -136,7 +145,7 @@ class HttpLineageDispatcher(
 
   override def ensureProducerReady(): Unit = {
     val tryStatusResponse = Try(baseHttp(statusUrl)
-      .method("HEAD")
+      .method(HttpMethod.HEAD)
       .asString)
 
     val notAbleToConnectMsg = "Spark Agent was not able to establish connection to Spline Gateway."
@@ -154,8 +163,8 @@ class HttpLineageDispatcher(
 
   private def configureDispatcher(headers: Map[String, IndexedSeq[String]]): Unit = {
     useRequestCompression = headers
-      .get(HttpHeaders.SupportsRequestDecompression)
-      .map(_.head.toBoolean)
-      .getOrElse(false)
+      .get(SplineHttpHeaders.AcceptRequestEncoding)
+      .toSeq.flatten
+      .exists(_.toLowerCase == Encoding.GZIP)
   }
 }
