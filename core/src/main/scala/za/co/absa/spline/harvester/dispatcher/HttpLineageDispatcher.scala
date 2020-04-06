@@ -23,20 +23,19 @@ import org.apache.commons.configuration.Configuration
 import org.apache.spark.internal.Logging
 import scalaj.http.{BaseHttp, Http}
 import za.co.absa.commons.config.ConfigurationImplicits._
-import za.co.absa.spline.harvester.dispatcher.HttpLineageDispatcher.RESTResource
-import za.co.absa.spline.harvester.dispatcher.HttpLineageDispatcher._
+import za.co.absa.commons.lang.ARM.using
+import za.co.absa.spline.harvester.dispatcher.HttpLineageDispatcher.{RESTResource, _}
 import za.co.absa.spline.harvester.exception.SplineNotInitializedException
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
 import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
-import za.co.absa.commons.lang.ARM.{managed, using}
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 object HttpLineageDispatcher {
-  val producerUrlProperty = "spline.producer.url"
-  val connectionTimeoutMsKey = "spline.timeout.connection"
-  val readTimeoutMsKey = "spline.timeout.read"
+  val ProducerUrlProperty = "spline.producer.url"
+  val ConnectionTimeoutMsKey = "spline.timeout.connection"
+  val ReadTimeoutMsKey = "spline.timeout.read"
 
   val defaultConnectionTimeout = 1000
   val defaultReadTimeout = 20000
@@ -45,6 +44,10 @@ object HttpLineageDispatcher {
     val ExecutionPlans = "execution-plans"
     val ExecutionEvents = "execution-events"
     val Status = "status"
+  }
+
+  object HttpHeaders {
+    val SupportsRequestDecompression = "supports-request-decompression"
   }
 }
 
@@ -57,10 +60,10 @@ object HttpLineageDispatcher {
  * @param readTimeoutMs timeout for each individual TCP packet (in already established connection)
  */
 class HttpLineageDispatcher(
-     splineServerRESTEndpointBaseURL: String,
-     baseHttp: BaseHttp,
-     connectionTimeoutMs: Int,
-     readTimeoutMs: Int)
+  splineServerRESTEndpointBaseURL: String,
+  baseHttp: BaseHttp,
+  connectionTimeoutMs: Int,
+  readTimeoutMs: Int)
   extends LineageDispatcher
   with Logging {
 
@@ -72,10 +75,10 @@ class HttpLineageDispatcher(
   )
 
   def this(configuration: Configuration) = this(
-    configuration.getRequiredString(producerUrlProperty),
+    configuration.getRequiredString(ProducerUrlProperty),
     Http,
-    configuration.getInt(connectionTimeoutMsKey, defaultConnectionTimeout),
-    configuration.getInt(readTimeoutMsKey, defaultReadTimeout)
+    configuration.getInt(ConnectionTimeoutMsKey, defaultConnectionTimeout),
+    configuration.getInt(ReadTimeoutMsKey, defaultReadTimeout)
   )
 
   log.info(s"spline.producer.url is set to:'${splineServerRESTEndpointBaseURL}'")
@@ -86,7 +89,7 @@ class HttpLineageDispatcher(
   val executionEventsUrl = s"$splineServerRESTEndpointBaseURL/${RESTResource.ExecutionEvents}"
   val statusUrl = s"$splineServerRESTEndpointBaseURL/${RESTResource.Status}"
 
-  private lazy val useRequestCompression = isServerCompressionReady()
+  private var useRequestCompression = false
 
   override def send(executionPlan: ExecutionPlan): String = {
     sendJson(executionPlan.toJson, executionPlansUrl)
@@ -100,14 +103,15 @@ class HttpLineageDispatcher(
     log.debug(s"sendJson $url : $json")
 
     try {
-      val http = if (useRequestCompression) {
-        baseHttp(url)
-          .postData(compressData(json))
-          .header("content-encoding", "gzip")
-      } else {
-        baseHttp(url)
-          .postData(json)
-      }
+      val http =
+        if (useRequestCompression) {
+          baseHttp(url)
+            .postData(compressData(json))
+            .header("content-encoding", "gzip")
+        } else {
+          baseHttp(url)
+            .postData(json)
+        }
 
       http
       .compress(true) // response compression
@@ -123,7 +127,6 @@ class HttpLineageDispatcher(
   }
 
   private def compressData(json: String): Array[Byte] = {
-
     val bytes = json.getBytes("UTF-8")
 
     val byteStream = new ByteArrayOutputStream(bytes.length)
@@ -132,46 +135,27 @@ class HttpLineageDispatcher(
   }
 
   override def ensureProducerReady(): Unit = {
-    val tryStatusOk = Try(baseHttp(statusUrl)
+    val tryStatusResponse = Try(baseHttp(statusUrl)
       .method("HEAD")
-      .asString
-      .isSuccess)
+      .asString)
 
-    tryStatusOk match {
-      case Success(false) => throw new SplineNotInitializedException(
+    val notAbleToConnectMsg = "Spark Agent was not able to establish connection to Spline Gateway."
+
+    tryStatusResponse match {
+      case Success(response) if response.is2xx => configureDispatcher(response.headers)
+      case Success(response) if response.is5xx => throw new SplineNotInitializedException(
         "Connection to Spline Gateway: OK, but the Gateway is not initialized properly! Check Gateway's logs.")
-      case Failure(e) if NonFatal(e) => throw new SplineNotInitializedException(
-        "Spark Agent was not able to establish connection to Spline Gateway.", e)
-      case _ => Unit
+      case Success(response) => throw new SplineNotInitializedException(
+        s"$notAbleToConnectMsg Http Status: ${response.code}")
+      case Failure(e) if NonFatal(e) => throw new SplineNotInitializedException(notAbleToConnectMsg, e)
+      case _ => throw new SplineNotInitializedException(notAbleToConnectMsg)
     }
   }
 
-  private def isServerCompressionReady(): Boolean = {
-    val tryStatus = Try(baseHttp(statusUrl)
-      .method("GET")
-      .asString
-      .throwError
-      .body)
-
-    tryStatus
-      .toOption
-      .map(extractCompressionFlag(_))
+  private def configureDispatcher(headers: Map[String, IndexedSeq[String]]): Unit = {
+    useRequestCompression = headers
+      .get(HttpHeaders.SupportsRequestDecompression)
+      .map(_.head.toBoolean)
       .getOrElse(false)
   }
-
-  private def extractCompressionFlag(json: String): Boolean = {
-
-    import org.json4s._
-    import org.json4s.jackson.JsonMethods._
-
-    val jsonAST = parse(json)
-
-    val compressList = for {
-      JObject(child) <- jsonAST
-      JField("requestDecompression", JBool(compress))  <- child
-    } yield compress
-
-    compressList.head
-  }
-
 }

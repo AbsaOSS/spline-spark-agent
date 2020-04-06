@@ -25,6 +25,7 @@ import za.co.absa.spline.harvester.conf.{DefaultSplineConfigurer, SplineConfigur
 import za.co.absa.spline.harvester.listener.SplineQueryExecutionListener
 
 import scala.concurrent.ExecutionContext
+import scala.util.{Failure, Try}
 import scala.util.control.NonFatal
 
 /**
@@ -68,8 +69,11 @@ object SparkLineageInitializer extends Logging {
               .stripMargin.replaceAll("\n", " "))
         }
 
-        if (configurer.splineMode == REQUIRED) {
-          configurer.lineageDispatcher.ensureProducerReady()
+
+        Try(configurer.lineageDispatcher.ensureProducerReady()) match {
+          case Failure(e) if configurer.splineMode == REQUIRED => throw e;
+          case Failure(e) => log.warn("Problem during spline init", e)
+          case _ => Unit
         }
 
         createEventHandler(configurer).foreach(eventHandler =>
