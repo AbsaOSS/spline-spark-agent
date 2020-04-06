@@ -41,7 +41,7 @@ object SourceIdentifier {
     SourceIdentifier(Some("excel"), filePath)
 
   def forCassandra(keyspace: String, table: String): SourceIdentifier =
-    SourceIdentifier(Some("cassandra"),SourceUri.forCassandra(keyspace, table))
+    SourceIdentifier(Some("cassandra"), SourceUri.forCassandra(keyspace, table))
 
 
 }

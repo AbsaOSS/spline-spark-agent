@@ -106,7 +106,7 @@ object ReadCommandExtractor {
 
   object `_: ExcelRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.crealytics.spark.excel.ExcelRelation")
 
-  object `_: CassandraSourceRelation` extends SafeTypeMatchingExtractor[AnyRef] ("org.apache.spark.sql.cassandra.CassandraSourceRelation")
+  object `_: CassandraSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.cassandra.CassandraSourceRelation")
 
   object TableOrQueryFromJDBCOptionsExtractor extends AccessorMethodValueExtractor[String]("table", "tableOrQuery")
 

@@ -48,7 +48,7 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
             val tableName = cmd.options("dbtable")
             WriteCommand(cmd.nodeName, SourceIdentifier.forJDBC(jdbcConnectionString, tableName), cmd.mode, cmd.query)
 
-          case Some(sourceType) if sourceType == "cassandra" || sourceType.isInstanceOf[org.apache.spark.sql.cassandra.DefaultSource]=>
+          case Some(sourceType) if sourceType == "cassandra" || sourceType.isInstanceOf[org.apache.spark.sql.cassandra.DefaultSource] =>
             asCassandarWriteCommand(cmd)
 
           case Some(ExcelSourceExtractor(_)) => asExcelWriteCommand(cmd)

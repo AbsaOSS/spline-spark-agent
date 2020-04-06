@@ -30,7 +30,7 @@ class CassandraSpec
   extends AnyFlatSpec
     with Matchers
     with SparkFixture
-    with SplineFixture{
+    with SplineFixture {
 
   it should "support Cassandra as a write source" in {
     withNewSparkSession(spark => {
@@ -58,26 +58,26 @@ class CassandraSpec
           .write
           .mode(SaveMode.Overwrite)
           .format("org.apache.spark.sql.cassandra")
-          .options(Map( "table" -> table, "keyspace" -> keyspace, "confirm.truncate" -> "true"))
+          .options(Map("table" -> table, "keyspace" -> keyspace, "confirm.truncate" -> "true"))
           .save())
 
-        val (plan2, _) = lineageCaptor.lineageOf{
-          val df =spark
+        val (plan2, _) = lineageCaptor.lineageOf {
+          val df = spark
             .read
             .format("org.apache.spark.sql.cassandra")
-            .options(Map( "table" -> table, "keyspace" -> keyspace))
+            .options(Map("table" -> table, "keyspace" -> keyspace))
             .load()
 
           df.write
             .mode(SaveMode.Append)
             .format("org.apache.spark.sql.cassandra")
-            .options(Map( "table" -> table, "keyspace" -> keyspace))
+            .options(Map("table" -> table, "keyspace" -> keyspace))
             .save()
         }
 
         plan1.operations.write.append shouldBe false
         plan1.operations.write.extra.get("destinationType") shouldBe Some("cassandra")
-        plan1.operations.write.outputSource shouldBe s"$keyspace:$table"
+        plan1.operations.write.outputSource shouldBe s"cassandra:$keyspace:$table"
 
         plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
         plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("cassandra")
