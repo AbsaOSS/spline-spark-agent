@@ -24,7 +24,7 @@ import javax.ws.rs.core.MediaType
 import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpHeaders
 import org.apache.spark.internal.Logging
-import scalaj.http.{BaseHttp, Http}
+import scalaj.http.{BaseHttp, Http, HttpResponse}
 import za.co.absa.commons.config.ConfigurationImplicits._
 import za.co.absa.commons.lang.ARM.using
 import za.co.absa.spline.harvester.dispatcher.HttpLineageDispatcher.{RESTResource, _}
@@ -33,8 +33,8 @@ import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
 import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
 import scala.concurrent.duration._
+import scala.util.Try
 import scala.util.control.NonFatal
-import scala.util.{Failure, Success, Try}
 
 object HttpLineageDispatcher {
   val ProducerUrlProperty = "spline.producer.url"
@@ -94,11 +94,53 @@ class HttpLineageDispatcher(
   log.info(s"spline.timeout.connection is set to:'$connectionTimeout' ms")
   log.info(s"spline.timeout.read is set to:'$readTimeout' ms")
 
-  val executionPlansUrl = s"$splineServerRESTEndpointBaseURL/${RESTResource.ExecutionPlans}"
-  val executionEventsUrl = s"$splineServerRESTEndpointBaseURL/${RESTResource.ExecutionEvents}"
-  val statusUrl = s"$splineServerRESTEndpointBaseURL/${RESTResource.Status}"
+  private val executionPlansUrl = s"$splineServerRESTEndpointBaseURL/${RESTResource.ExecutionPlans}"
+  private val executionEventsUrl = s"$splineServerRESTEndpointBaseURL/${RESTResource.ExecutionEvents}"
+  private val statusUrl = s"$splineServerRESTEndpointBaseURL/${RESTResource.Status}"
 
-  private var useRequestCompression = false
+  private lazy val serverStatusResponse: Try[HttpResponse[String]] =
+    Try(baseHttp(statusUrl)
+      .method(HttpMethod.HEAD)
+      .asString)
+
+  private lazy val requestCompressionSupported: Boolean =
+    serverStatusResponse.get.headers
+      .get(SplineHttpHeaders.AcceptRequestEncoding)
+      .toSeq.flatten
+      .exists(_.toLowerCase == Encoding.GZIP)
+
+  private def compressData(json: String): Array[Byte] = {
+    val bytes = json.getBytes("UTF-8")
+    val byteStream = new ByteArrayOutputStream(bytes.length)
+    using(new GZIPOutputStream(byteStream))(_.write(bytes))
+    byteStream.toByteArray // byteStream doesn't need to be closed
+  }
+
+  private def sendJson(json: String, url: String) = {
+    log.trace(s"sendJson $url : $json")
+
+    val http =
+      if (requestCompressionSupported) {
+        baseHttp(url)
+          .postData(compressData(json))
+          .header(HttpHeaders.CONTENT_ENCODING, Encoding.GZIP)
+      } else {
+        baseHttp(url)
+          .postData(json)
+      }
+
+    try {
+      http
+        .compress(true) // response compression
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .timeout(connectionTimeout.toMillis.toInt, readTimeout.toMillis.toInt)
+        .asString
+        .throwError
+        .body
+    } catch {
+      case NonFatal(e) => throw new RuntimeException(s"Cannot send lineage data to $url", e)
+    }
+  }
 
   override def send(executionPlan: ExecutionPlan): String = {
     sendJson(executionPlan.toJson, executionPlansUrl)
@@ -108,63 +150,21 @@ class HttpLineageDispatcher(
     sendJson(Seq(event).toJson, executionEventsUrl)
   }
 
-  private def sendJson(json: String, url: String) = {
-    log.debug(s"sendJson $url : $json")
-
-    try {
-      val http =
-        if (useRequestCompression) {
-          baseHttp(url)
-            .postData(compressData(json))
-            .header(HttpHeaders.CONTENT_ENCODING, Encoding.GZIP)
-        } else {
-          baseHttp(url)
-            .postData(json)
-        }
-
-      http
-        .compress(true) // response compression
-        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-        .timeout(connectionTimeout.toMillis.toInt, readTimeout.toMillis.toInt)
-        .asString
-        .throwError
-        .body
-
-    } catch {
-      case NonFatal(e) => throw new RuntimeException(s"Cannot send lineage data to $url", e)
-    }
-  }
-
-  private def compressData(json: String): Array[Byte] = {
-    val bytes = json.getBytes("UTF-8")
-
-    val byteStream = new ByteArrayOutputStream(bytes.length)
-    using(new GZIPOutputStream(byteStream))(_.write(bytes))
-    byteStream.toByteArray // byteStream doesn't need to be closed
-  }
-
   override def ensureProducerReady(): Unit = {
-    val tryStatusResponse = Try(baseHttp(statusUrl)
-      .method(HttpMethod.HEAD)
-      .asString)
+    val unableToConnectMsg = "Spark Agent was not able to establish connection to Spline Gateway"
+    val serverHasIssuesMsg = "Connection to Spline Gateway: OK, but the Gateway is not initialized properly! Check Gateway's logs."
 
-    val notAbleToConnectMsg = "Spark Agent was not able to establish connection to Spline Gateway."
-
-    tryStatusResponse match {
-      case Success(response) if response.is2xx => configureDispatcher(response.headers)
-      case Success(response) if response.is5xx => throw new SplineNotInitializedException(
-        "Connection to Spline Gateway: OK, but the Gateway is not initialized properly! Check Gateway's logs.")
-      case Success(response) => throw new SplineNotInitializedException(
-        s"$notAbleToConnectMsg Http Status: ${response.code}")
-      case Failure(e) if NonFatal(e) => throw new SplineNotInitializedException(notAbleToConnectMsg, e)
-      case _ => throw new SplineNotInitializedException(notAbleToConnectMsg)
-    }
+    serverStatusResponse
+      .map {
+        case response if response.is2xx => response.headers
+        case response if response.is5xx => throw new SplineNotInitializedException(serverHasIssuesMsg)
+        case response => throw new SplineNotInitializedException(s"$unableToConnectMsg. Http Status: ${response.code}")
+      }
+      .recover {
+        case NonFatal(e) => throw new SplineNotInitializedException(unableToConnectMsg, e)
+        case _ => throw new SplineNotInitializedException(unableToConnectMsg)
+      }
+      .get
   }
 
-  private def configureDispatcher(headers: Map[String, IndexedSeq[String]]): Unit = {
-    useRequestCompression = headers
-      .get(SplineHttpHeaders.AcceptRequestEncoding)
-      .toSeq.flatten
-      .exists(_.toLowerCase == Encoding.GZIP)
-  }
 }
