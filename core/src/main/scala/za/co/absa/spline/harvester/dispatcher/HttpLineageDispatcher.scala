@@ -24,11 +24,11 @@ import javax.ws.rs.core.MediaType
 import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpHeaders
 import org.apache.spark.internal.Logging
-import scalaj.http.{BaseHttp, Http, HttpResponse}
+import scalaj.http.{BaseHttp, Http}
 import za.co.absa.commons.config.ConfigurationImplicits._
 import za.co.absa.commons.lang.ARM.using
 import za.co.absa.spline.harvester.dispatcher.HttpLineageDispatcher.{RESTResource, _}
-import za.co.absa.spline.harvester.exception.SplineNotInitializedException
+import za.co.absa.spline.harvester.exception.SplineInitializationException
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
 import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
@@ -98,13 +98,28 @@ class HttpLineageDispatcher(
   private val executionEventsUrl = s"$splineServerRESTEndpointBaseURL/${RESTResource.ExecutionEvents}"
   private val statusUrl = s"$splineServerRESTEndpointBaseURL/${RESTResource.Status}"
 
-  private lazy val serverStatusResponse: Try[HttpResponse[String]] =
+  private val serverHeaders: Map[String, IndexedSeq[String]] = {
+    val unableToConnectMsg = "Spark Agent was not able to establish connection to Spline Gateway"
+    val serverHasIssuesMsg = "Connection to Spline Gateway: OK, but the Gateway is not initialized properly! Check Gateway's logs."
+
     Try(baseHttp(statusUrl)
       .method(HttpMethod.HEAD)
       .asString)
+      .map {
+        case response if response.is2xx => response.headers
+        case response if response.is5xx => throw new SplineInitializationException(serverHasIssuesMsg)
+        case response => throw new SplineInitializationException(s"$unableToConnectMsg. Http Status: ${response.code}")
+      }
+      .recover {
+        case e: SplineInitializationException => throw e
+        case NonFatal(e) => throw new SplineInitializationException(unableToConnectMsg, e)
+        case _ => throw new SplineInitializationException(unableToConnectMsg)
+      }
+      .get
+  }
 
   private lazy val requestCompressionSupported: Boolean =
-    serverStatusResponse.get.headers
+    serverHeaders
       .get(SplineHttpHeaders.AcceptRequestEncoding)
       .toSeq.flatten
       .exists(_.toLowerCase == Encoding.GZIP)
@@ -149,23 +164,4 @@ class HttpLineageDispatcher(
   override def send(event: ExecutionEvent): Unit = {
     sendJson(Seq(event).toJson, executionEventsUrl)
   }
-
-  override def ensureProducerReady(): Unit = {
-    val unableToConnectMsg = "Spark Agent was not able to establish connection to Spline Gateway"
-    val serverHasIssuesMsg = "Connection to Spline Gateway: OK, but the Gateway is not initialized properly! Check Gateway's logs."
-
-    serverStatusResponse
-      .map {
-        case response if response.is2xx => response.headers
-        case response if response.is5xx => throw new SplineNotInitializedException(serverHasIssuesMsg)
-        case response => throw new SplineNotInitializedException(s"$unableToConnectMsg. Http Status: ${response.code}")
-      }
-      .recover {
-        case e: SplineNotInitializedException => throw e
-        case NonFatal(e) => throw new SplineNotInitializedException(unableToConnectMsg, e)
-        case _ => throw new SplineNotInitializedException(unableToConnectMsg)
-      }
-      .get
-  }
-
 }

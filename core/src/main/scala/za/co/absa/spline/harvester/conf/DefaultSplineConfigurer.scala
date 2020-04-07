@@ -16,6 +16,8 @@
 
 package za.co.absa.spline.harvester.conf
 
+import java.lang.reflect.InvocationTargetException
+
 import org.apache.commons.configuration.{CompositeConfiguration, Configuration, PropertiesConfiguration}
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
@@ -42,9 +44,12 @@ object DefaultSplineConfigurer {
     val LINEAGE_DISPATCHER_CLASS = "spline.lineage_dispatcher.className"
   }
 
+  def apply(sparkSession: SparkSession): DefaultSplineConfigurer = {
+    new DefaultSplineConfigurer(StandardSplineConfigurationStack(sparkSession))
+  }
 }
 
-class DefaultSplineConfigurer(userConfiguration: Configuration, sparkSession: SparkSession)
+class DefaultSplineConfigurer(userConfiguration: Configuration)
   extends SplineConfigurer
     with Logging {
 
@@ -72,16 +77,19 @@ class DefaultSplineConfigurer(userConfiguration: Configuration, sparkSession: Sp
   override lazy val lineageDispatcher: LineageDispatcher = {
     val className = configuration.getRequiredString(LINEAGE_DISPATCHER_CLASS)
     log debug s"Instantiating a lineage dispatcher for class name: $className"
-    Class.forName(className.trim)
-      .getConstructor(classOf[Configuration])
-      .newInstance(configuration)
-      .asInstanceOf[LineageDispatcher]
+    try {
+      Class.forName(className.trim)
+        .getConstructor(classOf[Configuration])
+        .newInstance(configuration)
+        .asInstanceOf[LineageDispatcher]
+    }
+    catch {
+      case e: InvocationTargetException => throw e.getTargetException
+    }
   }
 
-  private lazy val harvesterFactory = new LineageHarvesterFactory(
-    sparkSession.sparkContext.hadoopConfiguration,
-    splineMode)
+  private lazy val harvesterFactory = new LineageHarvesterFactory(splineMode)
 
   def queryExecutionEventHandler: QueryExecutionEventHandler =
-    new QueryExecutionEventHandler(harvesterFactory, lineageDispatcher, sparkSession)
+    new QueryExecutionEventHandler(harvesterFactory, lineageDispatcher)
 }

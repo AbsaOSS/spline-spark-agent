@@ -16,4 +16,4 @@
 
 package za.co.absa.spline.harvester.exception
 
-class SplineNotInitializedException(msg: String, throwable: Throwable = null) extends HarvesterException(msg, throwable)
+class SplineInitializationException(msg: String, throwable: Throwable = null) extends HarvesterException(msg, throwable)

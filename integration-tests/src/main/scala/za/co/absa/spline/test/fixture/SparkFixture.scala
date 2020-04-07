@@ -21,6 +21,7 @@ import java.sql.DriverManager
 
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.SparkSession
+import org.scalatest.{BeforeAndAfterEach, Suite}
 import za.co.absa.commons.io.TempDirectory
 
 import scala.util.Try
@@ -49,11 +50,29 @@ trait SparkFixture {
     finally haltSparkAndCleanup()
   }
 
-  private def haltSparkAndCleanup(): Unit = {
+  private[SparkFixture] def haltSparkAndCleanup(): Unit = {
     SparkSession.getDefaultSession.foreach(_.close())
     // clean up Derby resources to allow for re-creation of a Hive context later in the same JVM instance
     Try(DriverManager.getConnection("jdbc:derby:;shutdown=true"))
     FileUtils.deleteQuietly(new File("metastore_db"))
     FileUtils.deleteQuietly(new File(warehouseDir))
   }
+}
+
+object SparkFixture {
+
+  trait NewPerTest extends SparkFixture with BeforeAndAfterEach {
+    this: Suite =>
+
+    override protected def beforeEach() {
+      haltSparkAndCleanup()
+      super.beforeEach()
+    }
+
+    override protected def afterEach() {
+      try super.afterEach()
+      finally haltSparkAndCleanup()
+    }
+  }
+
 }
