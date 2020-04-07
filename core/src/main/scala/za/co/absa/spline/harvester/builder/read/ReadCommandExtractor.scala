@@ -21,8 +21,11 @@ import java.util.Properties
 
 import com.crealytics.spark.excel.{ExcelRelation, WorkbookReader}
 import com.databricks.spark.xml.XmlRelation
+import com.mongodb.spark.config.ReadConfig
+import com.mongodb.spark.rdd.MongoRDD
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.cassandra.TableRef
 import org.apache.spark.sql.catalyst.catalog.HiveTableRelation
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
@@ -72,20 +75,28 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
             "endingOffsets" -> extractFieldValue[AnyRef](kr, "endingOffsets")
           ))
 
-        case `_: ExcelRelation`(exr) => {
+        case `_: ExcelRelation`(exr) =>
           val excelRelation = exr.asInstanceOf[ExcelRelation]
           val inputStream = extractExcelInputStream(excelRelation.workbookReader)
           val path = extractFieldValue[org.apache.hadoop.fs.Path](inputStream, "file")
-          val qualifiedPath = pathQualifier.qualify(path.toString())
+          val qualifiedPath = pathQualifier.qualify(path.toString)
           ReadCommand(SourceIdentifier.forExcel(qualifiedPath), operation,
             extractExcelParams(excelRelation) + ("header" -> excelRelation.header.toString))
-        }
 
         case `_: CassandraSourceRelation`(casr) =>
-          val tableRef = extractFieldValue[AnyRef](casr,"tableRef")
-          val table = extractFieldValue[AnyRef](tableRef, "table")
-          val keyspace = extractFieldValue[AnyRef](tableRef, "keyspace")
-          ReadCommand(SourceIdentifier.forCassandra(keyspace.asInstanceOf[String], table.asInstanceOf[String]), operation)
+          val tableRef = extractFieldValue[TableRef](casr, "tableRef")
+          val table = tableRef.table
+          val keyspace = tableRef.keyspace
+          ReadCommand(SourceIdentifier.forCassandra(keyspace, table), operation)
+
+        case `_: MongoDBSourceRelation`(mongr) =>
+          val mongoRDD = extractFieldValue[MongoRDD[_]](mongr, "mongoRDD")
+          val readConfig = extractFieldValue[ReadConfig](mongoRDD, "readConfig")
+          val database = readConfig.databaseName
+          val collection = readConfig.collectionName
+          val connectionUrl = readConfig.connectionString.getOrElse(sys.error("Unable to extract MongoDB connection URL"))
+
+          ReadCommand(SourceIdentifier.forMongoDB(connectionUrl, database, collection), operation)
 
         case br: BaseRelation =>
           sys.error(s"Relation is not supported: $br")
@@ -107,6 +118,8 @@ object ReadCommandExtractor {
   object `_: ExcelRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.crealytics.spark.excel.ExcelRelation")
 
   object `_: CassandraSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.cassandra.CassandraSourceRelation")
+
+  object `_: MongoDBSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.mongodb.spark.sql.MongoRelation")
 
   object TableOrQueryFromJDBCOptionsExtractor extends AccessorMethodValueExtractor[String]("table", "tableOrQuery")
 

@@ -43,5 +43,8 @@ object SourceIdentifier {
   def forCassandra(keyspace: String, table: String): SourceIdentifier =
     SourceIdentifier(Some("cassandra"), SourceUri.forCassandra(keyspace, table))
 
+  def forMongoDB(connectionUrl: String, database: String, collection: String): SourceIdentifier =
+    SourceIdentifier(Some("mongodb"), SourceUri.forMongoDB(connectionUrl, database, collection))
+
 
 }

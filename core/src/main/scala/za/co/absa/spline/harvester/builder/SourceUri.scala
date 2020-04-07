@@ -26,6 +26,8 @@ object SourceUri {
 
   def forCassandra(keyspace: String, table: String): String = s"cassandra:$keyspace:$table"
 
+  def forMongoDB(connectionUrl: String, database: String, collection: String): String = s"$connectionUrl/$database.$collection"
+
   def forTable(tableIdentifier: TableIdentifier)
     (session: SparkSession): String = {
     val catalog = session.catalog
