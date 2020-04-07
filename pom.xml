@@ -356,6 +356,11 @@
                 <artifactId>spark-cassandra-connector_${scala.binary.version}</artifactId>
                 <version>2.4.2</version>
             </dependency>
+            <dependency>
+                <groupId>org.mongodb.spark</groupId>
+                <artifactId>mongo-spark-connector_${scala.binary.version}</artifactId>
+                <version>2.4.1</version>
+            </dependency>
 
             <!-- Json4s -->
 
