@@ -34,6 +34,7 @@ import za.co.absa.commons.reflect.extractors.{AccessorMethodValueExtractor, Safe
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.builder.read.ReadCommandExtractor._
 import za.co.absa.spline.harvester.qualifier.PathQualifier
+
 import scala.PartialFunction.condOpt
 import scala.collection.JavaConverters._
 import scala.util.Try
