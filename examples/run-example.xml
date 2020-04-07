@@ -25,6 +25,12 @@
             <isset property="spline.producer.url"/>
         </condition>
 
+        <condition property="spline.mode"
+                   value="${spline.mode}"
+                   else="BEST_EFFORT">
+            <isset property="spline.mode"/>
+        </condition>
+
         <if>
             <isset property="exampleClass"/>
             <then>
@@ -42,6 +48,7 @@
         <foreach target="runFile" param="classFile">
             <param name="compile_classpath" value="${compile_classpath}"/>
             <param name="spline.producer.url" value="${spline.producer.url}"/>
+            <param name="spline.mode" value="${spline.mode}"/>
 
             <fileset dir="${basedir}" casesensitive="yes">
                 <include name="**/*Job.class"/>
@@ -61,13 +68,15 @@
 
     <target name="runClass">
         <echo message="Running ${className}"/>
-        <echo message="Using Spline Producer URL: ${spline.producer.url}"/>
+        <echo message="Setting Spline Producer URL: ${spline.producer.url}"/>
+        <echo message="Setting Spline Mode: ${spline.mode}"/>
 
         <java fork="true"
               failonerror="true"
               classname="${className}"
               classpath="${compile_classpath}">
-            <jvmarg value="-Dspline.producer.url=${spline.producer.url}"/>
+            <sysproperty key="spline.producer.url" value="${spline.producer.url}"/>
+            <sysproperty key="spline.mode" value="${spline.mode}"/>
         </java>
     </target>
 </project>

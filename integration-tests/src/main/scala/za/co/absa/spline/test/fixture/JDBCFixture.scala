@@ -17,10 +17,10 @@
 
 package za.co.absa.spline.test.fixture
 
-import org.scalatest.{BeforeAndAfterEach, Suite}
+import org.scalatest.Suite
 import za.co.absa.commons.io.TempFile
 
-trait JDBCFixture extends BeforeAndAfterEach {
+trait JDBCFixture {
   this: Suite =>
 
   protected val jdbcConnectionString = s"jdbc:sqlite:${TempFile().deleteOnExit().path}"

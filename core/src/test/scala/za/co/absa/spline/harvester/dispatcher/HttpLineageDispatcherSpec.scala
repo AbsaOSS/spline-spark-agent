@@ -20,7 +20,7 @@ import org.mockito.Mockito._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.mockito.MockitoSugar
 import scalaj.http._
-import za.co.absa.spline.harvester.exception.SplineNotInitializedException
+import za.co.absa.spline.harvester.exception.SplineInitializationException
 
 class HttpLineageDispatcherSpec extends AnyFlatSpec with MockitoSugar {
 
@@ -36,37 +36,27 @@ class HttpLineageDispatcherSpec extends AnyFlatSpec with MockitoSugar {
   when(httpRequestMock.method("HEAD")) thenReturn httpRequestMock
 
   it should "not do anything when producer is ready" in {
-
     when(httpRequestMock.asString) thenReturn httpResponseMock
     when(httpResponseMock.is2xx) thenReturn true
     when(httpResponseMock.headers) thenReturn Map.empty[String, IndexedSeq[String]]
 
-    val dispatcher = new HttpLineageDispatcher(dummyUrl, httpMock)
-
-    dispatcher.ensureProducerReady()
+    new HttpLineageDispatcher(dummyUrl, httpMock)
   }
 
   it should "throw when producer is not ready" in {
-
     when(httpRequestMock.asString) thenReturn httpResponseMock
     when(httpResponseMock.is2xx) thenReturn false
     when(httpResponseMock.is5xx) thenReturn true
 
-    val dispatcher = new HttpLineageDispatcher(dummyUrl, httpMock)
-
-    assertThrows[SplineNotInitializedException] {
-      dispatcher.ensureProducerReady()
+    assertThrows[SplineInitializationException] {
+      new HttpLineageDispatcher(dummyUrl, httpMock)
     }
   }
 
   it should "throw when connection to producer was not successful" in {
-
     when(httpRequestMock.asString) thenThrow new RuntimeException
-
-    val dispatcher = new HttpLineageDispatcher(dummyUrl, httpMock)
-
-    assertThrows[SplineNotInitializedException] {
-      dispatcher.ensureProducerReady()
+    assertThrows[SplineInitializationException] {
+      new HttpLineageDispatcher(dummyUrl, httpMock)
     }
   }
 }

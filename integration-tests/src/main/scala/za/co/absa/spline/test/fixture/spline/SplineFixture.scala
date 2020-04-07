@@ -31,7 +31,7 @@ trait SplineFixture {
   def withLineageTracking[T](session: SparkSession)(testBody: LineageCaptor.Getter => T): T = {
     val lineageCaptor = new LineageCaptor
 
-    val testSplineConfigurer = new DefaultSplineConfigurer(EMPTY_CONF, session) {
+    val testSplineConfigurer = new DefaultSplineConfigurer(EMPTY_CONF) {
       override lazy val lineageDispatcher: LineageDispatcher =
         new LineageCapturingDispatcher(lineageCaptor.setter)
     }

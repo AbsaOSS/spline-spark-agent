@@ -146,11 +146,11 @@ class LineageHarvester(logicalPlan: LogicalPlan, executedPlanOpt: Option[SparkPl
       .getOrElse(new GenericNodeBuilder(op))
 
   private def extractChildren(plan: LogicalPlan) = plan match {
-    case AnalysisBarrierExtractor(_) => {
+    case AnalysisBarrierExtractor(_) =>
       // special handling - spark 2.3 sometimes includes AnalysisBarrier in the plan
       val child = ReflectionUtils.extractFieldValue[LogicalPlan](plan, "child")
       Seq(child)
-    }
+
     case _ => plan.children
   }
 }

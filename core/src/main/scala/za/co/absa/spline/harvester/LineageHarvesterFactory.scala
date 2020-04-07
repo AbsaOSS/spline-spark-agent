@@ -16,7 +16,6 @@
 
 package za.co.absa.spline.harvester
 
-import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.SparkPlan
@@ -24,16 +23,8 @@ import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
 
 import scala.language.postfixOps
 
-/** The class is responsible for gathering lineage information from Spark logical plan
- *
- * @param hadoopConfiguration A hadoop configuration
- */
-class LineageHarvesterFactory(hadoopConfiguration: Configuration, splineMode: SplineMode) {
+class LineageHarvesterFactory(splineMode: SplineMode) {
 
-  /** A main method of the object that performs transformation of Spark internal structures to library lineage representation.
-   *
-   * @return A lineage representation
-   */
   def harvester(logicalPlan: LogicalPlan, executedPlan: Option[SparkPlan], session: SparkSession): LineageHarvester =
-    new LineageHarvester(logicalPlan, executedPlan, session)(hadoopConfiguration, splineMode)
+    new LineageHarvester(logicalPlan, executedPlan, session)(session.sparkContext.hadoopConfiguration, splineMode)
 }
