@@ -34,7 +34,6 @@ import za.co.absa.commons.reflect.extractors.{AccessorMethodValueExtractor, Safe
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.builder.read.ReadCommandExtractor._
 import za.co.absa.spline.harvester.qualifier.PathQualifier
-
 import scala.PartialFunction.condOpt
 import scala.collection.JavaConverters._
 import scala.util.Try
@@ -82,10 +81,20 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
         }
 
         case `_: CassandraSourceRelation`(casr) =>
-          val tableRef = extractFieldValue[AnyRef](casr,"tableRef")
+          val tableRef = extractFieldValue[AnyRef](casr, "tableRef")
           val table = extractFieldValue[AnyRef](tableRef, "table")
           val keyspace = extractFieldValue[AnyRef](tableRef, "keyspace")
           ReadCommand(SourceIdentifier.forCassandra(keyspace.asInstanceOf[String], table.asInstanceOf[String]), operation)
+
+        case `_: MongoDBSourceRelation`(mongr) =>
+          val mongoRDD = extractFieldValue[AnyRef](mongr, "mongoRDD")
+          val readConfig = extractFieldValue[AnyRef](mongoRDD, "readConfig")
+          val database = extractFieldValue[AnyRef](readConfig, "databaseName")
+          val collection = extractFieldValue[AnyRef](readConfig, "collectionName")
+          val connectionUrlx = extractFieldValue[AnyRef](readConfig, "connectionString")
+          val connectionUrl = extractFieldValue[AnyRef](connectionUrlx, "x")
+
+          ReadCommand(SourceIdentifier.forMongoDB(connectionUrl.asInstanceOf[String], database.asInstanceOf[String], collection.asInstanceOf[String]), operation)
 
         case br: BaseRelation =>
           sys.error(s"Relation is not supported: $br")
@@ -107,6 +116,8 @@ object ReadCommandExtractor {
   object `_: ExcelRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.crealytics.spark.excel.ExcelRelation")
 
   object `_: CassandraSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.cassandra.CassandraSourceRelation")
+
+  object `_: MongoDBSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.mongodb.spark.sql.MongoRelation")
 
   object TableOrQueryFromJDBCOptionsExtractor extends AccessorMethodValueExtractor[String]("table", "tableOrQuery")
 

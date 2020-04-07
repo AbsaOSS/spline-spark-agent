@@ -51,10 +51,15 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
           case Some(sourceType) if sourceType == "cassandra" || sourceType.isInstanceOf[org.apache.spark.sql.cassandra.DefaultSource] =>
             asCassandarWriteCommand(cmd)
 
+          case Some(sourceType) if sourceType == "mongo" || sourceType.isInstanceOf[com.mongodb.spark.sql.DefaultSource] =>
+            asMongoDBWriteCommand(cmd)
+
           case Some(ExcelSourceExtractor(_)) => asExcelWriteCommand(cmd)
           case Some("com.crealytics.spark.excel") => asExcelWriteCommand(cmd)
 
           case Some("org.apache.spark.sql.cassandra") => asCassandarWriteCommand(cmd) //for spark 2.2
+
+          case Some("com.mongodb.spark.sql.DefaultSource") => asMongoDBWriteCommand(cmd) //for spark 2.2
 
           case _ =>
             val maybeFormat = maybeSourceType.map {
@@ -115,6 +120,13 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
     val keyspace = cmd.options("keyspace")
     val table = cmd.options("table")
     WriteCommand(cmd.nodeName, SourceIdentifier.forCassandra(keyspace, table), cmd.mode, cmd.query, cmd.options)
+  }
+
+  private def asMongoDBWriteCommand(cmd: SaveIntoDataSourceCommand) = {
+    val database = cmd.options("database")
+    val collection = cmd.options("collection")
+    val uri = cmd.options("uri")
+    WriteCommand(cmd.nodeName, SourceIdentifier.forMongoDB(uri, database, collection), cmd.mode, cmd.query, cmd.options)
   }
 
   private def asDirWriteCommand(name: String, storage: CatalogStorageFormat, provider: String, overwrite: Boolean, query: LogicalPlan) = {
