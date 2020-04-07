@@ -93,7 +93,12 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
           val database = extractFieldValue[AnyRef](readConfig, "databaseName")
           val collection = extractFieldValue[AnyRef](readConfig, "collectionName")
           val connectionUrlx = extractFieldValue[AnyRef](readConfig, "connectionString")
-          val connectionUrl = extractFieldValue[AnyRef](connectionUrlx, "x")
+
+          val connectionUrl_Scala_2_11 = "x"
+          val connectionUrl_Scala_2_12 = "value"
+          val connectionUrl = Try(extractFieldValue[AnyRef](connectionUrlx, connectionUrl_Scala_2_11))
+            .orElse(Try(extractFieldValue[AnyRef](connectionUrlx, connectionUrl_Scala_2_12)))
+            .getOrElse(sys.error("Unable to extract MongoDB connection URL"))
 
           ReadCommand(SourceIdentifier.forMongoDB(connectionUrl.asInstanceOf[String], database.asInstanceOf[String], collection.asInstanceOf[String]), operation)
 

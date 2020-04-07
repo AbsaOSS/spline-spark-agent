@@ -43,6 +43,7 @@ class MongoDBSpec
     val port = 12345
     val databaseName = "test"
     val collection = "testCollection"
+    val sparkFormat = "com.mongodb.spark.sql.DefaultSource"
     val mongodConfig = new MongodConfigBuilder().version(Version.Main.PRODUCTION).net(new Net(bindIp, port, Network.localhostIsIPv6)).build()
 
     val mongodExecutable = starter.prepare(mongodConfig)
@@ -59,8 +60,8 @@ class MongoDBSpec
         }
         val (plan1, _) = lineageCaptor.lineageOf(testData
           .write
-          .format("com.mongodb.spark.sql.DefaultSource")
-          .option("uri", "mongodb://127.0.0.1:12345")
+          .format(sparkFormat)
+          .option("uri", s"mongodb://$bindIp:$port")
           .option("database", databaseName)
           .option("collection", collection)
           .save()
@@ -69,8 +70,8 @@ class MongoDBSpec
         val (plan2, _) = lineageCaptor.lineageOf {
           val df = spark
             .read
-            .format("com.mongodb.spark.sql.DefaultSource")
-            .option("uri", "mongodb://127.0.0.1:12345")
+            .format(sparkFormat)
+            .option("uri", s"mongodb://$bindIp:$port")
             .option("database", databaseName)
             .option("collection", collection)
             .option("partitioner", "MongoSplitVectorPartitioner")
@@ -79,8 +80,8 @@ class MongoDBSpec
           df
             .write
             .mode(SaveMode.Overwrite)
-            .format("com.mongodb.spark.sql.DefaultSource")
-            .option("uri", "mongodb://127.0.0.1:12345")
+            .format(sparkFormat)
+            .option("uri", s"mongodb://$bindIp:$port")
             .option("database", databaseName)
             .option("collection", collection)
             .save()
@@ -88,7 +89,7 @@ class MongoDBSpec
 
         plan1.operations.write.append shouldBe false
         plan1.operations.write.extra.get("destinationType") shouldBe Some("mongodb")
-        plan1.operations.write.outputSource shouldBe s"mongodb://127.0.0.1:12345/$databaseName.$collection"
+        plan1.operations.write.outputSource shouldBe s"mongodb://$bindIp:$port/$databaseName.$collection"
 
         plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
         plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("mongodb")
