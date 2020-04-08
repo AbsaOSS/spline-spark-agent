@@ -17,7 +17,6 @@ package za.co.absa.spline.harvester
 
 import java.util.UUID
 
-import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.execution.QueryExecution
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
@@ -26,8 +25,7 @@ import scala.language.postfixOps
 
 class QueryExecutionEventHandler(
   harvesterFactory: LineageHarvesterFactory,
-  lineageDispatcher: LineageDispatcher,
-  sparkSession: SparkSession) {
+  lineageDispatcher: LineageDispatcher) {
 
   /**
     * The method is executed when an action execution is successful.

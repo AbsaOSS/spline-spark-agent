@@ -19,25 +19,25 @@ package za.co.absa.spline.harvester.listener
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.util.QueryExecutionListener
-import za.co.absa.spline.harvester.QueryExecutionEventHandler
-import za.co.absa.spline.harvester.SparkLineageInitializer.createEventHandler
+import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer
 import za.co.absa.spline.harvester.listener.SplineQueryExecutionListener._
+import za.co.absa.spline.harvester.{QueryExecutionEventHandler, QueryExecutionEventHandlerFactory}
 
 class SplineQueryExecutionListener(maybeEventHandlerConstructor: => Option[QueryExecutionEventHandler]) extends QueryExecutionListener {
 
   private lazy val maybeEventHandler: Option[QueryExecutionEventHandler] = maybeEventHandlerConstructor
 
   /**
-    * Listener delegate is lazily evaluated as Spline initialization requires completely initialized SparkSession
-    * to be able to use sessionState for duplicate tracking prevention.
-    */
+   * Listener delegate is lazily evaluated as Spline initialization requires completely initialized SparkSession
+   * to be able to use sessionState for duplicate tracking prevention.
+   */
   def this() = this(constructEventHandler())
 
   override def onSuccess(funcName: String, qe: QueryExecution, durationNs: Long): Unit =
-      maybeEventHandler.foreach(_.onSuccess(funcName, qe, durationNs))
+    maybeEventHandler.foreach(_.onSuccess(funcName, qe, durationNs))
 
   override def onFailure(funcName: String, qe: QueryExecution, exception: Exception): Unit =
-      maybeEventHandler.foreach(_.onFailure(funcName, qe, exception))
+    maybeEventHandler.foreach(_.onFailure(funcName, qe, exception))
 
 }
 
@@ -47,8 +47,9 @@ object SplineQueryExecutionListener {
     val sparkSession = SparkSession.getActiveSession
       .orElse(SparkSession.getDefaultSession)
       .getOrElse(throw new IllegalStateException("Session is unexpectedly missing. Spline cannot be initialized."))
-    createEventHandler(sparkSession)
+
+    val configurer = DefaultSplineConfigurer(sparkSession)
+    new QueryExecutionEventHandlerFactory(sparkSession).createEventHandler(configurer)
   }
 
 }
-

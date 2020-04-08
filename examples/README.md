@@ -48,6 +48,11 @@ To change the Spline Producer URL (default is http://localhost:8080/producer):
 mvn test -P examples -D spline.producer.url=http://localhost:8888/producer
 ```
 
+To change the Spline Mode (default is BEST_EFFORT):
+```shell script
+mvn test -P examples -D spline.mode=REQUIRED
+```
+
 
 #### Examples source code
   - [Scala](src/main/scala/za/co/absa/spline/example/)
