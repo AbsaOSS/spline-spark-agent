@@ -54,12 +54,17 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
           case Some(sourceType) if sourceType == "mongo" || sourceType.isInstanceOf[com.mongodb.spark.sql.DefaultSource] =>
             asMongoDBWriteCommand(cmd)
 
+          case Some(sourceType) if sourceType == "elasticsearch" || sourceType.isInstanceOf[org.elasticsearch.spark.sql.DefaultSource15] =>
+            asElasticSearchWriteCommand(cmd)
+
           case Some(ExcelSourceExtractor(_)) => asExcelWriteCommand(cmd)
           case Some("com.crealytics.spark.excel") => asExcelWriteCommand(cmd)
 
           case Some("org.apache.spark.sql.cassandra") => asCassandarWriteCommand(cmd) //for spark 2.2
 
           case Some("com.mongodb.spark.sql.DefaultSource") => asMongoDBWriteCommand(cmd) //for spark 2.2
+
+          case Some("es") => asElasticSearchWriteCommand(cmd) //for spark 2.2
 
           case _ =>
             val maybeFormat = maybeSourceType.map {
@@ -127,6 +132,12 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
     val collection = cmd.options("collection")
     val uri = cmd.options("uri")
     WriteCommand(cmd.nodeName, SourceIdentifier.forMongoDB(uri, database, collection), cmd.mode, cmd.query, cmd.options)
+  }
+
+  private def asElasticSearchWriteCommand(cmd: SaveIntoDataSourceCommand) = {
+    val indexDocType = cmd.options("path")
+    val server = cmd.options("es.nodes")
+    WriteCommand(cmd.nodeName, SourceIdentifier.forElasticSearch(server, indexDocType), cmd.mode, cmd.query, cmd.options)
   }
 
   private def asDirWriteCommand(name: String, storage: CatalogStorageFormat, provider: String, overwrite: Boolean, query: LogicalPlan) = {
