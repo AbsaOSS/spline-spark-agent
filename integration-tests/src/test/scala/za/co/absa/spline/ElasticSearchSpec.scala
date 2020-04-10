@@ -47,7 +47,7 @@ class ElasticSearchSpec
       .withElasticVersion("6.6.0")
       .withSetting(PopularProperties.TRANSPORT_TCP_PORT, tcpPort)
       .withSetting(PopularProperties.CLUSTER_NAME, clusterName)
-      .withStartTimeout(1, TimeUnit.MINUTES)
+      .withStartTimeout(5, TimeUnit.MINUTES)
       .withIndex(index, IndexSettings.builder().build())
       .build()
     embeddedElastic.start()
