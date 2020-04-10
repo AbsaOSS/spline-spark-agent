@@ -39,60 +39,7 @@ class ElasticSearchSpec
   val esNodes = "localhost"
   val tcpPort = 9350
   val clusterName = "my_cluster"
-
-  it should "support ElasticSearch 5.5 as a write source" in {
-
-    val embeddedElastic = EmbeddedElastic.builder()
-      .withElasticVersion("5.5.0")
-      .withSetting(PopularProperties.TRANSPORT_TCP_PORT, tcpPort)
-      .withSetting(PopularProperties.CLUSTER_NAME, clusterName)
-      .withStartTimeout(1, TimeUnit.MINUTES)
-      .withIndex(index, IndexSettings.builder().build())
-      .build()
-    embeddedElastic.start()
-
-    withNewSparkSession(spark => {
-      withLineageTracking(spark)(lineageCaptor => {
-
-        val testData: DataFrame = {
-          val schema = StructType(StructField("id", IntegerType, nullable = false) :: StructField("name", StringType, nullable = false) :: Nil)
-          val rdd = spark.sparkContext.parallelize(Row(1014, "Warsaw") :: Row(1002, "Corte") :: Nil)
-          spark.sqlContext.createDataFrame(rdd, schema)
-        }
-        val (plan1, _) = lineageCaptor.lineageOf(testData
-          .write
-          .mode(SaveMode.Append)
-          .option("es.nodes",esNodes)
-          .format(sparkFormat)
-          .save(s"$index/$docType")
-        )
-
-        val (plan2, _) = lineageCaptor.lineageOf {
-          val df = spark
-            .read
-            .option("es.nodes",esNodes)
-            .format(sparkFormat)
-            .load(s"$index/$docType")
-
-          df
-            .write
-            .option("es.nodes",esNodes)
-            .mode(SaveMode.Overwrite)
-            .save(s"$index/$docType")
-        }
-
-        plan1.operations.write.append shouldBe true
-        plan1.operations.write.extra.get("destinationType") shouldBe Some("elasticsearch")
-        plan1.operations.write.outputSource shouldBe s"elasticsearch://$esNodes/$index/$docType"
-
-        plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
-        plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("elasticsearch")
-        plan2.operations.write.append shouldBe false
-
-      })
-      embeddedElastic.stop()
-    })
-  }
+  val options = Map("es.nodes" -> esNodes)
 
   it should "support ElasticSearch 6.6 as a write source" in {
 
@@ -116,7 +63,7 @@ class ElasticSearchSpec
         val (plan1, _) = lineageCaptor.lineageOf(testData
           .write
           .mode(SaveMode.Append)
-          .option("es.nodes",esNodes)
+          .options(options)
           .format(sparkFormat)
           .save(s"$index/$docType")
         )
@@ -124,13 +71,13 @@ class ElasticSearchSpec
         val (plan2, _) = lineageCaptor.lineageOf {
           val df = spark
             .read
-            .option("es.nodes",esNodes)
+            .options(options)
             .format(sparkFormat)
             .load(s"$index/$docType")
 
           df
             .write
-            .option("es.nodes",esNodes)
+            .options(options)
             .mode(SaveMode.Overwrite)
             .save(s"$index/$docType")
         }
