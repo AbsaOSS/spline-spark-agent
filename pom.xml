@@ -183,6 +183,7 @@
                     <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
                     <junitxml>.</junitxml>
                     <filereports>WDF TestSuite.txt</filereports>
+                    <tagsToExclude>${exlude.unsupported}</tagsToExclude>
                 </configuration>
                 <executions>
                     <execution>
@@ -497,6 +498,7 @@
             <properties>
                 <scala.binary.version>2.11</scala.binary.version>
                 <scala.version>${scala_2.11.version}</scala.version>
+                <exlude.unsupported>None</exlude.unsupported>
             </properties>
             <modules>
                 <module>bundle-2.2</module>
@@ -508,6 +510,7 @@
             <properties>
                 <scala.binary.version>2.12</scala.binary.version>
                 <scala.version>${scala_2.12.version}</scala.version>
+                <exlude.unsupported>Unsupported_2.12</exlude.unsupported>
             </properties>
         </profile>
 

@@ -41,7 +41,7 @@ class ElasticSearchSpec
   val clusterName = "my_cluster"
   val options = Map("es.nodes" -> esNodes)
 
-  it should "support ElasticSearch 6.6 as a write source" in {
+  it should "support ElasticSearch 6.6 as a write source" taggedAs (Unsupported2_12) in {
 
     val embeddedElastic = EmbeddedElastic.builder()
       .withElasticVersion("6.6.0")
