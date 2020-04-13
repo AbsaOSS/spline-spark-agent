@@ -95,6 +95,9 @@
         <scala_2.11.version>2.11.12</scala_2.11.version>
         <scala_2.12.version>2.12.10</scala_2.12.version>
 
+        <!-- Unsupported connectors -->
+        <exlude.unsupported>None</exlude.unsupported>
+
         <!-- Controlled by `scala-cross-build` plugin -->
         <scala.version>2.11.12</scala.version>
         <scala.binary.version>2.11</scala.binary.version>
