@@ -48,22 +48,16 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
             val tableName = cmd.options("dbtable")
             WriteCommand(cmd.nodeName, SourceIdentifier.forJDBC(jdbcConnectionString, tableName), cmd.mode, cmd.query)
 
-          case Some(sourceType) if sourceType == "cassandra" || sourceType.isInstanceOf[org.apache.spark.sql.cassandra.DefaultSource] =>
-            asCassandarWriteCommand(cmd)
-
-          case Some(sourceType) if sourceType == "mongo" || sourceType.isInstanceOf[com.mongodb.spark.sql.DefaultSource] =>
-            asMongoDBWriteCommand(cmd)
-
-          case Some(sourceType) if sourceType == "elasticsearch" || sourceType.isInstanceOf[org.elasticsearch.spark.sql.DefaultSource15] =>
-            asElasticSearchWriteCommand(cmd)
-
           case Some(ExcelSourceExtractor(_)) => asExcelWriteCommand(cmd)
           case Some("com.crealytics.spark.excel") => asExcelWriteCommand(cmd)
 
+          case Some(CassandraSourceExtractor(_)) => asCassandarWriteCommand(cmd)
           case Some("org.apache.spark.sql.cassandra") => asCassandarWriteCommand(cmd) //for spark 2.2
 
+          case Some(MongoDBSourceExtractor(_)) => asMongoDBWriteCommand(cmd)
           case Some("com.mongodb.spark.sql.DefaultSource") => asMongoDBWriteCommand(cmd) //for spark 2.2
 
+          case Some(ElasticSearchSourceExtractor(_)) => asElasticSearchWriteCommand(cmd)
           case Some("es") => asElasticSearchWriteCommand(cmd) //for spark 2.2
 
           case _ =>
@@ -181,7 +175,11 @@ object WriteCommandExtractor {
 
   private object ExcelSourceExtractor extends SafeTypeMatchingExtractor(classOf[DefaultSource])
 
-  private object CassandraSourceExtractor extends SafeTypeMatchingExtractor(classOf[DefaultSource])
+  private object CassandraSourceExtractor extends SafeTypeMatchingExtractor(classOf[org.apache.spark.sql.cassandra.DefaultSource])
+
+  private object MongoDBSourceExtractor extends SafeTypeMatchingExtractor(classOf[com.mongodb.spark.sql.DefaultSource])
+
+  private object ElasticSearchSourceExtractor extends SafeTypeMatchingExtractor(classOf[org.elasticsearch.spark.sql.DefaultSource15])
 
   private object DataSourceTypeExtractor extends AccessorMethodValueExtractor[AnyRef]("provider", "dataSource")
 
