@@ -95,9 +95,6 @@
         <scala_2.11.version>2.11.12</scala_2.11.version>
         <scala_2.12.version>2.12.10</scala_2.12.version>
 
-        <!-- Unsupported connectors -->
-        <exlude.unsupported>None</exlude.unsupported>
-
         <!-- Controlled by `scala-cross-build` plugin -->
         <scala.version>2.11.12</scala.version>
         <scala.binary.version>2.11</scala.binary.version>
@@ -186,7 +183,6 @@
                     <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
                     <junitxml>.</junitxml>
                     <filereports>WDF TestSuite.txt</filereports>
-                    <tagsToExclude>${exlude.unsupported}</tagsToExclude>
                 </configuration>
                 <executions>
                     <execution>
@@ -501,7 +497,6 @@
             <properties>
                 <scala.binary.version>2.11</scala.binary.version>
                 <scala.version>${scala_2.11.version}</scala.version>
-                <exlude.unsupported>None</exlude.unsupported>
             </properties>
             <modules>
                 <module>bundle-2.2</module>
@@ -513,7 +508,6 @@
             <properties>
                 <scala.binary.version>2.12</scala.binary.version>
                 <scala.version>${scala_2.12.version}</scala.version>
-                <exlude.unsupported>Unsupported_2.12</exlude.unsupported>
             </properties>
         </profile>
 

@@ -26,6 +26,8 @@ import org.scalatest.matchers.should.Matchers
 import pl.allegro.tech.embeddedelasticsearch.{EmbeddedElastic, IndexSettings, PopularProperties}
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
+import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
+import za.co.absa.commons.version.Version._
 
 class ElasticSearchSpec
   extends AnyFlatSpec
@@ -41,7 +43,7 @@ class ElasticSearchSpec
   val clusterName = "my_cluster"
   val options = Map("es.nodes" -> esNodes)
 
-  it should "support ElasticSearch 6.6 as a write source" taggedAs (Unsupported2_12) in {
+  it should "support ES" taggedAs ignoreIf(semver"${util.Properties.versionNumberString}" >= semver"2.12.0") in {
 
     val embeddedElastic = EmbeddedElastic.builder()
       .withElasticVersion("6.6.0")
