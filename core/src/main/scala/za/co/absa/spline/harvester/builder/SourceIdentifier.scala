@@ -46,5 +46,8 @@ object SourceIdentifier {
   def forMongoDB(connectionUrl: String, database: String, collection: String): SourceIdentifier =
     SourceIdentifier(Some("mongodb"), SourceUri.forMongoDB(connectionUrl, database, collection))
 
+  def forElasticSearch(server: String, indexDocType: String): SourceIdentifier =
+    SourceIdentifier(Some("elasticsearch"), SourceUri.forElastiSearch(server, indexDocType))
+
 
 }

@@ -28,6 +28,8 @@ object SourceUri {
 
   def forMongoDB(connectionUrl: String, database: String, collection: String): String = s"$connectionUrl/$database.$collection"
 
+  def forElastiSearch(server: String, indexDocType: String): String = s"elasticsearch://$server/$indexDocType"
+
   def forTable(tableIdentifier: TableIdentifier)
     (session: SparkSession): String = {
     val catalog = session.catalog
