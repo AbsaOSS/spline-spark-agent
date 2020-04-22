@@ -32,6 +32,7 @@ import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.execution.datasources.{HadoopFsRelation, LogicalRelation}
 import org.apache.spark.sql.kafka010.{AssignStrategy, ConsumerStrategy, SubscribePatternStrategy, SubscribeStrategy}
 import org.apache.spark.sql.sources.BaseRelation
+import org.elasticsearch.spark.cfg.SparkSettings
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.{AccessorMethodValueExtractor, SafeTypeMatchingExtractor}
 import za.co.absa.spline.harvester.builder.SourceIdentifier
@@ -98,6 +99,13 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
 
           ReadCommand(SourceIdentifier.forMongoDB(connectionUrl, database, collection), operation)
 
+        case `_: ElasticSearchSourceRelation`(esr) =>
+          val parameters = extractFieldValue[SparkSettings](esr, "cfg")
+          val server = parameters.getProperty("es.nodes")
+          val indexDocType = parameters.getProperty("es.resource")
+
+          ReadCommand(SourceIdentifier.forElasticSearch(server, indexDocType), operation)
+
         case br: BaseRelation =>
           sys.error(s"Relation is not supported: $br")
       }
@@ -120,6 +128,8 @@ object ReadCommandExtractor {
   object `_: CassandraSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.cassandra.CassandraSourceRelation")
 
   object `_: MongoDBSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.mongodb.spark.sql.MongoRelation")
+
+  object `_: ElasticSearchSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.elasticsearch.spark.sql.ElasticsearchRelation")
 
   object TableOrQueryFromJDBCOptionsExtractor extends AccessorMethodValueExtractor[String]("table", "tableOrQuery")
 
