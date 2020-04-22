@@ -24,10 +24,11 @@ import org.apache.spark.sql.{DataFrame, Row, SaveMode}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import pl.allegro.tech.embeddedelasticsearch.{EmbeddedElastic, IndexSettings, PopularProperties}
-import za.co.absa.spline.test.fixture.SparkFixture
-import za.co.absa.spline.test.fixture.spline.SplineFixture
+import za.co.absa.commons.io.TempDirectory
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version._
+import za.co.absa.spline.test.fixture.SparkFixture
+import za.co.absa.spline.test.fixture.spline.SplineFixture
 
 class ElasticSearchSpec
   extends AnyFlatSpec
@@ -35,13 +36,12 @@ class ElasticSearchSpec
     with SparkFixture
     with SplineFixture {
 
-  val sparkFormat = "es"
   val index = "test"
   val docType = "test"
   val esNodes = "localhost"
   val tcpPort = 9350
   val clusterName = "my_cluster"
-  val options = Map("es.nodes" -> esNodes)
+  val esOptions = Map("es.nodes" -> esNodes)
 
   it should "support ES" taggedAs ignoreIf(semver"${util.Properties.versionNumberString}" >= semver"2.12.0") in {
 
@@ -65,23 +65,19 @@ class ElasticSearchSpec
         val (plan1, _) = lineageCaptor.lineageOf(testData
           .write
           .mode(SaveMode.Append)
-          .options(options)
-          .format(sparkFormat)
+          .options(esOptions)
+          .format("es")
           .save(s"$index/$docType")
         )
 
         val (plan2, _) = lineageCaptor.lineageOf {
           val df = spark
             .read
-            .options(options)
-            .format(sparkFormat)
+            .options(esOptions)
+            .format("es")
             .load(s"$index/$docType")
 
-          df
-            .write
-            .options(options)
-            .mode(SaveMode.Overwrite)
-            .save(s"$index/$docType")
+          df.write.save(TempDirectory(pathOnly = true).deleteOnExit().path.toString)
         }
 
         plan1.operations.write.append shouldBe true

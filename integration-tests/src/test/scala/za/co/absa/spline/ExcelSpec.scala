@@ -21,7 +21,7 @@ import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructT
 import org.apache.spark.sql.{DataFrame, Row}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.commons.io.TempFile
+import za.co.absa.commons.io.{TempDirectory, TempFile}
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 
@@ -59,12 +59,7 @@ class ExcelSpec extends AnyFlatSpec
             .option("header", "true")
             .load(filePath1)
 
-          // write again just to generate the lineage
-          df.write
-            .format("com.crealytics.spark.excel")
-            .option("header", "true")
-            .mode("overwrite")
-            .save(filePath2)
+          df.write.save(TempDirectory(pathOnly = true).deleteOnExit().path.toString)
         }
 
         plan1.operations.write.append shouldBe false
