@@ -21,6 +21,7 @@
     <groupId>za.co.absa.spline.agent.spark</groupId>
     <artifactId>spline-spark-agent_2.11</artifactId>
     <name>Spline Spark Agent</name>
+    <description>Spline Agent for Apache Spark</description>
     <version>0.6.0-SNAPSHOT</version>
 
     <packaging>pom</packaging>
@@ -619,6 +620,11 @@
                             </providerImplementations>
                         </configuration>
                         <dependencies>
+                            <dependency>
+                                <groupId>org.apache.maven.scm</groupId>
+                                <artifactId>maven-scm-api</artifactId>
+                                <version>1.11.2</version>
+                            </dependency>
                             <dependency>
                                 <groupId>org.apache.maven.scm</groupId>
                                 <artifactId>maven-scm-provider-jgit</artifactId>
