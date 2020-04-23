@@ -17,14 +17,15 @@
 package za.co.absa.spline
 
 
+import com.datastax.driver.core.Cluster
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode}
+import org.cassandraunit.utils.EmbeddedCassandraServerHelper
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import za.co.absa.commons.io.TempDirectory
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
-import com.datastax.driver.core.Cluster
-import org.cassandraunit.utils.EmbeddedCassandraServerHelper
 
 class CassandraSpec
   extends AnyFlatSpec
@@ -68,11 +69,7 @@ class CassandraSpec
             .options(Map("table" -> table, "keyspace" -> keyspace))
             .load()
 
-          df.write
-            .mode(SaveMode.Append)
-            .format("org.apache.spark.sql.cassandra")
-            .options(Map("table" -> table, "keyspace" -> keyspace))
-            .save()
+          df.write.save(TempDirectory(pathOnly = true).deleteOnExit().path.toString)
         }
 
         plan1.operations.write.append shouldBe false
@@ -81,8 +78,6 @@ class CassandraSpec
 
         plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
         plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("cassandra")
-        plan2.operations.write.append shouldBe true
-
       })
     })
   }
