@@ -50,8 +50,16 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
       case lr: LogicalRelation => lr.relation match {
         case hr: HadoopFsRelation =>
           val uris = hr.location.rootPaths.map(path => pathQualifier.qualify(path.toString))
-          val format = hr.fileFormat.toString
-          ReadCommand(SourceIdentifier(Some(format), uris: _*), operation, hr.options)
+          val fileFormat = hr.fileFormat
+          fileFormat match {
+            case `_: SparkAvroSourceRelation`(avro) =>
+              ReadCommand(SourceIdentifier(Some("Avro"), uris: _*), operation, hr.options)
+            case `_: DatabricksAvroSourceRelation`(avro) =>
+              ReadCommand(SourceIdentifier(Some("Avro"), uris: _*), operation, hr.options)
+            case _ =>
+              val format = fileFormat.toString
+              ReadCommand(SourceIdentifier(Some(format), uris: _*), operation, hr.options)
+          }
 
         case xr: XmlRelation =>
           val uris = xr.location.toSeq.map(pathQualifier.qualify)
@@ -130,6 +138,10 @@ object ReadCommandExtractor {
   object `_: MongoDBSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.mongodb.spark.sql.MongoRelation")
 
   object `_: ElasticSearchSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.elasticsearch.spark.sql.ElasticsearchRelation")
+
+  private object `_: SparkAvroSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.avro.AvroFileFormat")
+
+  private object `_: DatabricksAvroSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.databricks.spark.avro.DefaultSource")
 
   object TableOrQueryFromJDBCOptionsExtractor extends AccessorMethodValueExtractor[String]("table", "tableOrQuery")
 
