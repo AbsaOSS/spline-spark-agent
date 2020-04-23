@@ -17,17 +17,17 @@
 package za.co.absa.spline
 
 import com.mongodb.MongoClient
-import de.flapdoodle.embed.mongo.config.Net
-import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
-import org.apache.spark.sql.{DataFrame, Row, SaveMode}
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
-import za.co.absa.spline.test.fixture.SparkFixture
-import za.co.absa.spline.test.fixture.spline.SplineFixture
-import de.flapdoodle.embed.mongo.config.MongodConfigBuilder
+import de.flapdoodle.embed.mongo.MongodStarter
+import de.flapdoodle.embed.mongo.config.{MongodConfigBuilder, Net}
 import de.flapdoodle.embed.mongo.distribution.Version
 import de.flapdoodle.embed.process.runtime.Network
-import de.flapdoodle.embed.mongo.MongodStarter
+import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
+import org.apache.spark.sql.{DataFrame, Row}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+import za.co.absa.commons.io.TempDirectory
+import za.co.absa.spline.test.fixture.SparkFixture
+import za.co.absa.spline.test.fixture.spline.SplineFixture
 
 class MongoDBSpec
   extends AnyFlatSpec
@@ -77,14 +77,7 @@ class MongoDBSpec
             .option("partitioner", "MongoSplitVectorPartitioner")
             .load()
 
-          df
-            .write
-            .mode(SaveMode.Overwrite)
-            .format(sparkFormat)
-            .option("uri", s"mongodb://$bindIp:$port")
-            .option("database", databaseName)
-            .option("collection", collection)
-            .save()
+          df.write.save(TempDirectory(pathOnly = true).deleteOnExit().path.toString)
         }
 
         plan1.operations.write.append shouldBe false
