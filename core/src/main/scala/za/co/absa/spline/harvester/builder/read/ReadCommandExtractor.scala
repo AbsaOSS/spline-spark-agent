@@ -52,9 +52,9 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
           val uris = hr.location.rootPaths.map(path => pathQualifier.qualify(path.toString))
           val fileFormat = hr.fileFormat
           fileFormat match {
-            case `_: SparkAvroSourceRelation`(avro) =>
+            case SparkAvroSourceRelation(avro) =>
               ReadCommand(SourceIdentifier(Some("Avro"), uris: _*), operation, hr.options)
-            case `_: DatabricksAvroSourceRelation`(avro) =>
+            case DatabricksAvroSourceRelation(avro) =>
               ReadCommand(SourceIdentifier(Some("Avro"), uris: _*), operation, hr.options)
             case _ =>
               val format = fileFormat.toString
@@ -139,9 +139,9 @@ object ReadCommandExtractor {
 
   object `_: ElasticSearchSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.elasticsearch.spark.sql.ElasticsearchRelation")
 
-  private object `_: SparkAvroSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.avro.AvroFileFormat")
+  object SparkAvroSourceRelation extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.avro.AvroFileFormat")
 
-  private object `_: DatabricksAvroSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.databricks.spark.avro.DefaultSource")
+  object DatabricksAvroSourceRelation extends SafeTypeMatchingExtractor[AnyRef]("com.databricks.spark.avro.DefaultSource")
 
   object TableOrQueryFromJDBCOptionsExtractor extends AccessorMethodValueExtractor[String]("table", "tableOrQuery")
 
