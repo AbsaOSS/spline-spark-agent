@@ -84,7 +84,7 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
         fileFormat match {
           case SparkAvroSourceExtractor(avro) =>
             WriteCommand(cmd.nodeName, SourceIdentifier(Some("Avro"), qPath), cmd.mode, cmd.query, cmd.options)
-          case `_: DatabricksAvroSourceExtractor`(avro) =>
+          case DatabricksAvroSourceExtractor(avro) =>
             WriteCommand(cmd.nodeName, SourceIdentifier(Some("Avro"), qPath), cmd.mode, cmd.query, cmd.options)
           case _ =>
             val format = fileFormat.toString
@@ -197,7 +197,7 @@ object WriteCommandExtractor {
 
   private object SparkAvroSourceExtractor extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.avro.AvroFileFormat")
 
-  private object `_: DatabricksAvroSourceExtractor` extends SafeTypeMatchingExtractor[AnyRef]("com.databricks.spark.avro.DefaultSource")
+  private object DatabricksAvroSourceExtractor extends SafeTypeMatchingExtractor[AnyRef]("com.databricks.spark.avro.DefaultSource")
 
   private object DataSourceTypeExtractor extends AccessorMethodValueExtractor[AnyRef]("provider", "dataSource")
 
