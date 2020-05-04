@@ -65,6 +65,13 @@ class ExpressionConverter(
         getExpressionSimpleClassName(e),
         getExpressionExtraParameters(e))
 
+    case _: expressions.WindowSpecDefinition | _: expressions.WindowFrame =>
+      expr.UntypedExpression(
+        sparkExpr.prettyName,
+        sparkExpr.children map convert,
+        getExpressionSimpleClassName(sparkExpr),
+        getExpressionExtraParameters(sparkExpr))
+
     case e: expressions.Expression =>
       expr.Generic(
         e.prettyName,
