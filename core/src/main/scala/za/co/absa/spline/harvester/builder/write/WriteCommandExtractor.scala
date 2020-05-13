@@ -142,7 +142,6 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
     val path = catalogTable.flatMap(_.storage.locationUri).map(_.toString)
       .getOrElse(sys.error(s"Cannot extract source URI from InsertIntoDataSourceCommand"))
     val format = catalogTable.flatMap(_.provider).map(_.toLowerCase)
-
       .getOrElse(sys.error(s"Cannot extract format from InsertIntoDataSourceCommand"))
     val qPath = pathQualifier.qualify(path)
     val mode = if (cmd.overwrite) SaveMode.Overwrite else SaveMode.Append
