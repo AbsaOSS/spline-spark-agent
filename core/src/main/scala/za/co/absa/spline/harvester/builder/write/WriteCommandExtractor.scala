@@ -22,7 +22,7 @@ import org.apache.spark.sql.catalyst.catalog.{CatalogStorageFormat, CatalogTable
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.command._
 import org.apache.spark.sql.execution.datasources.jdbc.JdbcRelationProvider
-import org.apache.spark.sql.execution.datasources.{InsertIntoHadoopFsRelationCommand, SaveIntoDataSourceCommand}
+import org.apache.spark.sql.execution.datasources.{InsertIntoDataSourceCommand, InsertIntoHadoopFsRelationCommand, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.hive.execution.{CreateHiveTableAsSelectCommand, InsertIntoHiveTable}
 import org.apache.spark.sql.sources.DataSourceRegister
 import org.apache.spark.sql.{SaveMode, SparkSession}
@@ -78,6 +78,9 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
         val qPath = pathQualifier.qualify(path)
         WriteCommand(cmd.nodeName, SourceIdentifier(Some(format), qPath), cmd.mode, cmd.query, cmd.options)
 
+      case cmd: InsertIntoDataSourceCommand =>
+        asInsertIntoDataSourceCommand(cmd)
+
       case `_: InsertIntoDataSourceDirCommand`(cmd) =>
         asDirWriteCommand(cmd.nodeName, cmd.storage, cmd.provider, cmd.overwrite, cmd.query)
 
@@ -132,6 +135,17 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
     val indexDocType = cmd.options("path")
     val server = cmd.options("es.nodes")
     WriteCommand(cmd.nodeName, SourceIdentifier.forElasticSearch(server, indexDocType), cmd.mode, cmd.query, cmd.options)
+  }
+
+  private def asInsertIntoDataSourceCommand(cmd: InsertIntoDataSourceCommand) = {
+    val catalogTable = cmd.logicalRelation.catalogTable
+    val path = catalogTable.flatMap(_.storage.locationUri).map(_.toString)
+      .getOrElse(sys.error(s"Cannot extract source URI from InsertIntoDataSourceCommand"))
+    val format = catalogTable.flatMap(_.provider).map(_.toLowerCase)
+      .getOrElse(sys.error(s"Cannot extract format from InsertIntoDataSourceCommand"))
+    val qPath = pathQualifier.qualify(path)
+    val mode = if (cmd.overwrite) SaveMode.Overwrite else SaveMode.Append
+    WriteCommand(cmd.nodeName, SourceIdentifier(Some(format), qPath), mode, cmd.query)
   }
 
   private def asDirWriteCommand(name: String, storage: CatalogStorageFormat, provider: String, overwrite: Boolean, query: LogicalPlan) = {
