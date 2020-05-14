@@ -93,6 +93,9 @@ class LineageHarvesterSpec extends AnyFlatSpec
         val (plan, _) = lineageOf(df.write.save(tmpDest))
 
         assertDataLineage(expectedOperations, expectedAttributes, plan)
+
+        val localRelation = plan.operations.other.get.find(_.extra.get("name") == "LocalRelation").get
+        assert(localRelation.params.map(p => !p.contains("data")).getOrElse(true))
       }
     })
 
@@ -138,6 +141,9 @@ class LineageHarvesterSpec extends AnyFlatSpec
         val (plan, _) = lineageOf(df.write.save(tmpDest))
 
         assertDataLineage(expectedOperations, expectedAttributes, plan)
+
+        val localRelation = plan.operations.other.get.find(_.extra.get("name") == "LocalRelation").get
+        assert(localRelation.params.map(p => !p.contains("data")).getOrElse(true))
       }
     })
 
@@ -179,6 +185,9 @@ class LineageHarvesterSpec extends AnyFlatSpec
         val (plan, _) = lineageOf(df.write.save(tmpDest))
 
         assertDataLineage(expectedOperations, expectedAttributes, plan)
+
+        val localRelation = plan.operations.other.get.find(_.extra.get("name") == "LocalRelation").get
+        assert(localRelation.params.map(p => !p.contains("data")).getOrElse(true))
       }
     })
 

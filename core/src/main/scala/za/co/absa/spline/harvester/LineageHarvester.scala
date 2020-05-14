@@ -37,12 +37,13 @@ import za.co.absa.spline.harvester.builder.{GenericNodeBuilder, _}
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
 import za.co.absa.spline.harvester.qualifier.HDFSPathQualifier
+import za.co.absa.spline.harvester.write_detection.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.producer.model._
 
 import scala.util.{Failure, Success, Try}
 
 class LineageHarvester(logicalPlan: LogicalPlan, executedPlanOpt: Option[SparkPlan], session: SparkSession)
-  (hadoopConfiguration: Configuration, splineMode: SplineMode)
+  (hadoopConfiguration: Configuration, splineMode: SplineMode, iwdStrategy: IgnoredWriteDetectionStrategy)
   extends Logging {
 
   implicit private val componentCreatorFactory: ComponentCreatorFactory = new ComponentCreatorFactory
@@ -94,7 +95,7 @@ class LineageHarvester(logicalPlan: LogicalPlan, executedPlanOpt: Option[SparkPl
         ).asOption
       )
 
-      if (writeCommand.mode == SaveMode.Ignore) None
+      if (writeCommand.mode == SaveMode.Ignore && iwdStrategy.wasWriteIgnored(writeMetrics)) None
       else Some(plan -> ExecutionEvent(
         planId = plan.id,
         timestamp = System.currentTimeMillis(),
@@ -156,7 +157,7 @@ class LineageHarvester(logicalPlan: LogicalPlan, executedPlanOpt: Option[SparkPl
 }
 
 object LineageHarvester {
-  private type Metrics = Map[String, Long]
+  type Metrics = Map[String, Long]
   private type HarvestResult = Option[(ExecutionPlan, ExecutionEvent)]
 
   private def getExecutedReadWriteMetrics(executedPlan: SparkPlan): (Metrics, Metrics) = {

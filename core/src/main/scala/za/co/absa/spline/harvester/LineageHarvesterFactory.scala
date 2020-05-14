@@ -20,11 +20,13 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.SparkPlan
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
+import za.co.absa.spline.harvester.write_detection.IgnoredWriteDetectionStrategy
 
 import scala.language.postfixOps
 
-class LineageHarvesterFactory(splineMode: SplineMode) {
+class LineageHarvesterFactory(splineMode: SplineMode, iwdStrategy: IgnoredWriteDetectionStrategy) {
 
   def harvester(logicalPlan: LogicalPlan, executedPlan: Option[SparkPlan], session: SparkSession): LineageHarvester =
-    new LineageHarvester(logicalPlan, executedPlan, session)(session.sparkContext.hadoopConfiguration, splineMode)
+    new LineageHarvester(logicalPlan, executedPlan, session)(
+      session.sparkContext.hadoopConfiguration, splineMode, iwdStrategy)
 }

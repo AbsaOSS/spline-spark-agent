@@ -24,7 +24,10 @@ import org.apache.spark.sql.SparkSession
 import za.co.absa.commons.config.ConfigurationImplicits
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
+import za.co.absa.spline.harvester.write_detection.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.{LineageHarvesterFactory, QueryExecutionEventHandler}
+
+import scala.reflect.ClassTag
 
 object DefaultSplineConfigurer {
   private val defaultPropertiesFileName = "spline.default.properties"
@@ -36,12 +39,17 @@ object DefaultSplineConfigurer {
      *
      * @see [[SplineMode]]
      */
-    val MODE = "spline.mode"
+    val Mode = "spline.mode"
 
     /**
      * Which lineage dispatcher should be used to report lineages
      */
-    val LINEAGE_DISPATCHER_CLASS = "spline.lineage_dispatcher.className"
+    val LineageDispatcherClass = "spline.lineage_dispatcher.className"
+
+    /**
+     * Which strategy should be used to detect mode=ignore writes
+     */
+    val IgnoreWriteDetectionStrategyClass = "spline.iwd_strategy.className"
   }
 
   def apply(sparkSession: SparkSession): DefaultSplineConfigurer = {
@@ -66,29 +74,35 @@ class DefaultSplineConfigurer(userConfiguration: Configuration)
   ).asJava)
 
   lazy val splineMode: SplineMode = {
-    val modeName = configuration.getRequiredString(MODE)
+    val modeName = configuration.getRequiredString(Mode)
     try SplineMode withName modeName
     catch {
       case _: NoSuchElementException => throw new IllegalArgumentException(
-        s"Invalid value for property $MODE=$modeName. Should be one of: ${SplineMode.values mkString ", "}")
+        s"Invalid value for property $Mode=$modeName. Should be one of: ${SplineMode.values mkString ", "}")
     }
   }
 
-  override lazy val lineageDispatcher: LineageDispatcher = {
-    val className = configuration.getRequiredString(LINEAGE_DISPATCHER_CLASS)
-    log debug s"Instantiating a lineage dispatcher for class name: $className"
+  override lazy val lineageDispatcher: LineageDispatcher = instantiate[LineageDispatcher](
+    configuration.getRequiredString(LineageDispatcherClass))
+
+  private lazy val ignoreWriteDetectionStrategy = instantiate[IgnoredWriteDetectionStrategy](
+    configuration.getRequiredString(IgnoreWriteDetectionStrategyClass))
+
+  private def instantiate[T: ClassTag](className: String): T = {
+    val interfaceName = scala.reflect.classTag[T].runtimeClass.getSimpleName
+    log debug s"Instantiating ${interfaceName} for class name: $className"
     try {
       Class.forName(className.trim)
         .getConstructor(classOf[Configuration])
         .newInstance(configuration)
-        .asInstanceOf[LineageDispatcher]
+        .asInstanceOf[T]
     }
     catch {
       case e: InvocationTargetException => throw e.getTargetException
     }
   }
 
-  private lazy val harvesterFactory = new LineageHarvesterFactory(splineMode)
+  private lazy val harvesterFactory = new LineageHarvesterFactory(splineMode, ignoreWriteDetectionStrategy)
 
   def queryExecutionEventHandler: QueryExecutionEventHandler =
     new QueryExecutionEventHandler(harvesterFactory, lineageDispatcher)
