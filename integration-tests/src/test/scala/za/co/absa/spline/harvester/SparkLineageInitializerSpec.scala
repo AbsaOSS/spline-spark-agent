@@ -194,7 +194,7 @@ object SparkLineageInitializerSpec {
   }
 
   private def createFailingConfigurer(): DefaultSplineConfigurer = new DefaultSplineConfigurer(new SystemConfiguration) {
-    override lazy val lineageDispatcher: LineageDispatcher = sys.error("Testing exception - please ignore.")
+    override def lineageDispatcher: LineageDispatcher = sys.error("Testing exception - please ignore.")
   }
 
 }
