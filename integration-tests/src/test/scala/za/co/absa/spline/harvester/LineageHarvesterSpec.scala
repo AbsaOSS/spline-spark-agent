@@ -19,19 +19,24 @@ package za.co.absa.spline.harvester
 import java.util.UUID
 import java.util.UUID.randomUUID
 
+import org.apache.commons.io.FileUtils
 import org.apache.spark.SPARK_VERSION
 import org.scalatest.Assertion
 import org.scalatest.Inside._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.commons.io.TempDirectory
+import za.co.absa.commons.io.{TempDirectory, TempFile}
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version._
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder.Schema
+import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer
+import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
+import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
 import za.co.absa.spline.model.{Attribute, dt}
 import za.co.absa.spline.producer.model._
-import za.co.absa.spline.test.fixture.spline.SplineFixture
+import za.co.absa.spline.test.fixture.spline.SplineFixture.EMPTY_CONF
+import za.co.absa.spline.test.fixture.spline.{LineageCaptor, LineageCapturingDispatcher, SplineFixture}
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 
 import scala.language.reflectiveCalls
@@ -93,9 +98,6 @@ class LineageHarvesterSpec extends AnyFlatSpec
         val (plan, _) = lineageOf(df.write.save(tmpDest))
 
         assertDataLineage(expectedOperations, expectedAttributes, plan)
-
-        val localRelation = plan.operations.other.get.find(_.extra.get("name") == "LocalRelation").get
-        assert(localRelation.params.map(p => !p.contains("data")).getOrElse(true))
       }
     })
 
@@ -141,9 +143,6 @@ class LineageHarvesterSpec extends AnyFlatSpec
         val (plan, _) = lineageOf(df.write.save(tmpDest))
 
         assertDataLineage(expectedOperations, expectedAttributes, plan)
-
-        val localRelation = plan.operations.other.get.find(_.extra.get("name") == "LocalRelation").get
-        assert(localRelation.params.map(p => !p.contains("data")).getOrElse(true))
       }
     })
 
@@ -185,9 +184,6 @@ class LineageHarvesterSpec extends AnyFlatSpec
         val (plan, _) = lineageOf(df.write.save(tmpDest))
 
         assertDataLineage(expectedOperations, expectedAttributes, plan)
-
-        val localRelation = plan.operations.other.get.find(_.extra.get("name") == "LocalRelation").get
-        assert(localRelation.params.map(p => !p.contains("data")).getOrElse(true))
       }
     })
 
@@ -302,6 +298,70 @@ class LineageHarvesterSpec extends AnyFlatSpec
         }
       }
     }
+
+  "harvest()" should "collect user extra metadata" in {
+    withNewSparkSession(spark => {
+      val lineageCaptor = new LineageCaptor
+
+      val testSplineConfigurer = new DefaultSplineConfigurer(EMPTY_CONF) {
+        override protected def lineageDispatcher: LineageDispatcher = new LineageCapturingDispatcher(lineageCaptor.setter)
+
+        override protected def userExtraMetadataProvider: UserExtraMetadataProvider = new UserExtraMetadataProvider {
+          override def forExecEvent(event: ExecutionEvent, ctx: HarvestingContext): Map[String, Any] = Map("test.extra" -> event)
+
+          override def forExecPlan(plan: ExecutionPlan, ctx: HarvestingContext): Map[String, Any] = Map("test.extra" -> plan)
+
+          override def forOperation(op: ReadOperation, ctx: HarvestingContext): Map[String, Any] = Map("test.extra" -> op)
+
+          override def forOperation(op: WriteOperation, ctx: HarvestingContext): Map[String, Any] = Map("test.extra" -> op)
+
+          override def forOperation(op: DataOperation, ctx: HarvestingContext): Map[String, Any] = Map("test.extra" -> op)
+        }
+      }
+
+      import SparkLineageInitializer._
+      import spark.implicits._
+      spark.enableLineageTracking(testSplineConfigurer)
+
+      val dummyCSVFile = TempFile(prefix = "spline-test", suffix = ".csv").deleteOnExit().path
+      FileUtils.write(dummyCSVFile.toFile, "1,2,3", "UTF-8")
+
+      val (plan, Seq(event)) = lineageCaptor.getter.lineageOf {
+        spark
+          .read.csv(dummyCSVFile.toString)
+          .filter($"_c0" =!= 42)
+          .write.save(tmpDest)
+      }
+
+      inside(plan.operations) {
+        case Operations(wop, Some(Seq(rop)), Some(Seq(dop))) =>
+          wop.extra.get("test.extra") should equal(wop.copy(extra = Some(wop.extra.get - "test.extra")))
+          rop.extra.get("test.extra") should equal(rop.copy(extra = Some(rop.extra.get - "test.extra")))
+          dop.extra.get("test.extra") should equal(dop.copy(extra = Some(dop.extra.get - "test.extra")))
+      }
+
+      plan.extraInfo.get("test.extra") should equal(plan.copy(extraInfo = Some(plan.extraInfo.get - "test.extra")))
+      event.extra.get("test.extra") should equal(event.copy(extra = Some(event.extra.get - "test.extra")))
+    })
+  }
+
+  // https://github.com/AbsaOSS/spline-spark-agent/issues/39
+  it should "not capture 'data'" in {
+    withNewSparkSession(spark => {
+      withLineageTracking(spark) { lineageCaptor =>
+        import lineageCaptor._
+        import spark.implicits._
+
+        val (plan, _) = lineageOf {
+          spark.createDataset(Seq(TestRow(1, 2.3, "text"))).write.save(tmpDest)
+        }
+
+        val localRelation = plan.operations.other.get.find(_.extra.get("name") == "LocalRelation").get
+        assert(localRelation.params.forall(p => !p.contains("data")))
+      }
+    })
+  }
+
 }
 
 object LineageHarvesterSpec extends Matchers {

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.write_detection
+package za.co.absa.spline.harvester.iwd
 
 import org.apache.commons.configuration.Configuration
 import za.co.absa.spline.harvester.LineageHarvester.Metrics
-import za.co.absa.spline.harvester.write_detection.DefaultIgnoredWriteDetectionStrategy.Behaviour
+import za.co.absa.spline.harvester.iwd.DefaultIgnoredWriteDetectionStrategy.Behaviour
 
 object DefaultIgnoredWriteDetectionStrategy {
   val OnMissingMetricsKey = "spline.iwd_strategy.default.on_missing_metrics"
@@ -26,7 +26,7 @@ object DefaultIgnoredWriteDetectionStrategy {
   object Behaviour {
     val IgnoreLineage = "IGNORE_LINEAGE"
     val CaptureLineage= "CAPTURE_LINEAGE"
-    val Default = IgnoreLineage
+    val Default: String = IgnoreLineage
   }
 }
 
