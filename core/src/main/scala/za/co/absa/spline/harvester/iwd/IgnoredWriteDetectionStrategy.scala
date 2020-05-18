@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.write_detection
+package za.co.absa.spline.harvester.iwd
 
 import za.co.absa.spline.harvester.LineageHarvester.Metrics
 
@@ -28,7 +28,7 @@ import za.co.absa.spline.harvester.LineageHarvester.Metrics
  * </p>
  * <br>
  * <p>
- * By default [[za.co.absa.spline.harvester.write_detection.DefaultIgnoredWriteDetectionStrategy]] is used.
+ * By default [[za.co.absa.spline.harvester.iwd.DefaultIgnoredWriteDetectionStrategy]] is used.
  * </p>
  *
  */
