@@ -96,14 +96,14 @@ class LineageHarvester(
           ExecutionPlanExtra.DataTypes -> componentCreatorFactory.dataTypeConverter.values,
           ExecutionPlanExtra.Attributes -> componentCreatorFactory.attributeConverter.values
         )
-        val plan0 = ExecutionPlan(
+        val p = ExecutionPlan(
           id = UUID.randomUUID,
           operations = Operations(writeOp, opReads.asOption, opOthers.asOption),
           systemInfo = SystemInfo(AppMetaInfo.Spark, spark.SPARK_VERSION),
           agentInfo = Some(AgentInfo(AppMetaInfo.Spline, BuildInfo.Version)),
           extraInfo = planExtra.asOption
         )
-        plan0.withAddedExtra(userExtraMetadataProvider.forExecPlan(plan0, ctx))
+        p.withAddedExtra(userExtraMetadataProvider.forExecPlan(p, ctx))
       }
 
       if (writeCommand.mode == SaveMode.Ignore && iwdStrategy.wasWriteIgnored(writeMetrics))
@@ -115,14 +115,14 @@ class LineageHarvester(
           ExecutionEventExtra.WriteMetrics -> writeMetrics
         ).optionally[Duration]((m, d) => m + (ExecutionEventExtra.DurationNs -> d.toNanos), result.toOption)
 
-        val event0 = ExecutionEvent(
+        val ev = ExecutionEvent(
           planId = plan.id,
           timestamp = System.currentTimeMillis,
           error = result.left.toOption,
           extra = eventExtra.asOption)
 
-        val eventUserExtra = userExtraMetadataProvider.forExecEvent(event0, ctx)
-        val event = event0.withAddedExtra(eventUserExtra)
+        val eventUserExtra = userExtraMetadataProvider.forExecEvent(ev, ctx)
+        val event = ev.withAddedExtra(eventUserExtra)
 
         Some(plan -> event)
       }
