@@ -362,6 +362,23 @@ class LineageHarvesterSpec extends AnyFlatSpec
     })
   }
 
+  // https://github.com/AbsaOSS/spline-spark-agent/issues/72
+  it should "support lambdas" in {
+    withNewSparkSession(spark => {
+      withLineageTracking(spark) { lineageCaptor =>
+        import lineageCaptor._
+        import spark.implicits._
+
+        val (plan, _) = lineageOf {
+          spark.createDataset(Seq(TestRow(1, 2.3, "text"))).map(_.copy(i = 2)).write.save(tmpDest)
+        }
+
+        plan.operations.other.get should have size 4 // LocalRelation, DeserializeToObject, Map, SerializeFromObject
+        plan.operations.other.get(2).params.get should contain key "func"
+      }
+    })
+  }
+
 }
 
 object LineageHarvesterSpec extends Matchers {
