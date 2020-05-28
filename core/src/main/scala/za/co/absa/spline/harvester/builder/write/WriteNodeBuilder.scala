@@ -19,21 +19,25 @@ package za.co.absa.spline.harvester.builder.write
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.commons.lang.OptionImplicits._
-import za.co.absa.spline.harvester.ComponentCreatorFactory
 import za.co.absa.spline.harvester.ModelConstants.OperationExtras
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder
+import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
+import za.co.absa.spline.harvester.{ComponentCreatorFactory, HarvestingContext}
 import za.co.absa.spline.producer.model.WriteOperation
 
-class WriteNodeBuilder(command: WriteCommand)
-  (implicit val componentCreatorFactory: ComponentCreatorFactory)
+class WriteNodeBuilder
+  (command: WriteCommand)
+  (val componentCreatorFactory: ComponentCreatorFactory, userExtraMetadataProvider: UserExtraMetadataProvider, ctx: HarvestingContext)
   extends OperationNodeBuilder {
+
+  import za.co.absa.spline.harvester.ExtraMetadataImplicits._
 
   override protected type R = WriteOperation
   override val operation: LogicalPlan = command.query
 
   override def build(): WriteOperation = {
     val Seq(uri) = command.sourceIdentifier.uris
-    WriteOperation(
+    val wop = WriteOperation(
       outputSource = uri,
       append = command.mode == SaveMode.Append,
       id = id,
@@ -45,5 +49,7 @@ class WriteNodeBuilder(command: WriteCommand)
         OperationExtras.DestinationType -> command.sourceIdentifier.format
       ).asOption
     )
+
+    wop.withAddedExtra(userExtraMetadataProvider.forOperation(wop, ctx))
   }
 }

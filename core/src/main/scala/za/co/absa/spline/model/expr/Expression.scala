@@ -98,3 +98,12 @@ case class UDF
   override val children: Seq[Expression]
 ) extends Expression
   with TypedExpression
+
+case class UntypedExpression
+(
+  override val name: String,
+  override val children: Seq[Expression],
+  override val exprType: String,
+  override val params: Option[Map[String, Any]]
+) extends Expression
+  with GenericExpressionLike

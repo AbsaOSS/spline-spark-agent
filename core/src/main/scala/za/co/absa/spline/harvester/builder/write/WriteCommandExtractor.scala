@@ -22,7 +22,7 @@ import org.apache.spark.sql.catalyst.catalog.{CatalogStorageFormat, CatalogTable
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.command._
 import org.apache.spark.sql.execution.datasources.jdbc.JdbcRelationProvider
-import org.apache.spark.sql.execution.datasources.{InsertIntoHadoopFsRelationCommand, SaveIntoDataSourceCommand}
+import org.apache.spark.sql.execution.datasources.{InsertIntoDataSourceCommand, InsertIntoHadoopFsRelationCommand, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.hive.execution.{CreateHiveTableAsSelectCommand, InsertIntoHiveTable}
 import org.apache.spark.sql.sources.DataSourceRegister
 import org.apache.spark.sql.{SaveMode, SparkSession}
@@ -60,6 +60,11 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
           case Some(ElasticSearchSourceExtractor(_)) => asElasticSearchWriteCommand(cmd)
           case Some("es") => asElasticSearchWriteCommand(cmd) //for spark 2.2
 
+          case Some("com.databricks.spark.avro") => //for spark 2.2
+            val path = pathQualifier.qualify(cmd.options("path"))
+            val qPath = pathQualifier.qualify(path)
+            WriteCommand(cmd.nodeName, SourceIdentifier(Some("Avro"), qPath), cmd.mode, cmd.query, cmd.options)
+
           case _ =>
             val maybeFormat = maybeSourceType.map {
               case dsr: DataSourceRegister => dsr.shortName
@@ -74,9 +79,21 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
 
       case cmd: InsertIntoHadoopFsRelationCommand =>
         val path = cmd.outputPath.toString
-        val format = cmd.fileFormat.toString
         val qPath = pathQualifier.qualify(path)
-        WriteCommand(cmd.nodeName, SourceIdentifier(Some(format), qPath), cmd.mode, cmd.query, cmd.options)
+        val fileFormat = cmd.fileFormat
+        fileFormat match {
+          case SparkAvroSourceExtractor(avro) =>
+            WriteCommand(cmd.nodeName, SourceIdentifier(Some("Avro"), qPath), cmd.mode, cmd.query, cmd.options)
+          case DatabricksAvroSourceExtractor(avro) =>
+            WriteCommand(cmd.nodeName, SourceIdentifier(Some("Avro"), qPath), cmd.mode, cmd.query, cmd.options)
+          case _ =>
+            val format = fileFormat.toString
+            WriteCommand(cmd.nodeName, SourceIdentifier(Some(format), qPath), cmd.mode, cmd.query, cmd.options)
+        }
+
+
+      case cmd: InsertIntoDataSourceCommand =>
+        asInsertIntoDataSourceCommand(cmd)
 
       case `_: InsertIntoDataSourceDirCommand`(cmd) =>
         asDirWriteCommand(cmd.nodeName, cmd.storage, cmd.provider, cmd.overwrite, cmd.query)
@@ -134,6 +151,17 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
     WriteCommand(cmd.nodeName, SourceIdentifier.forElasticSearch(server, indexDocType), cmd.mode, cmd.query, cmd.options)
   }
 
+  private def asInsertIntoDataSourceCommand(cmd: InsertIntoDataSourceCommand) = {
+    val catalogTable = cmd.logicalRelation.catalogTable
+    val path = catalogTable.flatMap(_.storage.locationUri).map(_.toString)
+      .getOrElse(sys.error(s"Cannot extract source URI from InsertIntoDataSourceCommand"))
+    val format = catalogTable.flatMap(_.provider).map(_.toLowerCase)
+      .getOrElse(sys.error(s"Cannot extract format from InsertIntoDataSourceCommand"))
+    val qPath = pathQualifier.qualify(path)
+    val mode = if (cmd.overwrite) SaveMode.Overwrite else SaveMode.Append
+    WriteCommand(cmd.nodeName, SourceIdentifier(Some(format), qPath), mode, cmd.query)
+  }
+
   private def asDirWriteCommand(name: String, storage: CatalogStorageFormat, provider: String, overwrite: Boolean, query: LogicalPlan) = {
     val uri = storage.locationUri.getOrElse(sys.error(s"Cannot determine the data source location: $storage"))
     val mode = if (overwrite) Overwrite else Append
@@ -180,6 +208,10 @@ object WriteCommandExtractor {
   private object MongoDBSourceExtractor extends SafeTypeMatchingExtractor(classOf[com.mongodb.spark.sql.DefaultSource])
 
   private object ElasticSearchSourceExtractor extends SafeTypeMatchingExtractor(classOf[org.elasticsearch.spark.sql.DefaultSource15])
+
+  private object SparkAvroSourceExtractor extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.avro.AvroFileFormat")
+
+  private object DatabricksAvroSourceExtractor extends SafeTypeMatchingExtractor[AnyRef]("com.databricks.spark.avro.DefaultSource")
 
   private object DataSourceTypeExtractor extends AccessorMethodValueExtractor[AnyRef]("provider", "dataSource")
 
