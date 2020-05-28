@@ -25,10 +25,10 @@ import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.execution.{LeafExecNode, SparkPlan}
 import org.apache.spark.sql.{SaveMode, SparkSession}
 import scalaz.Scalaz._
-import za.co.absa.commons.buildinfo.BuildInfo
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.reflect.ReflectionUtils
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
+import za.co.absa.spline.common.SplineBuildInfo
 import za.co.absa.spline.harvester.LineageHarvester._
 import za.co.absa.spline.harvester.ModelConstants.{AppMetaInfo, ExecutionEventExtra, ExecutionPlanExtra}
 import za.co.absa.spline.harvester.builder.read.{ReadCommandExtractor, ReadNodeBuilder}
@@ -87,7 +87,7 @@ class LineageHarvester(logicalPlan: LogicalPlan, executedPlanOpt: Option[SparkPl
         id = UUID.randomUUID,
         operations = Operations(writeOp, opReads.asOption, opOthers.asOption),
         systemInfo = SystemInfo(AppMetaInfo.Spark, spark.SPARK_VERSION),
-        agentInfo = Some(AgentInfo(AppMetaInfo.Spline, BuildInfo.Version)),
+        agentInfo = Some(AgentInfo(AppMetaInfo.Spline, SplineBuildInfo.Version)),
         extraInfo = Map(
           ExecutionPlanExtra.AppName -> session.sparkContext.appName,
           ExecutionPlanExtra.DataTypes -> componentCreatorFactory.dataTypeConverter.values,

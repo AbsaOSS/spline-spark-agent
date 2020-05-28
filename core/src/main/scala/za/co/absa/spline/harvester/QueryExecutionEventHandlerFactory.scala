@@ -18,7 +18,7 @@ package za.co.absa.spline.harvester
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
-import za.co.absa.commons.buildinfo.BuildInfo
+import za.co.absa.spline.common.SplineBuildInfo
 import za.co.absa.spline.harvester.SparkLineageInitializer.InitFlagKey
 import za.co.absa.spline.harvester.conf.SplineConfigurer
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode._
@@ -31,7 +31,7 @@ class QueryExecutionEventHandlerFactory(sparkSession: SparkSession) extends Logg
     if (configurer.splineMode != DISABLED) {
       if (!getOrSetIsInitialized()) {
         log.info(s"Initializing Spline agent...")
-        log.info(s"Spline version: ${BuildInfo.Version}")
+        log.info(s"Spline version: ${SplineBuildInfo.Version}")
         log.info(s"Spline mode: ${configurer.splineMode}")
 
         try {
