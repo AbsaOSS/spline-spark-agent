@@ -24,7 +24,7 @@ import javax.ws.rs.core.MediaType
 import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpHeaders
 import org.apache.spark.internal.Logging
-import scalaj.http.{BaseHttp, Http}
+import scalaj.http.{BaseHttp, Http, HttpStatusException}
 import za.co.absa.commons.config.ConfigurationImplicits._
 import za.co.absa.commons.lang.ARM.using
 import za.co.absa.spline.harvester.dispatcher.HttpLineageDispatcher.{RESTResource, _}
@@ -58,6 +58,8 @@ object HttpLineageDispatcher {
     val GZIP = "gzip"
   }
 
+  private def createHttpErrorMessage(msg: String, code: Int, body: String): String =
+    s"$msg. HTTP Response: $code $body"
 }
 
 /**
@@ -100,20 +102,22 @@ class HttpLineageDispatcher(
 
   private val serverHeaders: Map[String, IndexedSeq[String]] = {
     val unableToConnectMsg = "Spark Agent was not able to establish connection to Spline Gateway"
-    val serverHasIssuesMsg = "Connection to Spline Gateway: OK, but the Gateway is not initialized properly! Check Gateway's logs."
+    val serverHasIssuesMsg = "Connection to Spline Gateway: OK, but the Gateway is not initialized properly! Check Gateway logs"
 
     Try(baseHttp(statusUrl)
       .method(HttpMethod.HEAD)
       .asString)
       .map {
-        case response if response.is2xx => response.headers
-        case response if response.is5xx => throw new SplineInitializationException(serverHasIssuesMsg)
-        case response => throw new SplineInitializationException(s"$unableToConnectMsg. Http Status: ${response.code}")
+        case resp if resp.is2xx =>
+          resp.headers
+        case resp if resp.is5xx =>
+          throw new SplineInitializationException(createHttpErrorMessage(serverHasIssuesMsg, resp.code, resp.body))
+        case resp =>
+          throw new SplineInitializationException(createHttpErrorMessage(unableToConnectMsg, resp.code, resp.body))
       }
       .recover {
         case e: SplineInitializationException => throw e
         case NonFatal(e) => throw new SplineInitializationException(unableToConnectMsg, e)
-        case _ => throw new SplineInitializationException(unableToConnectMsg)
       }
       .get
   }
@@ -153,7 +157,10 @@ class HttpLineageDispatcher(
         .throwError
         .body
     } catch {
-      case NonFatal(e) => throw new RuntimeException(s"Cannot send lineage data to $url", e)
+      case HttpStatusException(code, _, body) =>
+        throw new RuntimeException(createHttpErrorMessage(s"Cannot send lineage data to $url", code, body))
+      case NonFatal(e) =>
+        throw new RuntimeException(s"Cannot send lineage data to $url", e)
     }
   }
 
