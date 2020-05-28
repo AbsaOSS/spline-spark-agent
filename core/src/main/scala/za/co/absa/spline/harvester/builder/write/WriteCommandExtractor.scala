@@ -78,17 +78,24 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
         }
 
       case cmd: InsertIntoHadoopFsRelationCommand =>
-        val path = cmd.outputPath.toString
-        val qPath = pathQualifier.qualify(path)
-        val fileFormat = cmd.fileFormat
-        fileFormat match {
-          case SparkAvroSourceExtractor(avro) =>
-            WriteCommand(cmd.nodeName, SourceIdentifier(Some("Avro"), qPath), cmd.mode, cmd.query, cmd.options)
-          case DatabricksAvroSourceExtractor(avro) =>
-            WriteCommand(cmd.nodeName, SourceIdentifier(Some("Avro"), qPath), cmd.mode, cmd.query, cmd.options)
-          case _ =>
-            val format = fileFormat.toString
-            WriteCommand(cmd.nodeName, SourceIdentifier(Some(format), qPath), cmd.mode, cmd.query, cmd.options)
+        val catalogTable = cmd.catalogTable.orNull
+        if(catalogTable != null){
+          val mode = if (cmd.mode == SaveMode.Overwrite) Overwrite else Append
+          asTableWriteCommand(cmd.nodeName, catalogTable, mode, cmd.query)
+        }
+        else{
+          val path = cmd.outputPath.toString
+          val qPath = pathQualifier.qualify(path)
+          val fileFormat = cmd.fileFormat
+          fileFormat match {
+            case SparkAvroSourceExtractor(avro) =>
+              WriteCommand(cmd.nodeName, SourceIdentifier(Some("Avro"), qPath), cmd.mode, cmd.query, cmd.options)
+            case DatabricksAvroSourceExtractor(avro) =>
+              WriteCommand(cmd.nodeName, SourceIdentifier(Some("Avro"), qPath), cmd.mode, cmd.query, cmd.options)
+            case _ =>
+              val format = fileFormat.toString
+              WriteCommand(cmd.nodeName, SourceIdentifier(Some(format), qPath), cmd.mode, cmd.query, cmd.options)
+          }
         }
 
 

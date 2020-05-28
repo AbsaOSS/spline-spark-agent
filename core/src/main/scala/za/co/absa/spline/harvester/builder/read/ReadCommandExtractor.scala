@@ -49,16 +49,22 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
     condOpt(operation) {
       case lr: LogicalRelation => lr.relation match {
         case hr: HadoopFsRelation =>
-          val uris = hr.location.rootPaths.map(path => pathQualifier.qualify(path.toString))
-          val fileFormat = hr.fileFormat
-          fileFormat match {
-            case SparkAvroSourceRelation(avro) =>
-              ReadCommand(SourceIdentifier(Some("Avro"), uris: _*), operation, hr.options)
-            case DatabricksAvroSourceRelation(avro) =>
-              ReadCommand(SourceIdentifier(Some("Avro"), uris: _*), operation, hr.options)
-            case _ =>
-              val format = fileFormat.toString
-              ReadCommand(SourceIdentifier(Some(format), uris: _*), operation, hr.options)
+          val catalogTable = lr.catalogTable.orNull
+          if(catalogTable != null){
+            ReadCommand(SourceIdentifier.forTable(catalogTable)(pathQualifier, session), operation, params = Map("table" -> catalogTable))
+          }
+          else{
+            val uris = hr.location.rootPaths.map(path => pathQualifier.qualify(path.toString))
+            val fileFormat = hr.fileFormat
+            fileFormat match {
+              case SparkAvroSourceRelation(avro) =>
+                ReadCommand(SourceIdentifier(Some("Avro"), uris: _*), operation, hr.options)
+              case DatabricksAvroSourceRelation(avro) =>
+                ReadCommand(SourceIdentifier(Some("Avro"), uris: _*), operation, hr.options)
+              case _ =>
+                val format = fileFormat.toString
+                ReadCommand(SourceIdentifier(Some(format), uris: _*), operation, hr.options)
+            }
           }
 
         case xr: XmlRelation =>
