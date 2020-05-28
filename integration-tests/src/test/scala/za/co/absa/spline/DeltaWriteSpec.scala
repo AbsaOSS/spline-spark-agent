@@ -60,6 +60,26 @@ class DeltaWriteSpec extends AnyFlatSpec
         plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("Parquet")
       })
     })
+
+  it should "support insert into existing Delta Lake table" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.4.2") in
+    withNewSparkSession(spark => {
+      withLineageTracking(spark)(lineageCaptor => {
+        val testData: DataFrame = {
+          val schema = StructType(StructField("ID", IntegerType, nullable = false) :: StructField("NAME", StringType, nullable = false) :: Nil)
+          val rdd = spark.sparkContext.parallelize(Row(1014, "Warsaw") :: Row(1002, "Corte") :: Nil)
+          spark.sqlContext.createDataFrame(rdd, schema)
+        }
+
+        spark.sql(s"CREATE TABLE table_name(ID int, NAME string) USING DELTA LOCATION '$deltaPath'")
+
+        val (plan1, _) = lineageCaptor.lineageOf{
+          testData.createOrReplaceTempView("tempView")
+          spark.sql(s"INSERT OVERWRITE TABLE table_name SELECT * FROM tempView")
+        }
+
+        plan1.operations.write.append shouldBe false
+        plan1.operations.write.extra.get("destinationType") shouldBe Some("delta")
+        plan1.operations.write.outputSource shouldBe s"file:$deltaPath"
+      })
+    })
 }
-
-

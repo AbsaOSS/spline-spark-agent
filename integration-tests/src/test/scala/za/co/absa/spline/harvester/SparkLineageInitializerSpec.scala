@@ -52,7 +52,7 @@ class SparkLineageInitializerSpec
     with SystemFixture.IsolatedSystemPropertiesPerTest {
 
   before {
-    sys.props.put(LINEAGE_DISPATCHER_CLASS, classOf[MockLineageDispatcher].getName)
+    sys.props.put(LineageDispatcherClass, classOf[MockLineageDispatcher].getName)
     MockLineageDispatcher.reset()
   }
 
@@ -96,7 +96,7 @@ class SparkLineageInitializerSpec
 
     describe("modes") {
       it("should disable Spline and proceed, when is in BEST_EFFORT (default) mode") {
-        sys.props += MODE -> BEST_EFFORT.toString
+        sys.props += Mode -> BEST_EFFORT.toString
 
         withNewSparkSession(sparkSession => {
           sparkSession.enableLineageTracking(createFailingConfigurer())
@@ -113,7 +113,7 @@ class SparkLineageInitializerSpec
       }
 
       it("should abort application, when is in REQUIRED mode") {
-        sys.props += MODE -> REQUIRED.toString
+        sys.props += Mode -> REQUIRED.toString
 
         intercept[Exception] {
           withNewSparkSession(_.enableLineageTracking(createFailingConfigurer()))
@@ -126,7 +126,7 @@ class SparkLineageInitializerSpec
       }
 
       it("should have no effect, when is in DISABLED mode") {
-        sys.props += MODE -> DISABLED.toString
+        sys.props += Mode -> DISABLED.toString
 
         withNewSparkSession(sparkSession => {
           sparkSession.enableLineageTracking(createFailingConfigurer())
@@ -194,7 +194,7 @@ object SparkLineageInitializerSpec {
   }
 
   private def createFailingConfigurer(): DefaultSplineConfigurer = new DefaultSplineConfigurer(new SystemConfiguration) {
-    override lazy val lineageDispatcher: LineageDispatcher = sys.error("Testing exception - please ignore.")
+    override def lineageDispatcher: LineageDispatcher = sys.error("Testing exception - please ignore.")
   }
 
 }

@@ -33,13 +33,6 @@ trait SplineConfigurer {
   def queryExecutionEventHandler: QueryExecutionEventHandler
 
   /**
-   * Consumer client
-   *
-   * @return [[za.co.absa.spline.harvester.dispatcher.LineageDispatcher]]
-   */
-  val lineageDispatcher: LineageDispatcher
-
-  /**
     * Spline mode designates how Spline should behave in a context of a Spark application.
     * It mostly relates to error handling. E.g. is lineage tracking a mandatory for the given Spark app or is it good to have.
     * Should the Spark app be aborted on Spline errors or not.

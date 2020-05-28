@@ -21,23 +21,25 @@ import org.apache.spark.sql.execution.QueryExecution
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
 
+import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.util.Try
 
 class QueryExecutionEventHandler(
   harvesterFactory: LineageHarvesterFactory,
   lineageDispatcher: LineageDispatcher) {
 
   /**
-    * The method is executed when an action execution is successful.
-    *
-    * @param funcName   A name of the executed action.
-    * @param qe         A Spark object holding lineage information (logical, optimized, physical plan)
-    * @param durationNs Duration of the action execution [nanoseconds]
-    */
+   * The method is executed when an action execution is successful.
+   *
+   * @param funcName   A name of the executed action.
+   * @param qe         A Spark object holding lineage information (logical, optimized, physical plan)
+   * @param durationNs Duration of the action execution [nanoseconds]
+   */
   def onSuccess(funcName: String, qe: QueryExecution, durationNs: Long): Unit = {
     harvesterFactory
       .harvester(qe.analyzed, Some(qe.executedPlan), qe.sparkSession)
-      .harvest()
+      .harvest(Try(durationNs.nanos))
       .foreach({
         case (plan, event) =>
           val idAsJson = lineageDispatcher.send(plan)
@@ -47,12 +49,12 @@ class QueryExecutionEventHandler(
   }
 
   /**
-    * The method is executed when an error occurs during an action execution.
-    *
-    * @param funcName  A name of the executed action.
-    * @param qe        A Spark object holding lineage information (logical, optimized, physical plan)
-    * @param exception An exception describing the reason of the error
-    */
+   * The method is executed when an error occurs during an action execution.
+   *
+   * @param funcName  A name of the executed action.
+   * @param qe        A Spark object holding lineage information (logical, optimized, physical plan)
+   * @param exception An exception describing the reason of the error
+   */
   def onFailure(funcName: String, qe: QueryExecution, exception: Exception): Unit = {
     //TODO: send exec plan and an event with the error. See: https://github.com/AbsaOSS/spline/issues/310
   }

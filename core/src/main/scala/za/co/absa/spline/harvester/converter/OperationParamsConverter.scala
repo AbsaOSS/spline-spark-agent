@@ -52,7 +52,8 @@ class OperationParamsConverter(
 
     for {
       (p, v) <- ReflectionUtils.extractProperties(operation)
-      if !knownPropNames(p)
+      if !KnownPropNames(p)
+      if !IgnoredPropNames(p)
       if !isChildOperation(v)
     } yield
       p -> renderer.decompose(v, operation.schema)
@@ -60,5 +61,6 @@ class OperationParamsConverter(
 }
 
 object OperationParamsConverter {
-  private val knownPropNames = Set("nodeName", "output", "children")
+  private val KnownPropNames = Set("nodeName", "output", "children")
+  private val IgnoredPropNames = Set("data")
 }
