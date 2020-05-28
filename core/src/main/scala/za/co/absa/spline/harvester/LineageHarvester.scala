@@ -95,16 +95,24 @@ class LineageHarvester(logicalPlan: LogicalPlan, executedPlanOpt: Option[SparkPl
         ).asOption
       )
 
-      if (writeCommand.mode == SaveMode.Ignore && iwdStrategy.wasWriteIgnored(writeMetrics)) None
-      else Some(plan -> ExecutionEvent(
-        planId = plan.id,
-        timestamp = System.currentTimeMillis(),
-        error = None,
-        extra = Map(
-          ExecutionEventExtra.AppId -> session.sparkContext.applicationId,
-          ExecutionEventExtra.ReadMetrics -> readMetrics,
-          ExecutionEventExtra.WriteMetrics -> writeMetrics
-        ).asOption))
+      if (writeCommand.mode == SaveMode.Ignore && iwdStrategy.wasWriteIgnored(writeMetrics)) {
+        log.debug(s"Ignored write detected. Skipping lineage.")
+        None
+      }
+      else {
+        val event = ExecutionEvent(
+          planId = plan.id,
+          timestamp = System.currentTimeMillis(),
+          error = None,
+          extra = Map(
+            ExecutionEventExtra.AppId -> session.sparkContext.applicationId,
+            ExecutionEventExtra.ReadMetrics -> readMetrics,
+            ExecutionEventExtra.WriteMetrics -> writeMetrics
+          ).asOption)
+
+        log.debug(s"Successfully harvested lineage from ${logicalPlan.getClass}")
+        Some(plan -> event)
+      }
     })
   }
 
