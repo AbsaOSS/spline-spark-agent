@@ -17,7 +17,7 @@ package za.co.absa.spline.harvester.dispatcher
 
 import org.apache.commons.configuration.Configuration
 import org.apache.spark.internal.Logging
-import scalaj.http.Http
+import scalaj.http.{Http, HttpStatusException}
 import za.co.absa.commons.config.ConfigurationImplicits._
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.version.Version
@@ -147,9 +147,16 @@ class HttpLineageDispatcher(restClient: RestClient)
         .post(json, requestCompressionSupported)
         .throwError
         .body
-
     } catch {
-      case NonFatal(e) => throw new RuntimeException(s"Cannot send lineage data to ${endpoint.request.url}", e)
+      case e: HttpStatusException => {
+        log.error(s"Could not send lineage data to ${endpoint.request.url}: ${e.code} ${e.statusLine}", e)
+        log.debug(s"Error response body: ${e.body}")
+        throw new RuntimeException(s"Cannot send lineage data to ${endpoint.request.url}", e)
+      }
+      case NonFatal(e) => {
+        log.error(s"Could not send lineage data to ${endpoint.request.url}", e)
+        throw new RuntimeException(s"Cannot send lineage data to ${endpoint.request.url}", e)
+      }
     }
   }
 }
