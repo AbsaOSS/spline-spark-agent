@@ -53,6 +53,8 @@ class LineageHarvester(logicalPlan: LogicalPlan, executedPlanOpt: Option[SparkPl
   private val readCommandExtractor = new ReadCommandExtractor(pathQualifier, session)
 
   def harvest(): HarvestResult = {
+    log.debug(s"Harvesting lineage from ${logicalPlan.getClass}")
+
     val (readMetrics: Metrics, writeMetrics: Metrics) = executedPlanOpt.
       map(getExecutedReadWriteMetrics).
       getOrElse((Map.empty, Map.empty))
@@ -67,6 +69,9 @@ class LineageHarvester(logicalPlan: LogicalPlan, executedPlanOpt: Option[SparkPl
           None
       }
     }
+
+    if (maybeCommand.isEmpty)
+      log.debug(s"${logicalPlan.getClass} was not recognized as a write-command. Skipping.")
 
     maybeCommand.flatMap(writeCommand => {
       val writeOpBuilder = new WriteNodeBuilder(writeCommand)
