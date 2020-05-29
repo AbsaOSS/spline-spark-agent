@@ -49,9 +49,22 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
     condOpt(operation) {
       case lr: LogicalRelation => lr.relation match {
         case hr: HadoopFsRelation =>
-          val uris = hr.location.rootPaths.map(path => pathQualifier.qualify(path.toString))
-          val format = hr.fileFormat.toString
-          ReadCommand(SourceIdentifier(Some(format), uris: _*), operation, hr.options)
+          lr.catalogTable.map(catalogTable => {
+            ReadCommand(SourceIdentifier.forTable(catalogTable)(pathQualifier, session), operation, params = Map("table" -> Map("identifier" -> catalogTable.identifier, "storage" -> catalogTable.storage)))
+          })
+            .getOrElse({
+              val uris = hr.location.rootPaths.map(path => pathQualifier.qualify(path.toString))
+              val fileFormat = hr.fileFormat
+              fileFormat match {
+                case SparkAvroSourceRelation(avro) =>
+                  ReadCommand(SourceIdentifier(Some("Avro"), uris: _*), operation, hr.options)
+                case DatabricksAvroSourceRelation(avro) =>
+                  ReadCommand(SourceIdentifier(Some("Avro"), uris: _*), operation, hr.options)
+                case _ =>
+                  val format = fileFormat.toString
+                  ReadCommand(SourceIdentifier(Some(format), uris: _*), operation, hr.options)
+              }
+            })
 
         case xr: XmlRelation =>
           val uris = xr.location.toSeq.map(pathQualifier.qualify)
@@ -112,7 +125,7 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
 
       case htr: HiveTableRelation =>
         val catalogTable = htr.tableMeta
-        ReadCommand(SourceIdentifier.forTable(catalogTable)(pathQualifier, session), operation)
+        ReadCommand(SourceIdentifier.forTable(catalogTable)(pathQualifier, session), operation, params = Map("table" -> Map("identifier" -> catalogTable.identifier, "storage" -> catalogTable.storage)))
     }
 
 }
@@ -130,6 +143,10 @@ object ReadCommandExtractor {
   object `_: MongoDBSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.mongodb.spark.sql.MongoRelation")
 
   object `_: ElasticSearchSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.elasticsearch.spark.sql.ElasticsearchRelation")
+
+  object SparkAvroSourceRelation extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.avro.AvroFileFormat")
+
+  object DatabricksAvroSourceRelation extends SafeTypeMatchingExtractor[AnyRef]("com.databricks.spark.avro.DefaultSource")
 
   object TableOrQueryFromJDBCOptionsExtractor extends AccessorMethodValueExtractor[String]("table", "tableOrQuery")
 
@@ -171,4 +188,3 @@ object ReadCommandExtractor {
     fieldNames.map(fn => fn -> extract(fn)).toMap
   }
 }
-
