@@ -49,23 +49,22 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
     condOpt(operation) {
       case lr: LogicalRelation => lr.relation match {
         case hr: HadoopFsRelation =>
-          val catalogTable = lr.catalogTable.orNull
-          if(catalogTable != null){
+          lr.catalogTable.map(catalogTable => {
             ReadCommand(SourceIdentifier.forTable(catalogTable)(pathQualifier, session), operation, params = Map("table" -> catalogTable))
-          }
-          else{
-            val uris = hr.location.rootPaths.map(path => pathQualifier.qualify(path.toString))
-            val fileFormat = hr.fileFormat
-            fileFormat match {
-              case SparkAvroSourceRelation(avro) =>
-                ReadCommand(SourceIdentifier(Some("Avro"), uris: _*), operation, hr.options)
-              case DatabricksAvroSourceRelation(avro) =>
-                ReadCommand(SourceIdentifier(Some("Avro"), uris: _*), operation, hr.options)
-              case _ =>
-                val format = fileFormat.toString
-                ReadCommand(SourceIdentifier(Some(format), uris: _*), operation, hr.options)
-            }
-          }
+          })
+            .getOrElse({
+              val uris = hr.location.rootPaths.map(path => pathQualifier.qualify(path.toString))
+              val fileFormat = hr.fileFormat
+              fileFormat match {
+                case SparkAvroSourceRelation(avro) =>
+                  ReadCommand(SourceIdentifier(Some("Avro"), uris: _*), operation, hr.options)
+                case DatabricksAvroSourceRelation(avro) =>
+                  ReadCommand(SourceIdentifier(Some("Avro"), uris: _*), operation, hr.options)
+                case _ =>
+                  val format = fileFormat.toString
+                  ReadCommand(SourceIdentifier(Some(format), uris: _*), operation, hr.options)
+              }
+            })
 
         case xr: XmlRelation =>
           val uris = xr.location.toSeq.map(pathQualifier.qualify)
@@ -126,7 +125,7 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
 
       case htr: HiveTableRelation =>
         val catalogTable = htr.tableMeta
-        ReadCommand(SourceIdentifier.forTable(catalogTable)(pathQualifier, session), operation)
+        ReadCommand(SourceIdentifier.forTable(catalogTable)(pathQualifier, session), operation, params = Map("table" -> catalogTable))
     }
 
 }
