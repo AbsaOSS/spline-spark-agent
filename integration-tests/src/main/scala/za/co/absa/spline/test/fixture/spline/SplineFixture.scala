@@ -32,7 +32,7 @@ trait SplineFixture {
     val lineageCaptor = new LineageCaptor
 
     val testSplineConfigurer = new DefaultSplineConfigurer(EMPTY_CONF) {
-      override lazy val lineageDispatcher: LineageDispatcher =
+      override def lineageDispatcher: LineageDispatcher =
         new LineageCapturingDispatcher(lineageCaptor.setter)
     }
 

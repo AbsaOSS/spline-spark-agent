@@ -24,7 +24,8 @@ import org.apache.spark.sql.SparkSession
 import za.co.absa.commons.config.ConfigurationImplicits
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
-import za.co.absa.spline.harvester.write_detection.IgnoredWriteDetectionStrategy
+import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
+import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.{LineageHarvesterFactory, QueryExecutionEventHandler}
 
 import scala.reflect.ClassTag
@@ -42,14 +43,19 @@ object DefaultSplineConfigurer {
     val Mode = "spline.mode"
 
     /**
-     * Which lineage dispatcher should be used to report lineages
+     * Lineage dispatcher used to report lineages
      */
     val LineageDispatcherClass = "spline.lineage_dispatcher.className"
 
     /**
-     * Which strategy should be used to detect mode=ignore writes
+     * Strategy used to detect ignored writes
      */
     val IgnoreWriteDetectionStrategyClass = "spline.iwd_strategy.className"
+
+    /**
+     * Which strategy should be used to detect mode=ignore writes
+     */
+    val UserExtraMetadataProviderClass = "spline.user_extra_meta_provider.className"
   }
 
   def apply(sparkSession: SparkSession): DefaultSplineConfigurer = {
@@ -82,15 +88,26 @@ class DefaultSplineConfigurer(userConfiguration: Configuration)
     }
   }
 
-  override lazy val lineageDispatcher: LineageDispatcher = instantiate[LineageDispatcher](
+  override def queryExecutionEventHandler: QueryExecutionEventHandler =
+    new QueryExecutionEventHandler(harvesterFactory, lineageDispatcher)
+
+  protected def lineageDispatcher: LineageDispatcher = instantiate[LineageDispatcher](
     configuration.getRequiredString(LineageDispatcherClass))
 
-  private lazy val ignoreWriteDetectionStrategy = instantiate[IgnoredWriteDetectionStrategy](
+  protected def ignoredWriteDetectionStrategy: IgnoredWriteDetectionStrategy = instantiate[IgnoredWriteDetectionStrategy](
     configuration.getRequiredString(IgnoreWriteDetectionStrategyClass))
+
+  protected def userExtraMetadataProvider: UserExtraMetadataProvider = instantiate[UserExtraMetadataProvider](
+    configuration.getRequiredString(UserExtraMetadataProviderClass))
+
+  private def harvesterFactory = new LineageHarvesterFactory(
+    splineMode,
+    ignoredWriteDetectionStrategy,
+    userExtraMetadataProvider)
 
   private def instantiate[T: ClassTag](className: String): T = {
     val interfaceName = scala.reflect.classTag[T].runtimeClass.getSimpleName
-    log debug s"Instantiating ${interfaceName} for class name: $className"
+    log debug s"Instantiating $interfaceName for class name: $className"
     try {
       Class.forName(className.trim)
         .getConstructor(classOf[Configuration])
@@ -101,9 +118,4 @@ class DefaultSplineConfigurer(userConfiguration: Configuration)
       case e: InvocationTargetException => throw e.getTargetException
     }
   }
-
-  private lazy val harvesterFactory = new LineageHarvesterFactory(splineMode, ignoreWriteDetectionStrategy)
-
-  def queryExecutionEventHandler: QueryExecutionEventHandler =
-    new QueryExecutionEventHandler(harvesterFactory, lineageDispatcher)
 }
