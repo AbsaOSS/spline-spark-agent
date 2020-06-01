@@ -26,7 +26,7 @@ import com.mongodb.spark.rdd.MongoRDD
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.cassandra.TableRef
-import org.apache.spark.sql.catalyst.catalog.HiveTableRelation
+import org.apache.spark.sql.catalyst.catalog.{CatalogTable, HiveTableRelation}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.execution.datasources.{HadoopFsRelation, LogicalRelation}
@@ -49,17 +49,23 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
     condOpt(operation) {
       case lr: LogicalRelation => lr.relation match {
         case hr: HadoopFsRelation =>
-          val uris = hr.location.rootPaths.map(path => pathQualifier.qualify(path.toString))
-          val fileFormat = hr.fileFormat
-          fileFormat match {
-            case SparkAvroSourceRelation(avro) =>
-              ReadCommand(SourceIdentifier(Some("Avro"), uris: _*), operation, hr.options)
-            case DatabricksAvroSourceRelation(avro) =>
-              ReadCommand(SourceIdentifier(Some("Avro"), uris: _*), operation, hr.options)
-            case _ =>
-              val format = fileFormat.toString
-              ReadCommand(SourceIdentifier(Some(format), uris: _*), operation, hr.options)
-          }
+          lr.catalogTable
+            .map(catalogTable => {
+              ReadCommand(SourceIdentifier.forTable(catalogTable)(pathQualifier, session), operation, params = extractCatalogTableParams(catalogTable))
+            })
+            .getOrElse({
+              val uris = hr.location.rootPaths.map(path => pathQualifier.qualify(path.toString))
+              val fileFormat = hr.fileFormat
+              fileFormat match {
+                case SparkAvroSourceRelation(_) =>
+                  ReadCommand(SourceIdentifier(Some("Avro"), uris: _*), operation, hr.options)
+                case DatabricksAvroSourceRelation(_) =>
+                  ReadCommand(SourceIdentifier(Some("Avro"), uris: _*), operation, hr.options)
+                case _ =>
+                  val format = fileFormat.toString
+                  ReadCommand(SourceIdentifier(Some(format), uris: _*), operation, hr.options)
+              }
+            })
 
         case xr: XmlRelation =>
           val uris = xr.location.toSeq.map(pathQualifier.qualify)
@@ -120,9 +126,8 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
 
       case htr: HiveTableRelation =>
         val catalogTable = htr.tableMeta
-        ReadCommand(SourceIdentifier.forTable(catalogTable)(pathQualifier, session), operation)
+        ReadCommand(SourceIdentifier.forTable(catalogTable)(pathQualifier, session), operation, params = extractCatalogTableParams(catalogTable))
     }
-
 }
 
 object ReadCommandExtractor {
@@ -174,13 +179,20 @@ object ReadCommandExtractor {
   private def extractExcelParams(excelRelation: ExcelRelation): Map[String, Any] = {
     val locator = excelRelation.dataLocator
 
-    def extract(fieldName: String) = Try(extractFieldValue[Any](locator, fieldName))
-      .map(_.toString)
-      .getOrElse("")
+    def extract(fieldName: String) =
+      Try(extractFieldValue[Any](locator, fieldName))
+        .map(_.toString)
+        .getOrElse("")
 
     val fieldNames = locator.getClass.getDeclaredFields.map(_.getName)
 
     fieldNames.map(fn => fn -> extract(fn)).toMap
   }
-}
 
+  private def extractCatalogTableParams(catalogTable: CatalogTable): Map[String, Any] = {
+    Map("table" -> Map(
+      "identifier" -> catalogTable.identifier,
+      "storage" -> catalogTable.storage))
+  }
+
+}

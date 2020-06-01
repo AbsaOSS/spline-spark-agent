@@ -78,19 +78,25 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
         }
 
       case cmd: InsertIntoHadoopFsRelationCommand =>
-        val path = cmd.outputPath.toString
-        val qPath = pathQualifier.qualify(path)
-        val fileFormat = cmd.fileFormat
-        fileFormat match {
-          case SparkAvroSourceExtractor(avro) =>
-            WriteCommand(cmd.nodeName, SourceIdentifier(Some("Avro"), qPath), cmd.mode, cmd.query, cmd.options)
-          case DatabricksAvroSourceExtractor(avro) =>
-            WriteCommand(cmd.nodeName, SourceIdentifier(Some("Avro"), qPath), cmd.mode, cmd.query, cmd.options)
-          case _ =>
-            val format = fileFormat.toString
-            WriteCommand(cmd.nodeName, SourceIdentifier(Some(format), qPath), cmd.mode, cmd.query, cmd.options)
-        }
-
+        cmd.catalogTable
+          .map(catalogTable => {
+            val mode = if (cmd.mode == SaveMode.Overwrite) Overwrite else Append
+            asTableWriteCommand(cmd.nodeName, catalogTable, mode, cmd.query)
+          })
+          .getOrElse({
+            val path = cmd.outputPath.toString
+            val qPath = pathQualifier.qualify(path)
+            val fileFormat = cmd.fileFormat
+            fileFormat match {
+              case SparkAvroSourceExtractor(_) =>
+                WriteCommand(cmd.nodeName, SourceIdentifier(Some("Avro"), qPath), cmd.mode, cmd.query, cmd.options)
+              case DatabricksAvroSourceExtractor(_) =>
+                WriteCommand(cmd.nodeName, SourceIdentifier(Some("Avro"), qPath), cmd.mode, cmd.query, cmd.options)
+              case _ =>
+                val format = fileFormat.toString
+                WriteCommand(cmd.nodeName, SourceIdentifier(Some(format), qPath), cmd.mode, cmd.query, cmd.options)
+            }
+          })
 
       case cmd: InsertIntoDataSourceCommand =>
         asInsertIntoDataSourceCommand(cmd)
@@ -170,7 +176,7 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
 
   private def asTableWriteCommand(name: String, table: CatalogTable, mode: SaveMode, query: LogicalPlan) = {
     val sourceIdentifier = SourceIdentifier.forTable(table)(pathQualifier, session)
-    WriteCommand(name, sourceIdentifier, mode, query, Map("table" -> table))
+    WriteCommand(name, sourceIdentifier, mode, query, Map("table" -> Map("identifier" -> table.identifier, "storage" -> table.storage)))
   }
 
   private val commandsToBeImplemented = Seq(

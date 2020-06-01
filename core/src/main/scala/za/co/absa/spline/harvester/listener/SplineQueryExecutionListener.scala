@@ -16,6 +16,7 @@
 
 package za.co.absa.spline.harvester.listener
 
+import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.util.QueryExecutionListener
@@ -23,7 +24,11 @@ import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer
 import za.co.absa.spline.harvester.listener.SplineQueryExecutionListener._
 import za.co.absa.spline.harvester.{QueryExecutionEventHandler, QueryExecutionEventHandlerFactory}
 
-class SplineQueryExecutionListener(maybeEventHandlerConstructor: => Option[QueryExecutionEventHandler]) extends QueryExecutionListener {
+import scala.util.control.NonFatal
+
+class SplineQueryExecutionListener(maybeEventHandlerConstructor: => Option[QueryExecutionEventHandler])
+  extends QueryExecutionListener
+    with Logging {
 
   private lazy val maybeEventHandler: Option[QueryExecutionEventHandler] = maybeEventHandlerConstructor
 
@@ -33,12 +38,23 @@ class SplineQueryExecutionListener(maybeEventHandlerConstructor: => Option[Query
    */
   def this() = this(constructEventHandler())
 
-  override def onSuccess(funcName: String, qe: QueryExecution, durationNs: Long): Unit =
+  override def onSuccess(funcName: String, qe: QueryExecution, durationNs: Long): Unit = withErrorHandling(qe) {
     maybeEventHandler.foreach(_.onSuccess(funcName, qe, durationNs))
+  }
 
-  override def onFailure(funcName: String, qe: QueryExecution, exception: Exception): Unit =
+  override def onFailure(funcName: String, qe: QueryExecution, exception: Exception): Unit = withErrorHandling(qe) {
     maybeEventHandler.foreach(_.onFailure(funcName, qe, exception))
+  }
 
+  private def withErrorHandling(qe: QueryExecution)(body: => Unit): Unit = {
+    try
+      body
+    catch {
+      case NonFatal(e) =>
+        val ctx = qe.sparkSession.sparkContext
+        log.error(s"Unexpected error occurred during lineage processing for application: ${ctx.appName} #${ctx.applicationId}", e)
+    }
+  }
 }
 
 object SplineQueryExecutionListener {
@@ -51,5 +67,4 @@ object SplineQueryExecutionListener {
     val configurer = DefaultSplineConfigurer(sparkSession)
     new QueryExecutionEventHandlerFactory(sparkSession).createEventHandler(configurer)
   }
-
 }
