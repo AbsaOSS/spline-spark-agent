@@ -25,7 +25,6 @@ import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.execution.{LeafExecNode, SparkPlan}
 import scalaz.Scalaz._
-import za.co.absa.commons.buildinfo.BuildInfo
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.reflect.ReflectionUtils
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
@@ -105,7 +104,7 @@ class LineageHarvester(
           id = UUID.randomUUID,
           operations = Operations(writeOp, opReads.asOption, opOthers.asOption),
           systemInfo = SystemInfo(AppMetaInfo.Spark, spark.SPARK_VERSION),
-          agentInfo = Some(AgentInfo(AppMetaInfo.Spline, BuildInfo.Version)),
+          agentInfo = Some(AgentInfo(AppMetaInfo.Spline, SplineBuildInfo.Version)),
           extraInfo = planExtra.asOption
         )
         p.withAddedExtra(userExtraMetadataProvider.forExecPlan(p, ctx))
