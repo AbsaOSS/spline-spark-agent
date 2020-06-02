@@ -40,6 +40,9 @@ object SourceIdentifier {
   def forExcel(filePath: String): SourceIdentifier =
     SourceIdentifier(Some("excel"), filePath)
 
+  def forCobrix(filePath: String): SourceIdentifier =
+    SourceIdentifier(Some("cobrix"), filePath)
+
   def forCassandra(keyspace: String, table: String): SourceIdentifier =
     SourceIdentifier(Some("cassandra"), SourceUri.forCassandra(keyspace, table))
 
