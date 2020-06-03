@@ -92,8 +92,7 @@ class CobrixWriteSpec extends AnyFlatSpec
           .option("copybook_contents", copybook)
           .option("is_record_sequence", "true")
           .option("schema_retention_policy", "collapse_root")
-          .option("segment_id_" +
-          "level0", "R")
+          .option("segment_id_level0", "R")
           .option("segment_id_prefix", "ID")
           .load(cobrixPath).write.mode(Overwrite).saveAsTable("somewhere")
         )
