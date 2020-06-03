@@ -81,7 +81,7 @@ class CobrixWriteSpec extends AnyFlatSpec
   val bos = new FileOutputStream(cobrixPath)
   bos.write(bytes)
   bos.close()
-// taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.4.2")
+
   it should "support Cobrix as a source" in
     withNewSparkSession(spark => {
       withLineageTracking(spark)(lineageCaptor => {
