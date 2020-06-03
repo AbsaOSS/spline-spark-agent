@@ -120,6 +120,10 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
 
           ReadCommand(SourceIdentifier.forElasticSearch(server, indexDocType), operation)
 
+        case `_: CobrixSourceRelation`(cobrix) =>
+          val sourceDir = extractFieldValue[String](cobrix, "sourceDir")
+          ReadCommand(SourceIdentifier.forCobrix(sourceDir), operation)
+
         case br: BaseRelation =>
           sys.error(s"Relation is not supported: $br")
       }
@@ -147,6 +151,8 @@ object ReadCommandExtractor {
   object SparkAvroSourceRelation extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.avro.AvroFileFormat")
 
   object DatabricksAvroSourceRelation extends SafeTypeMatchingExtractor[AnyRef]("com.databricks.spark.avro.DefaultSource")
+
+  object `_: CobrixSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("za.co.absa.cobrix.spark.cobol.source.CobolRelation")
 
   object TableOrQueryFromJDBCOptionsExtractor extends AccessorMethodValueExtractor[String]("table", "tableOrQuery")
 
