@@ -36,6 +36,10 @@ trait SparkFixture {
       .config("spark.ui.enabled", "false")
       .config("spark.sql.warehouse.dir", warehouseDir)
 
+  def withSparkSession[T](testBody: SparkSession => T): T = {
+    testBody(sessionBuilder.getOrCreate)
+  }
+
   def withNewSparkSession[T](testBody: SparkSession => T): T = {
     withCustomSparkSession(identity)(testBody)
   }

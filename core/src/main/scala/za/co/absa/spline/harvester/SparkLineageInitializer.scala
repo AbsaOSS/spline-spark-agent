@@ -16,15 +16,12 @@
 
 package za.co.absa.spline.harvester
 
-import org.apache.spark
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
-import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode._
 import za.co.absa.spline.harvester.conf.{DefaultSplineConfigurer, SplineConfigurer}
 import za.co.absa.spline.harvester.listener.SplineQueryExecutionListener
 
 import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Try}
 
 /**
  * The object contains logic needed for initialization of the library
@@ -48,33 +45,11 @@ object SparkLineageInitializer extends Logging {
      * @return An original Spark session
      */
     def enableLineageTracking(configurer: SplineConfigurer = DefaultSplineConfigurer(sparkSession)): SparkSession = {
-      val splineConfiguredForCodelessInit = sparkSession.sparkContext.getConf
-        .getOption(SparkQueryExecutionListenersKey).toSeq
-        .flatMap(s => s.split(",").toSeq)
-        .contains(classOf[QueryExecutionEventHandler].getCanonicalName)
-      if (!splineConfiguredForCodelessInit || spark.SPARK_VERSION.startsWith("2.2")) {
-        if (splineConfiguredForCodelessInit) {
-          log.warn(
-            """
-              |Spline lineage tracking is also configured for codeless initialization, but codeless init is
-              |supported on Spark 2.3+ and not current version 2.2. Spline will be initialized only via code call to
-              |enableLineageTracking i.e. the same way as is now."""
-              .stripMargin.replaceAll("\n", " "))
-        }
+      new QueryExecutionEventHandlerFactory(sparkSession)
+        .createEventHandler(configurer, false)
+        .foreach(eventHandler =>
+          sparkSession.listenerManager.register(new SplineQueryExecutionListener(Some(eventHandler))))
 
-
-        new QueryExecutionEventHandlerFactory(sparkSession)
-          .createEventHandler(configurer)
-          .foreach(eventHandler =>
-            sparkSession.listenerManager.register(new SplineQueryExecutionListener(Some(eventHandler))))
-
-      } else {
-        log.warn(
-          """
-            |Spline lineage tracking is also configured for codeless initialization.
-            |It wont be initialized by this code call to enableLineageTracking now."""
-            .stripMargin.replaceAll("\n", " "))
-      }
       sparkSession
     }
   }
