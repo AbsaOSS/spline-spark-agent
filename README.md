@@ -18,6 +18,13 @@ This module is responsible for listening to spark command events and converting 
 |**Spark 2.3** | (no Delta support)         | &mdash;    |
 |**Spark 2.4** | Yes                        | Yes        |
 
+## Artifacts
+- `agent-core_Y` is a classic maven library that you can use with any compatible Spark version.
+- `spark-X-spline-agent-bundle_Y` is a fat jar. That means it contains all dependencies inside.
+
+X represents Spark version and Y represents Scala version.
+
+
 ## Spark commands support
 Some events provided by Spark are not yet implemented. Some of them will be implemented in future 
 and some of them bear no lineage information and should be ignored.
@@ -102,6 +109,27 @@ When one of these commands occurs spline will let you know.
 
 \* `SaveIntoDataSourceCommand` is produced at the same time and it's already implemented.
 
+
+## Developer documentation
+
+### Building for different Scala and Spark versions
+There are several maven profiles that makes it easy to build the project with different versions of Spark and Scala.
+- Scala profiles: `scala-2.11`, `scala-2.12`
+- Spark profiles: `spark-2.2`, `spark-2.3`, `spark-2.4`
+
+However, maven is not able to change an artifact name using profile. To do that we use `scala-cross-build-maven-plugin`.
+
+Example of usage:
+```
+# Change Scala version in pom.xml.
+mvn scala-cross-build:change-version -Pscala-2.12
+
+# now you can build for Scala 2.12
+mvn clean package -Pspark-2.4
+
+# Change back to the default Scala version.
+mvn scala-cross-build:restore-version
+```
 
 ---
 

@@ -21,16 +21,14 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.util.QueryExecutionListener
 import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer
-import za.co.absa.spline.harvester.listener.SplineQueryExecutionListener._
+import za.co.absa.spline.harvester.listener.SplineQueryExecutionListener.constructEventHandler
 import za.co.absa.spline.harvester.{QueryExecutionEventHandler, QueryExecutionEventHandlerFactory}
 
 import scala.util.control.NonFatal
 
-class SplineQueryExecutionListener(maybeEventHandlerConstructor: => Option[QueryExecutionEventHandler])
+class SplineQueryExecutionListener(maybeEventHandler: Option[QueryExecutionEventHandler])
   extends QueryExecutionListener
     with Logging {
-
-  private lazy val maybeEventHandler: Option[QueryExecutionEventHandler] = maybeEventHandlerConstructor
 
   /**
    * Listener delegate is lazily evaluated as Spline initialization requires completely initialized SparkSession
@@ -57,7 +55,7 @@ class SplineQueryExecutionListener(maybeEventHandlerConstructor: => Option[Query
   }
 }
 
-object SplineQueryExecutionListener {
+object SplineQueryExecutionListener extends Logging {
 
   private def constructEventHandler(): Option[QueryExecutionEventHandler] = {
     val sparkSession = SparkSession.getActiveSession
@@ -65,6 +63,7 @@ object SplineQueryExecutionListener {
       .getOrElse(throw new IllegalStateException("Session is unexpectedly missing. Spline cannot be initialized."))
 
     val configurer = DefaultSplineConfigurer(sparkSession)
-    new QueryExecutionEventHandlerFactory(sparkSession).createEventHandler(configurer)
+
+    new QueryExecutionEventHandlerFactory(sparkSession).createEventHandler(configurer, true)
   }
 }
