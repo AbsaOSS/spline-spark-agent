@@ -42,7 +42,7 @@ class QueryExecutionEventHandlerFactory(sparkSession: SparkSession) extends Logg
         if (isCodelessInit) {
           Some(initEventHandler(configurer))
         } else {
-          assureOneListenerPerSession(configurer) {
+          assureOneListenerPerSession {
             initEventHandler(configurer)
           }
         }
@@ -66,7 +66,7 @@ class QueryExecutionEventHandlerFactory(sparkSession: SparkSession) extends Logg
     eventHandler
   }
 
-  private def assureOneListenerPerSession(configurer: SplineConfigurer)(body: => QueryExecutionEventHandler) = {
+  private def assureOneListenerPerSession(body: => QueryExecutionEventHandler) = {
     if (isCodelessInitActive()) {
       None
     } else {

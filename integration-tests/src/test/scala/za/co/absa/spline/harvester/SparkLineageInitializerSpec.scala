@@ -71,9 +71,15 @@ class SparkLineageInitializerSpec
     it("should propagate to child sessions", ignoreIf(ver"$SPARK_VERSION" < ver"2.3")) {
       sys.props.put(SparkQueryExecutionListenersKey, classOf[SplineQueryExecutionListener].getName)
       withSparkSession(session => {
+        runDummySparkJob(session)
+        MockLineageDispatcher.verifyTheOnlyLineageCaptured()
+        MockLineageDispatcher.instanceCount should be(1)
+
+        MockLineageDispatcher.reset()
+
         runDummySparkJob(session.newSession())
         MockLineageDispatcher.verifyTheOnlyLineageCaptured()
-        MockLineageDispatcher.instanceCount should be(2)
+        MockLineageDispatcher.instanceCount should be(1)
       })
     }
   }
