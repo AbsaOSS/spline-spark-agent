@@ -20,7 +20,6 @@ import java.io.InputStream
 import java.util.Properties
 
 import com.crealytics.spark.excel.{ExcelRelation, WorkbookReader}
-import com.databricks.spark.xml.XmlRelation
 import com.mongodb.spark.config.ReadConfig
 import com.mongodb.spark.rdd.MongoRDD
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -67,9 +66,11 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
               }
             })
 
-        case xr: XmlRelation =>
-          val uris = xr.location.toSeq.map(pathQualifier.qualify)
-          ReadCommand(SourceIdentifier(Some("XML"), uris: _*), operation, xr.parameters)
+        case `_: XmlRelation`(xr) =>
+          val parameters = extractFieldValue[Map[String, String]](xr, "parameters")
+          val location = extractFieldValue[Option[String]](xr, "location")
+          val qualifiedPaths = location.toSeq.map(pathQualifier.qualify)
+          ReadCommand(SourceIdentifier.forXml(qualifiedPaths), operation, parameters)
 
         case `_: JDBCRelation`(jr) =>
           val jdbcOptions = extractFieldValue[JDBCOptions](jr, "jdbcOptions")
@@ -135,6 +136,8 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
 }
 
 object ReadCommandExtractor {
+
+  object `_: XmlRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.databricks.spark.xml.XmlRelation")
 
   object `_: JDBCRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.execution.datasources.jdbc.JDBCRelation")
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ABSA Group Limited
+ * Copyright 2020 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,14 @@ import za.co.absa.commons.io.{TempDirectory, TempFile}
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 
-class ExcelSpec extends AnyFlatSpec
+class XmlSpec extends AnyFlatSpec
   with Matchers
   with SparkFixture
   with SplineFixture {
 
-  private val filePath = TempFile("file1", ".xlsx", false).deleteOnExit().path.toAbsolutePath.toString
+  private val filePath = TempFile("file1", ".xml", false).deleteOnExit().path.toAbsolutePath.toString
 
-  it should "support Excel files as a source" in
+  it should "support Xml files as a source" in
     withNewSparkSession(spark => {
       withLineageTracking(spark)(lineageCaptor => {
         val testData: DataFrame = {
@@ -43,8 +43,9 @@ class ExcelSpec extends AnyFlatSpec
 
         val (plan1, _) = lineageCaptor.lineageOf(testData
           .write
-          .format("com.crealytics.spark.excel")
-          .option("header", "true")
+          .format("xml")
+          .option("rootTag", "cities")
+          .option("rowTag", "city")
           .mode("overwrite")
           .save(filePath)
         )
@@ -52,19 +53,19 @@ class ExcelSpec extends AnyFlatSpec
         val (plan2, _) = lineageCaptor.lineageOf {
           val df = spark
             .read
-            .format("com.crealytics.spark.excel")
-            .option("header", "true")
+            .format("xml")
+            .option("rowTag", "city")
             .load(filePath)
 
           df.write.save(TempDirectory(pathOnly = true).deleteOnExit().path.toString)
         }
 
         plan1.operations.write.append shouldBe false
-        plan1.operations.write.extra.get("destinationType") shouldBe Some("excel")
+        plan1.operations.write.extra.get("destinationType") shouldBe Some("xml")
         plan1.operations.write.outputSource shouldBe s"file:$filePath"
 
         plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
-        plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("excel")
+        plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("xml")
       })
     })
 
