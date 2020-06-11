@@ -52,5 +52,7 @@ object SourceIdentifier {
   def forElasticSearch(server: String, indexDocType: String): SourceIdentifier =
     SourceIdentifier(Some("elasticsearch"), SourceUri.forElastiSearch(server, indexDocType))
 
+  def forXml(qualifiedPaths: Seq[String]): SourceIdentifier =
+    SourceIdentifier(Some("xml"), qualifiedPaths: _*)
 
 }

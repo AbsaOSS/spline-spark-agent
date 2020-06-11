@@ -61,7 +61,7 @@ class WriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
           case Some("es") => asElasticSearchWriteCommand(cmd) //for spark 2.2
 
           case Some("com.databricks.spark.avro") => //for spark 2.2
-            val path = pathQualifier.qualify(cmd.options("path"))
+            val path = cmd.options("path")
             val qPath = pathQualifier.qualify(path)
             WriteCommand(cmd.nodeName, SourceIdentifier(Some("Avro"), qPath), cmd.mode, cmd.query, cmd.options)
 
