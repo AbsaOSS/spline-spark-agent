@@ -21,7 +21,7 @@ import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.harvester.ModelConstants.OperationExtras
 import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
 import za.co.absa.spline.harvester.{ComponentCreatorFactory, HarvestingContext}
-import za.co.absa.spline.producer.model.DataOperation
+import za.co.absa.spline.producer.model.v1_1.DataOperation
 
 class GenericNodeBuilder
   (val operation: LogicalPlan)
@@ -34,9 +34,9 @@ class GenericNodeBuilder
 
   override def build(): DataOperation = {
     val dop = DataOperation(
-      id = id,
-      childIds = childIds.toList.asOption,
-      schema = if (!isTerminal && childOutputSchemas.forall(outputSchema.==)) None else Some(outputSchema),
+      id = id.toString,
+      childIds = childIds.toList.map(_.toString).asOption,
+      //schema = if (!isTerminal && childOutputSchemas.forall(outputSchema.==)) None else Some(outputSchema),
       params = componentCreatorFactory.operationParamsConverter.convert(operation).asOption,
       extra = Map(OperationExtras.Name -> operation.nodeName).asOption
     )

@@ -41,7 +41,7 @@ import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode._
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.exception.SplineInitializationException
 import za.co.absa.spline.harvester.listener.SplineQueryExecutionListener
-import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
+import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 import za.co.absa.spline.test.fixture.{SparkFixture, SystemFixture}
 
 class SparkLineageInitializerSpec

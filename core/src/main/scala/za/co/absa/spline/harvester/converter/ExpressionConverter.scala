@@ -44,7 +44,7 @@ class ExpressionConverter(
       expr.AttrRef(attributeConverter.convert(a).id)
 
     case lit: expressions.Literal =>
-      expr.Literal(dataConverter.convert((lit.value, lit.dataType)), getDataType(lit).id)
+      expr.Literal.apply(dataConverter.convert(Tuple2.apply(lit.value, lit.dataType)), getDataType(lit).id)
 
     case bo: expressions.BinaryOperator =>
       expr.Binary(

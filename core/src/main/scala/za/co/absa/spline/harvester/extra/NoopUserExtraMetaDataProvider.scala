@@ -18,7 +18,7 @@ package za.co.absa.spline.harvester.extra
 
 import org.apache.commons.configuration.Configuration
 import za.co.absa.spline.harvester.HarvestingContext
-import za.co.absa.spline.producer.model._
+import za.co.absa.spline.producer.model.v1_1._
 
 class NoopUserExtraMetaDataProvider() extends UserExtraMetadataProvider {
 
