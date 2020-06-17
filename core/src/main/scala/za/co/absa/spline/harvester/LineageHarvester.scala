@@ -38,7 +38,7 @@ import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
 import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.logging.ObjectStructureDumper
-import za.co.absa.spline.producer.model._
+import za.co.absa.spline.producer.model.v1_1._
 
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
@@ -94,17 +94,26 @@ class LineageHarvester(
           case ((accRead, accOther), opOther: DataOperation) => (accRead, accOther :+ opOther)
         }
 
+      val planId = UUID.randomUUID
       val plan = {
         val planExtra = Map[String, Any](
           ExecutionPlanExtra.AppName -> ctx.session.sparkContext.appName,
-          ExecutionPlanExtra.DataTypes -> componentCreatorFactory.dataTypeConverter.values,
-          ExecutionPlanExtra.Attributes -> componentCreatorFactory.attributeConverter.values
+          ExecutionPlanExtra.DataTypes -> componentCreatorFactory.dataTypeConverter.values
         )
+
+        val exprConverters = componentCreatorFactory.expressionConverters
+        val expressions = Expressions(
+          attributes = exprConverters.flatMap(_.attributes),
+          constants = exprConverters.flatMap(_.literals),
+          functions = exprConverters.flatMap(_.functionalExpressions)
+        )
+
         val p = ExecutionPlan(
-          id = UUID.randomUUID,
+          id = Some(planId),
           operations = Operations(writeOp, opReads.asOption, opOthers.asOption),
-          systemInfo = SystemInfo(AppMetaInfo.Spark, spark.SPARK_VERSION),
-          agentInfo = Some(AgentInfo(AppMetaInfo.Spline, SplineBuildInfo.Version)),
+          expressions = Some(expressions),
+          systemInfo = NameAndVersion(AppMetaInfo.Spark, spark.SPARK_VERSION),
+          agentInfo = Some(NameAndVersion(AppMetaInfo.Spline, SplineBuildInfo.Version)),
           extraInfo = planExtra.asOption
         )
         p.withAddedExtra(userExtraMetadataProvider.forExecPlan(p, ctx))
@@ -122,7 +131,7 @@ class LineageHarvester(
         ).optionally[Duration]((m, d) => m + (ExecutionEventExtra.DurationNs -> d.toNanos), result.toOption)
 
         val ev = ExecutionEvent(
-          planId = plan.id,
+          planId = planId,
           timestamp = System.currentTimeMillis,
           error = result.left.toOption,
           extra = eventExtra.asOption)

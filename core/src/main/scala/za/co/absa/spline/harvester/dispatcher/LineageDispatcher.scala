@@ -17,7 +17,7 @@
 package za.co.absa.spline.harvester.dispatcher
 
 import za.co.absa.spline.harvester.exception.SplineInitializationException
-import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
+import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 
 /**
  * <p>

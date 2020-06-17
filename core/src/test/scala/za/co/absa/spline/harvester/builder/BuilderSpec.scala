@@ -25,7 +25,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.spline.harvester.builder.read.{ReadCommand, ReadNodeBuilder}
 import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
 import za.co.absa.spline.harvester.{ComponentCreatorFactory, HarvestingContext}
-import za.co.absa.spline.producer.model.ReadOperation
+import za.co.absa.spline.producer.model.v1_1.ReadOperation
 
 class BuilderSpec extends AnyFlatSpec with Matchers with MockitoSugar {
 

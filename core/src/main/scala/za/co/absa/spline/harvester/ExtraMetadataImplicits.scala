@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.harvester
 
-import za.co.absa.spline.producer.model._
+import za.co.absa.spline.producer.model.v1_1._
 
 object ExtraMetadataImplicits {
 

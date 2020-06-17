@@ -17,7 +17,7 @@
 package za.co.absa.spline.harvester.extra
 
 import za.co.absa.spline.harvester.HarvestingContext
-import za.co.absa.spline.producer.model._
+import za.co.absa.spline.producer.model.v1_1._
 
 trait UserExtraMetadataProvider {
   def forExecEvent(event: ExecutionEvent, ctx: HarvestingContext): Map[String, Any]
