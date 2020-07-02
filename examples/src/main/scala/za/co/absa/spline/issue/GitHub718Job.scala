@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 ABSA Group Limited
+ * Copyright 2020 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.example.batch
+package za.co.absa.spline.issue
 
 import org.apache.commons.io.FileUtils
 import za.co.absa.commons.io.TempFile
-import za.co.absa.spline.example.SparkApp
+import za.co.absa.spline.SparkApp
 import za.co.absa.spline.harvester.SparkLineageInitializer._
 
-object GitHub718Example extends SparkApp("GitHub spline-718") {
+object GitHub718Job extends SparkApp("GitHub spline-718") {
 
   spark.enableLineageTracking()
 

@@ -21,7 +21,7 @@ import org.apache.spark.sql.functions.max
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row}
 import za.co.absa.commons.io.TempFile
-import za.co.absa.spline.example.SparkApp
+import za.co.absa.spline.SparkApp
 import za.co.absa.spline.harvester.SparkLineageInitializer._
 
 /**

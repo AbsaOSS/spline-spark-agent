@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.example.batch
 
-import za.co.absa.spline.example.SparkApp
+import za.co.absa.spline.SparkApp
 
 object ExcelJob extends SparkApp("Excel Job", conf = Seq("spark.sql.shuffle.partitions" -> "4")) {
 
