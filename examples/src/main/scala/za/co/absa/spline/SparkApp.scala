@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 ABSA Group Limited
+ * Copyright 2020 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.example
+package za.co.absa.spline
 
 import org.apache.spark.sql.{SQLContext, SQLImplicits, SparkSession}
 

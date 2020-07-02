@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.example.batchWithDependencies
 
-import za.co.absa.spline.example.SparkApp
+import za.co.absa.spline.SparkApp
 
 import scala.language.postfixOps
 
