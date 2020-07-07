@@ -43,7 +43,9 @@ import scala.collection.JavaConverters._
 import scala.util.Try
 
 
-class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) {
+class ReadCommandExtractor(pathQualifier: PathQualifier,
+                           session: SparkSession,
+                           relationHandler: ReadRelationHandler = NoOpReadRelationHandler()) {
   def asReadCommand(operation: LogicalPlan): Option[ReadCommand] =
     condOpt(operation) {
       case lr: LogicalRelation => lr.relation match {
@@ -126,7 +128,12 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
           ReadCommand(SourceIdentifier.forCobrix(sourceDir), operation)
 
         case br: BaseRelation =>
-          sys.error(s"Relation is not supported: $br")
+          if (relationHandler.isApplicable(br)) {
+            relationHandler(br,
+                            operation)
+          } else {
+            sys.error(s"Relation is not supported: $br")
+          }
       }
 
       case htr: HiveTableRelation =>
