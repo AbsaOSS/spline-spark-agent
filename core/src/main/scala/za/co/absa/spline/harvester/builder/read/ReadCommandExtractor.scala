@@ -45,7 +45,7 @@ import scala.util.Try
 
 class ReadCommandExtractor(pathQualifier: PathQualifier,
                            session: SparkSession,
-                           relationHandler: ReadRelationHandler = NoOpReadRelationHandler()) {
+                           relationHandler: ReadRelationHandler) {
   def asReadCommand(operation: LogicalPlan): Option[ReadCommand] =
     condOpt(operation) {
       case lr: LogicalRelation => lr.relation match {
