@@ -25,9 +25,7 @@ import org.scalatestplus.mockito.MockitoSugar
 
 import scala.util.{Failure, Try}
 
-class NoOpReadRelationHandlerSpec extends AnyFlatSpec
-                                          with Matchers
-                                          with MockitoSugar {
+class NoOpReadRelationHandlerSpec extends AnyFlatSpec with Matchers with MockitoSugar {
 
   it should "unconditionally return false for isApplicable" in {
     val handler: ReadRelationHandler = NoOpReadRelationHandler()

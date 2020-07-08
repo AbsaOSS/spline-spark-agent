@@ -17,6 +17,7 @@
 package za.co.absa.spline.harvester.builder.read
 
 import org.apache.hadoop.conf.Configuration
+import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources.LogicalRelation
@@ -31,23 +32,19 @@ import za.co.absa.spline.harvester.qualifier.HDFSPathQualifier
 
 import scala.util.{Failure, Try}
 
-class ReadCommandExtractorSpec extends AnyFlatSpec
-                                       with Matchers
-                                       with SparkTestBase
-                                       with MockitoSugar {
+class ReadCommandExtractorSpec extends AnyFlatSpec with Matchers with SparkTestBase with MockitoSugar {
 
   private val conf = new Configuration()
   private val pathQualifier = new HDFSPathQualifier(conf)
 
   it must "defer to the relation handler if there is a compatible one" in {
-    val logicalPlan: TestLogicalPlan = new TestLogicalPlan(TestRelation(spark.sqlContext))
+    val logicalPlan: LogicalRelation = LogicalRelation(TestRelation(spark.sqlContext))
     object TestRelationHandler extends ReadRelationHandler {
       override def isApplicable(relation: BaseRelation): Boolean = relation.isInstanceOf[TestRelation]
 
       override def apply(relation: BaseRelation,
                          logicalPlan: LogicalPlan): ReadCommand =
-        ReadCommand(SourceIdentifier(Some("test")),
-                    logicalPlan)
+        ReadCommand(SourceIdentifier(Some("test")), logicalPlan)
     }
 
     val result: Option[ReadCommand] =
@@ -63,7 +60,7 @@ class ReadCommandExtractorSpec extends AnyFlatSpec
     val relationNotHandled: Boolean =
       Try(
         new ReadCommandExtractor(pathQualifier, spark, NoOpReadRelationHandler())
-          .asReadCommand(new TestLogicalPlan(TestRelation(spark.sqlContext)))
+          .asReadCommand(LogicalRelation(TestRelation(spark.sqlContext)))
       )
       match {
         case _: Failure[_] => true
@@ -78,8 +75,3 @@ private case class TestRelation(sqlCxt: SQLContext) extends BaseRelation {
 
   override def schema: StructType = StructType(Seq.empty)
 }
-
-private class TestLogicalPlan(delegate: BaseRelation) extends LogicalRelation(delegate,
-                                                                              Seq.empty,
-                                                                              None,
-                                                                              false)

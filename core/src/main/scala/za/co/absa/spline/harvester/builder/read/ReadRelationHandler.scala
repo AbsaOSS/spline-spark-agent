@@ -43,6 +43,5 @@ trait ReadRelationHandler extends ((BaseRelation, LogicalPlan) => ReadCommand)  
    * @param logicalPlan the plan associated with the relation
    * @return a [[ReadCommand]]
    */
-  def apply(relation: BaseRelation,
-            logicalPlan: LogicalPlan): ReadCommand
+  def apply(relation: BaseRelation, logicalPlan: LogicalPlan): ReadCommand
 }

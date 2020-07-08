@@ -35,8 +35,7 @@ class NoOpReadRelationHandler(config: Configuration) extends ReadRelationHandler
   /**
    * Unconditionally throws an [[UnsupportedOperationException]].
    */
-  override def apply(relation: BaseRelation,
-                     logicalPlan: LogicalPlan): ReadCommand =
+  override def apply(relation: BaseRelation, logicalPlan: LogicalPlan): ReadCommand =
     throw new UnsupportedOperationException("NoOpRelationHandler - use isApplicable to avoid this exception")
 }
 

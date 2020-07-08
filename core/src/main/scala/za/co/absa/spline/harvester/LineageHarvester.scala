@@ -57,9 +57,7 @@ class LineageHarvester(
   private val pathQualifier = new HDFSPathQualifier(hadoopConfiguration)
   private val opNodeBuilderFactory = new OperationNodeBuilderFactory(userExtraMetadataProvider, componentCreatorFactory, ctx)
   private val writeCommandExtractor = new WriteCommandExtractor(pathQualifier, ctx.session)
-  private val readCommandExtractor = new ReadCommandExtractor(pathQualifier,
-                                                              ctx.session,
-                                                              relationHandler)
+  private val readCommandExtractor = new ReadCommandExtractor(pathQualifier, ctx.session, relationHandler)
 
   def harvest(result: Try[Duration]): HarvestResult = {
     log.debug(s"Harvesting lineage from ${ctx.logicalPlan.getClass}")
