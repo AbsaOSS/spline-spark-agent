@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ABSA Group Limited
+ * Copyright 2020 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package za.co.absa.spline.harvester.builder.read
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources.LogicalRelation
@@ -42,16 +41,13 @@ class ReadCommandExtractorSpec extends AnyFlatSpec with Matchers with SparkTestB
     object TestRelationHandler extends ReadRelationHandler {
       override def isApplicable(relation: BaseRelation): Boolean = relation.isInstanceOf[TestRelation]
 
-      override def apply(relation: BaseRelation,
-                         logicalPlan: LogicalPlan): ReadCommand =
+      override def apply(relation: BaseRelation, logicalPlan: LogicalPlan): ReadCommand =
         ReadCommand(SourceIdentifier(Some("test")), logicalPlan)
     }
 
     val result: Option[ReadCommand] =
-      new ReadCommandExtractor(pathQualifier,
-                               spark,
-                               TestRelationHandler)
-        .asReadCommand(logicalPlan)
+      new ReadCommandExtractor(pathQualifier, spark, TestRelationHandler).asReadCommand(logicalPlan)
+
     result.isDefined mustBe true
     result.map(rc => rc.sourceIdentifier).flatMap(si => si.format).getOrElse("fail") mustBe "test"
   }

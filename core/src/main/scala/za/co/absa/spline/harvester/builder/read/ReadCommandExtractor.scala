@@ -131,8 +131,7 @@ class ReadCommandExtractor(
 
         case br: BaseRelation =>
           if (relationHandler.isApplicable(br)) {
-            relationHandler(br,
-                            operation)
+            relationHandler(br, operation)
           } else {
             sys.error(s"Relation is not supported: $br")
           }

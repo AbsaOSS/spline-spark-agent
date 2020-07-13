@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ABSA Group Limited
+ * Copyright 2020 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,8 @@ class NoOpReadRelationHandlerSpec extends AnyFlatSpec with Matchers with Mockito
   }
 
   it should "throw an exception if applied" in {
-    val operationFailed: Boolean = Try(NoOpReadRelationHandler().apply(mock[BaseRelation],
-                                                                           mock[LogicalPlan])) match {
+    val tryApplyingMocks = Try(NoOpReadRelationHandler().apply(mock[BaseRelation], mock[LogicalPlan]))
+    val operationFailed: Boolean = tryApplyingMocks match {
       case _: Failure[_] => true
       case _ => false
     }
