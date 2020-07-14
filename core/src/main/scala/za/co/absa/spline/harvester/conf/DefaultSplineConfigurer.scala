@@ -16,15 +16,14 @@
 
 package za.co.absa.spline.harvester.conf
 
-import java.lang.reflect.InvocationTargetException
-
 import org.apache.commons.configuration.{CompositeConfiguration, Configuration, PropertiesConfiguration}
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import za.co.absa.commons.config.ConfigurationImplicits
+import za.co.absa.spline.harvester
 import za.co.absa.spline.harvester.builder.read.ReadRelationHandler
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
-import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
+import za.co.absa.spline.harvester.dispatcher.{AggregateLineageDispatcher, LineageDispatcher}
 import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.{LineageHarvesterFactory, QueryExecutionEventHandler}
@@ -47,6 +46,11 @@ object DefaultSplineConfigurer {
      * Lineage dispatcher used to report lineages
      */
     val LineageDispatcherClass = "spline.lineage_dispatcher.className"
+
+    /**
+     * Secondary lineage dispatchers used to perform arbitrary actions.  This is a comma-separated list.
+     */
+    val SecondaryLineageDispatcherClasses = "spline.lineage_dispatcher.secondary.classNames"
 
     /**
      * Relation handler used to deal with proprietary relations
@@ -86,13 +90,15 @@ class DefaultSplineConfigurer(userConfiguration: Configuration)
   ).asJava)
 
   lazy val splineMode: SplineMode = {
-    val modeName = configuration.getRequiredString(Mode)
+    val modeName: String = configuration.getRequiredString(Mode)
     try SplineMode withName modeName
     catch {
       case _: NoSuchElementException => throw new IllegalArgumentException(
         s"Invalid value for property $Mode=$modeName. Should be one of: ${SplineMode.values mkString ", "}")
     }
   }
+
+  private def instantiate[T: ClassTag](className: String): T = harvester.instantiate(configuration, className)
 
   override def queryExecutionEventHandler: QueryExecutionEventHandler =
     new QueryExecutionEventHandler(harvesterFactory, lineageDispatcher)
@@ -101,8 +107,21 @@ class DefaultSplineConfigurer(userConfiguration: Configuration)
     configuration.getString(RelationHandlerClass,
                             "za.co.absa.spline.harvester.builder.read.NoOpReadRelationHandler"))
 
-  protected def lineageDispatcher: LineageDispatcher = instantiate[LineageDispatcher](
-    configuration.getRequiredString(LineageDispatcherClass))
+  protected[conf] def lineageDispatcher: LineageDispatcher = {
+    val dispatcherClassName: String = configuration.getRequiredString(LineageDispatcherClass)
+    val primaryDispatcher: LineageDispatcher = instantiate[LineageDispatcher](dispatcherClassName)
+
+    val secondaryDispatcherClassNames: Array[String] = configuration.getStringArray(
+      SecondaryLineageDispatcherClasses)
+    if (secondaryDispatcherClassNames.nonEmpty) {
+      val secondaryDispatchers: Array[LineageDispatcher] =
+        for {className <- secondaryDispatcherClassNames} yield instantiate[LineageDispatcher](className)
+      new AggregateLineageDispatcher(primaryDispatcher,
+                                     Option(secondaryDispatchers))
+    } else {
+      primaryDispatcher
+    }
+  }
 
   protected def ignoredWriteDetectionStrategy: IgnoredWriteDetectionStrategy = instantiate[IgnoredWriteDetectionStrategy](
     configuration.getRequiredString(IgnoreWriteDetectionStrategyClass))
@@ -115,18 +134,4 @@ class DefaultSplineConfigurer(userConfiguration: Configuration)
     ignoredWriteDetectionStrategy,
     userExtraMetadataProvider,
     relationHandler)
-
-  private def instantiate[T: ClassTag](className: String): T = {
-    val interfaceName = scala.reflect.classTag[T].runtimeClass.getSimpleName
-    log debug s"Instantiating $interfaceName for class name: $className"
-    try {
-      Class.forName(className.trim)
-        .getConstructor(classOf[Configuration])
-        .newInstance(configuration)
-        .asInstanceOf[T]
-    }
-    catch {
-      case e: InvocationTargetException => throw e.getTargetException
-    }
-  }
 }

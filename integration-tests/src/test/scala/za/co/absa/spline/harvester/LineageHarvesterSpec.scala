@@ -304,7 +304,7 @@ class LineageHarvesterSpec extends AnyFlatSpec
       val lineageCaptor = new LineageCaptor
 
       val testSplineConfigurer = new DefaultSplineConfigurer(EMPTY_CONF) {
-        override protected def lineageDispatcher: LineageDispatcher = new LineageCapturingDispatcher(lineageCaptor.setter)
+        override protected[harvester] def lineageDispatcher: LineageDispatcher = new LineageCapturingDispatcher(lineageCaptor.setter)
 
         override protected def userExtraMetadataProvider: UserExtraMetadataProvider = new UserExtraMetadataProvider {
           override def forExecEvent(event: ExecutionEvent, ctx: HarvestingContext): Map[String, Any] = Map("test.extra" -> event)
