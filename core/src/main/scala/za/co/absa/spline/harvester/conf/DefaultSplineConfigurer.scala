@@ -73,9 +73,7 @@ object DefaultSplineConfigurer {
   }
 }
 
-class DefaultSplineConfigurer(userConfiguration: Configuration)
-  extends SplineConfigurer
-    with Logging {
+class DefaultSplineConfigurer(userConfiguration: Configuration) extends SplineConfigurer with Logging {
 
   import ConfigurationImplicits._
   import DefaultSplineConfigurer.ConfProperty._
@@ -104,8 +102,9 @@ class DefaultSplineConfigurer(userConfiguration: Configuration)
     new QueryExecutionEventHandler(harvesterFactory, lineageDispatcher)
 
   protected def relationHandler: ReadRelationHandler = instantiate[ReadRelationHandler](
-    configuration.getString(RelationHandlerClass,
-                            "za.co.absa.spline.harvester.builder.read.NoOpReadRelationHandler"))
+    configuration.getString(
+      RelationHandlerClass,
+      "za.co.absa.spline.harvester.builder.read.NoOpReadRelationHandler"))
 
   protected[conf] def lineageDispatcher: LineageDispatcher = {
     val dispatcherClassName: String = configuration.getRequiredString(LineageDispatcherClass)

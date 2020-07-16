@@ -42,10 +42,11 @@ import scala.PartialFunction.condOpt
 import scala.collection.JavaConverters._
 import scala.util.Try
 
+class ReadCommandExtractor(
+  pathQualifier: PathQualifier,
+  session: SparkSession,
+  relationHandler: ReadRelationHandler) {
 
-class ReadCommandExtractor(pathQualifier: PathQualifier,
-                           session: SparkSession,
-                           relationHandler: ReadRelationHandler = NoOpReadRelationHandler()) {
   def asReadCommand(operation: LogicalPlan): Option[ReadCommand] =
     condOpt(operation) {
       case lr: LogicalRelation => lr.relation match {
@@ -129,8 +130,7 @@ class ReadCommandExtractor(pathQualifier: PathQualifier,
 
         case br: BaseRelation =>
           if (relationHandler.isApplicable(br)) {
-            relationHandler(br,
-                            operation)
+            relationHandler(br, operation)
           } else {
             sys.error(s"Relation is not supported: $br")
           }
@@ -210,5 +210,4 @@ object ReadCommandExtractor {
       "identifier" -> catalogTable.identifier,
       "storage" -> catalogTable.storage))
   }
-
 }
