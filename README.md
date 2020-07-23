@@ -125,7 +125,7 @@ Example of usage:
 mvn scala-cross-build:change-version -Pscala-2.12
 
 # now you can build for Scala 2.12
-mvn clean package -Pspark-2.4
+mvn clean package -Pscala-2.12,spark-2.4
 
 # Change back to the default Scala version.
 mvn scala-cross-build:restore-version
