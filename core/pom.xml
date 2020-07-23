@@ -65,6 +65,7 @@
         <dependency>
             <groupId>com.databricks</groupId>
             <artifactId>spark-xml_${scala.binary.version}</artifactId>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.crealytics</groupId>
@@ -97,6 +98,11 @@
         <dependency>
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch-hadoop</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa.cobrix</groupId>
+            <artifactId>spark-cobol_${scala.binary.version}</artifactId>
             <optional>true</optional>
         </dependency>
     </dependencies>

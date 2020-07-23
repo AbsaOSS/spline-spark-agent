@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.common
+package za.co.absa.spline.harvester.dispatcher.httpdispatcher.modelmapper
 
-import za.co.absa.commons.buildinfo.{BuildInfo, PropMapping}
+import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
-/**
- * By using 'spline-build.properties' we should avoid name conflicts with libraries properties.
- */
-object SplineBuildInfo extends BuildInfo("/spline-build", PropMapping.Default)
+object ModelMapperV1 extends ModelMapper {
+
+  // v1 is the latest api version supported so no conversion is needed
+
+  override def toDTO(plan: ExecutionPlan): AnyRef = plan
+
+  override def toDTO(event: ExecutionEvent): AnyRef = event
+}

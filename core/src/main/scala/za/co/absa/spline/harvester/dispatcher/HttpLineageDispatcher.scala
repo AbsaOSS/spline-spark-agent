@@ -15,19 +15,18 @@
 
 package za.co.absa.spline.harvester.dispatcher
 
-
-import java.io.ByteArrayOutputStream
-import java.util.zip.GZIPOutputStream
-
-import javax.ws.rs.HttpMethod
-import javax.ws.rs.core.MediaType
 import org.apache.commons.configuration.Configuration
-import org.apache.http.HttpHeaders
 import org.apache.spark.internal.Logging
-import scalaj.http.{BaseHttp, Http, HttpStatusException}
+import scalaj.http.{Http, HttpStatusException}
 import za.co.absa.commons.config.ConfigurationImplicits._
-import za.co.absa.commons.lang.ARM.using
+import za.co.absa.commons.lang.OptionImplicits._
+import za.co.absa.commons.version.Version
 import za.co.absa.spline.harvester.dispatcher.HttpLineageDispatcher.{RESTResource, _}
+import za.co.absa.spline.harvester.dispatcher.httpdispatcher.HttpConstants.Encoding
+import za.co.absa.spline.harvester.dispatcher.httpdispatcher.ProducerApiVersion.SupportedApiRange
+import za.co.absa.spline.harvester.dispatcher.httpdispatcher.modelmapper.ModelMapper
+import za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest.{RestClient, RestEndpoint}
+import za.co.absa.spline.harvester.dispatcher.httpdispatcher.{ProducerApiCompatibilityManager, ProducerApiVersion}
 import za.co.absa.spline.harvester.exception.SplineInitializationException
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
 import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
@@ -37,25 +36,25 @@ import scala.util.Try
 import scala.util.control.NonFatal
 
 object HttpLineageDispatcher {
-  val ProducerUrlProperty = "spline.producer.url"
-  val ConnectionTimeoutMsKey = "spline.timeout.connection"
-  val ReadTimeoutMsKey = "spline.timeout.read"
+  private val ProducerUrlProperty = "spline.producer.url"
+  private val ConnectionTimeoutMsKey = "spline.timeout.connection"
+  private val ReadTimeoutMsKey = "spline.timeout.read"
 
-  val DefaultConnectionTimeout: Duration = 1.second
-  val DefaultReadTimeout: Duration = 20.second
+  private val DefaultConnectionTimeout: Duration = 1.second
+  private val DefaultReadTimeout: Duration = 20.second
 
-  object RESTResource {
+  private object RESTResource {
     val ExecutionPlans = "execution-plans"
     val ExecutionEvents = "execution-events"
     val Status = "status"
   }
 
-  object SplineHttpHeaders {
-    val AcceptRequestEncoding = "ABSA-Spline-Accept-Request-Encoding"
-  }
+  private object SplineHttpHeaders {
+    private val Prefix = "ABSA-Spline"
 
-  object Encoding {
-    val GZIP = "gzip"
+    val ApiVersion = s"$Prefix-API-Version"
+    val ApiLTSVersion = s"$Prefix-API-LTS-Version"
+    val AcceptRequestEncoding = s"$Prefix-Accept-Request-Encoding"
   }
 
   private def createHttpErrorMessage(msg: String, code: Int, body: String): String =
@@ -64,49 +63,28 @@ object HttpLineageDispatcher {
 
 /**
  * HttpLineageDispatcher is responsible for sending the lineage data to spline gateway through producer API
- *
- * @param splineServerRESTEndpointBaseURL spline producer API url
- * @param baseHttp                        http client
- * @param connectionTimeout               timeout for establishing TCP connection
- * @param readTimeout                     timeout for each individual TCP packet (in already established connection)
  */
-class HttpLineageDispatcher(
-  splineServerRESTEndpointBaseURL: String,
-  baseHttp: BaseHttp,
-  connectionTimeout: Duration,
-  readTimeout: Duration)
+class HttpLineageDispatcher(restClient: RestClient)
   extends LineageDispatcher
     with Logging {
 
-  def this(splineServerRESTEndpointBaseURL: String, http: BaseHttp) = this(
-    splineServerRESTEndpointBaseURL: String,
-    http: BaseHttp,
-    DefaultConnectionTimeout,
-    DefaultReadTimeout
-  )
-
   def this(configuration: Configuration) = this(
-    configuration.getRequiredString(ProducerUrlProperty),
-    Http,
-    configuration.getLong(ConnectionTimeoutMsKey, DefaultConnectionTimeout.toMillis).millis,
-    configuration.getLong(ReadTimeoutMsKey, DefaultReadTimeout.toMillis).millis
-  )
+    RestClient(
+      Http,
+      configuration.getRequiredString(ProducerUrlProperty),
+      configuration.getLong(ConnectionTimeoutMsKey, DefaultConnectionTimeout.toMillis).millis,
+      configuration.getLong(ReadTimeoutMsKey, DefaultReadTimeout.toMillis).millis
+    ))
 
-  log.info(s"spline.producer.url is set to:'$splineServerRESTEndpointBaseURL'")
-  log.info(s"spline.timeout.connection is set to:'$connectionTimeout' ms")
-  log.info(s"spline.timeout.read is set to:'$readTimeout' ms")
-
-  private val executionPlansUrl = s"$splineServerRESTEndpointBaseURL/${RESTResource.ExecutionPlans}"
-  private val executionEventsUrl = s"$splineServerRESTEndpointBaseURL/${RESTResource.ExecutionEvents}"
-  private val statusUrl = s"$splineServerRESTEndpointBaseURL/${RESTResource.Status}"
+  private val statusEndpoint = restClient.endpoint(RESTResource.Status)
+  private val executionPlansEndpoint = restClient.endpoint(RESTResource.ExecutionPlans)
+  private val executionEventsEndpoint = restClient.endpoint(RESTResource.ExecutionEvents)
 
   private val serverHeaders: Map[String, IndexedSeq[String]] = {
     val unableToConnectMsg = "Spark Agent was not able to establish connection to Spline Gateway"
     val serverHasIssuesMsg = "Connection to Spline Gateway: OK, but the Gateway is not initialized properly! Check Gateway logs"
 
-    Try(baseHttp(statusUrl)
-      .method(HttpMethod.HEAD)
-      .asString)
+    Try(statusEndpoint.head())
       .map {
         case resp if resp.is2xx =>
           resp.headers
@@ -120,55 +98,66 @@ class HttpLineageDispatcher(
         case NonFatal(e) => throw new SplineInitializationException(unableToConnectMsg, e)
       }
       .get
+      .withDefaultValue(Array.empty[String])
   }
 
-  private lazy val requestCompressionSupported: Boolean =
-    serverHeaders
-      .get(SplineHttpHeaders.AcceptRequestEncoding)
-      .toSeq.flatten
+  private val modelMapper = ModelMapper.forApiVersion({
+    val serverApiVersions =
+      serverHeaders(SplineHttpHeaders.ApiVersion)
+        .map(Version.asSimple)
+        .asOption
+        .getOrElse(Seq(ProducerApiVersion.Default))
+
+    val serverApiLTSVersions =
+      serverHeaders(SplineHttpHeaders.ApiLTSVersion)
+        .map(Version.asSimple)
+        .asOption
+        .getOrElse(serverApiVersions)
+
+    val apiCompatManager = ProducerApiCompatibilityManager(serverApiVersions, serverApiLTSVersions)
+
+    apiCompatManager.newerServerApiVersion.foreach(ver => log.warn(s"Newer Producer API version ${ver.asString} is available on the server"))
+    apiCompatManager.deprecatedApiVersion.foreach(ver => log.warn(s"UPGRADE SPLINE AGENT! Producer API version ${ver.asString} is deprecated"))
+
+    val apiVersion = apiCompatManager.highestCompatibleApiVersion.getOrElse(throw new SplineInitializationException(
+      s"Spline Agent and Server versions don't match. " +
+        s"Agent supports API versions ${SupportedApiRange.Min.asString} to ${SupportedApiRange.Max.asString}, " +
+        s"but the server only provides: ${serverApiVersions.map(_.asString).mkString(", ")}"))
+
+    log.debug(s"Selected Producer API version: ${apiVersion.asString}")
+
+    apiVersion
+  })
+
+  private val requestCompressionSupported: Boolean =
+    serverHeaders(SplineHttpHeaders.AcceptRequestEncoding)
       .exists(_.toLowerCase == Encoding.GZIP)
 
-  private def compressData(json: String): Array[Byte] = {
-    val bytes = json.getBytes("UTF-8")
-    val byteStream = new ByteArrayOutputStream(bytes.length)
-    using(new GZIPOutputStream(byteStream))(_.write(bytes))
-    byteStream.toByteArray // byteStream doesn't need to be closed
+  override def send(executionPlan: ExecutionPlan): String = {
+    val execPlanDTO = modelMapper.toDTO(executionPlan)
+    sendJson(execPlanDTO.toJson, executionPlansEndpoint)
   }
 
-  private def sendJson(json: String, url: String) = {
+  override def send(event: ExecutionEvent): Unit = {
+    val eventDTO = modelMapper.toDTO(event)
+    sendJson(Seq(eventDTO).toJson, executionEventsEndpoint)
+  }
+
+  private def sendJson(json: String, endpoint: RestEndpoint) = {
+    val url = endpoint.request.url
     log.trace(s"sendJson $url : $json")
 
-    val http =
-      if (requestCompressionSupported) {
-        baseHttp(url)
-          .postData(compressData(json))
-          .header(HttpHeaders.CONTENT_ENCODING, Encoding.GZIP)
-      } else {
-        baseHttp(url)
-          .postData(json)
-      }
-
     try {
-      http
-        .compress(true) // response compression
-        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-        .timeout(connectionTimeout.toMillis.toInt, readTimeout.toMillis.toInt)
-        .asString
+      endpoint
+        .post(json, requestCompressionSupported)
         .throwError
         .body
+
     } catch {
       case HttpStatusException(code, _, body) =>
         throw new RuntimeException(createHttpErrorMessage(s"Cannot send lineage data to $url", code, body))
       case NonFatal(e) =>
         throw new RuntimeException(s"Cannot send lineage data to $url", e)
     }
-  }
-
-  override def send(executionPlan: ExecutionPlan): String = {
-    sendJson(executionPlan.toJson, executionPlansUrl)
-  }
-
-  override def send(event: ExecutionEvent): Unit = {
-    sendJson(Seq(event).toJson, executionEventsUrl)
   }
 }

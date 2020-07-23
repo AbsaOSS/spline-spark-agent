@@ -20,13 +20,12 @@ import java.io.InputStream
 import java.util.Properties
 
 import com.crealytics.spark.excel.{ExcelRelation, WorkbookReader}
-import com.databricks.spark.xml.XmlRelation
 import com.mongodb.spark.config.ReadConfig
 import com.mongodb.spark.rdd.MongoRDD
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.cassandra.TableRef
-import org.apache.spark.sql.catalyst.catalog.HiveTableRelation
+import org.apache.spark.sql.catalyst.catalog.{CatalogTable, HiveTableRelation}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.execution.datasources.{HadoopFsRelation, LogicalRelation}
@@ -44,21 +43,26 @@ import scala.collection.JavaConverters._
 import scala.util.Try
 
 
-class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) {
+class ReadCommandExtractor(
+  pathQualifier: PathQualifier,
+  session: SparkSession,
+  relationHandler: ReadRelationHandler) {
+
   def asReadCommand(operation: LogicalPlan): Option[ReadCommand] =
     condOpt(operation) {
       case lr: LogicalRelation => lr.relation match {
         case hr: HadoopFsRelation =>
-          lr.catalogTable.map(catalogTable => {
-            ReadCommand(SourceIdentifier.forTable(catalogTable)(pathQualifier, session), operation, params = Map("table" -> Map("identifier" -> catalogTable.identifier, "storage" -> catalogTable.storage)))
-          })
+          lr.catalogTable
+            .map(catalogTable => {
+              ReadCommand(SourceIdentifier.forTable(catalogTable)(pathQualifier, session), operation, params = extractCatalogTableParams(catalogTable))
+            })
             .getOrElse({
               val uris = hr.location.rootPaths.map(path => pathQualifier.qualify(path.toString))
               val fileFormat = hr.fileFormat
               fileFormat match {
-                case SparkAvroSourceRelation(avro) =>
+                case SparkAvroSourceRelation(_) =>
                   ReadCommand(SourceIdentifier(Some("Avro"), uris: _*), operation, hr.options)
-                case DatabricksAvroSourceRelation(avro) =>
+                case DatabricksAvroSourceRelation(_) =>
                   ReadCommand(SourceIdentifier(Some("Avro"), uris: _*), operation, hr.options)
                 case _ =>
                   val format = fileFormat.toString
@@ -66,9 +70,11 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
               }
             })
 
-        case xr: XmlRelation =>
-          val uris = xr.location.toSeq.map(pathQualifier.qualify)
-          ReadCommand(SourceIdentifier(Some("XML"), uris: _*), operation, xr.parameters)
+        case `_: XmlRelation`(xr) =>
+          val parameters = extractFieldValue[Map[String, String]](xr, "parameters")
+          val location = extractFieldValue[Option[String]](xr, "location")
+          val qualifiedPaths = location.toSeq.map(pathQualifier.qualify)
+          ReadCommand(SourceIdentifier.forXml(qualifiedPaths), operation, parameters)
 
         case `_: JDBCRelation`(jr) =>
           val jdbcOptions = extractFieldValue[JDBCOptions](jr, "jdbcOptions")
@@ -119,18 +125,27 @@ class ReadCommandExtractor(pathQualifier: PathQualifier, session: SparkSession) 
 
           ReadCommand(SourceIdentifier.forElasticSearch(server, indexDocType), operation)
 
+        case `_: CobrixSourceRelation`(cobrix) =>
+          val sourceDir = extractFieldValue[String](cobrix, "sourceDir")
+          ReadCommand(SourceIdentifier.forCobrix(sourceDir), operation)
+
         case br: BaseRelation =>
-          sys.error(s"Relation is not supported: $br")
+          if (relationHandler.isApplicable(br)) {
+            relationHandler(br, operation)
+          } else {
+            sys.error(s"Relation is not supported: $br")
+          }
       }
 
       case htr: HiveTableRelation =>
         val catalogTable = htr.tableMeta
-        ReadCommand(SourceIdentifier.forTable(catalogTable)(pathQualifier, session), operation, params = Map("table" -> Map("identifier" -> catalogTable.identifier, "storage" -> catalogTable.storage)))
+        ReadCommand(SourceIdentifier.forTable(catalogTable)(pathQualifier, session), operation, params = extractCatalogTableParams(catalogTable))
     }
-
 }
 
 object ReadCommandExtractor {
+
+  object `_: XmlRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.databricks.spark.xml.XmlRelation")
 
   object `_: JDBCRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.execution.datasources.jdbc.JDBCRelation")
 
@@ -147,6 +162,8 @@ object ReadCommandExtractor {
   object SparkAvroSourceRelation extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.avro.AvroFileFormat")
 
   object DatabricksAvroSourceRelation extends SafeTypeMatchingExtractor[AnyRef]("com.databricks.spark.avro.DefaultSource")
+
+  object `_: CobrixSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("za.co.absa.cobrix.spark.cobol.source.CobolRelation")
 
   object TableOrQueryFromJDBCOptionsExtractor extends AccessorMethodValueExtractor[String]("table", "tableOrQuery")
 
@@ -179,12 +196,20 @@ object ReadCommandExtractor {
   private def extractExcelParams(excelRelation: ExcelRelation): Map[String, Any] = {
     val locator = excelRelation.dataLocator
 
-    def extract(fieldName: String) = Try(extractFieldValue[Any](locator, fieldName))
-      .map(_.toString)
-      .getOrElse("")
+    def extract(fieldName: String) =
+      Try(extractFieldValue[Any](locator, fieldName))
+        .map(_.toString)
+        .getOrElse("")
 
     val fieldNames = locator.getClass.getDeclaredFields.map(_.getName)
 
     fieldNames.map(fn => fn -> extract(fn)).toMap
   }
+
+  private def extractCatalogTableParams(catalogTable: CatalogTable): Map[String, Any] = {
+    Map("table" -> Map(
+      "identifier" -> catalogTable.identifier,
+      "storage" -> catalogTable.storage))
+  }
+
 }

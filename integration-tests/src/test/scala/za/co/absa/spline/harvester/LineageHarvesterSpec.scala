@@ -362,7 +362,6 @@ class LineageHarvesterSpec extends AnyFlatSpec
     })
   }
 
-
   // https://github.com/AbsaOSS/spline-spark-agent/issues/72
   it should "support lambdas" in {
     withNewSparkSession(spark => {

@@ -30,6 +30,7 @@ import za.co.absa.commons.version.Version._
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 
+
 class ElasticSearchSpec
   extends AnyFlatSpec
     with Matchers

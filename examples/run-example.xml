@@ -51,7 +51,7 @@
             <param name="spline.mode" value="${spline.mode}"/>
 
             <fileset dir="${basedir}" casesensitive="yes">
-                <include name="**/*Job.class"/>
+                <include name="**/example/**/*Job.class"/>
             </fileset>
         </foreach>
     </target>

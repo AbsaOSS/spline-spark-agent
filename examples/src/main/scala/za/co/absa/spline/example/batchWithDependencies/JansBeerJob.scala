@@ -18,7 +18,7 @@ package za.co.absa.spline.example.batchWithDependencies
 
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.functions.col
-import za.co.absa.spline.example.SparkApp
+import za.co.absa.spline.SparkApp
 
 object JansBeerJob extends SparkApp("Jan's Beer Job", conf = Seq("spark.sql.shuffle.partitions" -> "4")) {
 

@@ -40,6 +40,9 @@ object SourceIdentifier {
   def forExcel(filePath: String): SourceIdentifier =
     SourceIdentifier(Some("excel"), filePath)
 
+  def forCobrix(filePath: String): SourceIdentifier =
+    SourceIdentifier(Some("cobrix"), filePath)
+
   def forCassandra(keyspace: String, table: String): SourceIdentifier =
     SourceIdentifier(Some("cassandra"), SourceUri.forCassandra(keyspace, table))
 
@@ -49,5 +52,7 @@ object SourceIdentifier {
   def forElasticSearch(server: String, indexDocType: String): SourceIdentifier =
     SourceIdentifier(Some("elasticsearch"), SourceUri.forElastiSearch(server, indexDocType))
 
+  def forXml(qualifiedPaths: Seq[String]): SourceIdentifier =
+    SourceIdentifier(Some("xml"), qualifiedPaths: _*)
 
 }

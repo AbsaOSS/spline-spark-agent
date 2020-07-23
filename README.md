@@ -3,7 +3,7 @@ Spark Agent / Harvester
 
 This module is responsible for listening to spark command events and converting them to spline lineage.
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/za.co.absa.spline.agent.spark/spline-spark-agent/badge.svg)](https://search.maven.org/search?q=g:za.co.absa.spline.agent.spark)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/za.co.absa.spline.agent.spark/agent-core_2.12/badge.svg)](https://search.maven.org/search?q=g:za.co.absa.spline.agent.spark)
 [![TeamCity build](https://teamcity.jetbrains.com/app/rest/builds/aggregated/strob:%28locator:%28buildType:%28id:OpenSourceProjects_AbsaOSS_SplineAgentSpark_AutoBuildSpark24scala212%29,branch:develop%29%29/statusIcon.svg)](https://teamcity.jetbrains.com/viewType.html?buildTypeId=OpenSourceProjects_AbsaOSS_SplineAgentSpark_AutoBuildSpark24scala212&branch=develop&tab=buildTypeStatusDiv)
 [![Sonarcloud Status](https://sonarcloud.io/api/project_badges/measure?project=AbsaOSS_spline-spark-agent&metric=alert_status)](https://sonarcloud.io/dashboard?id=AbsaOSS_spline-spark-agent)
 [![SonarCloud Maintainability](https://sonarcloud.io/api/project_badges/measure?project=AbsaOSS_spline-spark-agent&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=AbsaOSS_spline-spark-agent)
@@ -17,6 +17,13 @@ This module is responsible for listening to spark command events and converting 
 |**Spark 2.2** | (no SQL; no codeless init) | &mdash;    |
 |**Spark 2.3** | (no Delta support)         | &mdash;    |
 |**Spark 2.4** | Yes                        | Yes        |
+
+## Artifacts
+- `agent-core_Y` is a classic maven library that you can use with any compatible Spark version.
+- `spark-X-spline-agent-bundle_Y` is a fat jar. That means it contains all dependencies inside.
+
+X represents Spark version and Y represents Scala version.
+
 
 ## Spark commands support
 Some events provided by Spark are not yet implemented. Some of them will be implemented in future 
@@ -102,6 +109,27 @@ When one of these commands occurs spline will let you know.
 
 \* `SaveIntoDataSourceCommand` is produced at the same time and it's already implemented.
 
+
+## Developer documentation
+
+### Building for different Scala and Spark versions
+There are several maven profiles that makes it easy to build the project with different versions of Spark and Scala.
+- Scala profiles: `scala-2.11`, `scala-2.12`
+- Spark profiles: `spark-2.2`, `spark-2.3`, `spark-2.4`
+
+However, maven is not able to change an artifact name using profile. To do that we use `scala-cross-build-maven-plugin`.
+
+Example of usage:
+```
+# Change Scala version in pom.xml.
+mvn scala-cross-build:change-version -Pscala-2.12
+
+# now you can build for Scala 2.12
+mvn clean package -Pscala-2.12,spark-2.4
+
+# Change back to the default Scala version.
+mvn scala-cross-build:restore-version
+```
 
 ---
 
