@@ -46,7 +46,7 @@ class ReadCommandExtractorSpec extends AnyFlatSpec with Matchers with SparkTestB
     }
 
     val result: Option[ReadCommand] =
-      new ReadCommandExtractor(pathQualifier, spark, TestRelationHandler).asReadCommand(logicalPlan)
+      new PluggableReadCommandExtractor(pathQualifier, spark, TestRelationHandler).asReadCommand(logicalPlan)
 
     result.isDefined mustBe true
     result.map(rc => rc.sourceIdentifier).flatMap(si => si.format).getOrElse("fail") mustBe "test"
@@ -55,7 +55,7 @@ class ReadCommandExtractorSpec extends AnyFlatSpec with Matchers with SparkTestB
   it must "return a None if there is no way to handle the relation" in {
     val relationNotHandled: Boolean =
       Try(
-        new ReadCommandExtractor(pathQualifier, spark, NoOpReadRelationHandler())
+        new PluggableReadCommandExtractor(pathQualifier, spark, NoOpReadRelationHandler())
           .asReadCommand(LogicalRelation(TestRelation(spark.sqlContext)))
       )
       match {

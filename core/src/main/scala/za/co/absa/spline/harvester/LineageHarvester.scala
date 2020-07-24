@@ -32,8 +32,8 @@ import za.co.absa.spline.harvester.ExtraMetadataImplicits._
 import za.co.absa.spline.harvester.LineageHarvester._
 import za.co.absa.spline.harvester.ModelConstants.{AppMetaInfo, ExecutionEventExtra, ExecutionPlanExtra}
 import za.co.absa.spline.harvester.builder._
-import za.co.absa.spline.harvester.builder.read.{ReadCommandExtractor, ReadRelationHandler}
-import za.co.absa.spline.harvester.builder.write.WriteCommandExtractor
+import za.co.absa.spline.harvester.builder.read.{PluggableReadCommandExtractor, ReadRelationHandler}
+import za.co.absa.spline.harvester.builder.write.PluggableWriteCommandExtractor
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
 import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
@@ -56,8 +56,8 @@ class LineageHarvester(
   private val componentCreatorFactory: ComponentCreatorFactory = new ComponentCreatorFactory
   private val pathQualifier = new HDFSPathQualifier(hadoopConfiguration)
   private val opNodeBuilderFactory = new OperationNodeBuilderFactory(userExtraMetadataProvider, componentCreatorFactory, ctx)
-  private val writeCommandExtractor = new WriteCommandExtractor(pathQualifier, ctx.session)
-  private val readCommandExtractor = new ReadCommandExtractor(pathQualifier, ctx.session, relationHandler)
+  private val writeCommandExtractor = new PluggableWriteCommandExtractor(pathQualifier, ctx.session)
+  private val readCommandExtractor = new PluggableReadCommandExtractor(pathQualifier, ctx.session, relationHandler)
 
   def harvest(result: Try[Duration]): HarvestResult = {
     log.debug(s"Harvesting lineage from ${ctx.logicalPlan.getClass}")
