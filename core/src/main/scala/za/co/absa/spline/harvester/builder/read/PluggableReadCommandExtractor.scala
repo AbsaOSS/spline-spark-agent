@@ -140,7 +140,7 @@ class PluggableReadCommandExtractor(
     case lr: LogicalRelation if `_: CobolRelation` matches lr.relation =>
       val `_: CobolRelation`(cr) = lr.relation
       val sourceDir = extractFieldValue[String](cr, "sourceDir")
-      ReadCommand(SourceIdentifier.forCobrix(sourceDir), operation)
+      ReadCommand(SourceIdentifier.forCobol(sourceDir), operation)
 
     // Other ...
     case lr: LogicalRelation =>
