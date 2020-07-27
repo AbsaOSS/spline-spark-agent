@@ -42,7 +42,7 @@ class ReadCommandExtractorSpec extends AnyFlatSpec with Matchers with SparkTestB
       override def isApplicable(relation: BaseRelation): Boolean = relation.isInstanceOf[TestRelation]
 
       override def apply(relation: BaseRelation, logicalPlan: LogicalPlan): ReadCommand =
-        ReadCommand(SourceIdentifier(Some("test")), logicalPlan)
+        ReadCommand(SourceIdentifier(Some("test")), logicalPlan, Map.empty)
     }
 
     val result: Option[ReadCommand] =

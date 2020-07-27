@@ -15,10 +15,14 @@
  */
 
 package za.co.absa.commons
+
 import scala.language.reflectiveCalls
 
+// fixme: should probably become redundant when refactoring is complete
 object ExtractorImplicits {
+
   implicit class ExtractorOps[A, B](ex: {def unapply(arg: Any): Option[B]}) {
     def matches(o: A): Boolean = ex.unapply(o).isDefined
   }
+
 }

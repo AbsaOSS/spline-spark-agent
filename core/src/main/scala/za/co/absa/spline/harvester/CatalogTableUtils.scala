@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ABSA Group Limited
+ * Copyright 2020 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.builder.read
+package za.co.absa.spline.harvester
 
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import za.co.absa.spline.harvester.builder.SourceIdentifier
+import org.apache.spark.sql.catalyst.catalog.CatalogTable
 
-case class ReadCommand(sourceIdentifier: SourceIdentifier, operation: LogicalPlan, params: Map[String, Any])
+object CatalogTableUtils {
+
+  def extractCatalogTableParams(catalogTable: CatalogTable): Map[String, Any] = {
+    Map("table" -> Map(
+      "identifier" -> catalogTable.identifier,
+      "storage" -> catalogTable.storage))
+  }
+}

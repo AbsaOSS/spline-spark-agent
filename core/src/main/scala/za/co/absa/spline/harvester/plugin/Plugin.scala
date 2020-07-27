@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ABSA Group Limited
+ * Copyright 2020 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,28 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.builder.read
+package za.co.absa.spline.harvester.plugin
 
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.execution.datasources.LogicalRelation
+import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.spline.harvester.builder.SourceIdentifier
+import za.co.absa.spline.harvester.plugin.Plugin.Params
 
-case class ReadCommand(sourceIdentifier: SourceIdentifier, operation: LogicalPlan, params: Map[String, Any])
+trait Plugin
+
+trait ReadPlugin {
+  def readNodeProcessor: PartialFunction[LogicalPlan, (SourceIdentifier, Params)]
+}
+
+trait BaseRelationPlugin {
+  def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), (SourceIdentifier, Params)]
+}
+
+trait WritePlugin {
+  def writeNodeProcessor: PartialFunction[LogicalPlan, (SourceIdentifier, Params, LogicalPlan)]
+}
+
+object Plugin {
+  type Params = Map[String, Any]
+}
