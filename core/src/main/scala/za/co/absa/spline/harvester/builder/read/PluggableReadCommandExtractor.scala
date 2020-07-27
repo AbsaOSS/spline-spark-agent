@@ -33,8 +33,8 @@ import org.apache.spark.sql.kafka010.{AssignStrategy, ConsumerStrategy, Subscrib
 import org.elasticsearch.spark.cfg.SparkSettings
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.{AccessorMethodValueExtractor, SafeTypeMatchingExtractor}
-import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.builder.read.PluggableReadCommandExtractor.{`_: XmlRelation`, _}
+import za.co.absa.spline.harvester.builder.{DataSourceFormatNameResolver, SourceIdentifier}
 import za.co.absa.spline.harvester.qualifier.PathQualifier
 
 import scala.PartialFunction.condOpt
@@ -65,10 +65,7 @@ class PluggableReadCommandExtractor(
         .getOrElse({
           val uris = hr.location.rootPaths.map(path => pathQualifier.qualify(path.toString))
           val fileFormat = hr.fileFormat
-          val formatName = fileFormat match {
-            case `_: avro.AvroFileFormat`(_) | `_: avro.DefaultSource`(_) => "Avro"
-            case _ => fileFormat.toString
-          }
+          val formatName = DataSourceFormatNameResolver.resolve(fileFormat)
           ReadCommand(SourceIdentifier(Some(formatName), uris: _*), operation, hr.options)
         })
 
@@ -171,10 +168,6 @@ object PluggableReadCommandExtractor {
   object `_: MongoRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.mongodb.spark.sql.MongoRelation")
 
   object `_: ElasticsearchRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.elasticsearch.spark.sql.ElasticsearchRelation")
-
-  object `_: avro.AvroFileFormat` extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.avro.AvroFileFormat")
-
-  object `_: avro.DefaultSource` extends SafeTypeMatchingExtractor[AnyRef]("com.databricks.spark.avro.DefaultSource")
 
   object `_: CobolRelation` extends SafeTypeMatchingExtractor[AnyRef]("za.co.absa.cobrix.spark.cobol.source.CobolRelation")
 

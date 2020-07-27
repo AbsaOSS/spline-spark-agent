@@ -24,11 +24,10 @@ import org.apache.spark.sql.execution.command._
 import org.apache.spark.sql.execution.datasources.jdbc.JdbcRelationProvider
 import org.apache.spark.sql.execution.datasources.{InsertIntoDataSourceCommand, InsertIntoHadoopFsRelationCommand, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.hive.execution.{CreateHiveTableAsSelectCommand, InsertIntoHiveTable}
-import org.apache.spark.sql.sources.DataSourceRegister
 import org.apache.spark.sql.{SaveMode, SparkSession}
 import za.co.absa.commons.reflect.extractors.{AccessorMethodValueExtractor, SafeTypeMatchingExtractor}
 import za.co.absa.spline.harvester.builder.write.PluggableWriteCommandExtractor._
-import za.co.absa.spline.harvester.builder.{SourceIdentifier, SourceUri}
+import za.co.absa.spline.harvester.builder.{DataSourceFormatNameResolver, SourceIdentifier, SourceUri}
 import za.co.absa.spline.harvester.exception.UnsupportedSparkCommandException
 import za.co.absa.spline.harvester.qualifier.PathQualifier
 
@@ -59,7 +58,7 @@ class PluggableWriteCommandExtractor(pathQualifier: PathQualifier, session: Spar
       // Cassandra
       case cmd: SaveIntoDataSourceCommand
         if cond(cmd) { case DataSourceTypeExtractor(st) => st == "org.apache.spark.sql.cassandra" || CassandraSourceExtractor.matches(st) } =>
-        asCassandarWriteCommand(cmd)
+        asCassandraWriteCommand(cmd)
 
       // Mongo
       case cmd: SaveIntoDataSourceCommand
@@ -73,17 +72,8 @@ class PluggableWriteCommandExtractor(pathQualifier: PathQualifier, session: Spar
 
       // ???...
 
-      case cmd: SaveIntoDataSourceCommand
-        if cond(cmd) { case DataSourceTypeExtractor(st) => st == "com.databricks.spark.avro" } =>
-        val path = cmd.options("path")
-        val qPath = pathQualifier.qualify(path)
-        WriteCommand(cmd.nodeName, SourceIdentifier(Some("Avro"), qPath), cmd.mode, cmd.query, cmd.options)
-
       case cmd: SaveIntoDataSourceCommand =>
-        val maybeFormat = DataSourceTypeExtractor.unapply(cmd).map {
-          case dsr: DataSourceRegister => dsr.shortName
-          case o => o.toString
-        }
+        val maybeFormat = DataSourceTypeExtractor.unapply(cmd).map(DataSourceFormatNameResolver.resolve)
         val opts = cmd.options
         val uri = opts.get("path").map(pathQualifier.qualify)
           .orElse(opts.get("topic").filter(_ => opts.contains("kafka.bootstrap.servers")).map(SourceUri.forKafka))
@@ -95,17 +85,10 @@ class PluggableWriteCommandExtractor(pathQualifier: PathQualifier, session: Spar
         val mode = if (cmd.mode == SaveMode.Overwrite) Overwrite else Append
         asTableWriteCommand(cmd.nodeName, catalogTable, mode, cmd.query)
 
-      case cmd: InsertIntoHadoopFsRelationCommand
-        if DatabricksAvroSourceExtractor.matches(cmd.fileFormat)
-          || SparkAvroSourceExtractor.matches(cmd.fileFormat) =>
-        val path = cmd.outputPath.toString
-        val qPath = pathQualifier.qualify(path)
-        WriteCommand(cmd.nodeName, SourceIdentifier(Some("Avro"), qPath), cmd.mode, cmd.query, cmd.options)
-
       case cmd: InsertIntoHadoopFsRelationCommand =>
         val path = cmd.outputPath.toString
         val qPath = pathQualifier.qualify(path)
-        val format = cmd.fileFormat.toString
+        val format = DataSourceFormatNameResolver.resolve(cmd.fileFormat)
         WriteCommand(cmd.nodeName, SourceIdentifier(Some(format), qPath), cmd.mode, cmd.query, cmd.options)
 
       case cmd: InsertIntoDataSourceCommand =>
@@ -148,7 +131,7 @@ class PluggableWriteCommandExtractor(pathQualifier: PathQualifier, session: Spar
     WriteCommand(cmd.nodeName, SourceIdentifier.forExcel(path), cmd.mode, cmd.query, cmd.options)
   }
 
-  private def asCassandarWriteCommand(cmd: SaveIntoDataSourceCommand) = {
+  private def asCassandraWriteCommand(cmd: SaveIntoDataSourceCommand) = {
     val keyspace = cmd.options("keyspace")
     val table = cmd.options("table")
     WriteCommand(cmd.nodeName, SourceIdentifier.forCassandra(keyspace, table), cmd.mode, cmd.query, cmd.options)
@@ -224,10 +207,6 @@ object PluggableWriteCommandExtractor {
   private object MongoDBSourceExtractor extends SafeTypeMatchingExtractor(classOf[com.mongodb.spark.sql.DefaultSource])
 
   private object ElasticSearchSourceExtractor extends SafeTypeMatchingExtractor(classOf[org.elasticsearch.spark.sql.DefaultSource15])
-
-  private object SparkAvroSourceExtractor extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.avro.AvroFileFormat")
-
-  private object DatabricksAvroSourceExtractor extends SafeTypeMatchingExtractor[AnyRef]("com.databricks.spark.avro.DefaultSource")
 
   private object DataSourceTypeExtractor extends AccessorMethodValueExtractor[AnyRef]("provider", "dataSource")
 
