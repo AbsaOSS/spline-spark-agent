@@ -26,7 +26,7 @@ import org.apache.spark.sql.kafka010.{AssignStrategy, ConsumerStrategy, Subscrib
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
-import za.co.absa.spline.harvester.builder.{DataSourceFormatNameResolver, SourceIdentifier}
+import za.co.absa.spline.harvester.builder.{DataSourceFormatResolver, SourceIdentifier}
 import za.co.absa.spline.harvester.plugin.Plugin.Params
 import za.co.absa.spline.harvester.plugin.impl.KafkaPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, DataSourceTypePlugin, Plugin}
@@ -55,7 +55,7 @@ class KafkaPlugin
 
   override def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), (SourceIdentifier, SaveMode, LogicalPlan, Params)] = {
     case (st, cmd) if cmd.options.contains("kafka.bootstrap.servers") =>
-      val formatName = DataSourceFormatNameResolver.resolve(st)
+      val formatName = DataSourceFormatResolver.resolve(st)
       val uri = asURI(cmd.options("topic"))
       (SourceIdentifier(Some(formatName), uri), cmd.mode, cmd.query, cmd.options)
   }

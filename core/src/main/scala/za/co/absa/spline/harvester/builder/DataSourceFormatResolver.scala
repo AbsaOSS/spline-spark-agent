@@ -16,18 +16,24 @@
 
 package za.co.absa.spline.harvester.builder
 
-import com.crealytics.spark.excel.DefaultSource
 import org.apache.spark.sql.sources.DataSourceRegister
-import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
+import za.co.absa.spline.harvester.plugin.impl.{AvroPlugin, ExcelPlugin}
 
-object DataSourceFormatNameResolver {
-  def resolve(o: AnyRef): String = o match {
-    case "com.databricks.spark.avro" => "avro"
-    case "com.crealytics.spark.excel" | `_: excel.DefaultSource`(_) => "excel"
-    case dsr: DataSourceRegister => dsr.shortName
-    case _ => o.toString
-  }
+object DataSourceFormatResolver {
 
-  private object `_: excel.DefaultSource` extends SafeTypeMatchingExtractor(classOf[DefaultSource])
+  // fixme: obtain from a plugin registry
+  private val plugins = Seq(
+    new AvroPlugin,
+    new ExcelPlugin(null)
+  )
 
+  private val processFn = plugins
+    .map(_.formatNameResolver)
+    .reduce(_ orElse _)
+    .orElse[AnyRef, String] {
+      case dsr: DataSourceRegister => dsr.shortName
+      case o => o.toString
+    }
+
+  def resolve(o: AnyRef): String = processFn(o)
 }

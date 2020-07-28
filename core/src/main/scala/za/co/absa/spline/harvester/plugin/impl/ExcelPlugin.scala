@@ -18,7 +18,7 @@ package za.co.absa.spline.harvester.plugin.impl
 
 import java.io.InputStream
 
-import com.crealytics.spark.excel.{ExcelRelation, WorkbookReader}
+import com.crealytics.spark.excel.{DefaultSource, ExcelRelation, WorkbookReader}
 import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
@@ -26,16 +26,18 @@ import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.Params
 import za.co.absa.spline.harvester.plugin.impl.ExcelPlugin._
-import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, Plugin}
+import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, DataSourceFormatPlugin, Plugin}
 import za.co.absa.spline.harvester.qualifier.PathQualifier
 
 import scala.util.Try
 
 
-class ExcelPlugin(pathQualifier: PathQualifier) extends Plugin with BaseRelationPlugin {
+class ExcelPlugin(pathQualifier: PathQualifier)
+  extends Plugin
+    with BaseRelationPlugin
+    with DataSourceFormatPlugin {
 
   override def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), (SourceIdentifier, Params)] = {
-
     case (`_: ExcelRelation`(exr), _) =>
       val excelRelation = exr.asInstanceOf[ExcelRelation]
       val inputStream = extractExcelInputStream(excelRelation.workbookReader)
@@ -45,11 +47,17 @@ class ExcelPlugin(pathQualifier: PathQualifier) extends Plugin with BaseRelation
       val params = extractExcelParams(excelRelation) + ("header" -> excelRelation.header.toString)
       (sourceId, params)
   }
+
+  override def formatNameResolver: PartialFunction[AnyRef, String] = {
+    case "com.crealytics.spark.excel" | `_: excel.DefaultSource`(_) => "excel"
+  }
 }
 
 object ExcelPlugin {
 
-  object `_: ExcelRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.crealytics.spark.excel.ExcelRelation")
+  private object `_: ExcelRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.crealytics.spark.excel.ExcelRelation")
+
+  private object `_: excel.DefaultSource` extends SafeTypeMatchingExtractor(classOf[DefaultSource])
 
   private def extractExcelInputStream(reader: WorkbookReader) = {
 
@@ -77,7 +85,7 @@ object ExcelPlugin {
 
     val fieldNames = locator.getClass.getDeclaredFields.map(_.getName)
 
-    fieldNames.map(fn => fn -> extract(fn)).toMap
+    fieldNames.map(name => name -> extract(name)).toMap
   }
 
   private def asSourceId(filePath: String) = SourceIdentifier(Some("excel"), filePath)

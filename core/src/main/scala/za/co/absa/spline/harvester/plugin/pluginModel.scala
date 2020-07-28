@@ -41,6 +41,10 @@ trait DataSourceTypePlugin {
   def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), (SourceIdentifier, SaveMode, LogicalPlan, Params)]
 }
 
+trait DataSourceFormatPlugin {
+  def formatNameResolver: PartialFunction[AnyRef, String]
+}
+
 object Plugin {
   type Params = Map[String, Any]
 }

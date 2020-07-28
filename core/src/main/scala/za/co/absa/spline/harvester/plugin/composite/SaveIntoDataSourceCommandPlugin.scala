@@ -20,7 +20,7 @@ import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources.SaveIntoDataSourceCommand
 import za.co.absa.commons.reflect.extractors.AccessorMethodValueExtractor
-import za.co.absa.spline.harvester.builder.{DataSourceFormatNameResolver, SourceIdentifier}
+import za.co.absa.spline.harvester.builder.{DataSourceFormatResolver, SourceIdentifier}
 import za.co.absa.spline.harvester.plugin.Plugin.Params
 import za.co.absa.spline.harvester.plugin.composite.SaveIntoDataSourceCommandPlugin._
 import za.co.absa.spline.harvester.plugin.impl._
@@ -53,7 +53,7 @@ class SaveIntoDataSourceCommandPlugin(pathQualifier: PathQualifier) extends Plug
           dstProcessor((dst, cmd))
 
         case _ =>
-          val maybeFormat = DataSourceTypeExtractor.unapply(cmd).map(DataSourceFormatNameResolver.resolve)
+          val maybeFormat = DataSourceTypeExtractor.unapply(cmd).map(DataSourceFormatResolver.resolve)
           val opts = cmd.options
           val uri = opts.get("path").map(pathQualifier.qualify)
             .getOrElse(sys.error(s"Cannot extract source URI from the options: ${opts.keySet mkString ","}"))

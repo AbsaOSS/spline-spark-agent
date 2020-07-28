@@ -49,7 +49,7 @@ class SQLPlugin(pathQualifier: PathQualifier, session: SparkSession)
         .getOrElse {
           val uris = hr.location.rootPaths.map(path => pathQualifier.qualify(path.toString))
           val fileFormat = hr.fileFormat
-          val formatName = DataSourceFormatNameResolver.resolve(fileFormat)
+          val formatName = DataSourceFormatResolver.resolve(fileFormat)
           (SourceIdentifier(Some(formatName), uris: _*), hr.options)
         }
   }
@@ -64,7 +64,7 @@ class SQLPlugin(pathQualifier: PathQualifier, session: SparkSession)
     case cmd: InsertIntoHadoopFsRelationCommand =>
       val path = cmd.outputPath.toString
       val qPath = pathQualifier.qualify(path)
-      val format = DataSourceFormatNameResolver.resolve(cmd.fileFormat)
+      val format = DataSourceFormatResolver.resolve(cmd.fileFormat)
       (SourceIdentifier(Some(format), qPath), cmd.mode, cmd.query, cmd.options)
 
     case cmd: InsertIntoDataSourceCommand =>
