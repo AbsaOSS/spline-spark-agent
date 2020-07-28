@@ -16,43 +16,5 @@
 
 package za.co.absa.spline.harvester.builder
 
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.catalyst.catalog.CatalogTable
-import za.co.absa.spline.harvester.qualifier.PathQualifier
-
 case class SourceIdentifier(format: Option[String], uris: String*)
 
-object SourceIdentifier {
-  def forKafka(topics: String*): SourceIdentifier =
-    SourceIdentifier(Some("kafka"), topics.map(SourceUri.forKafka): _*)
-
-  def forJDBC(connectionUrl: String, table: String): SourceIdentifier =
-    SourceIdentifier(Some("jdbc"), SourceUri.forJDBC(connectionUrl, table))
-
-  def forTable(table: CatalogTable)
-    (pathQualifier: PathQualifier, session: SparkSession): SourceIdentifier = {
-    val uri = table.storage.locationUri
-      .map(_.toString)
-      .getOrElse(SourceUri.forTable(table.identifier)(session))
-    SourceIdentifier(table.provider, pathQualifier.qualify(uri))
-  }
-
-  def forExcel(filePath: String): SourceIdentifier =
-    SourceIdentifier(Some("excel"), filePath)
-
-  def forCobol(filePath: String): SourceIdentifier =
-    SourceIdentifier(Some("cobol"), filePath)
-
-  def forCassandra(keyspace: String, table: String): SourceIdentifier =
-    SourceIdentifier(Some("cassandra"), SourceUri.forCassandra(keyspace, table))
-
-  def forMongoDB(connectionUrl: String, database: String, collection: String): SourceIdentifier =
-    SourceIdentifier(Some("mongodb"), SourceUri.forMongoDB(connectionUrl, database, collection))
-
-  def forElasticSearch(server: String, indexDocType: String): SourceIdentifier =
-    SourceIdentifier(Some("elasticsearch"), SourceUri.forElastiSearch(server, indexDocType))
-
-  def forXml(qualifiedPaths: Seq[String]): SourceIdentifier =
-    SourceIdentifier(Some("xml"), qualifiedPaths: _*)
-
-}

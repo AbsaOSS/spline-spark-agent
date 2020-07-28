@@ -16,8 +16,9 @@
 
 package za.co.absa.spline.harvester.plugin
 
+import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import org.apache.spark.sql.execution.datasources.LogicalRelation
+import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.Params
@@ -33,7 +34,11 @@ trait BaseRelationPlugin {
 }
 
 trait WritePlugin {
-  def writeNodeProcessor: PartialFunction[LogicalPlan, (SourceIdentifier, Params, LogicalPlan)]
+  def writeNodeProcessor: PartialFunction[LogicalPlan, (SourceIdentifier, SaveMode, LogicalPlan, Params)]
+}
+
+trait DataSourceTypePlugin {
+  def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), (SourceIdentifier, SaveMode, LogicalPlan, Params)]
 }
 
 object Plugin {

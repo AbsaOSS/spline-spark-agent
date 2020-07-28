@@ -18,33 +18,49 @@ package za.co.absa.spline.harvester.plugin.impl
 
 import com.mongodb.spark.config.ReadConfig
 import com.mongodb.spark.rdd.MongoRDD
-import org.apache.spark.sql.execution.datasources.LogicalRelation
+import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
-import za.co.absa.spline.harvester.builder.SourceIdentifier
+import za.co.absa.spline.harvester.builder.{SourceId, SourceIdentifier}
 import za.co.absa.spline.harvester.plugin.Plugin.Params
-import za.co.absa.spline.harvester.plugin.impl.MongoPlugin.`_: MongoRelation`
-import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, Plugin}
+import za.co.absa.spline.harvester.plugin.impl.MongoPlugin._
+import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, DataSourceTypePlugin, Plugin}
 
 
-class MongoPlugin extends Plugin with BaseRelationPlugin {
+class MongoPlugin
+  extends Plugin
+    with BaseRelationPlugin
+    with DataSourceTypePlugin {
+
+  import za.co.absa.commons.ExtractorImplicits._
 
   override def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), (SourceIdentifier, Params)] = {
-
     case (`_: MongoRelation`(mongr), _) =>
       val mongoRDD = extractFieldValue[MongoRDD[_]](mongr, "mongoRDD")
       val readConfig = extractFieldValue[ReadConfig](mongoRDD, "readConfig")
       val database = readConfig.databaseName
       val collection = readConfig.collectionName
       val connectionUrl = readConfig.connectionString.getOrElse(sys.error("Unable to extract MongoDB connection URL"))
-      (SourceIdentifier.forMongoDB(connectionUrl, database, collection), Map.empty)
+      (SourceId.forMongoDB(connectionUrl, database, collection), Map.empty)
+  }
+
+  override def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), (SourceIdentifier, SaveMode, LogicalPlan, Params)] = {
+    case (st, cmd) if st == "com.mongodb.spark.sql.DefaultSource" || MongoDBSourceExtractor.matches(st) =>
+      val database = cmd.options("database")
+      val collection = cmd.options("collection")
+      val uri = cmd.options("uri")
+      (SourceId.forMongoDB(uri, database, collection), cmd.mode, cmd.query, cmd.options)
   }
 }
 
 object MongoPlugin {
 
   object `_: MongoRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.mongodb.spark.sql.MongoRelation")
+
+  private object MongoDBSourceExtractor extends SafeTypeMatchingExtractor(classOf[com.mongodb.spark.sql.DefaultSource])
 
 }
 

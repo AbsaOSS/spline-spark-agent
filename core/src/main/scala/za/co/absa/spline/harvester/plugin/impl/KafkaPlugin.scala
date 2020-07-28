@@ -19,22 +19,26 @@ package za.co.absa.spline.harvester.plugin.impl
 import java.util.Properties
 
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import org.apache.spark.sql.execution.datasources.LogicalRelation
+import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.kafka010.{AssignStrategy, ConsumerStrategy, SubscribePatternStrategy, SubscribeStrategy}
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
-import za.co.absa.spline.harvester.builder.SourceIdentifier
+import za.co.absa.spline.harvester.builder.{DataSourceFormatNameResolver, SourceId, SourceIdentifier, SourceUri}
 import za.co.absa.spline.harvester.plugin.Plugin.Params
 import za.co.absa.spline.harvester.plugin.impl.KafkaPlugin._
-import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, Plugin}
+import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, DataSourceTypePlugin, Plugin}
 
 import scala.collection.JavaConverters._
 
-class KafkaPlugin extends Plugin with BaseRelationPlugin {
+class KafkaPlugin
+  extends Plugin
+    with BaseRelationPlugin
+    with DataSourceTypePlugin {
 
   override def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), (SourceIdentifier, Params)] = {
-
     case (`_: KafkaRelation`(kr), _) =>
       val options = extractFieldValue[Map[String, String]](kr, "sourceOptions")
       val topics: Seq[String] = extractFieldValue[ConsumerStrategy](kr, "strategy") match {
@@ -42,10 +46,17 @@ class KafkaPlugin extends Plugin with BaseRelationPlugin {
         case SubscribeStrategy(topics) => topics
         case SubscribePatternStrategy(pattern) => kafkaTopics(options("kafka.bootstrap.servers")).filter(_.matches(pattern))
       }
-      (SourceIdentifier.forKafka(topics: _*), options ++ Map(
+      (SourceId.forKafka(topics: _*), options ++ Map(
         "startingOffsets" -> extractFieldValue[AnyRef](kr, "startingOffsets"),
         "endingOffsets" -> extractFieldValue[AnyRef](kr, "endingOffsets")
       ))
+  }
+
+  override def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), (SourceIdentifier, SaveMode, LogicalPlan, Params)] = {
+    case (st, cmd) if cmd.options.contains("kafka.bootstrap.servers") =>
+      val formatName = DataSourceFormatNameResolver.resolve(st)
+      val uri = SourceUri.forKafka(cmd.options("topic"))
+      (SourceIdentifier(Some(formatName), uri), cmd.mode, cmd.query, cmd.options)
   }
 }
 

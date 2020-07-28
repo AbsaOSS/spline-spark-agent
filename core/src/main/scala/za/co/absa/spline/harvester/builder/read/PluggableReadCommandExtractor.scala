@@ -22,7 +22,7 @@ import org.apache.spark.sql.execution.datasources.LogicalRelation
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.Params
 import za.co.absa.spline.harvester.plugin.composite.LogicalRelationPlugin
-import za.co.absa.spline.harvester.plugin.impl.HivePlugin
+import za.co.absa.spline.harvester.plugin.impl.SQLPlugin
 import za.co.absa.spline.harvester.qualifier.PathQualifier
 
 
@@ -31,12 +31,12 @@ class PluggableReadCommandExtractor(
   session: SparkSession,
   relationHandler: ReadRelationHandler) extends ReadCommandExtractor {
 
+  // fixme: obtain from a plugin registry
   private val readPlugins = Seq(
-    new HivePlugin(pathQualifier, session),
+    new SQLPlugin(pathQualifier, session),
     new LogicalRelationPlugin(pathQualifier, session)
   )
 
-  // Fixme: obtain from plugins
   private val processFn: LogicalPlan => Option[(SourceIdentifier, Params)] =
     readPlugins
       .map(_.readNodeProcessor)

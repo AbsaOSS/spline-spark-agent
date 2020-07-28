@@ -19,8 +19,7 @@ package za.co.absa.spline.harvester.plugin.impl
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.execution.datasources.{HadoopFsRelation, LogicalRelation}
 import org.apache.spark.sql.sources.BaseRelation
-import za.co.absa.spline.harvester.CatalogTableUtils
-import za.co.absa.spline.harvester.builder.{DataSourceFormatNameResolver, SourceIdentifier}
+import za.co.absa.spline.harvester.builder.{BuilderUtils, DataSourceFormatNameResolver, SourceId, SourceIdentifier}
 import za.co.absa.spline.harvester.plugin.Plugin.Params
 import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, Plugin}
 import za.co.absa.spline.harvester.qualifier.PathQualifier
@@ -33,8 +32,8 @@ class HadoopPlugin(pathQualifier: PathQualifier, session: SparkSession) extends 
     case (hr: HadoopFsRelation, lr) =>
       lr.catalogTable
         .map(ct => {
-          val sourceId = SourceIdentifier.forTable(ct)(pathQualifier, session)
-          val params = CatalogTableUtils.extractCatalogTableParams(ct)
+          val sourceId = SourceId.forTable(ct)(pathQualifier, session)
+          val params = BuilderUtils.extractCatalogTableParams(ct)
           (sourceId, params)
         })
         .getOrElse({

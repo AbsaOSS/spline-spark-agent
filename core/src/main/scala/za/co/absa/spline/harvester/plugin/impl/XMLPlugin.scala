@@ -20,7 +20,7 @@ import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
-import za.co.absa.spline.harvester.builder.SourceIdentifier
+import za.co.absa.spline.harvester.builder.{SourceId, SourceIdentifier}
 import za.co.absa.spline.harvester.plugin.Plugin.Params
 import za.co.absa.spline.harvester.plugin.impl.XMLPlugin.`_: XmlRelation`
 import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, Plugin}
@@ -35,7 +35,7 @@ class XMLPlugin(pathQualifier: PathQualifier) extends Plugin with BaseRelationPl
       val parameters = extractFieldValue[Map[String, String]](xr, "parameters")
       val location = extractFieldValue[Option[String]](xr, "location")
       val qualifiedPaths = location.toSeq.map(pathQualifier.qualify)
-      (SourceIdentifier.forXml(qualifiedPaths), parameters)
+      (SourceId.forXml(qualifiedPaths), parameters)
   }
 }
 

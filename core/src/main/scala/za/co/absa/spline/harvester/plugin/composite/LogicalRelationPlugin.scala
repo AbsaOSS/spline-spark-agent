@@ -28,6 +28,7 @@ import za.co.absa.spline.harvester.qualifier.PathQualifier
 
 class LogicalRelationPlugin(pathQualifier: PathQualifier, session: SparkSession) extends Plugin with ReadPlugin {
 
+  // fixme: obtain from a plugin registry
   private val plugins = Seq(
     new HadoopPlugin(pathQualifier, session),
     new XMLPlugin(pathQualifier),
