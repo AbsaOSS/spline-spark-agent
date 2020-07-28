@@ -30,7 +30,6 @@ class LogicalRelationPlugin(pathQualifier: PathQualifier, session: SparkSession)
 
   // fixme: obtain from a plugin registry
   private val plugins = Seq(
-    new HadoopPlugin(pathQualifier, session),
     new XMLPlugin(pathQualifier),
     new JDBCPlugin,
     new KafkaPlugin,
