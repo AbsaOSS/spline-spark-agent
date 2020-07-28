@@ -23,7 +23,7 @@ import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoData
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
-import za.co.absa.spline.harvester.builder.{SourceId, SourceIdentifier}
+import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.Params
 import za.co.absa.spline.harvester.plugin.impl.CassandraPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, DataSourceTypePlugin, Plugin}
@@ -41,14 +41,14 @@ class CassandraPlugin
       val tableRef = extractFieldValue[TableRef](casr, "tableRef")
       val table = tableRef.table
       val keyspace = tableRef.keyspace
-      (SourceId.forCassandra(keyspace, table), Map.empty)
+      (asSourceId(keyspace, table), Map.empty)
   }
 
   override def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), (SourceIdentifier, SaveMode, LogicalPlan, Params)] = {
     case (st, cmd) if st == "org.apache.spark.sql.cassandra" || CassandraSourceExtractor.matches(st) =>
       val keyspace = cmd.options("keyspace")
       val table = cmd.options("table")
-      (SourceId.forCassandra(keyspace, table), cmd.mode, cmd.query, cmd.options)
+      (asSourceId(keyspace, table), cmd.mode, cmd.query, cmd.options)
   }
 }
 
@@ -58,7 +58,6 @@ object CassandraPlugin {
 
   private object CassandraSourceExtractor extends SafeTypeMatchingExtractor(classOf[org.apache.spark.sql.cassandra.DefaultSource])
 
+  private def asSourceId(keyspace: String, table: String) = SourceIdentifier(Some("cassandra"), s"cassandra:$keyspace:$table")
+
 }
-
-
-

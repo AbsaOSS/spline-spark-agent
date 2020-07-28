@@ -23,7 +23,7 @@ import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
-import za.co.absa.spline.harvester.builder.{SourceId, SourceIdentifier}
+import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.Params
 import za.co.absa.spline.harvester.plugin.impl.ExcelPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, Plugin}
@@ -41,8 +41,9 @@ class ExcelPlugin(pathQualifier: PathQualifier) extends Plugin with BaseRelation
       val inputStream = extractExcelInputStream(excelRelation.workbookReader)
       val path = extractFieldValue[org.apache.hadoop.fs.Path](inputStream, "file")
       val qualifiedPath = pathQualifier.qualify(path.toString)
-      (SourceId.forExcel(qualifiedPath),
-        extractExcelParams(excelRelation) + ("header" -> excelRelation.header.toString))
+      val sourceId = asSourceId(qualifiedPath)
+      val params = extractExcelParams(excelRelation) + ("header" -> excelRelation.header.toString)
+      (sourceId, params)
   }
 }
 
@@ -79,7 +80,5 @@ object ExcelPlugin {
     fieldNames.map(fn => fn -> extract(fn)).toMap
   }
 
+  private def asSourceId(filePath: String) = SourceIdentifier(Some("excel"), filePath)
 }
-
-
-

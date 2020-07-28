@@ -31,12 +31,6 @@ object BuilderUtils {
 }
 
 object SourceId {
-  def forKafka(topics: String*): SourceIdentifier =
-    SourceIdentifier(Some("kafka"), topics.map(SourceUri.forKafka): _*)
-
-  def forJDBC(connectionUrl: String, table: String): SourceIdentifier =
-    SourceIdentifier(Some("jdbc"), SourceUri.forJDBC(connectionUrl, table))
-
   def forTable(table: CatalogTable)
     (pathQualifier: PathQualifier, session: SparkSession): SourceIdentifier = {
     val uri = table.storage.locationUri
@@ -44,37 +38,9 @@ object SourceId {
       .getOrElse(SourceUri.forTable(table.identifier)(session))
     SourceIdentifier(table.provider, pathQualifier.qualify(uri))
   }
-
-  def forExcel(filePath: String): SourceIdentifier =
-    SourceIdentifier(Some("excel"), filePath)
-
-  def forCobol(filePath: String): SourceIdentifier =
-    SourceIdentifier(Some("cobol"), filePath)
-
-  def forCassandra(keyspace: String, table: String): SourceIdentifier =
-    SourceIdentifier(Some("cassandra"), SourceUri.forCassandra(keyspace, table))
-
-  def forMongoDB(connectionUrl: String, database: String, collection: String): SourceIdentifier =
-    SourceIdentifier(Some("mongodb"), SourceUri.forMongoDB(connectionUrl, database, collection))
-
-  def forElasticSearch(server: String, indexDocType: String): SourceIdentifier =
-    SourceIdentifier(Some("elasticsearch"), SourceUri.forElasticSearch(server, indexDocType))
-
-  def forXml(qualifiedPaths: Seq[String]): SourceIdentifier =
-    SourceIdentifier(Some("xml"), qualifiedPaths: _*)
-
 }
 
 object SourceUri {
-  def forKafka(topic: String): String = s"kafka:$topic"
-
-  def forJDBC(connectionUrl: String, table: String): String = s"$connectionUrl:$table"
-
-  def forCassandra(keyspace: String, table: String): String = s"cassandra:$keyspace:$table"
-
-  def forMongoDB(connectionUrl: String, database: String, collection: String): String = s"$connectionUrl/$database.$collection"
-
-  def forElasticSearch(server: String, indexDocType: String): String = s"elasticsearch://$server/$indexDocType"
 
   def forTable(tableIdentifier: TableIdentifier)
     (session: SparkSession): String = {

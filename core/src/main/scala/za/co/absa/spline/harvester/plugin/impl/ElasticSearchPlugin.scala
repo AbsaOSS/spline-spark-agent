@@ -23,7 +23,7 @@ import org.apache.spark.sql.sources.BaseRelation
 import org.elasticsearch.spark.cfg.SparkSettings
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
-import za.co.absa.spline.harvester.builder.{SourceId, SourceIdentifier}
+import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.Params
 import za.co.absa.spline.harvester.plugin.impl.ElasticSearchPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, DataSourceTypePlugin, Plugin}
@@ -41,14 +41,14 @@ class ElasticSearchPlugin
       val parameters = extractFieldValue[SparkSettings](esr, "cfg")
       val server = parameters.getProperty("es.nodes")
       val indexDocType = parameters.getProperty("es.resource")
-      (SourceId.forElasticSearch(server, indexDocType), Map.empty)
+      (asSourceId(server, indexDocType), Map.empty)
   }
 
   override def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), (SourceIdentifier, SaveMode, LogicalPlan, Params)] = {
     case (st, cmd) if st == "es" || ElasticSearchSourceExtractor.matches(st) =>
       val indexDocType = cmd.options("path")
       val server = cmd.options("es.nodes")
-      (SourceId.forElasticSearch(server, indexDocType), cmd.mode, cmd.query, cmd.options)
+      (asSourceId(server, indexDocType), cmd.mode, cmd.query, cmd.options)
   }
 }
 
@@ -58,7 +58,7 @@ object ElasticSearchPlugin {
 
   private object ElasticSearchSourceExtractor extends SafeTypeMatchingExtractor(classOf[org.elasticsearch.spark.sql.DefaultSource15])
 
+  private def asSourceId(server: String, indexDocType: String) =
+    SourceIdentifier(Some("elasticsearch"), s"elasticsearch://$server/$indexDocType")
+
 }
-
-
-

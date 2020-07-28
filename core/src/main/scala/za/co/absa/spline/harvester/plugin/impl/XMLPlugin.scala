@@ -20,9 +20,9 @@ import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
-import za.co.absa.spline.harvester.builder.{SourceId, SourceIdentifier}
+import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.Params
-import za.co.absa.spline.harvester.plugin.impl.XMLPlugin.`_: XmlRelation`
+import za.co.absa.spline.harvester.plugin.impl.XMLPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, Plugin}
 import za.co.absa.spline.harvester.qualifier.PathQualifier
 
@@ -30,12 +30,11 @@ import za.co.absa.spline.harvester.qualifier.PathQualifier
 class XMLPlugin(pathQualifier: PathQualifier) extends Plugin with BaseRelationPlugin {
 
   override def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), (SourceIdentifier, Params)] = {
-
     case (`_: XmlRelation`(xr), _) =>
       val parameters = extractFieldValue[Map[String, String]](xr, "parameters")
       val location = extractFieldValue[Option[String]](xr, "location")
       val qualifiedPaths = location.toSeq.map(pathQualifier.qualify)
-      (SourceId.forXml(qualifiedPaths), parameters)
+      (asSourceId(qualifiedPaths), parameters)
   }
 }
 
@@ -43,7 +42,5 @@ object XMLPlugin {
 
   object `_: XmlRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.databricks.spark.xml.XmlRelation")
 
+  private def asSourceId(paths: Seq[String]) = SourceIdentifier(Some("xml"), paths: _*)
 }
-
-
-

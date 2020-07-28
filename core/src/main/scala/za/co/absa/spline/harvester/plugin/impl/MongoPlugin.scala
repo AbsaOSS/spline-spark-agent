@@ -24,7 +24,7 @@ import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoData
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
-import za.co.absa.spline.harvester.builder.{SourceId, SourceIdentifier}
+import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.Params
 import za.co.absa.spline.harvester.plugin.impl.MongoPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, DataSourceTypePlugin, Plugin}
@@ -44,7 +44,7 @@ class MongoPlugin
       val database = readConfig.databaseName
       val collection = readConfig.collectionName
       val connectionUrl = readConfig.connectionString.getOrElse(sys.error("Unable to extract MongoDB connection URL"))
-      (SourceId.forMongoDB(connectionUrl, database, collection), Map.empty)
+      (asSourceId(connectionUrl, database, collection), Map.empty)
   }
 
   override def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), (SourceIdentifier, SaveMode, LogicalPlan, Params)] = {
@@ -52,7 +52,7 @@ class MongoPlugin
       val database = cmd.options("database")
       val collection = cmd.options("collection")
       val uri = cmd.options("uri")
-      (SourceId.forMongoDB(uri, database, collection), cmd.mode, cmd.query, cmd.options)
+      (asSourceId(uri, database, collection), cmd.mode, cmd.query, cmd.options)
   }
 }
 
@@ -62,7 +62,6 @@ object MongoPlugin {
 
   private object MongoDBSourceExtractor extends SafeTypeMatchingExtractor(classOf[com.mongodb.spark.sql.DefaultSource])
 
+  private def asSourceId(connectionUrl: String, database: String, collection: String) =
+    SourceIdentifier(Some("mongodb"), s"$connectionUrl/$database.$collection")
 }
-
-
-

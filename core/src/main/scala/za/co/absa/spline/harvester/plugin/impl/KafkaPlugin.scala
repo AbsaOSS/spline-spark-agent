@@ -26,7 +26,7 @@ import org.apache.spark.sql.kafka010.{AssignStrategy, ConsumerStrategy, Subscrib
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
-import za.co.absa.spline.harvester.builder.{DataSourceFormatNameResolver, SourceId, SourceIdentifier, SourceUri}
+import za.co.absa.spline.harvester.builder.{DataSourceFormatNameResolver, SourceIdentifier}
 import za.co.absa.spline.harvester.plugin.Plugin.Params
 import za.co.absa.spline.harvester.plugin.impl.KafkaPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, DataSourceTypePlugin, Plugin}
@@ -46,7 +46,8 @@ class KafkaPlugin
         case SubscribeStrategy(topics) => topics
         case SubscribePatternStrategy(pattern) => kafkaTopics(options("kafka.bootstrap.servers")).filter(_.matches(pattern))
       }
-      (SourceId.forKafka(topics: _*), options ++ Map(
+      val sourceId = SourceIdentifier(Some("kafka"), topics.map(asURI): _*)
+      (sourceId, options ++ Map(
         "startingOffsets" -> extractFieldValue[AnyRef](kr, "startingOffsets"),
         "endingOffsets" -> extractFieldValue[AnyRef](kr, "endingOffsets")
       ))
@@ -55,7 +56,7 @@ class KafkaPlugin
   override def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), (SourceIdentifier, SaveMode, LogicalPlan, Params)] = {
     case (st, cmd) if cmd.options.contains("kafka.bootstrap.servers") =>
       val formatName = DataSourceFormatNameResolver.resolve(st)
-      val uri = SourceUri.forKafka(cmd.options("topic"))
+      val uri = asURI(cmd.options("topic"))
       (SourceIdentifier(Some(formatName), uri), cmd.mode, cmd.query, cmd.options)
   }
 }
@@ -73,7 +74,6 @@ object KafkaPlugin {
     try kc.listTopics.keySet.asScala.toSeq
     finally kc.close()
   }
+
+  private def asURI(topic: String) = s"kafka:$topic"
 }
-
-
-
