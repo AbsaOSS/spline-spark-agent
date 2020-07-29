@@ -17,15 +17,12 @@
 package za.co.absa.spline.harvester.builder.read
 
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import org.apache.spark.sql.execution.datasources.LogicalRelation
-import za.co.absa.spline.harvester.builder.{DataSourceFormatResolver, PluggableDataSourceFormatResolver, SourceIdentifier}
+import za.co.absa.spline.harvester.builder.{PluggableDataSourceFormatResolver, SourceIdentifier}
 import za.co.absa.spline.harvester.plugin.Plugin.ReadNodeInfo
 import za.co.absa.spline.harvester.plugin.{PluginRegistry, ReadPlugin}
 
 
-class PluggableReadCommandExtractor(
-  pluginRegistry: PluginRegistry,
-  relationHandler: ReadRelationHandler)
+class PluggableReadCommandExtractor(pluginRegistry: PluginRegistry)
   extends ReadCommandExtractor {
 
   private val processFn: LogicalPlan => Option[ReadNodeInfo] =
@@ -33,18 +30,6 @@ class PluggableReadCommandExtractor(
       .collect({ case p: ReadPlugin => p })
       .map(_.readNodeProcessor)
       .reduce(_ orElse _)
-      .orElse[LogicalPlan, ReadNodeInfo]({
-        // Fixme: this should go
-        // Other ...
-        case lr: LogicalRelation =>
-          val br = lr.relation
-          if (relationHandler.isApplicable(br)) {
-            val ReadCommand(sourceId, _, params) = relationHandler(br, lr)
-            (sourceId, params)
-          } else {
-            sys.error(s"Relation is not supported: $br")
-          }
-      })
       .lift
 
   // fixme: shouldn't a format name resolving happen outside the command extractor?

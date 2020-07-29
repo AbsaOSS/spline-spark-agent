@@ -25,7 +25,7 @@ trait DataSourceFormatResolver {
 
 class PluggableDataSourceFormatResolver(pluginRegistry: PluginRegistry) extends DataSourceFormatResolver {
 
-  private lazy val processFn = pluginRegistry.plugins
+  private val processFn = pluginRegistry.plugins
     .collect({ case p: DataSourceFormatPlugin => p })
     .map(_.formatNameResolver)
     .reduce(_ orElse _)
