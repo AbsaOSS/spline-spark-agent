@@ -32,7 +32,7 @@ class SaveIntoDataSourceCommandPlugin(
   extends Plugin
     with WriteNodeProcessing {
 
-  private lazy val dstProcessor =
+  private lazy val rpProcessor =
     pluginRegistry.plugins[RelationProviderProcessing]
       .map(_.relationProviderProcessor)
       .reduce(_ orElse _)
@@ -43,8 +43,8 @@ class SaveIntoDataSourceCommandPlugin(
     case cmd: SaveIntoDataSourceCommand =>
       cmd match {
         case RelationProviderExtractor(rp)
-          if dstProcessor.isDefinedAt((rp, cmd)) =>
-          dstProcessor((rp, cmd))
+          if rpProcessor.isDefinedAt((rp, cmd)) =>
+          rpProcessor((rp, cmd))
 
         case _ =>
           val maybeProvider = RelationProviderExtractor.unapply(cmd)
