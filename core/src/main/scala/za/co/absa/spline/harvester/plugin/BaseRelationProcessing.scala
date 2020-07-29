@@ -21,5 +21,6 @@ import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.spline.harvester.plugin.Plugin.ReadNodeInfo
 
 trait BaseRelationProcessing {
+  self: Plugin =>
   def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo]
 }

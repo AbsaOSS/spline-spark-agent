@@ -20,5 +20,6 @@ import org.apache.spark.sql.execution.datasources.SaveIntoDataSourceCommand
 import za.co.absa.spline.harvester.plugin.Plugin.WriteNodeInfo
 
 trait RelationProviderProcessing {
+  self: Plugin =>
   def relationProviderProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo]
 }
