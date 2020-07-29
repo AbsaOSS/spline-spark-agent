@@ -27,8 +27,7 @@ class PluggableReadCommandExtractor(pluginRegistry: PluginRegistry)
   extends ReadCommandExtractor {
 
   private val processFn: LogicalPlan => Option[ReadNodeInfo] =
-    pluginRegistry.plugins
-      .collect({ case p: ReadNodeProcessing => p })
+    pluginRegistry.plugins[ReadNodeProcessing]
       .map(_.readNodeProcessor)
       .reduce(_ orElse _)
       .lift

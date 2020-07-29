@@ -18,6 +18,8 @@ package za.co.absa.spline.harvester.plugin.registry
 
 import za.co.absa.spline.harvester.plugin.Plugin
 
+import scala.reflect.ClassTag
+
 trait PluginRegistry {
-  def plugins: Seq[Plugin]
+  def plugins[A: ClassTag]: Seq[Plugin with A]
 }

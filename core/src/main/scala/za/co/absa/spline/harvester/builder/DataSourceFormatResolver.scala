@@ -26,14 +26,14 @@ trait DataSourceFormatResolver {
 
 class PluggableDataSourceFormatResolver(pluginRegistry: PluginRegistry) extends DataSourceFormatResolver {
 
-  private val processFn = pluginRegistry.plugins
-    .collect({ case p: DataSourceFormatNameResolving => p })
-    .map(_.formatNameResolver)
-    .reduce(_ orElse _)
-    .orElse[AnyRef, String] {
-      case dsr: DataSourceRegister => dsr.shortName
-      case o => o.toString
-    }
+  private val processFn =
+    pluginRegistry.plugins[DataSourceFormatNameResolving]
+      .map(_.formatNameResolver)
+      .reduce(_ orElse _)
+      .orElse[AnyRef, String] {
+        case dsr: DataSourceRegister => dsr.shortName
+        case o => o.toString
+      }
 
   override def resolve(o: AnyRef): String = processFn(o)
 }

@@ -24,6 +24,7 @@ import za.co.absa.spline.harvester.plugin.Plugin
 import za.co.absa.spline.harvester.plugin.registry.AutoDiscoveryPluginRegistry.{PluginClasses, getOnlyOrThrow}
 
 import scala.collection.JavaConverters._
+import scala.reflect.ClassTag
 import scala.util.Try
 import scala.util.control.NonFatal
 
@@ -41,7 +42,7 @@ class AutoDiscoveryPluginRegistry(injectables: AnyRef*)
     typedInjectables.groupBy(_._1).mapValues(_.map(_._2))
   }
 
-  override val plugins: Seq[Plugin] = {
+  private val allPlugins: Seq[Plugin] = {
     for {
       pluginClass <- PluginClasses
     } yield {
@@ -52,6 +53,11 @@ class AutoDiscoveryPluginRegistry(injectables: AnyRef*)
         })
         .get
     }
+  }
+
+  override def plugins[A: ClassTag]: Seq[Plugin with A] = {
+    val ct = implicitly[ClassTag[A]]
+    allPlugins.collect({ case p: Plugin with A if ct.runtimeClass.isInstance(p) => p })
   }
 
   private def instantiatePlugin(pluginClass: Class[_]): Try[Plugin] = Try {

@@ -31,8 +31,7 @@ class PluggableWriteCommandExtractor(pluginRegistry: PluginRegistry)
   extends WriteCommandExtractor {
 
   private val processFn: LogicalPlan => Option[WriteNodeInfo] =
-    pluginRegistry.plugins
-      .collect({ case p: WriteNodeProcessing => p })
+    pluginRegistry.plugins[WriteNodeProcessing]
       .map(_.writeNodeProcessor)
       .reduce(_ orElse _)
       .lift

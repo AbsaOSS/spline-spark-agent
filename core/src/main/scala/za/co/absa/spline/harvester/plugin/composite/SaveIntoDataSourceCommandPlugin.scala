@@ -33,8 +33,7 @@ class SaveIntoDataSourceCommandPlugin(
     with WriteNodeProcessing {
 
   private lazy val dstProcessor =
-    pluginRegistry.plugins
-      .collect({ case p: RelationProviderProcessing => p })
+    pluginRegistry.plugins[RelationProviderProcessing]
       .map(_.relationProviderProcessor)
       .reduce(_ orElse _)
 

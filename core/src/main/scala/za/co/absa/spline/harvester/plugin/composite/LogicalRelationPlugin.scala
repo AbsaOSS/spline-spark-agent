@@ -26,8 +26,7 @@ import za.co.absa.spline.harvester.plugin.registry.PluginRegistry
 class LogicalRelationPlugin(pluginRegistry: PluginRegistry) extends Plugin with ReadNodeProcessing {
 
   private lazy val baseRelProcessor =
-    pluginRegistry.plugins
-      .collect({ case p: BaseRelationProcessing => p })
+    pluginRegistry.plugins[BaseRelationProcessing]
       .map(_.baseRelationProcessor)
       .reduce(_ orElse _)
 
