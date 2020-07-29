@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.plugin.impl
+package za.co.absa.spline.harvester.plugin.embedded
 
 import org.apache.spark.sql.SaveMode.{Append, Overwrite}
 import org.apache.spark.sql.catalyst.TableIdentifier
@@ -27,8 +27,8 @@ import org.apache.spark.sql.{SaveMode, SparkSession}
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder._
 import za.co.absa.spline.harvester.plugin.Plugin.{Params, ReadNodeInfo, WriteNodeInfo}
-import za.co.absa.spline.harvester.plugin.impl.SQLPlugin._
-import za.co.absa.spline.harvester.plugin.{Plugin, ReadPlugin, WritePlugin}
+import za.co.absa.spline.harvester.plugin.embedded.SQLPlugin._
+import za.co.absa.spline.harvester.plugin.{Plugin, ReadNodeProcessing, WriteNodeProcessing}
 import za.co.absa.spline.harvester.qualifier.PathQualifier
 
 import scala.language.reflectiveCalls
@@ -37,8 +37,8 @@ class SQLPlugin(
   pathQualifier: PathQualifier,
   session: SparkSession)
   extends Plugin
-    with ReadPlugin
-    with WritePlugin {
+    with ReadNodeProcessing
+    with WriteNodeProcessing {
 
   override val readNodeProcessor: PartialFunction[LogicalPlan, ReadNodeInfo] = {
     case htr: HiveTableRelation =>

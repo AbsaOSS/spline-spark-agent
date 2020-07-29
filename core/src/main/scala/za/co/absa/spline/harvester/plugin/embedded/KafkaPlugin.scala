@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.plugin.impl
+package za.co.absa.spline.harvester.plugin.embedded
 
 import java.util.Properties
 
@@ -26,17 +26,17 @@ import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{ReadNodeInfo, WriteNodeInfo}
-import za.co.absa.spline.harvester.plugin.impl.KafkaPlugin._
-import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, DataSourceTypePlugin, Plugin}
+import za.co.absa.spline.harvester.plugin.embedded.KafkaPlugin._
+import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, RelationProviderProcessing, Plugin}
 
 import scala.collection.JavaConverters._
 
 class KafkaPlugin
   extends Plugin
-    with BaseRelationPlugin
-    with DataSourceTypePlugin {
+    with BaseRelationProcessing
+    with RelationProviderProcessing {
 
-  override def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
+  override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: KafkaRelation`(kr), _) =>
       val options = extractFieldValue[Map[String, String]](kr, "sourceOptions")
       val topics: Seq[String] = extractFieldValue[ConsumerStrategy](kr, "strategy") match {
@@ -51,7 +51,7 @@ class KafkaPlugin
       ))
   }
 
-  override def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
+  override def relationProviderProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
     case (st, cmd) if cmd.options.contains("kafka.bootstrap.servers") =>
       val uri = asURI(cmd.options("topic"))
       (SourceIdentifier(Option(st), uri), cmd.mode, cmd.query, cmd.options)

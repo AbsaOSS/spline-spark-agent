@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.plugin.impl
+package za.co.absa.spline.harvester.plugin.embedded
 
 import org.apache.spark.sql.execution.datasources.jdbc.{JDBCOptions, JdbcRelationProvider}
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
@@ -23,16 +23,16 @@ import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.{AccessorMethodValueExtractor, SafeTypeMatchingExtractor}
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{ReadNodeInfo, WriteNodeInfo}
-import za.co.absa.spline.harvester.plugin.impl.JDBCPlugin._
-import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, DataSourceTypePlugin, Plugin}
+import za.co.absa.spline.harvester.plugin.embedded.JDBCPlugin._
+import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, RelationProviderProcessing, Plugin}
 
 
 class JDBCPlugin
   extends Plugin
-    with BaseRelationPlugin
-    with DataSourceTypePlugin {
+    with BaseRelationProcessing
+    with RelationProviderProcessing {
 
-  override def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
+  override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: JDBCRelation`(jr), _) =>
       val jdbcOptions = extractFieldValue[JDBCOptions](jr, "jdbcOptions")
       val url = extractFieldValue[String](jdbcOptions, "url")
@@ -41,7 +41,7 @@ class JDBCPlugin
       (asSourceId(url, toq), params)
   }
 
-  override def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
+  override def relationProviderProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
     case (st, cmd) if st == "jdbc" || st.isInstanceOf[JdbcRelationProvider] =>
       val jdbcConnectionString = cmd.options("url")
       val tableName = cmd.options("dbtable")

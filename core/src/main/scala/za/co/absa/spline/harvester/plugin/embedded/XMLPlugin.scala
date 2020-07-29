@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.plugin.impl
+package za.co.absa.spline.harvester.plugin.embedded
 
 import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.sources.BaseRelation
@@ -22,23 +22,25 @@ import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.ReadNodeInfo
-import za.co.absa.spline.harvester.plugin.impl.CobrixPlugin._
-import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, Plugin}
+import za.co.absa.spline.harvester.plugin.embedded.XMLPlugin._
+import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, Plugin}
+import za.co.absa.spline.harvester.qualifier.PathQualifier
 
 
-class CobrixPlugin extends Plugin with BaseRelationPlugin {
+class XMLPlugin(pathQualifier: PathQualifier) extends Plugin with BaseRelationProcessing {
 
-  override def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
-    case (`_: CobolRelation`(cr), _) =>
-      val sourceDir = extractFieldValue[String](cr, "sourceDir")
-      (forCobol(sourceDir), Map.empty)
+  override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
+    case (`_: XmlRelation`(xr), _) =>
+      val parameters = extractFieldValue[Map[String, String]](xr, "parameters")
+      val location = extractFieldValue[Option[String]](xr, "location")
+      val qualifiedPaths = location.toSeq.map(pathQualifier.qualify)
+      (asSourceId(qualifiedPaths), parameters)
   }
 }
 
+object XMLPlugin {
 
-object CobrixPlugin {
+  object `_: XmlRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.databricks.spark.xml.XmlRelation")
 
-  object `_: CobolRelation` extends SafeTypeMatchingExtractor[AnyRef]("za.co.absa.cobrix.spark.cobol.source.CobolRelation")
-
-  private def forCobol(filePath: String) = SourceIdentifier(Some("cobol"), filePath)
+  private def asSourceId(paths: Seq[String]) = SourceIdentifier(Some("xml"), paths: _*)
 }

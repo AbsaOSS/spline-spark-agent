@@ -16,6 +16,10 @@
 
 package za.co.absa.spline.harvester.plugin
 
-trait PluginRegistry {
-  def plugins: Seq[Plugin]
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import za.co.absa.spline.harvester.plugin.Plugin.WriteNodeInfo
+
+trait WriteNodeProcessing {
+  self: Plugin =>
+  def writeNodeProcessor: PartialFunction[LogicalPlan, WriteNodeInfo]
 }

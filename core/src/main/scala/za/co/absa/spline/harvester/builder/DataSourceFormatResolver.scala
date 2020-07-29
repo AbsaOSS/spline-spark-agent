@@ -17,7 +17,8 @@
 package za.co.absa.spline.harvester.builder
 
 import org.apache.spark.sql.sources.DataSourceRegister
-import za.co.absa.spline.harvester.plugin.{DataSourceFormatPlugin, PluginRegistry}
+import za.co.absa.spline.harvester.plugin.DataSourceFormatNameResolving
+import za.co.absa.spline.harvester.plugin.registry.PluginRegistry
 
 trait DataSourceFormatResolver {
   def resolve(o: AnyRef): String
@@ -26,7 +27,7 @@ trait DataSourceFormatResolver {
 class PluggableDataSourceFormatResolver(pluginRegistry: PluginRegistry) extends DataSourceFormatResolver {
 
   private val processFn = pluginRegistry.plugins
-    .collect({ case p: DataSourceFormatPlugin => p })
+    .collect({ case p: DataSourceFormatNameResolving => p })
     .map(_.formatNameResolver)
     .reduce(_ orElse _)
     .orElse[AnyRef, String] {

@@ -59,11 +59,11 @@ object DefaultSplineConfigurer {
   }
 
   def apply(sparkSession: SparkSession): DefaultSplineConfigurer = {
-    new DefaultSplineConfigurer(StandardSplineConfigurationStack(sparkSession))
+    new DefaultSplineConfigurer(sparkSession, StandardSplineConfigurationStack(sparkSession))
   }
 }
 
-class DefaultSplineConfigurer(userConfiguration: Configuration) extends SplineConfigurer with Logging {
+class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Configuration) extends SplineConfigurer with Logging {
 
   import ConfigurationImplicits._
   import DefaultSplineConfigurer.ConfProperty._
@@ -99,6 +99,7 @@ class DefaultSplineConfigurer(userConfiguration: Configuration) extends SplineCo
     configuration.getRequiredString(UserExtraMetadataProviderClass))
 
   private def harvesterFactory = new LineageHarvesterFactory(
+    sparkSession,
     splineMode,
     ignoredWriteDetectionStrategy,
     userExtraMetadataProvider

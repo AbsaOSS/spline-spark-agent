@@ -18,7 +18,6 @@ package za.co.absa.spline.harvester
 
 import java.util.UUID
 
-import org.apache.hadoop.conf.Configuration
 import org.apache.spark
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SaveMode
@@ -32,14 +31,12 @@ import za.co.absa.spline.harvester.ExtraMetadataImplicits._
 import za.co.absa.spline.harvester.LineageHarvester._
 import za.co.absa.spline.harvester.ModelConstants.{AppMetaInfo, ExecutionEventExtra, ExecutionPlanExtra}
 import za.co.absa.spline.harvester.builder._
-import za.co.absa.spline.harvester.builder.read.PluggableReadCommandExtractor
-import za.co.absa.spline.harvester.builder.write.PluggableWriteCommandExtractor
+import za.co.absa.spline.harvester.builder.read.ReadCommandExtractor
+import za.co.absa.spline.harvester.builder.write.WriteCommandExtractor
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
 import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
-import za.co.absa.spline.harvester.plugin.PluginRegistryImpl
-import za.co.absa.spline.harvester.qualifier.HDFSPathQualifier
 import za.co.absa.spline.producer.model._
 
 import scala.concurrent.duration.Duration
@@ -47,18 +44,15 @@ import scala.util.{Failure, Success, Try}
 
 class LineageHarvester(
   ctx: HarvestingContext,
-  hadoopConfiguration: Configuration,
   splineMode: SplineMode,
+  writeCommandExtractor: WriteCommandExtractor,
+  readCommandExtractor: ReadCommandExtractor,
   iwdStrategy: IgnoredWriteDetectionStrategy,
   userExtraMetadataProvider: UserExtraMetadataProvider
 ) extends Logging {
 
   private val componentCreatorFactory: ComponentCreatorFactory = new ComponentCreatorFactory
-  private val pathQualifier = new HDFSPathQualifier(hadoopConfiguration)
   private val opNodeBuilderFactory = new OperationNodeBuilderFactory(userExtraMetadataProvider, componentCreatorFactory, ctx)
-  private val pluginRegistry = new PluginRegistryImpl(pathQualifier, ctx.session)
-  private val writeCommandExtractor = new PluggableWriteCommandExtractor(pluginRegistry)
-  private val readCommandExtractor = new PluggableReadCommandExtractor(pluginRegistry)
 
   def harvest(result: Try[Duration]): HarvestResult = {
     log.debug(s"Harvesting lineage from ${ctx.logicalPlan.getClass}")

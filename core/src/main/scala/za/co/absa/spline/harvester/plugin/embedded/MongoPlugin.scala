@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.plugin.impl
+package za.co.absa.spline.harvester.plugin.embedded
 
 import com.mongodb.spark.config.ReadConfig
 import com.mongodb.spark.rdd.MongoRDD
@@ -24,18 +24,18 @@ import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{ReadNodeInfo, WriteNodeInfo}
-import za.co.absa.spline.harvester.plugin.impl.MongoPlugin._
-import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, DataSourceTypePlugin, Plugin}
+import za.co.absa.spline.harvester.plugin.embedded.MongoPlugin._
+import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, RelationProviderProcessing, Plugin}
 
 
 class MongoPlugin
   extends Plugin
-    with BaseRelationPlugin
-    with DataSourceTypePlugin {
+    with BaseRelationProcessing
+    with RelationProviderProcessing {
 
   import za.co.absa.commons.ExtractorImplicits._
 
-  override def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
+  override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: MongoRelation`(mongr), _) =>
       val mongoRDD = extractFieldValue[MongoRDD[_]](mongr, "mongoRDD")
       val readConfig = extractFieldValue[ReadConfig](mongoRDD, "readConfig")
@@ -45,7 +45,7 @@ class MongoPlugin
       (asSourceId(connectionUrl, database, collection), Map.empty)
   }
 
-  override def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
+  override def relationProviderProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
     case (st, cmd) if st == "com.mongodb.spark.sql.DefaultSource" || MongoDBSourceExtractor.matches(st) =>
       val database = cmd.options("database")
       val collection = cmd.options("collection")

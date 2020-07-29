@@ -19,22 +19,34 @@ package za.co.absa.spline.harvester
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.SparkPlan
+import za.co.absa.spline.harvester.builder.read.PluggableReadCommandExtractor
+import za.co.absa.spline.harvester.builder.write.PluggableWriteCommandExtractor
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
 import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
+import za.co.absa.spline.harvester.plugin.registry.AutoDiscoveryPluginRegistry
+import za.co.absa.spline.harvester.qualifier.HDFSPathQualifier
 
 import scala.language.postfixOps
 
 class LineageHarvesterFactory(
+  session: SparkSession,
   splineMode: SplineMode,
   iwdStrategy: IgnoredWriteDetectionStrategy,
   userExtraMetadataProvider: UserExtraMetadataProvider) {
 
-  def harvester(logicalPlan: LogicalPlan, executedPlan: Option[SparkPlan], session: SparkSession): LineageHarvester =
+  private val pathQualifier = new HDFSPathQualifier(session.sparkContext.hadoopConfiguration)
+  private val pluginRegistry = new AutoDiscoveryPluginRegistry(pathQualifier, session)
+  private val writeCommandExtractor = new PluggableWriteCommandExtractor(pluginRegistry)
+  private val readCommandExtractor = new PluggableReadCommandExtractor(pluginRegistry)
+
+
+  def harvester(logicalPlan: LogicalPlan, executedPlan: Option[SparkPlan]): LineageHarvester =
     new LineageHarvester(
       HarvestingContext(logicalPlan, executedPlan, session),
-      session.sparkContext.hadoopConfiguration,
       splineMode,
+      writeCommandExtractor,
+      readCommandExtractor,
       iwdStrategy,
       userExtraMetadataProvider
     )

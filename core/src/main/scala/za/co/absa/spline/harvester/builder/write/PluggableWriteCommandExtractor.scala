@@ -22,7 +22,8 @@ import za.co.absa.spline.harvester.builder.write.PluggableWriteCommandExtractor.
 import za.co.absa.spline.harvester.builder.{PluggableDataSourceFormatResolver, SourceIdentifier}
 import za.co.absa.spline.harvester.exception.UnsupportedSparkCommandException
 import za.co.absa.spline.harvester.plugin.Plugin.WriteNodeInfo
-import za.co.absa.spline.harvester.plugin.{PluginRegistry, WritePlugin}
+import za.co.absa.spline.harvester.plugin.WriteNodeProcessing
+import za.co.absa.spline.harvester.plugin.registry.PluginRegistry
 
 import scala.language.reflectiveCalls
 
@@ -31,7 +32,7 @@ class PluggableWriteCommandExtractor(pluginRegistry: PluginRegistry)
 
   private val processFn: LogicalPlan => Option[WriteNodeInfo] =
     pluginRegistry.plugins
-      .collect({ case p: WritePlugin => p })
+      .collect({ case p: WriteNodeProcessing => p })
       .map(_.writeNodeProcessor)
       .reduce(_ orElse _)
       .lift

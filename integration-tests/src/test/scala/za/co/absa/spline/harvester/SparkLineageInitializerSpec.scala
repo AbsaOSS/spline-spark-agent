@@ -28,6 +28,7 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar.mock
 import za.co.absa.commons.io.TempFile
 import za.co.absa.commons.json.DefaultJacksonJsonSerDe
 import za.co.absa.commons.scalatest.ConditionalTestTags._
@@ -215,8 +216,9 @@ object SparkLineageInitializerSpec {
     Seq((1, 2)).toDF.write.save(TempFile(pathOnly = true).deleteOnExit().path.toString)
   }
 
-  private def createFailingConfigurer(): DefaultSplineConfigurer = new DefaultSplineConfigurer(new SystemConfiguration) {
-    override def lineageDispatcher: LineageDispatcher = sys.error("Testing exception - please ignore.")
-  }
+  private def createFailingConfigurer(): DefaultSplineConfigurer =
+    new DefaultSplineConfigurer(mock[SparkSession], new SystemConfiguration) {
+      override def lineageDispatcher: LineageDispatcher = sys.error("Testing exception - please ignore.")
+    }
 
 }

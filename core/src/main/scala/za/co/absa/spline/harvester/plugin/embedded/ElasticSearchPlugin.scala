@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.plugin.impl
+package za.co.absa.spline.harvester.plugin.embedded
 
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.sources.BaseRelation
@@ -23,18 +23,18 @@ import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{ReadNodeInfo, WriteNodeInfo}
-import za.co.absa.spline.harvester.plugin.impl.ElasticSearchPlugin._
-import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, DataSourceTypePlugin, Plugin}
+import za.co.absa.spline.harvester.plugin.embedded.ElasticSearchPlugin._
+import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, RelationProviderProcessing, Plugin}
 
 
 class ElasticSearchPlugin
   extends Plugin
-    with BaseRelationPlugin
-    with DataSourceTypePlugin {
+    with BaseRelationProcessing
+    with RelationProviderProcessing {
 
   import za.co.absa.commons.ExtractorImplicits._
 
-  override def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
+  override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: ElasticsearchRelation`(esr), _) =>
       val parameters = extractFieldValue[SparkSettings](esr, "cfg")
       val server = parameters.getProperty("es.nodes")
@@ -42,7 +42,7 @@ class ElasticSearchPlugin
       (asSourceId(server, indexDocType), Map.empty)
   }
 
-  override def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
+  override def relationProviderProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
     case (st, cmd) if st == "es" || ElasticSearchSourceExtractor.matches(st) =>
       val indexDocType = cmd.options("path")
       val server = cmd.options("es.nodes")

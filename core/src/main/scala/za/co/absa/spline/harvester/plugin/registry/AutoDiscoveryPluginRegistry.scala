@@ -14,31 +14,36 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.plugin
+package za.co.absa.spline.harvester.plugin.registry
 
 import io.github.classgraph.ClassGraph
+import org.apache.commons.lang.ClassUtils.{getAllInterfaces, getAllSuperclasses}
 import org.apache.spark.internal.Logging
-import org.apache.spark.sql.SparkSession
 import za.co.absa.commons.lang.ARM
-import za.co.absa.spline.harvester.qualifier.PathQualifier
+import za.co.absa.spline.harvester.plugin.Plugin
+import za.co.absa.spline.harvester.plugin.registry.AutoDiscoveryPluginRegistry.{PluginClasses, getOnlyOrThrow}
 
 import scala.collection.JavaConverters._
 import scala.util.Try
 import scala.util.control.NonFatal
 
-class PluginRegistryImpl(pathQualifier: PathQualifier, session: SparkSession)
+class AutoDiscoveryPluginRegistry(injectables: AnyRef*)
   extends PluginRegistry
     with Logging {
 
-  private val pluginArgsByType: Map[Class[_], AnyRef] = Map(
-    classOf[PluginRegistry] -> this,
-    classOf[SparkSession] -> session,
-    classOf[PathQualifier] -> pathQualifier
-  )
+  private val injectablesByType: Map[Class[_], Seq[_ <: AnyRef]] = {
+    val typedInjectables =
+      for {
+        o <- this +: injectables
+        c = o.getClass
+        t <- getAllSuperclasses(c).asScala ++ getAllInterfaces(c).asScala :+ c
+      } yield t.asInstanceOf[Class[_]] -> o
+    typedInjectables.groupBy(_._1).mapValues(_.map(_._2))
+  }
 
   override val plugins: Seq[Plugin] = {
     for {
-      pluginClass <- PluginRegistryImpl.PluginClasses
+      pluginClass <- PluginClasses
     } yield {
       log.info(s"Loading plugin: $pluginClass")
       instantiatePlugin(pluginClass)
@@ -50,18 +55,20 @@ class PluginRegistryImpl(pathQualifier: PathQualifier, session: SparkSession)
   }
 
   private def instantiatePlugin(pluginClass: Class[_]): Try[Plugin] = Try {
-    val constructors = pluginClass.getConstructors
-    if (constructors.length != 1)
-      sys.error(s"Cannot instantiate a plugin with multiple constructors: $pluginClass")
-    val constr = constructors.head
-    val args = constr.getParameterTypes.map(pt => pluginArgsByType.getOrElse(pt, sys.error(s"Cannot find value for $pt")))
+    val constrs = pluginClass.getConstructors
+    val constr = getOnlyOrThrow(constrs, s"Cannot instantiate plugin with multiple constructors: ${constrs.mkString(", ")}")
+    val args = constr.getParameterTypes.map(pt => {
+      val candidates = injectablesByType.getOrElse(pt, sys.error(s"Cannot bind $pt. No value found"))
+      getOnlyOrThrow(candidates, s"Ambiguous constructor parameter binding. Multiple values found for $pt: ${candidates.length}")
+    })
     constr.newInstance(args: _*).asInstanceOf[Plugin]
   }
+
 }
 
-object PluginRegistryImpl extends Logging {
+object AutoDiscoveryPluginRegistry extends Logging {
 
-  private lazy val PluginClasses: Seq[Class[_]] = {
+  private val PluginClasses: Seq[Class[_]] = {
     log.debug("Scanning for plugins")
     val classGraph = new ClassGraph().enableClassInfo
     for {
@@ -71,5 +78,10 @@ object PluginRegistryImpl extends Logging {
       log.debug(s"Found plugin: $pluginClass")
       pluginClass
     }
+  }
+
+  private def getOnlyOrThrow[A](xs: Seq[A], msg: => String): A = xs match {
+    case Seq(x) => x
+    case _ => sys.error(msg)
   }
 }

@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.plugin.impl
+package za.co.absa.spline.harvester.plugin.registry
 
-import za.co.absa.spline.harvester.plugin.{DataSourceFormatPlugin, Plugin}
+import za.co.absa.spline.harvester.plugin.Plugin
 
-class AvroPlugin extends Plugin with DataSourceFormatPlugin {
-  override val formatNameResolver: PartialFunction[AnyRef, String] = {
-    case "com.databricks.spark.avro" => "avro"
-  }
+trait PluginRegistry {
+  def plugins: Seq[Plugin]
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.plugin.impl
+package za.co.absa.spline.harvester.plugin.embedded
 
 import org.apache.spark.sql.cassandra.TableRef
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
@@ -23,18 +23,18 @@ import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{ReadNodeInfo, WriteNodeInfo}
-import za.co.absa.spline.harvester.plugin.impl.CassandraPlugin._
-import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, DataSourceTypePlugin, Plugin}
+import za.co.absa.spline.harvester.plugin.embedded.CassandraPlugin._
+import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, RelationProviderProcessing, Plugin}
 
 
 class CassandraPlugin
   extends Plugin
-    with BaseRelationPlugin
-    with DataSourceTypePlugin {
+    with BaseRelationProcessing
+    with RelationProviderProcessing {
 
   import za.co.absa.commons.ExtractorImplicits._
 
-  override def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
+  override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: CassandraSourceRelation`(casr), _) =>
       val tableRef = extractFieldValue[TableRef](casr, "tableRef")
       val table = tableRef.table
@@ -42,7 +42,7 @@ class CassandraPlugin
       (asSourceId(keyspace, table), Map.empty)
   }
 
-  override def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
+  override def relationProviderProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
     case (st, cmd) if st == "org.apache.spark.sql.cassandra" || CassandraSourceExtractor.matches(st) =>
       val keyspace = cmd.options("keyspace")
       val table = cmd.options("table")

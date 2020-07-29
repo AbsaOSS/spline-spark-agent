@@ -38,7 +38,7 @@ class QueryExecutionEventHandler(
    */
   def onSuccess(funcName: String, qe: QueryExecution, durationNs: Long): Unit = {
     harvesterFactory
-      .harvester(qe.analyzed, Some(qe.executedPlan), qe.sparkSession)
+      .harvester(qe.analyzed, Some(qe.executedPlan))
       .harvest(Try(durationNs.nanos))
       .foreach({
         case (plan, event) =>

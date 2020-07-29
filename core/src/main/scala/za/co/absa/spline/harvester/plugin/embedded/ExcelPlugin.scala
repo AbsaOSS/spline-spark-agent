@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.plugin.impl
+package za.co.absa.spline.harvester.plugin.embedded
 
 import java.io.InputStream
 
@@ -25,8 +25,8 @@ import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.ReadNodeInfo
-import za.co.absa.spline.harvester.plugin.impl.ExcelPlugin._
-import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, DataSourceFormatPlugin, Plugin}
+import za.co.absa.spline.harvester.plugin.embedded.ExcelPlugin._
+import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, DataSourceFormatNameResolving, Plugin}
 import za.co.absa.spline.harvester.qualifier.PathQualifier
 
 import scala.util.Try
@@ -34,10 +34,10 @@ import scala.util.Try
 
 class ExcelPlugin(pathQualifier: PathQualifier)
   extends Plugin
-    with BaseRelationPlugin
-    with DataSourceFormatPlugin {
+    with BaseRelationProcessing
+    with DataSourceFormatNameResolving {
 
-  override def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
+  override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: ExcelRelation`(exr), _) =>
       val excelRelation = exr.asInstanceOf[ExcelRelation]
       val inputStream = extractExcelInputStream(excelRelation.workbookReader)

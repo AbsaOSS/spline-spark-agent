@@ -22,19 +22,20 @@ import za.co.absa.commons.reflect.extractors.AccessorMethodValueExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.WriteNodeInfo
 import za.co.absa.spline.harvester.plugin.composite.SaveIntoDataSourceCommandPlugin._
-import za.co.absa.spline.harvester.plugin.{DataSourceTypePlugin, Plugin, PluginRegistry, WritePlugin}
+import za.co.absa.spline.harvester.plugin.registry.PluginRegistry
+import za.co.absa.spline.harvester.plugin.{Plugin, RelationProviderProcessing, WriteNodeProcessing}
 import za.co.absa.spline.harvester.qualifier.PathQualifier
 
 class SaveIntoDataSourceCommandPlugin(
   pluginRegistry: PluginRegistry,
   pathQualifier: PathQualifier)
   extends Plugin
-    with WritePlugin {
+    with WriteNodeProcessing {
 
   private lazy val dstProcessor =
     pluginRegistry.plugins
-      .collect({ case p: DataSourceTypePlugin => p })
-      .map(_.dataSourceTypeProcessor)
+      .collect({ case p: RelationProviderProcessing => p })
+      .map(_.relationProviderProcessor)
       .reduce(_ orElse _)
 
 
@@ -42,22 +43,22 @@ class SaveIntoDataSourceCommandPlugin(
     // fixme: should the default case be handled here?
     case cmd: SaveIntoDataSourceCommand =>
       cmd match {
-        case DataSourceTypeExtractor(dst)
-          if dstProcessor.isDefinedAt((dst, cmd)) =>
-          dstProcessor((dst, cmd))
+        case RelationProviderExtractor(rp)
+          if dstProcessor.isDefinedAt((rp, cmd)) =>
+          dstProcessor((rp, cmd))
 
         case _ =>
-          val maybeFormat = DataSourceTypeExtractor.unapply(cmd)
+          val maybeProvider = RelationProviderExtractor.unapply(cmd)
           val opts = cmd.options
           val uri = opts.get("path").map(pathQualifier.qualify)
             .getOrElse(sys.error(s"Cannot extract source URI from the options: ${opts.keySet mkString ","}"))
-          (SourceIdentifier(maybeFormat, uri), cmd.mode, cmd.query, opts)
+          (SourceIdentifier(maybeProvider, uri), cmd.mode, cmd.query, opts)
       }
   }
 }
 
 object SaveIntoDataSourceCommandPlugin {
 
-  private object DataSourceTypeExtractor extends AccessorMethodValueExtractor[AnyRef]("provider", "dataSource")
+  private object RelationProviderExtractor extends AccessorMethodValueExtractor[AnyRef]("provider", "dataSource")
 
 }
