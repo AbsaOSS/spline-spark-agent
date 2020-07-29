@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.builder.write
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.command._
 import za.co.absa.spline.harvester.builder.write.PluggableWriteCommandExtractor._
-import za.co.absa.spline.harvester.builder.{PluggableDataSourceFormatResolver, SourceIdentifier}
+import za.co.absa.spline.harvester.builder.{DataSourceFormatResolver, PluggableDataSourceFormatResolver, SourceIdentifier}
 import za.co.absa.spline.harvester.exception.UnsupportedSparkCommandException
 import za.co.absa.spline.harvester.plugin.Plugin.WriteNodeInfo
 import za.co.absa.spline.harvester.plugin.WriteNodeProcessing
@@ -27,16 +27,16 @@ import za.co.absa.spline.harvester.plugin.registry.PluginRegistry
 
 import scala.language.reflectiveCalls
 
-class PluggableWriteCommandExtractor(pluginRegistry: PluginRegistry)
-  extends WriteCommandExtractor {
+class PluggableWriteCommandExtractor(
+  pluginRegistry: PluginRegistry,
+  dataSourceFormatResolver: DataSourceFormatResolver
+) extends WriteCommandExtractor {
 
   private val processFn: LogicalPlan => Option[WriteNodeInfo] =
     pluginRegistry.plugins[WriteNodeProcessing]
       .map(_.writeNodeProcessor)
       .reduce(_ orElse _)
       .lift
-
-  private val dataSourceFormatResolver = new PluggableDataSourceFormatResolver(pluginRegistry)
 
   @throws(classOf[UnsupportedSparkCommandException])
   def asWriteCommand(operation: LogicalPlan): Option[WriteCommand] = {

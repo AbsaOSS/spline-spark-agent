@@ -17,23 +17,22 @@
 package za.co.absa.spline.harvester.builder.read
 
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import za.co.absa.spline.harvester.builder.{PluggableDataSourceFormatResolver, SourceIdentifier}
+import za.co.absa.spline.harvester.builder.{DataSourceFormatResolver, SourceIdentifier}
 import za.co.absa.spline.harvester.plugin.Plugin.ReadNodeInfo
 import za.co.absa.spline.harvester.plugin.ReadNodeProcessing
 import za.co.absa.spline.harvester.plugin.registry.PluginRegistry
 
 
-class PluggableReadCommandExtractor(pluginRegistry: PluginRegistry)
-  extends ReadCommandExtractor {
+class PluggableReadCommandExtractor(
+  pluginRegistry: PluginRegistry,
+  dataSourceFormatResolver: DataSourceFormatResolver
+) extends ReadCommandExtractor {
 
   private val processFn: LogicalPlan => Option[ReadNodeInfo] =
     pluginRegistry.plugins[ReadNodeProcessing]
       .map(_.readNodeProcessor)
       .reduce(_ orElse _)
       .lift
-
-  // fixme: shouldn't a format name resolving happen outside the command extractor?
-  private val dataSourceFormatResolver = new PluggableDataSourceFormatResolver(pluginRegistry)
 
   override def asReadCommand(operation: LogicalPlan): Option[ReadCommand] = {
     processFn(operation).map({

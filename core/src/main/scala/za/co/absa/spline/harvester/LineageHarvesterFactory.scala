@@ -19,6 +19,7 @@ package za.co.absa.spline.harvester
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.SparkPlan
+import za.co.absa.spline.harvester.builder.PluggableDataSourceFormatResolver
 import za.co.absa.spline.harvester.builder.read.PluggableReadCommandExtractor
 import za.co.absa.spline.harvester.builder.write.PluggableWriteCommandExtractor
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
@@ -37,8 +38,9 @@ class LineageHarvesterFactory(
 
   private val pathQualifier = new HDFSPathQualifier(session.sparkContext.hadoopConfiguration)
   private val pluginRegistry = new AutoDiscoveryPluginRegistry(pathQualifier, session)
-  private val writeCommandExtractor = new PluggableWriteCommandExtractor(pluginRegistry)
-  private val readCommandExtractor = new PluggableReadCommandExtractor(pluginRegistry)
+  private val dataSourceFormatResolver = new PluggableDataSourceFormatResolver(pluginRegistry)
+  private val writeCommandExtractor = new PluggableWriteCommandExtractor(pluginRegistry, dataSourceFormatResolver)
+  private val readCommandExtractor = new PluggableReadCommandExtractor(pluginRegistry, dataSourceFormatResolver)
 
 
   def harvester(logicalPlan: LogicalPlan, executedPlan: Option[SparkPlan]): LineageHarvester =
