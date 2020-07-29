@@ -16,15 +16,13 @@
 
 package za.co.absa.spline.harvester.plugin.impl
 
-import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.cassandra.TableRef
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
-import za.co.absa.spline.harvester.plugin.Plugin.Params
+import za.co.absa.spline.harvester.plugin.Plugin.{ReadNodeInfo, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.impl.CassandraPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, DataSourceTypePlugin, Plugin}
 
@@ -36,7 +34,7 @@ class CassandraPlugin
 
   import za.co.absa.commons.ExtractorImplicits._
 
-  override def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), (SourceIdentifier, Params)] = {
+  override def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: CassandraSourceRelation`(casr), _) =>
       val tableRef = extractFieldValue[TableRef](casr, "tableRef")
       val table = tableRef.table
@@ -44,7 +42,7 @@ class CassandraPlugin
       (asSourceId(keyspace, table), Map.empty)
   }
 
-  override def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), (SourceIdentifier, SaveMode, LogicalPlan, Params)] = {
+  override def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
     case (st, cmd) if st == "org.apache.spark.sql.cassandra" || CassandraSourceExtractor.matches(st) =>
       val keyspace = cmd.options("keyspace")
       val table = cmd.options("table")

@@ -24,7 +24,7 @@ import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
-import za.co.absa.spline.harvester.plugin.Plugin.Params
+import za.co.absa.spline.harvester.plugin.Plugin.ReadNodeInfo
 import za.co.absa.spline.harvester.plugin.impl.ExcelPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, DataSourceFormatPlugin, Plugin}
 import za.co.absa.spline.harvester.qualifier.PathQualifier
@@ -37,7 +37,7 @@ class ExcelPlugin(pathQualifier: PathQualifier)
     with BaseRelationPlugin
     with DataSourceFormatPlugin {
 
-  override def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), (SourceIdentifier, Params)] = {
+  override def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: ExcelRelation`(exr), _) =>
       val excelRelation = exr.asInstanceOf[ExcelRelation]
       val inputStream = extractExcelInputStream(excelRelation.workbookReader)

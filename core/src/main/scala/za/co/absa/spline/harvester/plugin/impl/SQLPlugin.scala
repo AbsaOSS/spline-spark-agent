@@ -26,19 +26,21 @@ import org.apache.spark.sql.hive.execution.{CreateHiveTableAsSelectCommand, Inse
 import org.apache.spark.sql.{SaveMode, SparkSession}
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder._
-import za.co.absa.spline.harvester.plugin.Plugin.Params
+import za.co.absa.spline.harvester.plugin.Plugin.{Params, ReadNodeInfo, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.impl.SQLPlugin._
 import za.co.absa.spline.harvester.plugin.{Plugin, ReadPlugin, WritePlugin}
 import za.co.absa.spline.harvester.qualifier.PathQualifier
 
 import scala.language.reflectiveCalls
 
-class SQLPlugin(pathQualifier: PathQualifier, session: SparkSession)
+class SQLPlugin(
+  pathQualifier: PathQualifier,
+  session: SparkSession)
   extends Plugin
     with ReadPlugin
     with WritePlugin {
 
-  override val readNodeProcessor: PartialFunction[LogicalPlan, (SourceIdentifier, Params)] = {
+  override val readNodeProcessor: PartialFunction[LogicalPlan, ReadNodeInfo] = {
     case htr: HiveTableRelation =>
       asTableRead(htr.tableMeta)
 
@@ -49,12 +51,11 @@ class SQLPlugin(pathQualifier: PathQualifier, session: SparkSession)
         .getOrElse {
           val uris = hr.location.rootPaths.map(path => pathQualifier.qualify(path.toString))
           val fileFormat = hr.fileFormat
-          val formatName = DataSourceFormatResolver.resolve(fileFormat)
-          (SourceIdentifier(Some(formatName), uris: _*), hr.options)
+          (SourceIdentifier(Option(fileFormat), uris: _*), hr.options)
         }
   }
 
-  override val writeNodeProcessor: PartialFunction[LogicalPlan, (SourceIdentifier, SaveMode, LogicalPlan, Params)] = {
+  override val writeNodeProcessor: PartialFunction[LogicalPlan, WriteNodeInfo] = {
 
     case cmd: InsertIntoHadoopFsRelationCommand if cmd.catalogTable.isDefined =>
       val catalogTable = cmd.catalogTable.get
@@ -64,8 +65,8 @@ class SQLPlugin(pathQualifier: PathQualifier, session: SparkSession)
     case cmd: InsertIntoHadoopFsRelationCommand =>
       val path = cmd.outputPath.toString
       val qPath = pathQualifier.qualify(path)
-      val format = DataSourceFormatResolver.resolve(cmd.fileFormat)
-      (SourceIdentifier(Some(format), qPath), cmd.mode, cmd.query, cmd.options)
+      val format = cmd.fileFormat
+      (SourceIdentifier(Option(format), qPath), cmd.mode, cmd.query, cmd.options)
 
     case cmd: InsertIntoDataSourceCommand =>
       val catalogTable = cmd.logicalRelation.catalogTable

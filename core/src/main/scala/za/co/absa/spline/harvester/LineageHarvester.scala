@@ -38,6 +38,7 @@ import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
 import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
+import za.co.absa.spline.harvester.plugin.PluginRegistryImpl
 import za.co.absa.spline.harvester.qualifier.HDFSPathQualifier
 import za.co.absa.spline.producer.model._
 
@@ -56,8 +57,9 @@ class LineageHarvester(
   private val componentCreatorFactory: ComponentCreatorFactory = new ComponentCreatorFactory
   private val pathQualifier = new HDFSPathQualifier(hadoopConfiguration)
   private val opNodeBuilderFactory = new OperationNodeBuilderFactory(userExtraMetadataProvider, componentCreatorFactory, ctx)
-  private val writeCommandExtractor = new PluggableWriteCommandExtractor(pathQualifier, ctx.session)
-  private val readCommandExtractor = new PluggableReadCommandExtractor(pathQualifier, ctx.session, relationHandler)
+  private val pluginRegistry = new PluginRegistryImpl(pathQualifier, ctx.session)
+  private val writeCommandExtractor = new PluggableWriteCommandExtractor(pluginRegistry)
+  private val readCommandExtractor = new PluggableReadCommandExtractor(pluginRegistry, relationHandler)
 
   def harvest(result: Try[Duration]): HarvestResult = {
     log.debug(s"Harvesting lineage from ${ctx.logicalPlan.getClass}")

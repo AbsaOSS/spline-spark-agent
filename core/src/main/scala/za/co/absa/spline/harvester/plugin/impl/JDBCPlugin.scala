@@ -16,15 +16,13 @@
 
 package za.co.absa.spline.harvester.plugin.impl
 
-import org.apache.spark.sql.SaveMode
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources.jdbc.{JDBCOptions, JdbcRelationProvider}
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.{AccessorMethodValueExtractor, SafeTypeMatchingExtractor}
 import za.co.absa.spline.harvester.builder.SourceIdentifier
-import za.co.absa.spline.harvester.plugin.Plugin.Params
+import za.co.absa.spline.harvester.plugin.Plugin.{ReadNodeInfo, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.impl.JDBCPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, DataSourceTypePlugin, Plugin}
 
@@ -34,7 +32,7 @@ class JDBCPlugin
     with BaseRelationPlugin
     with DataSourceTypePlugin {
 
-  override def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), (SourceIdentifier, Params)] = {
+  override def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: JDBCRelation`(jr), _) =>
       val jdbcOptions = extractFieldValue[JDBCOptions](jr, "jdbcOptions")
       val url = extractFieldValue[String](jdbcOptions, "url")
@@ -43,7 +41,7 @@ class JDBCPlugin
       (asSourceId(url, toq), params)
   }
 
-  override def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), (SourceIdentifier, SaveMode, LogicalPlan, Params)] = {
+  override def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
     case (st, cmd) if st == "jdbc" || st.isInstanceOf[JdbcRelationProvider] =>
       val jdbcConnectionString = cmd.options("url")
       val tableName = cmd.options("dbtable")

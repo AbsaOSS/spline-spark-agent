@@ -16,36 +16,21 @@
 
 package za.co.absa.spline.harvester.plugin.composite
 
-import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources.LogicalRelation
-import za.co.absa.spline.harvester.builder.SourceIdentifier
-import za.co.absa.spline.harvester.plugin.Plugin.Params
+import za.co.absa.spline.harvester.plugin.Plugin.ReadNodeInfo
 import za.co.absa.spline.harvester.plugin._
-import za.co.absa.spline.harvester.plugin.impl._
-import za.co.absa.spline.harvester.qualifier.PathQualifier
 
 
-class LogicalRelationPlugin(pathQualifier: PathQualifier, session: SparkSession) extends Plugin with ReadPlugin {
+class LogicalRelationPlugin(pluginRegistry: PluginRegistry) extends Plugin with ReadPlugin {
 
-  // fixme: obtain from a plugin registry
-  private val plugins = Seq(
-    new XMLPlugin(pathQualifier),
-    new JDBCPlugin,
-    new KafkaPlugin,
-    new ExcelPlugin(pathQualifier),
-    new CassandraPlugin,
-    new MongoPlugin,
-    new ElasticSearchPlugin,
-    new CobrixPlugin
-  )
-
-  private val baseRelProcessor =
-    plugins
+  private lazy val baseRelProcessor =
+    pluginRegistry.plugins
+      .collect({ case p: BaseRelationPlugin => p })
       .map(_.baseRelProcessor)
       .reduce(_ orElse _)
 
-  override val readNodeProcessor: PartialFunction[LogicalPlan, (SourceIdentifier, Params)] = {
+  override val readNodeProcessor: PartialFunction[LogicalPlan, ReadNodeInfo] = {
     case lr: LogicalRelation
       if baseRelProcessor.isDefinedAt((lr.relation, lr)) =>
       baseRelProcessor((lr.relation, lr))

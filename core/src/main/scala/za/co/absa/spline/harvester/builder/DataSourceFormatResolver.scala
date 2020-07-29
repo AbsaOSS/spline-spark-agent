@@ -17,17 +17,16 @@
 package za.co.absa.spline.harvester.builder
 
 import org.apache.spark.sql.sources.DataSourceRegister
-import za.co.absa.spline.harvester.plugin.impl.{AvroPlugin, ExcelPlugin}
+import za.co.absa.spline.harvester.plugin.{DataSourceFormatPlugin, PluginRegistry}
 
-object DataSourceFormatResolver {
+trait DataSourceFormatResolver {
+  def resolve(o: AnyRef): String
+}
 
-  // fixme: obtain from a plugin registry
-  private val plugins = Seq(
-    new AvroPlugin,
-    new ExcelPlugin(null)
-  )
+class PluggableDataSourceFormatResolver(pluginRegistry: PluginRegistry) extends DataSourceFormatResolver {
 
-  private val processFn = plugins
+  private lazy val processFn = pluginRegistry.plugins
+    .collect({ case p: DataSourceFormatPlugin => p })
     .map(_.formatNameResolver)
     .reduce(_ orElse _)
     .orElse[AnyRef, String] {
@@ -35,5 +34,5 @@ object DataSourceFormatResolver {
       case o => o.toString
     }
 
-  def resolve(o: AnyRef): String = processFn(o)
+  override def resolve(o: AnyRef): String = processFn(o)
 }

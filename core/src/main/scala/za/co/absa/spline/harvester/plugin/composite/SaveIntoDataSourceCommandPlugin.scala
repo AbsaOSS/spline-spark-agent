@@ -16,35 +16,29 @@
 
 package za.co.absa.spline.harvester.plugin.composite
 
-import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources.SaveIntoDataSourceCommand
 import za.co.absa.commons.reflect.extractors.AccessorMethodValueExtractor
-import za.co.absa.spline.harvester.builder.{DataSourceFormatResolver, SourceIdentifier}
-import za.co.absa.spline.harvester.plugin.Plugin.Params
+import za.co.absa.spline.harvester.builder.SourceIdentifier
+import za.co.absa.spline.harvester.plugin.Plugin.WriteNodeInfo
 import za.co.absa.spline.harvester.plugin.composite.SaveIntoDataSourceCommandPlugin._
-import za.co.absa.spline.harvester.plugin.impl._
-import za.co.absa.spline.harvester.plugin.{Plugin, WritePlugin}
+import za.co.absa.spline.harvester.plugin.{DataSourceTypePlugin, Plugin, PluginRegistry, WritePlugin}
 import za.co.absa.spline.harvester.qualifier.PathQualifier
 
-class SaveIntoDataSourceCommandPlugin(pathQualifier: PathQualifier) extends Plugin with WritePlugin {
+class SaveIntoDataSourceCommandPlugin(
+  pluginRegistry: PluginRegistry,
+  pathQualifier: PathQualifier)
+  extends Plugin
+    with WritePlugin {
 
-  // fixme: obtain from a plugin registry
-  private val plugins = Seq(
-    new JDBCPlugin,
-    new CassandraPlugin,
-    new MongoPlugin,
-    new ElasticSearchPlugin,
-    new KafkaPlugin
-  )
-
-  private val dstProcessor =
-    plugins
+  private lazy val dstProcessor =
+    pluginRegistry.plugins
+      .collect({ case p: DataSourceTypePlugin => p })
       .map(_.dataSourceTypeProcessor)
       .reduce(_ orElse _)
 
 
-  override def writeNodeProcessor: PartialFunction[LogicalPlan, (SourceIdentifier, SaveMode, LogicalPlan, Params)] = {
+  override def writeNodeProcessor: PartialFunction[LogicalPlan, WriteNodeInfo] = {
     // fixme: should the default case be handled here?
     case cmd: SaveIntoDataSourceCommand =>
       cmd match {
@@ -53,7 +47,7 @@ class SaveIntoDataSourceCommandPlugin(pathQualifier: PathQualifier) extends Plug
           dstProcessor((dst, cmd))
 
         case _ =>
-          val maybeFormat = DataSourceTypeExtractor.unapply(cmd).map(DataSourceFormatResolver.resolve)
+          val maybeFormat = DataSourceTypeExtractor.unapply(cmd)
           val opts = cmd.options
           val uri = opts.get("path").map(pathQualifier.qualify)
             .getOrElse(sys.error(s"Cannot extract source URI from the options: ${opts.keySet mkString ","}"))

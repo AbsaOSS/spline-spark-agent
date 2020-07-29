@@ -19,15 +19,13 @@ package za.co.absa.spline.harvester.plugin.impl
 import java.util.Properties
 
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import org.apache.spark.sql.SaveMode
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.kafka010.{AssignStrategy, ConsumerStrategy, SubscribePatternStrategy, SubscribeStrategy}
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
-import za.co.absa.spline.harvester.builder.{DataSourceFormatResolver, SourceIdentifier}
-import za.co.absa.spline.harvester.plugin.Plugin.Params
+import za.co.absa.spline.harvester.builder.SourceIdentifier
+import za.co.absa.spline.harvester.plugin.Plugin.{ReadNodeInfo, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.impl.KafkaPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationPlugin, DataSourceTypePlugin, Plugin}
 
@@ -38,7 +36,7 @@ class KafkaPlugin
     with BaseRelationPlugin
     with DataSourceTypePlugin {
 
-  override def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), (SourceIdentifier, Params)] = {
+  override def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: KafkaRelation`(kr), _) =>
       val options = extractFieldValue[Map[String, String]](kr, "sourceOptions")
       val topics: Seq[String] = extractFieldValue[ConsumerStrategy](kr, "strategy") match {
@@ -53,11 +51,10 @@ class KafkaPlugin
       ))
   }
 
-  override def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), (SourceIdentifier, SaveMode, LogicalPlan, Params)] = {
+  override def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
     case (st, cmd) if cmd.options.contains("kafka.bootstrap.servers") =>
-      val formatName = DataSourceFormatResolver.resolve(st)
       val uri = asURI(cmd.options("topic"))
-      (SourceIdentifier(Some(formatName), uri), cmd.mode, cmd.query, cmd.options)
+      (SourceIdentifier(Option(st), uri), cmd.mode, cmd.query, cmd.options)
   }
 }
 

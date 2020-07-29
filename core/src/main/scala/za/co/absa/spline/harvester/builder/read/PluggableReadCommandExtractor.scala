@@ -16,32 +16,24 @@
 
 package za.co.absa.spline.harvester.builder.read
 
-import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources.LogicalRelation
-import za.co.absa.spline.harvester.builder.SourceIdentifier
-import za.co.absa.spline.harvester.plugin.Plugin.Params
-import za.co.absa.spline.harvester.plugin.composite.LogicalRelationPlugin
-import za.co.absa.spline.harvester.plugin.impl.SQLPlugin
-import za.co.absa.spline.harvester.qualifier.PathQualifier
+import za.co.absa.spline.harvester.builder.{DataSourceFormatResolver, PluggableDataSourceFormatResolver, SourceIdentifier}
+import za.co.absa.spline.harvester.plugin.Plugin.ReadNodeInfo
+import za.co.absa.spline.harvester.plugin.{PluginRegistry, ReadPlugin}
 
 
 class PluggableReadCommandExtractor(
-  pathQualifier: PathQualifier,
-  session: SparkSession,
-  relationHandler: ReadRelationHandler) extends ReadCommandExtractor {
+  pluginRegistry: PluginRegistry,
+  relationHandler: ReadRelationHandler)
+  extends ReadCommandExtractor {
 
-  // fixme: obtain from a plugin registry
-  private val readPlugins = Seq(
-    new SQLPlugin(pathQualifier, session),
-    new LogicalRelationPlugin(pathQualifier, session)
-  )
-
-  private val processFn: LogicalPlan => Option[(SourceIdentifier, Params)] =
-    readPlugins
+  private val processFn: LogicalPlan => Option[ReadNodeInfo] =
+    pluginRegistry.plugins
+      .collect({ case p: ReadPlugin => p })
       .map(_.readNodeProcessor)
       .reduce(_ orElse _)
-      .orElse[LogicalPlan, (SourceIdentifier, Params)]({
+      .orElse[LogicalPlan, ReadNodeInfo]({
         // Fixme: this should go
         // Other ...
         case lr: LogicalRelation =>
@@ -55,9 +47,15 @@ class PluggableReadCommandExtractor(
       })
       .lift
 
+  // fixme: shouldn't a format name resolving happen outside the command extractor?
+  private val dataSourceFormatResolver = new PluggableDataSourceFormatResolver(pluginRegistry)
+
   override def asReadCommand(operation: LogicalPlan): Option[ReadCommand] = {
     processFn(operation).map({
-      case (sourceId, params) => ReadCommand(sourceId, operation, params)
+      case (SourceIdentifier(maybeFormat, uris@_*), params) =>
+        val maybeResolvedFormat = maybeFormat.map(dataSourceFormatResolver.resolve)
+        val sourceId = SourceIdentifier(maybeResolvedFormat, uris: _*)
+        ReadCommand(sourceId, operation, params)
     })
   }
 

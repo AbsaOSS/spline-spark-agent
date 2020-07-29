@@ -18,31 +18,25 @@ package za.co.absa.spline.harvester.builder.write
 
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.command._
-import org.apache.spark.sql.{SaveMode, SparkSession}
-import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.builder.write.PluggableWriteCommandExtractor._
+import za.co.absa.spline.harvester.builder.{PluggableDataSourceFormatResolver, SourceIdentifier}
 import za.co.absa.spline.harvester.exception.UnsupportedSparkCommandException
-import za.co.absa.spline.harvester.plugin.Plugin.Params
-import za.co.absa.spline.harvester.plugin.composite.SaveIntoDataSourceCommandPlugin
-import za.co.absa.spline.harvester.plugin.impl.SQLPlugin
-import za.co.absa.spline.harvester.qualifier.PathQualifier
+import za.co.absa.spline.harvester.plugin.Plugin.WriteNodeInfo
+import za.co.absa.spline.harvester.plugin.{PluginRegistry, WritePlugin}
 
 import scala.language.reflectiveCalls
 
-class PluggableWriteCommandExtractor(pathQualifier: PathQualifier, session: SparkSession)
+class PluggableWriteCommandExtractor(pluginRegistry: PluginRegistry)
   extends WriteCommandExtractor {
 
-  // fixme: obtain from a plugin registry
-  private val writePlugins = Seq(
-    new SaveIntoDataSourceCommandPlugin(pathQualifier),
-    new SQLPlugin(pathQualifier, session)
-  )
-
-  private val processFn: LogicalPlan => Option[(SourceIdentifier, SaveMode, LogicalPlan, Params)] =
-    writePlugins
+  private val processFn: LogicalPlan => Option[WriteNodeInfo] =
+    pluginRegistry.plugins
+      .collect({ case p: WritePlugin => p })
       .map(_.writeNodeProcessor)
       .reduce(_ orElse _)
       .lift
+
+  private val dataSourceFormatResolver = new PluggableDataSourceFormatResolver(pluginRegistry)
 
   @throws(classOf[UnsupportedSparkCommandException])
   def asWriteCommand(operation: LogicalPlan): Option[WriteCommand] = {
@@ -51,7 +45,10 @@ class PluggableWriteCommandExtractor(pathQualifier: PathQualifier, session: Spar
     if (maybeCapturedResult.isEmpty) alertWhenUnimplementedCommand(operation)
 
     maybeCapturedResult.map({
-      case (sourceId, mode, plan, params) => WriteCommand(operation.nodeName, sourceId, mode, plan, params)
+      case (SourceIdentifier(maybeFormat, uris@_*), mode, plan, params) =>
+        val maybeResolvedFormat = maybeFormat.map(dataSourceFormatResolver.resolve)
+        val sourceId = SourceIdentifier(maybeResolvedFormat, uris: _*)
+        WriteCommand(operation.nodeName, sourceId, mode, plan, params)
     })
   }
 

@@ -21,30 +21,36 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.spline.harvester.builder.SourceIdentifier
-import za.co.absa.spline.harvester.plugin.Plugin.Params
+import za.co.absa.spline.harvester.plugin.Plugin._
 
 trait Plugin
 
-trait ReadPlugin {
-  def readNodeProcessor: PartialFunction[LogicalPlan, (SourceIdentifier, Params)]
-}
-
-trait BaseRelationPlugin {
-  def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), (SourceIdentifier, Params)]
-}
-
-trait WritePlugin {
-  def writeNodeProcessor: PartialFunction[LogicalPlan, (SourceIdentifier, SaveMode, LogicalPlan, Params)]
-}
-
-trait DataSourceTypePlugin {
-  def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), (SourceIdentifier, SaveMode, LogicalPlan, Params)]
-}
+// primary
 
 trait DataSourceFormatPlugin {
   def formatNameResolver: PartialFunction[AnyRef, String]
 }
 
+trait ReadPlugin {
+  def readNodeProcessor: PartialFunction[LogicalPlan, ReadNodeInfo]
+}
+
+trait WritePlugin {
+  def writeNodeProcessor: PartialFunction[LogicalPlan, WriteNodeInfo]
+}
+
+// others
+
+trait BaseRelationPlugin {
+  def baseRelProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo]
+}
+
+trait DataSourceTypePlugin {
+  def dataSourceTypeProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo]
+}
+
 object Plugin {
   type Params = Map[String, Any]
+  type ReadNodeInfo = (SourceIdentifier, Params)
+  type WriteNodeInfo = (SourceIdentifier, SaveMode, LogicalPlan, Params)
 }

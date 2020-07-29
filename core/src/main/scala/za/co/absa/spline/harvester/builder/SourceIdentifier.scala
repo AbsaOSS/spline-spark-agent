@@ -16,5 +16,5 @@
 
 package za.co.absa.spline.harvester.builder
 
-case class SourceIdentifier(format: Option[String], uris: String*)
+case class SourceIdentifier(format: Option[AnyRef], uris: String*)
 
