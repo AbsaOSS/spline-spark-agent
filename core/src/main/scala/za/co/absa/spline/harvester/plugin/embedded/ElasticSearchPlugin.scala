@@ -45,7 +45,7 @@ class ElasticSearchPlugin
   }
 
   override def relationProviderProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
-    case (st, cmd) if st == "es" || ElasticSearchSourceExtractor.matches(st) =>
+    case (rp, cmd) if rp == "es" || ElasticSearchSourceExtractor.matches(rp) =>
       val indexDocType = cmd.options("path")
       val server = cmd.options("es.nodes")
       (asSourceId(server, indexDocType), cmd.mode, cmd.query, cmd.options)

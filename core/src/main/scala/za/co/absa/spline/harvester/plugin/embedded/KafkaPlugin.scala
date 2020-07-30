@@ -54,9 +54,9 @@ class KafkaPlugin
   }
 
   override def relationProviderProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
-    case (st, cmd) if cmd.options.contains("kafka.bootstrap.servers") =>
+    case (rp, cmd) if cmd.options.contains("kafka.bootstrap.servers") =>
       val uri = asURI(cmd.options("topic"))
-      (SourceIdentifier(Option(st), uri), cmd.mode, cmd.query, cmd.options)
+      (SourceIdentifier(Option(rp), uri), cmd.mode, cmd.query, cmd.options)
   }
 }
 

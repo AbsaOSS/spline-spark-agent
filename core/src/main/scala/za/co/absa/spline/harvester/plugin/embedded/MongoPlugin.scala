@@ -48,7 +48,7 @@ class MongoPlugin
   }
 
   override def relationProviderProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
-    case (st, cmd) if st == "com.mongodb.spark.sql.DefaultSource" || MongoDBSourceExtractor.matches(st) =>
+    case (rp, cmd) if rp == "com.mongodb.spark.sql.DefaultSource" || MongoDBSourceExtractor.matches(rp) =>
       val database = cmd.options("database")
       val collection = cmd.options("collection")
       val uri = cmd.options("uri")

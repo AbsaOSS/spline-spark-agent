@@ -44,7 +44,7 @@ class JDBCPlugin
   }
 
   override def relationProviderProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
-    case (st, cmd) if st == "jdbc" || st.isInstanceOf[JdbcRelationProvider] =>
+    case (rp, cmd) if rp == "jdbc" || rp.isInstanceOf[JdbcRelationProvider] =>
       val jdbcConnectionString = cmd.options("url")
       val tableName = cmd.options("dbtable")
       (asSourceId(jdbcConnectionString, tableName), cmd.mode, cmd.query, Map.empty)

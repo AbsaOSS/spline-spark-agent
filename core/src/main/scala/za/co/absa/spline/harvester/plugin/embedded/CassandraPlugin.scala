@@ -45,7 +45,7 @@ class CassandraPlugin
   }
 
   override def relationProviderProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
-    case (st, cmd) if st == "org.apache.spark.sql.cassandra" || CassandraSourceExtractor.matches(st) =>
+    case (rp, cmd) if rp == "org.apache.spark.sql.cassandra" || CassandraSourceExtractor.matches(rp) =>
       val keyspace = cmd.options("keyspace")
       val table = cmd.options("table")
       (asSourceId(keyspace, table), cmd.mode, cmd.query, cmd.options)
