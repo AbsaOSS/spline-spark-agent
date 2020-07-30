@@ -33,7 +33,7 @@ class CobrixPlugin extends Plugin with BaseRelationProcessing {
   override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: CobolRelation`(cr), _) =>
       val sourceDir = extractFieldValue[String](cr, "sourceDir")
-      (forCobol(sourceDir), Map.empty)
+      (asSourceId(sourceDir), Map.empty)
   }
 }
 
@@ -42,5 +42,5 @@ object CobrixPlugin {
 
   object `_: CobolRelation` extends SafeTypeMatchingExtractor[AnyRef]("za.co.absa.cobrix.spark.cobol.source.CobolRelation")
 
-  private def forCobol(filePath: String) = SourceIdentifier(Some("cobol"), filePath)
+  private def asSourceId(filePath: String) = SourceIdentifier(Some("cobol"), filePath)
 }

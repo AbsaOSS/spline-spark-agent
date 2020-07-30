@@ -71,32 +71,26 @@ class AutoDiscoveryPluginRegistry(injectables: AnyRef*)
 
 object AutoDiscoveryPluginRegistry extends Logging {
 
-  private implicit object PluginClassOrdering extends Ordering[Class[Plugin]] {
-    private def priority(c: Class[_]): Int =
-      Option(c.getAnnotation(classOf[Priority]))
-        .map(_.value)
-        .getOrElse(Precedence.User)
-
-    override def compare(x: Class[Plugin], y: Class[Plugin]): Int =
-      priority(x) - priority(y)
-  }
-
   private val PluginClasses: Seq[Class[Plugin]] = {
     log.debug("Scanning for plugins")
     val classGraph = new ClassGraph().enableClassInfo
     for {
       scanResult <- ARM.managed(classGraph.scan)
-      pluginClass <- scanResult
+      (cls, prt) <- scanResult
         .getClassesImplementing(classOf[Plugin].getName)
-        .loadClasses
-        .asScala
-        .asInstanceOf[Seq[Class[Plugin]]]
-        .sorted
+        .loadClasses.asScala.asInstanceOf[Seq[Class[Plugin]]]
+        .map(c => c -> priorityOf(c))
+        .sortBy(_._2)
     } yield {
-      log.debug(s"Found plugin: $pluginClass")
-      pluginClass
+      log.debug(s"Found plugin [priority=$prt]\t: $cls")
+      cls
     }
   }
+
+  private def priorityOf(c: Class[Plugin]): Int =
+    Option(c.getAnnotation(classOf[Priority]))
+      .map(_.value)
+      .getOrElse(Precedence.User)
 
   private def getOnlyOrThrow[A](xs: Seq[A], msg: => String): A = xs match {
     case Seq(x) => x
