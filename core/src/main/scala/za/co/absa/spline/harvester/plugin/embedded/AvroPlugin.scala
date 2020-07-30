@@ -16,8 +16,11 @@
 
 package za.co.absa.spline.harvester.plugin.embedded
 
+import javax.annotation.Priority
+import za.co.absa.spline.harvester.plugin.Plugin.Precedence
 import za.co.absa.spline.harvester.plugin.{DataSourceFormatNameResolving, Plugin}
 
+@Priority(Precedence.Normal)
 class AvroPlugin extends Plugin with DataSourceFormatNameResolving {
   override val formatNameResolver: PartialFunction[AnyRef, String] = {
     case "com.databricks.spark.avro" => "avro"

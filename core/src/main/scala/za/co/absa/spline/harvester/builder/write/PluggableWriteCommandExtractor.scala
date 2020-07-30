@@ -18,8 +18,9 @@ package za.co.absa.spline.harvester.builder.write
 
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.command._
+import za.co.absa.spline.harvester.builder.SourceIdentifier
+import za.co.absa.spline.harvester.builder.dsformat.DataSourceFormatResolver
 import za.co.absa.spline.harvester.builder.write.PluggableWriteCommandExtractor._
-import za.co.absa.spline.harvester.builder.{DataSourceFormatResolver, PluggableDataSourceFormatResolver, SourceIdentifier}
 import za.co.absa.spline.harvester.exception.UnsupportedSparkCommandException
 import za.co.absa.spline.harvester.plugin.Plugin.WriteNodeInfo
 import za.co.absa.spline.harvester.plugin.WriteNodeProcessing

@@ -19,12 +19,13 @@ package za.co.absa.spline.harvester.plugin.embedded
 import java.io.InputStream
 
 import com.crealytics.spark.excel.{DefaultSource, ExcelRelation, WorkbookReader}
+import javax.annotation.Priority
 import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
-import za.co.absa.spline.harvester.plugin.Plugin.ReadNodeInfo
+import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo}
 import za.co.absa.spline.harvester.plugin.embedded.ExcelPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, DataSourceFormatNameResolving, Plugin}
 import za.co.absa.spline.harvester.qualifier.PathQualifier
@@ -32,6 +33,7 @@ import za.co.absa.spline.harvester.qualifier.PathQualifier
 import scala.util.Try
 
 
+@Priority(Precedence.Normal)
 class ExcelPlugin(pathQualifier: PathQualifier)
   extends Plugin
     with BaseRelationProcessing

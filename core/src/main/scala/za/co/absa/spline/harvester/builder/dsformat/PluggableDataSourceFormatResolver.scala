@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.builder
+package za.co.absa.spline.harvester.builder.dsformat
 
 import org.apache.spark.sql.sources.DataSourceRegister
 import za.co.absa.spline.harvester.plugin.DataSourceFormatNameResolving
 import za.co.absa.spline.harvester.plugin.registry.PluginRegistry
-
-trait DataSourceFormatResolver {
-  def resolve(o: AnyRef): String
-}
 
 class PluggableDataSourceFormatResolver(pluginRegistry: PluginRegistry) extends DataSourceFormatResolver {
 

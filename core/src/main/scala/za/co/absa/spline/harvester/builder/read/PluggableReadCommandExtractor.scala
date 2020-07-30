@@ -17,7 +17,8 @@
 package za.co.absa.spline.harvester.builder.read
 
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import za.co.absa.spline.harvester.builder.{DataSourceFormatResolver, SourceIdentifier}
+import za.co.absa.spline.harvester.builder.SourceIdentifier
+import za.co.absa.spline.harvester.builder.dsformat.DataSourceFormatResolver
 import za.co.absa.spline.harvester.plugin.Plugin.ReadNodeInfo
 import za.co.absa.spline.harvester.plugin.ReadNodeProcessing
 import za.co.absa.spline.harvester.plugin.registry.PluginRegistry

@@ -14,24 +14,8 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.plugin
+package za.co.absa.spline.harvester.builder.dsformat
 
-import org.apache.spark.sql.SaveMode
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import za.co.absa.spline.harvester.builder.SourceIdentifier
-
-trait Plugin
-
-object Plugin {
-  type Params = Map[String, Any]
-  type ReadNodeInfo = (SourceIdentifier, Params)
-  type WriteNodeInfo = (SourceIdentifier, SaveMode, LogicalPlan, Params)
-
-  object Precedence {
-    final val Highest = 0
-    final val User = 1000
-    final val Normal = 5000
-    final val Lowest = Int.MaxValue
-  }
-
+trait DataSourceFormatResolver {
+  def resolve(o: AnyRef): String
 }

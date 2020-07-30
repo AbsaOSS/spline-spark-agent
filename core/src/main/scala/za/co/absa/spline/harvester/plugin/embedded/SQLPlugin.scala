@@ -16,6 +16,7 @@
 
 package za.co.absa.spline.harvester.plugin.embedded
 
+import javax.annotation.Priority
 import org.apache.spark.sql.SaveMode.{Append, Overwrite}
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.catalog.{CatalogStorageFormat, CatalogTable, HiveTableRelation}
@@ -26,13 +27,14 @@ import org.apache.spark.sql.hive.execution.{CreateHiveTableAsSelectCommand, Inse
 import org.apache.spark.sql.{SaveMode, SparkSession}
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder._
-import za.co.absa.spline.harvester.plugin.Plugin.{Params, ReadNodeInfo, WriteNodeInfo}
+import za.co.absa.spline.harvester.plugin.Plugin.{Params, Precedence, ReadNodeInfo, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.embedded.SQLPlugin._
 import za.co.absa.spline.harvester.plugin.{Plugin, ReadNodeProcessing, WriteNodeProcessing}
 import za.co.absa.spline.harvester.qualifier.PathQualifier
 
 import scala.language.reflectiveCalls
 
+@Priority(Precedence.Normal)
 class SQLPlugin(
   pathQualifier: PathQualifier,
   session: SparkSession)

@@ -16,13 +16,14 @@
 
 package za.co.absa.spline.harvester.plugin.composite
 
+import javax.annotation.Priority
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources.LogicalRelation
-import za.co.absa.spline.harvester.plugin.Plugin.ReadNodeInfo
+import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo}
 import za.co.absa.spline.harvester.plugin._
 import za.co.absa.spline.harvester.plugin.registry.PluginRegistry
 
-
+@Priority(Precedence.Lowest)
 class LogicalRelationPlugin(pluginRegistry: PluginRegistry) extends Plugin with ReadNodeProcessing {
 
   private lazy val baseRelProcessor =

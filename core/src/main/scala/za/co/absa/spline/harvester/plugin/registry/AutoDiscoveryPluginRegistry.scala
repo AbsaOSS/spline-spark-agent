@@ -17,10 +17,12 @@
 package za.co.absa.spline.harvester.plugin.registry
 
 import io.github.classgraph.ClassGraph
+import javax.annotation.Priority
 import org.apache.commons.lang.ClassUtils.{getAllInterfaces, getAllSuperclasses}
 import org.apache.spark.internal.Logging
 import za.co.absa.commons.lang.ARM
 import za.co.absa.spline.harvester.plugin.Plugin
+import za.co.absa.spline.harvester.plugin.Plugin.Precedence
 import za.co.absa.spline.harvester.plugin.registry.AutoDiscoveryPluginRegistry.{PluginClasses, getOnlyOrThrow}
 
 import scala.collection.JavaConverters._
@@ -42,18 +44,13 @@ class AutoDiscoveryPluginRegistry(injectables: AnyRef*)
     typedInjectables.groupBy(_._1).mapValues(_.map(_._2))
   }
 
-  private val allPlugins: Seq[Plugin] = {
-    for {
-      pluginClass <- PluginClasses
-    } yield {
-      log.info(s"Loading plugin: $pluginClass")
-      instantiatePlugin(pluginClass)
-        .recover({
-          case NonFatal(e) => throw new RuntimeException(s"Plugin instantiation failure: $pluginClass", e)
-        })
+  private val allPlugins: Seq[Plugin] =
+    for (pc <- PluginClasses) yield {
+      log.info(s"Loading plugin: $pc")
+      instantiatePlugin(pc)
+        .recover({ case NonFatal(e) => throw new RuntimeException(s"Plugin instantiation failure: $pc", e) })
         .get
     }
-  }
 
   override def plugins[A: ClassTag]: Seq[Plugin with A] = {
     val ct = implicitly[ClassTag[A]]
@@ -74,12 +71,27 @@ class AutoDiscoveryPluginRegistry(injectables: AnyRef*)
 
 object AutoDiscoveryPluginRegistry extends Logging {
 
-  private val PluginClasses: Seq[Class[_]] = {
+  private implicit object PluginClassOrdering extends Ordering[Class[Plugin]] {
+    private def priority(c: Class[_]): Int =
+      Option(c.getAnnotation(classOf[Priority]))
+        .map(_.value)
+        .getOrElse(Precedence.User)
+
+    override def compare(x: Class[Plugin], y: Class[Plugin]): Int =
+      priority(x) - priority(y)
+  }
+
+  private val PluginClasses: Seq[Class[Plugin]] = {
     log.debug("Scanning for plugins")
     val classGraph = new ClassGraph().enableClassInfo
     for {
       scanResult <- ARM.managed(classGraph.scan)
-      pluginClass <- scanResult.getClassesImplementing(classOf[Plugin].getName).loadClasses.asScala
+      pluginClass <- scanResult
+        .getClassesImplementing(classOf[Plugin].getName)
+        .loadClasses
+        .asScala
+        .asInstanceOf[Seq[Class[Plugin]]]
+        .sorted
     } yield {
       log.debug(s"Found plugin: $pluginClass")
       pluginClass
