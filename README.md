@@ -154,7 +154,7 @@ There are also two additional trait that handle common cases of reading and writ
 - `RelationProviderProcessing` - similar to `WriteNodeProcessing`, but it only captures `SaveIntoDataSourceCommand` (see `SaveIntoDataSourceCommandPlugin`) 
 
 The best way to illustrate how plugins work is to look at the real working example,
-e.g. (`za.co.absa.spline.harvester.plugin.embedded.JDBCPlugin`)[core/src/main/scala/za/co/absa/spline/harvester/plugin/embedded/JDBCPlugin.scala]
+e.g. [`za.co.absa.spline.harvester.plugin.embedded.JDBCPlugin`](core/src/main/scala/za/co/absa/spline/harvester/plugin/embedded/JDBCPlugin.scala)
 
 The most common simplified pattern looks like this:
 ```scala
