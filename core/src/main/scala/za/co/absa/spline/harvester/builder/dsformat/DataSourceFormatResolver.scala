@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.builder.read
+package za.co.absa.spline.harvester.builder.dsformat
 
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-
-trait ReadCommandExtractor {
-  def asReadCommand(operation: LogicalPlan): Option[ReadCommand]
+trait DataSourceFormatResolver {
+  def resolve(o: AnyRef): String
 }

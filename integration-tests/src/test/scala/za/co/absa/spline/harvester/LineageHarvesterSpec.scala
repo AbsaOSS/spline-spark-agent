@@ -303,7 +303,7 @@ class LineageHarvesterSpec extends AnyFlatSpec
     withNewSparkSession(spark => {
       val lineageCaptor = new LineageCaptor
 
-      val testSplineConfigurer = new DefaultSplineConfigurer(EMPTY_CONF) {
+      val testSplineConfigurer = new DefaultSplineConfigurer(spark, EMPTY_CONF) {
         override protected def lineageDispatcher: LineageDispatcher = new LineageCapturingDispatcher(lineageCaptor.setter)
 
         override protected def userExtraMetadataProvider: UserExtraMetadataProvider = new UserExtraMetadataProvider {

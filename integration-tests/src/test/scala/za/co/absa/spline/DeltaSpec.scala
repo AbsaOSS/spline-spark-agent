@@ -29,7 +29,7 @@ import za.co.absa.commons.version.Version._
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 
-class DeltaWriteSpec extends AnyFlatSpec
+class DeltaSpec extends AnyFlatSpec
   with Matchers
   with SparkFixture
   with SplineFixture {
@@ -57,7 +57,7 @@ class DeltaWriteSpec extends AnyFlatSpec
         plan1.operations.write.extra.get("destinationType") shouldBe Some("delta")
         plan1.operations.write.outputSource shouldBe s"file:$deltaPath"
         plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
-        plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("Parquet")
+        plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("parquet")
       })
     })
 

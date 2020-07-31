@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.builder.read
+package za.co.absa.commons
 
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import scala.language.reflectiveCalls
 
-trait ReadCommandExtractor {
-  def asReadCommand(operation: LogicalPlan): Option[ReadCommand]
+object ExtractorImplicits {
+
+  implicit class ExtractorOps[A, B](ex: {def unapply(arg: Any): Option[B]}) {
+    def matches(o: A): Boolean = ex.unapply(o).isDefined
+  }
+
 }

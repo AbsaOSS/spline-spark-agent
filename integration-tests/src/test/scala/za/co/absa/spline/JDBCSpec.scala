@@ -28,7 +28,7 @@ import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{JDBCFixture, SparkFixture}
 
 
-class JDBCWriteSpec extends AnyFlatSpec
+class JDBCSpec extends AnyFlatSpec
   with Matchers
   with SparkFixture
   with SplineFixture

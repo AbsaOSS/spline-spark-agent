@@ -22,7 +22,6 @@ import org.apache.commons.configuration.{CompositeConfiguration, Configuration, 
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import za.co.absa.commons.config.ConfigurationImplicits
-import za.co.absa.spline.harvester.builder.read.ReadRelationHandler
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
@@ -49,11 +48,6 @@ object DefaultSplineConfigurer {
     val LineageDispatcherClass = "spline.lineage_dispatcher.className"
 
     /**
-     * Relation handler used to deal with proprietary relations
-     */
-    val RelationHandlerClass = "spline.read_relation_handler.className"
-
-    /**
      * Strategy used to detect ignored writes
      */
     val IgnoreWriteDetectionStrategyClass = "spline.iwd_strategy.className"
@@ -65,11 +59,11 @@ object DefaultSplineConfigurer {
   }
 
   def apply(sparkSession: SparkSession): DefaultSplineConfigurer = {
-    new DefaultSplineConfigurer(StandardSplineConfigurationStack(sparkSession))
+    new DefaultSplineConfigurer(sparkSession, StandardSplineConfigurationStack(sparkSession))
   }
 }
 
-class DefaultSplineConfigurer(userConfiguration: Configuration) extends SplineConfigurer with Logging {
+class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Configuration) extends SplineConfigurer with Logging {
 
   import ConfigurationImplicits._
   import DefaultSplineConfigurer.ConfProperty._
@@ -95,11 +89,6 @@ class DefaultSplineConfigurer(userConfiguration: Configuration) extends SplineCo
   override def queryExecutionEventHandler: QueryExecutionEventHandler =
     new QueryExecutionEventHandler(harvesterFactory, lineageDispatcher)
 
-  protected def relationHandler: ReadRelationHandler = instantiate[ReadRelationHandler](
-    configuration.getString(
-      RelationHandlerClass,
-      "za.co.absa.spline.harvester.builder.read.NoOpReadRelationHandler"))
-
   protected def lineageDispatcher: LineageDispatcher = instantiate[LineageDispatcher](
     configuration.getRequiredString(LineageDispatcherClass))
 
@@ -110,10 +99,11 @@ class DefaultSplineConfigurer(userConfiguration: Configuration) extends SplineCo
     configuration.getRequiredString(UserExtraMetadataProviderClass))
 
   private def harvesterFactory = new LineageHarvesterFactory(
+    sparkSession,
     splineMode,
     ignoredWriteDetectionStrategy,
-    userExtraMetadataProvider,
-    relationHandler)
+    userExtraMetadataProvider
+  )
 
   private def instantiate[T: ClassTag](className: String): T = {
     val interfaceName = scala.reflect.classTag[T].runtimeClass.getSimpleName

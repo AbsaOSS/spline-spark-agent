@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.builder.read
+package za.co.absa.spline.harvester.plugin.registry
 
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import za.co.absa.spline.harvester.plugin.Plugin
 
-trait ReadCommandExtractor {
-  def asReadCommand(operation: LogicalPlan): Option[ReadCommand]
+import scala.reflect.ClassTag
+
+trait PluginRegistry {
+  def plugins[A: ClassTag]: Seq[Plugin with A]
 }

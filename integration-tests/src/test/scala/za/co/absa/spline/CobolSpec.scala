@@ -17,27 +17,47 @@
 
 package za.co.absa.spline
 
-import java.io.{BufferedWriter, FileOutputStream, FileWriter}
-
-import org.apache.spark.SPARK_VERSION
+import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.SaveMode.Overwrite
-import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
-import org.apache.spark.sql.{DataFrame, Row}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.TempDirectory
-import za.co.absa.commons.scalatest.ConditionalTestTags._
-import za.co.absa.commons.version.Version._
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 
-class CobrixWriteSpec extends AnyFlatSpec
+class CobolSpec extends AnyFlatSpec
   with Matchers
   with SparkFixture
   with SplineFixture {
 
-  private val cobrixPath = TempDirectory(prefix = "cobrix", pathOnly = true).deleteOnExit().path.toFile.getAbsolutePath
-  val copybook: String =
+  import CobolSpec._
+
+  it should "support Cobol as a source" in
+    withNewSparkSession(spark => {
+      withLineageTracking(spark)(lineageCaptor => {
+
+        val (plan1, _) = lineageCaptor.lineageOf(spark
+          .read
+          .format("cobol")
+          .option("copybook_contents", copybook)
+          .option("is_record_sequence", "true")
+          .option("schema_retention_policy", "collapse_root")
+          .option("segment_id_level0", "R")
+          .option("segment_id_prefix", "ID")
+          .load(copybookPath).write.mode(Overwrite).saveAsTable("somewhere")
+        )
+        plan1.operations.write.append shouldBe false
+        plan1.operations.reads.get.head.inputSources.head shouldBe copybookPath
+        plan1.operations.reads.get.head.extra.get("sourceType") shouldBe Some("cobol")
+
+
+      })
+    })
+}
+
+object CobolSpec {
+
+  private val copybook: String =
     """       01  RECORD.
       |           05  ID                        PIC S9(4)  COMP.
       |           05  COMPANY.
@@ -59,7 +79,7 @@ class CobrixWriteSpec extends AnyFlatSpec
       |
       |""".stripMargin
 
-  val bytes: Array[Byte]  = Array[Byte](
+  private val bytes: Array[Byte] = Array[Byte](
     0x00.toByte, 0x06.toByte, 0xC5.toByte, 0xE7.toByte, 0xC1.toByte, 0xD4.toByte, 0xD7.toByte, 0xD3.toByte,
     0xC5.toByte, 0xF4.toByte, 0x40.toByte, 0x40.toByte, 0x00.toByte, 0x00.toByte, 0x0F.toByte, 0x40.toByte,
     0x40.toByte, 0x40.toByte, 0x40.toByte, 0x40.toByte, 0x40.toByte, 0x40.toByte, 0x40.toByte, 0x40.toByte,
@@ -78,30 +98,10 @@ class CobrixWriteSpec extends AnyFlatSpec
     0x00.toByte, 0x00.toByte, 0x2F.toByte
   )
 
-  val bos = new FileOutputStream(cobrixPath)
-  bos.write(bytes)
-  bos.close()
+  private val copybookPath = {
+    val copybookFile = TempDirectory(prefix = "cobol", pathOnly = true).deleteOnExit().path.toFile
+    FileUtils.writeByteArrayToFile(copybookFile, bytes)
+    copybookFile.getPath
+  }
 
-  it should "support Cobrix as a source" in
-    withNewSparkSession(spark => {
-      withLineageTracking(spark)(lineageCaptor => {
-
-        val (plan1, _) = lineageCaptor.lineageOf(spark
-          .read
-          .format("cobol")
-          .option("copybook_contents", copybook)
-          .option("is_record_sequence", "true")
-          .option("schema_retention_policy", "collapse_root")
-          .option("segment_id_level0", "R")
-          .option("segment_id_prefix", "ID")
-          .load(cobrixPath).write.mode(Overwrite).saveAsTable("somewhere")
-        )
-        plan1.operations.write.append shouldBe false
-        plan1.operations.reads.get.head.inputSources.head shouldBe cobrixPath
-        plan1.operations.reads.get.head.extra.get("sourceType") shouldBe Some("cobrix")
-
-
-
-      })
-    })
 }

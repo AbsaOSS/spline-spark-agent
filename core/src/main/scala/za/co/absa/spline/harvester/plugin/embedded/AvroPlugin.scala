@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.builder.read
+package za.co.absa.spline.harvester.plugin.embedded
 
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import javax.annotation.Priority
+import za.co.absa.spline.harvester.plugin.Plugin.Precedence
+import za.co.absa.spline.harvester.plugin.{DataSourceFormatNameResolving, Plugin}
 
-trait ReadCommandExtractor {
-  def asReadCommand(operation: LogicalPlan): Option[ReadCommand]
+@Priority(Precedence.Normal)
+class AvroPlugin extends Plugin with DataSourceFormatNameResolving {
+  override val formatNameResolver: PartialFunction[AnyRef, String] = {
+    case "com.databricks.spark.avro" => "avro"
+  }
 }

@@ -26,8 +26,31 @@ X represents Spark version and Y represents Scala version.
 
 
 ## Spark commands support
-Some events provided by Spark are not yet implemented. Some of them will be implemented in future 
-and some of them bear no lineage information and should be ignored.
+The latest agent supports the following 
+data formats and providers out of the box:
+- Avro
+- Cassandra
+- COBOL
+- Delta
+- ElasticSearch
+- Excel
+- HDFS
+- Hive
+- JDBC
+- Kafka
+- MongoDB
+- XML
+
+Although Spark being an extensible piece of software can support much more,
+it doesn't provide any universal API that Spline can utilize to capture
+reads and write from/to everything that Spark supports.
+Support for most of different data sources and formats has to be added to Spline one by one.
+Fortunately starting with Spline 0.5.4 the auto discoverable [Plugin API](#plugins) 
+has been introduced to make this process easier.
+
+Below is the break down of the read/write command list that we have come through.  
+Some commands are implemented, others have yet to be implemented, 
+and finally there are such that bear no lineage information and hence are ignored.
 
 All commands inherit from `org.apache.spark.sql.catalyst.plans.logical.Command`.
 
@@ -107,10 +130,80 @@ When one of these commands occurs spline will let you know.
 - `UncacheTableCommand`  (org.apache.spark.sql.execution.command)
 
 
-\* `SaveIntoDataSourceCommand` is produced at the same time and it's already implemented.
+\*) `SaveIntoDataSourceCommand` is produced at the same time, and it's already implemented.
 
 
 ## Developer documentation
+
+<a id="plugins"></a>
+### Plugin API
+
+Using a plugin API you can capture lineage from a 3rd party data source provider.
+Spline discover plugins automatically by scanning a classpath, so no special steps required to register and configure a plugin.
+All you need is to create a class extending the `za.co.absa.spline.harvester.plugin.Plugin` marker trait 
+mixed with one or more `*Processing` traits, depending on your intention.
+
+There are three general processing traits:
+- `DataSourceFormatNameResolving` - returns a name of a data provider/format in use.
+- `ReadNodeProcessing` - detects a read-command and gather meta information.
+- `WriteNodeProcessing` - detects a write-command and gather meta information.
+
+
+There are also two additional trait that handle common cases of reading and writing:
+- `BaseRelationProcessing` - similar to `ReadNodeProcessing`, but instead of capturing all logical plan nodes it only reacts on `LogicalRelation` (see `LogicalRelationPlugin`)      
+- `RelationProviderProcessing` - similar to `WriteNodeProcessing`, but it only captures `SaveIntoDataSourceCommand` (see `SaveIntoDataSourceCommandPlugin`) 
+
+The best way to illustrate how plugins work is to look at the real working example,
+e.g. (`za.co.absa.spline.harvester.plugin.embedded.JDBCPlugin`)[core/src/main/scala/za/co/absa/spline/harvester/plugin/embedded/JDBCPlugin.scala]
+
+The most common simplified pattern looks like this:
+```scala
+package my.spline.plugin
+
+import javax.annotation.Priority
+import za.co.absa.spline.harvester.builder._
+import za.co.absa.spline.harvester.plugin.Plugin._
+import za.co.absa.spline.harvester.plugin._
+
+@Priority(Precedence.User) // not required, but can be used to control your plugin precedence in the plugin chain. Default value is `User`.  
+class FooBarPlugin
+  extends Plugin
+    with BaseRelationProcessing
+    with RelationProviderProcessing {
+
+  override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
+    case (FooBarRelation(a, b, c, d), lr) if /*more conditions*/ =>
+      val dataFormat: Option[AnyRef] = ??? // data format being read (will be resolved by the `DataSourceFormatResolver` later)
+      val dataSourceURI: String = ??? // a unique URI for the data source
+      val params: Map[String, Any] = ??? // additional parameters characterizing the read-command. E.g. (connection protocol, access mode, driver options etc)
+
+      (SourceIdentifier(dataFormat, dataSourceURI), params)
+  }
+
+  override def relationProviderProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
+    case (provider, cmd) if provider == "foobar" || provider.isInstanceOf[FooBarProvider] =>
+      val dataFormat: Option[AnyRef] = ??? // data format being written (will be resolved by the `DataSourceFormatResolver` later)
+      val dataSourceURI: String = ??? // a unique URI for the data source
+      val writeMode: SaveMode = ??? // was it Append or Overwrite?
+      val query: LogicalPlan = ??? // the logical plan to get the rest of the lineage from
+      val params: Map[String, Any] = ??? // additional parameters characterizing the write-command
+
+      (SourceIdentifier(dataFormat, dataSourceURI), writeMode, query, params)
+  }
+}
+```
+
+**Please note**: to avoid unwanted possible shadowing the other plugins (including the future ones),
+make sure that the pattern-matching criteria are as much selective as possible for your plugin needs. 
+
+A plugin class is expected to only have a single constructor.
+The constructor can have no arguments, or one or more of the following types (the values will be autowired):
+- `SparkSession`  
+- `PathQualifier`
+- `PluginRegistry`
+
+Compile you plugin and drop it into the Spline/Spark classpath.
+Spline will pick it up automatically. 
 
 ### Building for different Scala and Spark versions
 There are several maven profiles that makes it easy to build the project with different versions of Spark and Scala.

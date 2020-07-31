@@ -57,10 +57,10 @@ class FileFormatSpec extends AnyFlatSpec
         )
 
         plan1.operations.write.append shouldBe false
-        plan1.operations.write.extra.get("destinationType") shouldBe Some("Avro")
+        plan1.operations.write.extra.get("destinationType") shouldBe Some("avro")
         plan1.operations.write.outputSource shouldBe s"file:$avroPath"
         plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
-        plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("Avro")
+        plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("avro")
       })
     })
 
@@ -83,10 +83,10 @@ class FileFormatSpec extends AnyFlatSpec
         )
 
         plan1.operations.write.append shouldBe false
-        plan1.operations.write.extra.get("destinationType") shouldBe Some("Avro")
+        plan1.operations.write.extra.get("destinationType") shouldBe Some("avro")
         plan1.operations.write.outputSource shouldBe s"file:$avroPath"
         plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
-        plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("Avro")
+        plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("avro")
       })
     })
 
