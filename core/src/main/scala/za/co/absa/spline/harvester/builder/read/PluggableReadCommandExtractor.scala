@@ -16,32 +16,33 @@
 
 package za.co.absa.spline.harvester.builder.read
 
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.catalyst.plans.logical.{Command, LeafNode, LogicalPlan}
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.builder.dsformat.DataSourceFormatResolver
-import za.co.absa.spline.harvester.plugin.Plugin.ReadNodeInfo
 import za.co.absa.spline.harvester.plugin.ReadNodeProcessing
 import za.co.absa.spline.harvester.plugin.registry.PluginRegistry
 
+import scala.PartialFunction.condOpt
 
 class PluggableReadCommandExtractor(
   pluginRegistry: PluginRegistry,
   dataSourceFormatResolver: DataSourceFormatResolver
 ) extends ReadCommandExtractor {
 
-  private val processFn: LogicalPlan => Option[ReadNodeInfo] =
+  private val processFn =
     pluginRegistry.plugins[ReadNodeProcessing]
       .map(_.readNodeProcessor)
       .reduce(_ orElse _)
-      .lift
 
-  override def asReadCommand(operation: LogicalPlan): Option[ReadCommand] = {
-    processFn(operation).map({
+  override def asReadCommand(operation: LogicalPlan): Option[ReadCommand] =
+    condOpt(operation) {
+      case _: LeafNode | _: Command
+        if processFn.isDefinedAt(operation) =>
+        processFn(operation)
+    }.map({
       case (SourceIdentifier(maybeFormat, uris@_*), params) =>
         val maybeResolvedFormat = maybeFormat.map(dataSourceFormatResolver.resolve)
         val sourceId = SourceIdentifier(maybeResolvedFormat, uris: _*)
         ReadCommand(sourceId, operation, params)
     })
-  }
-
 }
