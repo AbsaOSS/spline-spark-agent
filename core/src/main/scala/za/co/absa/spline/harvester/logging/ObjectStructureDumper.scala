@@ -4,69 +4,68 @@ import java.lang.reflect.{Field, Method, Modifier}
 
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 
-import scala.collection.mutable
+import scala.annotation.tailrec
 
 object ObjectStructureDumper {
 
   def dump(obj: Any): String = {
     val value = obj.asInstanceOf[AnyRef]
 
-    val dumper = new innerDumper()
-    val info = dumper.allFieldsToString(value, value.getClass.getDeclaredFields, value.getClass.getDeclaredMethods, 0)
+    val initialValue = Box(value, "operation", value.getClass.getName, 0)
+
+    val info = objectToStringRec(List(initialValue), Set.empty[InstanceEqualityBox], "")
     s"Data for instance of ${value.getClass}\n$info"
   }
 
-  private class innerDumper() {
-    val visited = mutable.Set[InstanceEqualityBox]()
-    def addToVisited(obj: AnyRef): Unit = visited.add(InstanceEqualityBox(obj))
-    def wasVisited(obj: AnyRef): Boolean = visited(InstanceEqualityBox(obj))
+  case class Box(value: AnyRef, fieldName: String, fieldType: String, depth: Int)
 
-    case class InstanceEqualityBox(obj: AnyRef) {
-      override def equals(otherObj: Any): Boolean = otherObj match {
-        case InstanceEqualityBox(inner) => inner eq obj
-        case _ => throw new UnsupportedOperationException()
-      }
+  def addToVisited(visited: VisitedSet, obj: AnyRef): VisitedSet = visited + InstanceEqualityBox(obj)
+  def wasVisited(visited: VisitedSet, obj: AnyRef): Boolean = visited(InstanceEqualityBox(obj))
 
-      override def hashCode(): Int = obj.getClass.getName.hashCode
+  private type VisitedSet = Set[InstanceEqualityBox]
+
+  case class InstanceEqualityBox(obj: AnyRef) {
+    override def equals(otherObj: Any): Boolean = otherObj match {
+      case InstanceEqualityBox(inner) => inner eq obj
+      case _ => throw new UnsupportedOperationException()
     }
 
-    def allFieldsToString(parent: AnyRef, fields: Seq[Field], methods: Seq[Method], depth: Int): String = {
-      fields
-        .filter(_.getName != "child")
-        .filter(_.getName != "session")
-        .filter(f => !Modifier.isStatic(f.getModifiers))
-        .map { f =>
-          val subValue = extractFieldValue[AnyRef](parent, f.getName)
-          oneFieldToString(subValue, f, depth + 1)
-        }
-        .mkString("\n")
-    }
+    override def hashCode(): Int = obj.getClass.getName.hashCode
+  }
 
-    private def oneFieldToString(value: AnyRef, field: Field, depth: Int): String = {
-      val fieldsDetails = value match {
-        case _ if depth > 8 => "MAX DEPTH"
-        case null => "= null"
-        case v if isReadyForPrint(v) => s"= $v"
-        case v if wasVisited(v) => "! Object was already logged"
-        case None => "= None"
+  @tailrec
+  private final def objectToStringRec(stack: List[Box], visited: VisitedSet, result: String): String = stack match {
+    case Nil => result
+    case head :: tail => {
+      val value = head.value
+      val depth = head.depth
+
+      val (fieldsDetails, newStack, newVisited) = value match {
+        case null => ("= null", tail, visited)
+        case v if isReadyForPrint(v) => (s"= $v", tail, visited)
+        case v if wasVisited(visited, v) => ("! Object was already logged", tail, visited)
+        case None => ("= None", tail, visited)
         case Some(x) => {
-          addToVisited(value)
-          s"Some\n${oneFieldToString(x.asInstanceOf[AnyRef], field, depth + 1)}"
+          val newVal = Box(x.asInstanceOf[AnyRef], "x", x.getClass.getName, depth + 1)
+          ("Some", newVal :: tail, addToVisited(visited, value))
         }
         case _ => {
-          addToVisited(value)
+          val newFields = value.getClass.getDeclaredFields
+            .filter(f => !Set("child", "session")(f.getName))
+            .filter(f => !Modifier.isStatic(f.getModifiers))
+            .map { f =>
+              val subValue = extractFieldValue[AnyRef](value, f.getName)
+              Box(subValue, f.getName, f.getType.getName, depth + 1)
+            }.toList
 
-          val details = allFieldsToString(value, value.getClass.getDeclaredFields, value.getClass.getDeclaredMethods, depth)
-
-          if(details.nonEmpty)
-            s"\n$details"
-          else
-            details
+          ("", newFields ::: tail, addToVisited(visited, value))
         }
       }
 
       val indent = " " * depth * 2
-      s"$indent${field.getName}: ${field.getType.getName} $fieldsDetails"
+      val line = s"$indent${head.fieldName}: ${head.fieldType} $fieldsDetails\n"
+
+      objectToStringRec(newStack, newVisited, result + line)
     }
   }
 
