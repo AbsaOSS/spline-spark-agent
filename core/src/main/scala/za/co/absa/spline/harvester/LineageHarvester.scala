@@ -37,6 +37,7 @@ import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
 import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
+import za.co.absa.spline.harvester.logging.ObjectStructureDumper
 import za.co.absa.spline.producer.model._
 
 import scala.concurrent.duration.Duration
@@ -72,8 +73,11 @@ class LineageHarvester(
       }
     }
 
-    if (maybeCommand.isEmpty)
+
+    if (maybeCommand.isEmpty) {
       log.debug(s"${ctx.logicalPlan.getClass} was not recognized as a write-command. Skipping.")
+      log.info(ObjectStructureDumper.dump(ctx.logicalPlan))
+    }
 
     maybeCommand.flatMap(writeCommand => {
       val writeOpBuilder = opNodeBuilderFactory.writeNodeBuilder(writeCommand)
