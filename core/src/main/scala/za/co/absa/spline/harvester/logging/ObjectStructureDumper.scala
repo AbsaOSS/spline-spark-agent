@@ -1,6 +1,6 @@
 package za.co.absa.spline.harvester.logging
 
-import java.lang.reflect.{Field, Method, Modifier}
+import java.lang.reflect.Modifier
 
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 
@@ -11,20 +11,13 @@ object ObjectStructureDumper {
   def dump(obj: Any): String = {
     val value = obj.asInstanceOf[AnyRef]
 
-    val initialValue = Box(value, "operation", value.getClass.getName, 0)
+    val initialValue = ObjectBox(value, "operation", value.getClass.getName, 0)
 
     val info = objectToStringRec(List(initialValue), Set.empty[InstanceEqualityBox], "")
     s"Data for instance of ${value.getClass}\n$info"
   }
 
-  case class Box(value: AnyRef, fieldName: String, fieldType: String, depth: Int)
-
-  def addToVisited(visited: VisitedSet, obj: AnyRef): VisitedSet = visited + InstanceEqualityBox(obj)
-  def wasVisited(visited: VisitedSet, obj: AnyRef): Boolean = visited(InstanceEqualityBox(obj))
-
-  private type VisitedSet = Set[InstanceEqualityBox]
-
-  case class InstanceEqualityBox(obj: AnyRef) {
+  private case class InstanceEqualityBox(obj: AnyRef) {
     override def equals(otherObj: Any): Boolean = otherObj match {
       case InstanceEqualityBox(inner) => inner eq obj
       case _ => throw new UnsupportedOperationException()
@@ -33,8 +26,16 @@ object ObjectStructureDumper {
     override def hashCode(): Int = obj.getClass.getName.hashCode
   }
 
+  private type VisitedSet = Set[InstanceEqualityBox]
+
+  private def addToVisited(visited: VisitedSet, obj: AnyRef): VisitedSet = visited + InstanceEqualityBox(obj)
+
+  private def wasVisited(visited: VisitedSet, obj: AnyRef): Boolean = visited(InstanceEqualityBox(obj))
+
+  private case class ObjectBox(value: AnyRef, fieldName: String, fieldType: String, depth: Int)
+
   @tailrec
-  private final def objectToStringRec(stack: List[Box], visited: VisitedSet, result: String): String = stack match {
+  private final def objectToStringRec(stack: List[ObjectBox], visited: VisitedSet, result: String): String = stack match {
     case Nil => result
     case head :: tail => {
       val value = head.value
@@ -46,7 +47,7 @@ object ObjectStructureDumper {
         case v if wasVisited(visited, v) => ("! Object was already logged", tail, visited)
         case None => ("= None", tail, visited)
         case Some(x) => {
-          val newVal = Box(x.asInstanceOf[AnyRef], "x", x.getClass.getName, depth + 1)
+          val newVal = ObjectBox(x.asInstanceOf[AnyRef], "x", x.getClass.getName, depth + 1)
           ("Some", newVal :: tail, addToVisited(visited, value))
         }
         case _ => {
@@ -55,7 +56,7 @@ object ObjectStructureDumper {
             .filter(f => !Modifier.isStatic(f.getModifiers))
             .map { f =>
               val subValue = extractFieldValue[AnyRef](value, f.getName)
-              Box(subValue, f.getName, f.getType.getName, depth + 1)
+              ObjectBox(subValue, f.getName, f.getType.getName, depth + 1)
             }.toList
 
           ("", newFields ::: tail, addToVisited(visited, value))

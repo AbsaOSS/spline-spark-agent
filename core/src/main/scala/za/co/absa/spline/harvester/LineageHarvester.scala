@@ -76,7 +76,7 @@ class LineageHarvester(
 
     if (maybeCommand.isEmpty) {
       log.debug(s"${ctx.logicalPlan.getClass} was not recognized as a write-command. Skipping.")
-      log.info(ObjectStructureDumper.dump(ctx.logicalPlan))
+      log.trace(ObjectStructureDumper.dump(ctx.logicalPlan))
     }
 
     maybeCommand.flatMap(writeCommand => {
