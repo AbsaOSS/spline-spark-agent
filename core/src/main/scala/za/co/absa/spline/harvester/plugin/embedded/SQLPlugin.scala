@@ -28,7 +28,7 @@ import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder._
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.embedded.SQLPlugin._
-import za.co.absa.spline.harvester.plugin.util.CatalogTableUtils
+import za.co.absa.spline.harvester.plugin.extractor.CatalogTableExtractor
 import za.co.absa.spline.harvester.plugin.{Plugin, ReadNodeProcessing, WriteNodeProcessing}
 import za.co.absa.spline.harvester.qualifier.PathQualifier
 
@@ -42,16 +42,16 @@ class SQLPlugin(
     with ReadNodeProcessing
     with WriteNodeProcessing {
 
-  private val utils = new CatalogTableUtils(session.catalog, pathQualifier)
+  private val extractor = new CatalogTableExtractor(session.catalog, pathQualifier)
 
   override val readNodeProcessor: PartialFunction[LogicalPlan, ReadNodeInfo] = {
     case htr: HiveTableRelation =>
-      utils.asTableRead(htr.tableMeta)
+      extractor.asTableRead(htr.tableMeta)
 
     case lr: LogicalRelation if lr.relation.isInstanceOf[HadoopFsRelation] =>
       val hr = lr.relation.asInstanceOf[HadoopFsRelation]
       lr.catalogTable
-        .map(utils.asTableRead)
+        .map(extractor.asTableRead)
         .getOrElse {
           val uris = hr.location.rootPaths.map(path => pathQualifier.qualify(path.toString))
           val fileFormat = hr.fileFormat
@@ -64,7 +64,7 @@ class SQLPlugin(
     case cmd: InsertIntoHadoopFsRelationCommand if cmd.catalogTable.isDefined =>
       val catalogTable = cmd.catalogTable.get
       val mode = if (cmd.mode == SaveMode.Overwrite) Overwrite else Append
-      utils.asTableWrite(catalogTable, mode, cmd.query)
+      extractor.asTableWrite(catalogTable, mode, cmd.query)
 
     case cmd: InsertIntoHadoopFsRelationCommand =>
       val path = cmd.outputPath.toString
@@ -83,29 +83,29 @@ class SQLPlugin(
       (SourceIdentifier(Some(format), qPath), mode, cmd.query, Map.empty)
 
     case `_: InsertIntoDataSourceDirCommand`(cmd) =>
-      utils.asDirWrite(cmd.storage, cmd.provider, cmd.overwrite, cmd.query)
+      extractor.asDirWrite(cmd.storage, cmd.provider, cmd.overwrite, cmd.query)
 
     case `_: InsertIntoHiveDirCommand`(cmd) =>
-      utils.asDirWrite(cmd.storage, "hive", cmd.overwrite, cmd.query)
+      extractor.asDirWrite(cmd.storage, "hive", cmd.overwrite, cmd.query)
 
     case `_: InsertIntoHiveTable`(cmd) =>
       val mode = if (cmd.overwrite) Overwrite else Append
-      utils.asTableWrite(cmd.table, mode, cmd.query)
+      extractor.asTableWrite(cmd.table, mode, cmd.query)
 
     case `_: CreateHiveTableAsSelectCommand`(cmd) =>
-      val sourceId = utils.asTableSourceId(cmd.tableDesc)
+      val sourceId = extractor.asTableSourceId(cmd.tableDesc)
       (sourceId, cmd.mode, cmd.query, Map.empty)
 
     case cmd: CreateDataSourceTableAsSelectCommand =>
-      utils.asTableWrite(cmd.table, cmd.mode, cmd.query)
+      extractor.asTableWrite(cmd.table, cmd.mode, cmd.query)
 
     case dtc: DropTableCommand =>
-      val uri = utils.asTableURI(dtc.tableName)
+      val uri = extractor.asTableURI(dtc.tableName)
       val sourceId = SourceIdentifier(None, pathQualifier.qualify(uri))
       (sourceId, Overwrite, dtc, Map.empty)
 
     case ctc: CreateTableCommand =>
-      val sourceId = utils.asTableSourceId(ctc.table)
+      val sourceId = extractor.asTableSourceId(ctc.table)
       (sourceId, Overwrite, ctc, Map.empty)
   }
 }

@@ -24,7 +24,7 @@ import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.embedded.DatabricksPlugin.`_: DataBricksCreateDeltaTableCommand`
-import za.co.absa.spline.harvester.plugin.util.CatalogTableUtils
+import za.co.absa.spline.harvester.plugin.extractor.CatalogTableExtractor
 import za.co.absa.spline.harvester.plugin.{Plugin, ReadNodeProcessing, WriteNodeProcessing}
 import za.co.absa.spline.harvester.qualifier.PathQualifier
 
@@ -37,14 +37,14 @@ class DatabricksPlugin(
   extends Plugin
     with WriteNodeProcessing {
 
-  private val utils = new CatalogTableUtils(session.catalog, pathQualifier)
+  private val extractor = new CatalogTableExtractor(session.catalog, pathQualifier)
 
   override val writeNodeProcessor: PartialFunction[LogicalPlan, WriteNodeInfo] = {
     case `_: DataBricksCreateDeltaTableCommand`(command) =>
       val table = extractFieldValue[CatalogTable](command, "table")
       val saveMode = extractFieldValue[SaveMode](command, "mode")
       val query = extractFieldValue[Option[LogicalPlan]](command, "query").get
-      utils.asTableWrite(table, saveMode, query)
+      extractor.asTableWrite(table, saveMode, query)
   }
 }
 

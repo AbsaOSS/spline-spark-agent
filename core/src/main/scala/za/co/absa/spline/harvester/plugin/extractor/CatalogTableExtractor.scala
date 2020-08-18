@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.plugin.util
+package za.co.absa.spline.harvester.plugin.extractor
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.SaveMode.{Append, Overwrite}
 import org.apache.spark.sql.catalog.Catalog
@@ -22,10 +22,10 @@ import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.catalog.{CatalogStorageFormat, CatalogTable}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.spline.harvester.builder.SourceIdentifier
-import za.co.absa.spline.harvester.plugin.Plugin.Params
+import za.co.absa.spline.harvester.plugin.Plugin.{Params, WriteNodeInfo}
 import za.co.absa.spline.harvester.qualifier.PathQualifier
 
-class CatalogTableUtils(catalog: Catalog, pathQualifier: PathQualifier) {
+class CatalogTableExtractor(catalog: Catalog, pathQualifier: PathQualifier) {
 
   def asTableURI(tableIdentifier: TableIdentifier): String = {
     val TableIdentifier(tableName, maybeTableDatabase) = tableIdentifier
@@ -41,7 +41,7 @@ class CatalogTableUtils(catalog: Catalog, pathQualifier: PathQualifier) {
     SourceIdentifier(table.provider, pathQualifier.qualify(uri))
   }
 
-  def asTableRead(ct: CatalogTable) = {
+  def asTableRead(ct: CatalogTable): (SourceIdentifier, Map[String, Any]) = {
     val sourceId = asTableSourceId(ct)
     val params = Map(
       "table" -> Map(
@@ -50,12 +50,12 @@ class CatalogTableUtils(catalog: Catalog, pathQualifier: PathQualifier) {
     (sourceId, params)
   }
 
-  def asTableWrite(table: CatalogTable, mode: SaveMode, query: LogicalPlan) = {
+  def asTableWrite(table: CatalogTable, mode: SaveMode, query: LogicalPlan): WriteNodeInfo = {
     val sourceIdentifier = asTableSourceId(table)
     (sourceIdentifier, mode, query, Map("table" -> Map("identifier" -> table.identifier, "storage" -> table.storage)))
   }
 
-  def asDirWrite(storage: CatalogStorageFormat, provider: String, overwrite: Boolean, query: LogicalPlan) = {
+  def asDirWrite(storage: CatalogStorageFormat, provider: String, overwrite: Boolean, query: LogicalPlan): WriteNodeInfo = {
     val uri = storage.locationUri.getOrElse(sys.error(s"Cannot determine the data source location: $storage"))
     val mode = if (overwrite) Overwrite else Append
     (SourceIdentifier(Some(provider), uri.toString), mode, query, Map.empty: Params)
