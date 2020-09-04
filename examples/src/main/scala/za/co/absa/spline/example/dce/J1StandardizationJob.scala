@@ -20,7 +20,7 @@ import org.apache.spark.sql.functions._
 import za.co.absa.spline.example.SparkApp
 import za.co.absa.spline.harvester.SparkLineageInitializer.SparkSessionWrapper
 
-object StandardizationJob extends SparkApp("My Standardization") {
+object J1StandardizationJob extends SparkApp("My Standardization") {
 
   spark.enableLineageTracking()
 

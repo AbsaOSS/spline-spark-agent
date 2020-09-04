@@ -19,7 +19,7 @@ package za.co.absa.spline.example.dce
 import za.co.absa.spline.example.SparkApp
 import za.co.absa.spline.harvester.SparkLineageInitializer.SparkSessionWrapper
 
-object ConformanceJob extends SparkApp("My Conformance") {
+object J2ConformanceJob extends SparkApp("My Conformance") {
 
   spark.enableLineageTracking()
 
