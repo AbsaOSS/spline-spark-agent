@@ -30,9 +30,9 @@ class QueryExecutionEventHandlerFactory(sparkSession: SparkSession) extends Logg
 
   def createEventHandler(configurer: SplineConfigurer, isCodelessInit: Boolean): Option[QueryExecutionEventHandler] = {
     log.info(s"Initializing Spline agent...")
+    log.info(s"""Spline init type: ${if (isCodelessInit) "AUTO (codeless)" else "PROGRAMMATIC"}""")
     log.info(s"Spline version: ${SplineBuildInfo.Version}")
     log.info(s"Spline mode: ${configurer.splineMode}")
-    log.info(s"""Spline initialization type: ${if (isCodelessInit) "codeless" else "manual"}""")
 
     if (configurer.splineMode == DISABLED) {
       log.info("initialization aborted")
