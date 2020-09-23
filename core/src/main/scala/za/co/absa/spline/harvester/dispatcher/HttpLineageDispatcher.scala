@@ -21,7 +21,6 @@ import scalaj.http.{Http, HttpStatusException}
 import za.co.absa.commons.config.ConfigurationImplicits._
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.version.Version
-import za.co.absa.spline.harvester.dispatcher.HttpLineageDispatcher.{RESTResource, _}
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.HttpConstants.Encoding
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.ProducerApiVersion.SupportedApiRange
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.modelmapper.ModelMapper
@@ -35,7 +34,7 @@ import scala.concurrent.duration._
 import scala.util.Try
 import scala.util.control.NonFatal
 
-object HttpLineageDispatcher {
+object HttpLineageDispatcher extends Logging {
   private val ProducerUrlProperty = "spline.producer.url"
   private val ConnectionTimeoutMsKey = "spline.timeout.connection"
   private val ReadTimeoutMsKey = "spline.timeout.read"
@@ -59,6 +58,21 @@ object HttpLineageDispatcher {
 
   private def createHttpErrorMessage(msg: String, code: Int, body: String): String =
     s"$msg. HTTP Response: $code $body"
+
+  private def defaultRestClient(c: Configuration): RestClient = {
+    val producerUrl = c.getRequiredString(ProducerUrlProperty)
+    val connTimeout = c.getLong(ConnectionTimeoutMsKey, DefaultConnectionTimeout.toMillis).millis
+    val readTimeout = c.getLong(ReadTimeoutMsKey, DefaultReadTimeout.toMillis).millis
+
+    log.info(s"Producer URL: $producerUrl")
+
+    RestClient(
+      Http,
+      producerUrl,
+      connTimeout,
+      readTimeout
+    )
+  }
 }
 
 /**
@@ -68,13 +82,9 @@ class HttpLineageDispatcher(restClient: RestClient)
   extends LineageDispatcher
     with Logging {
 
-  def this(configuration: Configuration) = this(
-    RestClient(
-      Http,
-      configuration.getRequiredString(ProducerUrlProperty),
-      configuration.getLong(ConnectionTimeoutMsKey, DefaultConnectionTimeout.toMillis).millis,
-      configuration.getLong(ReadTimeoutMsKey, DefaultReadTimeout.toMillis).millis
-    ))
+  import za.co.absa.spline.harvester.dispatcher.HttpLineageDispatcher._
+
+  def this(configuration: Configuration) = this(HttpLineageDispatcher.defaultRestClient(configuration))
 
   private val statusEndpoint = restClient.endpoint(RESTResource.Status)
   private val executionPlansEndpoint = restClient.endpoint(RESTResource.ExecutionPlans)
@@ -124,7 +134,7 @@ class HttpLineageDispatcher(restClient: RestClient)
         s"Agent supports API versions ${SupportedApiRange.Min.asString} to ${SupportedApiRange.Max.asString}, " +
         s"but the server only provides: ${serverApiVersions.map(_.asString).mkString(", ")}"))
 
-    log.debug(s"Selected Producer API version: ${apiVersion.asString}")
+    log.info(s"Using Producer API version: ${apiVersion.asString}")
 
     apiVersion
   })

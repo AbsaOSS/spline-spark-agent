@@ -22,7 +22,7 @@
     <artifactId>spline-spark-agent_2.11</artifactId>
     <name>Spline Spark Agent</name>
     <description>Spline Agent for Apache Spark</description>
-    <version>0.5.4</version>
+    <version>0.5.5</version>
 
     <packaging>pom</packaging>
 
@@ -104,7 +104,7 @@
         <url>${scm.url}</url>
         <connection>${scm.connection}</connection>
         <developerConnection>${scm.developerConnection}</developerConnection>
-        <tag>release/0.5.4</tag>
+        <tag>release/0.5.5</tag>
     </scm>
 
     <distributionManagement>
