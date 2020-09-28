@@ -91,7 +91,7 @@
         <!--commons-->
         <commons.spark.version>${common.spark2.version}</commons.spark.version>
         <common.spark3.version>0.0.16-SNAPSHOT</common.spark3.version>
-        <common.spark2.version>0.0.15</common.spark2.version> 
+        <common.spark2.version>0.0.15</common.spark2.version>
 
         <!-- Cross build properties -->
 
@@ -554,7 +554,7 @@
             <properties>
                 <spark.version>${spark-24.version}</spark.version>
                 <json4s.version>${json4s-35.version}</json4s.version>
-                <common.spark.version>${common.spark2.version}</common.spark.version>
+                <commons.spark.version>${common.spark2.version}</commons.spark.version>
             </properties>
         </profile>
         <profile>
@@ -562,7 +562,7 @@
             <properties>
                 <spark.version>${spark-30.version}</spark.version>
                 <json4s.version>${json4s-36.version}</json4s.version>
-                <common.spark.version>${common.spark3.version}</common.spark.version>
+                <commons.spark.version>${common.spark3.version}</commons.spark.version>
             </properties>
         </profile>
         <!-- Deployment profiles -->
