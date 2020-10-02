@@ -18,7 +18,7 @@ package za.co.absa.spline.harvester.plugin.embedded
 
 import java.io.InputStream
 
-import com.crealytics.spark.excel.{DefaultSource, ExcelRelation, WorkbookReader}
+import com.crealytics.spark.excel.{DefaultSource, ExcelRelation}
 import javax.annotation.Priority
 import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.sources.BaseRelation
@@ -42,7 +42,8 @@ class ExcelPlugin(pathQualifier: PathQualifier)
   override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: ExcelRelation`(exr), _) =>
       val excelRelation = exr.asInstanceOf[ExcelRelation]
-      val inputStream = extractExcelInputStream(excelRelation.workbookReader)
+      val workbookReader = excelRelation.workbookReader
+      val inputStream = extractFieldValue[() => InputStream](workbookReader, "inputStreamProvider")()
       val path = extractFieldValue[org.apache.hadoop.fs.Path](inputStream, "file")
       val qualifiedPath = pathQualifier.qualify(path.toString)
       val sourceId = asSourceId(qualifiedPath)
@@ -60,22 +61,6 @@ object ExcelPlugin {
   private object `_: ExcelRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.crealytics.spark.excel.ExcelRelation")
 
   private object `_: excel.DefaultSource` extends SafeTypeMatchingExtractor(classOf[DefaultSource])
-
-  private def extractExcelInputStream(reader: WorkbookReader) = {
-
-    val streamFieldName_Scala_2_12 = "inputStreamProvider"
-    val streamFieldName_Scala_2_11_default = "com$crealytics$spark$excel$DefaultWorkbookReader$$inputStreamProvider"
-    val streamFieldName_Scala_2_11_streaming = "com$crealytics$spark$excel$StreamingWorkbookReader$$inputStreamProvider"
-
-    def extract(fieldName: String) = extractFieldValue[() => InputStream](reader, fieldName)
-
-    val lazyStream = Try(extract(streamFieldName_Scala_2_12))
-      .orElse(Try(extract(streamFieldName_Scala_2_11_default)))
-      .orElse(Try(extract(streamFieldName_Scala_2_11_streaming)))
-      .getOrElse(sys.error("Unable to extract Excel input stream"))
-
-    lazyStream.apply()
-  }
 
   private def extractExcelParams(excelRelation: ExcelRelation): Map[String, Any] = {
     val locator = excelRelation.dataLocator
