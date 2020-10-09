@@ -3,7 +3,7 @@ Spline Gateway Server Mock
 
 Simple server mocking producer API. It allows you to test the agent without any existing Spline server.
 
-The mock will throw away any request, but is returning a valid response.
+The mock will throw away any request, but it returns a valid response to the agent.
 
 ### Instalation
 ```
