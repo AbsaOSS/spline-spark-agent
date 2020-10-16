@@ -1,0 +1,4 @@
+HTTP/1.1 200 OK
+ABSA-Spline-API-Version: 1
+ABSA-Spline-Accept-Request-Encoding: gzip
+Content-Length: 0
