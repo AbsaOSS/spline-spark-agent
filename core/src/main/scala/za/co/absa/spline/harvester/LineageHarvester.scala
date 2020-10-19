@@ -97,6 +97,7 @@ class LineageHarvester(
       val plan = {
         val planExtra = Map[String, Any](
           ExecutionPlanExtra.AppName -> ctx.session.sparkContext.appName,
+          ExecutionPlanExtra.Config -> ctx.session.sparkContext.getConf.getAll,
           ExecutionPlanExtra.DataTypes -> componentCreatorFactory.dataTypeConverter.values,
           ExecutionPlanExtra.Attributes -> componentCreatorFactory.attributeConverter.values
         )

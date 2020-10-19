@@ -24,7 +24,7 @@ public class JavaExampleJob {
 
     public static void main(String[] args) {
         SparkSession.Builder builder = SparkSession.builder();
-        SparkSession session = builder.appName("java example app").master("local[*]").getOrCreate();
+        SparkSession session = builder.appName("java example app").config("custom_foo","bar").master("local[*]").getOrCreate();
         // configure Spline to track lineage
         SparkLineageInitializer.enableLineageTracking(session);
         session.read()
