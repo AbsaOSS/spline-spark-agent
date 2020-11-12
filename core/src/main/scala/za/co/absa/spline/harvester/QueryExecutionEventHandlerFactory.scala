@@ -29,10 +29,10 @@ import scala.util.control.NonFatal
 class QueryExecutionEventHandlerFactory(sparkSession: SparkSession) extends Logging {
 
   def createEventHandler(configurer: SplineConfigurer, isCodelessInit: Boolean): Option[QueryExecutionEventHandler] = {
-    log.info(s"Initializing Spline agent...")
-    log.info(s"""Spline init type: ${if (isCodelessInit) "AUTO (codeless)" else "PROGRAMMATIC"}""")
-    log.info(s"Spline version: ${SplineBuildInfo.Version}")
-    log.info(s"Spline mode: ${configurer.splineMode}")
+    log.info("Initializing Spline agent...")
+    log.info("Spline init type: {}", if (isCodelessInit) "AUTO (codeless)" else "PROGRAMMATIC")
+    log.info("Spline version: {}", SplineBuildInfo.Version)
+    log.info("Spline mode: {}", configurer.splineMode)
 
     if (configurer.splineMode == DISABLED) {
       log.info("initialization aborted")
@@ -62,7 +62,7 @@ class QueryExecutionEventHandlerFactory(sparkSession: SparkSession) extends Logg
 
   private def initEventHandler(configurer: SplineConfigurer): QueryExecutionEventHandler = {
     val eventHandler = configurer.queryExecutionEventHandler
-    log.info(s"Spline successfully initialized. Spark Lineage tracking is ENABLED.")
+    log.info("Spline successfully initialized. Spark Lineage tracking is ENABLED.")
     eventHandler
   }
 
