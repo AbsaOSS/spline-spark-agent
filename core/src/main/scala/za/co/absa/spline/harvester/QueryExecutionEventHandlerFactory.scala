@@ -29,13 +29,13 @@ import scala.util.control.NonFatal
 class QueryExecutionEventHandlerFactory(sparkSession: SparkSession) extends Logging {
 
   def createEventHandler(configurer: SplineConfigurer, isCodelessInit: Boolean): Option[QueryExecutionEventHandler] = {
-    log.info(s"Initializing Spline agent...")
-    log.info(s"""Spline init type: ${if (isCodelessInit) "AUTO (codeless)" else "PROGRAMMATIC"}""")
-    log.info(s"Spline version: ${SplineBuildInfo.Version}")
-    log.info(s"Spline mode: ${configurer.splineMode}")
+    logInfo("Initializing Spline agent...")
+    logInfo(s"""Spline init type: ${if (isCodelessInit) "AUTO (codeless)" else "PROGRAMMATIC"}""")
+    logInfo(s"Spline version: ${SplineBuildInfo.Version}")
+    logInfo(s"Spline mode: ${configurer.splineMode}")
 
     if (configurer.splineMode == DISABLED) {
-      log.info("initialization aborted")
+      logInfo("initialization aborted")
       None
     } else {
       withErrorHandling(configurer) {
@@ -55,14 +55,14 @@ class QueryExecutionEventHandlerFactory(sparkSession: SparkSession) extends Logg
       body
     } catch {
       case NonFatal(e) if configurer.splineMode == BEST_EFFORT =>
-        log.error(s"Spline initialization failed! Spark Lineage tracking is DISABLED.", e)
+        logError(s"Spline initialization failed! Spark Lineage tracking is DISABLED.", e)
         None
     }
   }
 
   private def initEventHandler(configurer: SplineConfigurer): QueryExecutionEventHandler = {
     val eventHandler = configurer.queryExecutionEventHandler
-    log.info(s"Spline successfully initialized. Spark Lineage tracking is ENABLED.")
+    logInfo("Spline successfully initialized. Spark Lineage tracking is ENABLED.")
     eventHandler
   }
 
@@ -71,7 +71,7 @@ class QueryExecutionEventHandlerFactory(sparkSession: SparkSession) extends Logg
       None
     } else {
       if (getOrSetIsInitialized()) {
-        log.warn("Spline lineage tracking is already initialized!")
+        logWarning("Spline lineage tracking is already initialized!")
         None
       } else {
         try {
@@ -94,7 +94,7 @@ class QueryExecutionEventHandlerFactory(sparkSession: SparkSession) extends Logg
     if (!splineConfiguredForCodelessInit) {
       false
     } else if (spark.SPARK_VERSION.startsWith("2.2")) {
-      log.warn(
+      logWarning(
         """
           |Spline lineage tracking is also configured for codeless initialization, but codeless init is
           |supported on Spark 2.3+ and not current version 2.2. Spline will be initialized only via code call to
@@ -102,7 +102,7 @@ class QueryExecutionEventHandlerFactory(sparkSession: SparkSession) extends Logg
           .stripMargin.replaceAll("\n", " ").trim())
       false
     } else {
-      log.warn(
+      logWarning(
         """
           |Spline lineage tracking is also configured for codeless initialization.
           |It wont be initialized by this code call to enableLineageTracking now."""

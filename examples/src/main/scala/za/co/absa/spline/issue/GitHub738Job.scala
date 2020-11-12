@@ -46,9 +46,9 @@ object GitHub738Job extends SparkApp("GitHub spline-738") with Logging {
     df.write.mode("overwrite").csv(prmWritePath)
     0 until nAppends foreach (_ => df.write.mode("append").csv(prmWritePath))
 
-    log.info(s"###############################")
-    log.info(s"Done ${i * primarySourcePaths.length + j + 1} of ${nIters * primarySourcePaths.length}")
-    log.info(s"###############################")
+    logInfo("###############################")
+    logInfo(s"Done ${i * primarySourcePaths.length + j + 1} of ${nIters * primarySourcePaths.length}")
+    logInfo("###############################")
   }
 
   private def createMockCSV(prefix: String) = {
