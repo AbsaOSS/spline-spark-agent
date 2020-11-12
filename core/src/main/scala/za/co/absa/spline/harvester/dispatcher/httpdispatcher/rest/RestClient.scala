@@ -38,10 +38,11 @@ object RestClient extends Logging {
     connectionTimeout: Duration,
     readTimeout: Duration): RestClient = {
 
-    log.debug(s"baseURL = $baseURL")
-    log.debug(s"connectionTimeout = $connectionTimeout")
-    log.debug(s"readTimeout = $readTimeout")
+    logDebug(s"baseURL = $baseURL")
+    logDebug(s"connectionTimeout = $connectionTimeout")
+    logDebug(s"readTimeout = $readTimeout")
 
+    //noinspection ConvertExpressionToSAM
     new RestClient {
       override def endpoint(resource: String): RestEndpoint = new RestEndpoint(
         baseHttp(s"$baseURL/$resource")

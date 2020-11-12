@@ -46,7 +46,7 @@ class AutoDiscoveryPluginRegistry(injectables: AnyRef*)
 
   private val allPlugins: Seq[Plugin] =
     for (pc <- PluginClasses) yield {
-      log.info(s"Loading plugin: $pc")
+      logInfo(s"Loading plugin: $pc")
       instantiatePlugin(pc)
         .recover({ case NonFatal(e) => throw new RuntimeException(s"Plugin instantiation failure: $pc", e) })
         .get
@@ -72,7 +72,7 @@ class AutoDiscoveryPluginRegistry(injectables: AnyRef*)
 object AutoDiscoveryPluginRegistry extends Logging {
 
   private val PluginClasses: Seq[Class[Plugin]] = {
-    log.debug("Scanning for plugins")
+    logDebug("Scanning for plugins")
     val classGraph = new ClassGraph().enableClassInfo
     for {
       scanResult <- ARM.managed(classGraph.scan)
@@ -82,7 +82,7 @@ object AutoDiscoveryPluginRegistry extends Logging {
         .map(c => c -> priorityOf(c))
         .sortBy(_._2)
     } yield {
-      log.debug(s"Found plugin [priority=$prt]\t: $cls")
+      logDebug(s"Found plugin [priority=$prt]\t: $cls")
       cls
     }
   }
