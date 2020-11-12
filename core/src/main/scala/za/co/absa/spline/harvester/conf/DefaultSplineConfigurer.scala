@@ -107,7 +107,7 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
 
   private def instantiate[T: ClassTag](className: String): T = {
     val interfaceName = scala.reflect.classTag[T].runtimeClass.getSimpleName
-    log debug s"Instantiating $interfaceName for class name: $className"
+    log.debug("Instantiating {} for class name: {}", interfaceName: Any, className)
     try {
       Class.forName(className.trim)
         .getConstructor(classOf[Configuration])

@@ -56,7 +56,7 @@ class LineageHarvester(
   private val opNodeBuilderFactory = new OperationNodeBuilderFactory(userExtraMetadataProvider, componentCreatorFactory, ctx)
 
   def harvest(result: Try[Duration]): HarvestResult = {
-    log.debug(s"Harvesting lineage from ${ctx.logicalPlan.getClass}")
+    log.debug("Harvesting lineage from {}", ctx.logicalPlan.getClass)
 
     val (readMetrics: Metrics, writeMetrics: Metrics) = ctx.executedPlanOpt.
       map(getExecutedReadWriteMetrics).
@@ -75,8 +75,8 @@ class LineageHarvester(
 
 
     if (maybeCommand.isEmpty) {
-      log.debug(s"${ctx.logicalPlan.getClass} was not recognized as a write-command. Skipping.")
-      log.trace(ObjectStructureDumper.dump(ctx.logicalPlan))
+      log.debug("{} was not recognized as a write-command. Skipping.", ctx.logicalPlan.getClass)
+      log.trace("{}", ObjectStructureDumper.dump(ctx.logicalPlan))
     }
 
     maybeCommand.flatMap(writeCommand => {
@@ -111,7 +111,7 @@ class LineageHarvester(
       }
 
       if (writeCommand.mode == SaveMode.Ignore && iwdStrategy.wasWriteIgnored(writeMetrics)) {
-        log.debug(s"Ignored write detected. Skipping lineage.")
+        log.debug("Ignored write detected. Skipping lineage.")
         None
       }
       else {
@@ -130,7 +130,7 @@ class LineageHarvester(
         val eventUserExtra = userExtraMetadataProvider.forExecEvent(ev, ctx)
         val event = ev.withAddedExtra(eventUserExtra)
 
-        log.debug(s"Successfully harvested lineage from ${ctx.logicalPlan.getClass}")
+        log.debug("Successfully harvested lineage from {}", ctx.logicalPlan.getClass)
         Some(plan -> event)
       }
     })
