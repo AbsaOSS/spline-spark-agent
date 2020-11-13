@@ -38,9 +38,9 @@ object RestClient extends Logging {
     connectionTimeout: Duration,
     readTimeout: Duration): RestClient = {
 
-    log.debug("baseURL = {}", baseURL)
-    log.debug("connectionTimeout = {}", connectionTimeout)
-    log.debug("readTimeout = {}", readTimeout)
+    logDebug(s"baseURL = $baseURL")
+    logDebug(s"connectionTimeout = $connectionTimeout")
+    logDebug(s"readTimeout = $readTimeout")
 
     //noinspection ConvertExpressionToSAM
     new RestClient {

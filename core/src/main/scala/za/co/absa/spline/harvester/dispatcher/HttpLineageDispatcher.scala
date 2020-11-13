@@ -64,7 +64,7 @@ object HttpLineageDispatcher extends Logging {
     val connTimeout = c.getLong(ConnectionTimeoutMsKey, DefaultConnectionTimeout.toMillis).millis
     val readTimeout = c.getLong(ReadTimeoutMsKey, DefaultReadTimeout.toMillis).millis
 
-    log.info("Producer URL: {}", producerUrl)
+    logInfo(s"Producer URL: $producerUrl")
 
     RestClient(
       Http,
@@ -126,15 +126,15 @@ class HttpLineageDispatcher(restClient: RestClient)
 
     val apiCompatManager = ProducerApiCompatibilityManager(serverApiVersions, serverApiLTSVersions)
 
-    apiCompatManager.newerServerApiVersion.foreach(ver => log.warn("Newer Producer API version {} is available on the server", ver.asString))
-    apiCompatManager.deprecatedApiVersion.foreach(ver => log.warn("UPGRADE SPLINE AGENT! Producer API version {} is deprecated", ver.asString))
+    apiCompatManager.newerServerApiVersion.foreach(ver => logWarning(s"Newer Producer API version ${ver.asString} is available on the server"))
+    apiCompatManager.deprecatedApiVersion.foreach(ver => logWarning(s"UPGRADE SPLINE AGENT! Producer API version ${ver.asString} is deprecated"))
 
     val apiVersion = apiCompatManager.highestCompatibleApiVersion.getOrElse(throw new SplineInitializationException(
       s"Spline Agent and Server versions don't match. " +
         s"Agent supports API versions ${SupportedApiRange.Min.asString} to ${SupportedApiRange.Max.asString}, " +
         s"but the server only provides: ${serverApiVersions.map(_.asString).mkString(", ")}"))
 
-    log.info("Using Producer API version: {}", apiVersion.asString)
+    logInfo(s"Using Producer API version: ${apiVersion.asString}")
 
     apiVersion
   })
@@ -155,7 +155,7 @@ class HttpLineageDispatcher(restClient: RestClient)
 
   private def sendJson(json: String, endpoint: RestEndpoint) = {
     val url = endpoint.request.url
-    log.trace("sendJson {} : {}", url: Any, json)
+    logTrace(s"sendJson $url : $json")
 
     try {
       endpoint

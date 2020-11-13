@@ -50,7 +50,7 @@ class SplineQueryExecutionListener(maybeEventHandler: Option[QueryExecutionEvent
     catch {
       case NonFatal(e) =>
         val ctx = qe.sparkSession.sparkContext
-        log.error(s"Unexpected error occurred during lineage processing for application: ${ctx.appName} #${ctx.applicationId}", e)
+        logError(s"Unexpected error occurred during lineage processing for application: ${ctx.appName} #${ctx.applicationId}", e)
     }
   }
 }
