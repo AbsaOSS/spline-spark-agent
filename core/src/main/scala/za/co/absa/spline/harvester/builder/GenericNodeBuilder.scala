@@ -36,8 +36,9 @@ class GenericNodeBuilder
     val dop = DataOperation(
       id = id.toString,
       childIds = childIds.toList.map(_.toString).asOption,
-      //schema = if (!isTerminal && childOutputSchemas.forall(outputSchema.==)) None else Some(outputSchema),
+      output = outputAttributes,
       params = componentCreatorFactory.operationParamsConverter.convert(operation).asOption,
+      expressions = None, // TODO remove
       extra = Map(OperationExtras.Name -> operation.nodeName).asOption
     )
 

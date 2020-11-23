@@ -16,29 +16,25 @@
 
 package za.co.absa.spline.harvester.converter
 
-import java.util.UUID.randomUUID
-
-import org.apache.spark.sql.catalyst.expressions.{Alias, ExprId, Expression, Attribute => SparkAttribute}
+import org.apache.spark.sql.catalyst.expressions.{Expression, Attribute => SparkAttribute}
 import za.co.absa.commons.lang.Converter
 import za.co.absa.spline.producer.model.v1_1.Attribute
 
-//class AttributeConverter(dataTypeConverter: DataTypeConverter)
-//  extends Converter {
-//  override type From = SparkAttribute
-//  override type To = Attribute
-//
-//  override def convert(attr: SparkAttribute): Attribute = {
-////    Attribute(
-////      id = randomUUID,
-////      name = attr.name,
-////      dataTypeId = List(dataTypeConverter.convert(attr.dataType, attr.nullable).id.toString)
-////    )
-//  }
-//}
+class InputAttributeConverter(dataTypeConverter: DataTypeConverter)
+  extends Converter {
+  override type From = Expression
+  override type To = Attribute
 
-object AttributeConverter {
-
-  def toSplineId(exprId: ExprId): String = {
-    s"${exprId.jvmId}:${exprId.id}"
+  override def convert(expr: Expression): Attribute = expr match {
+    case attr: SparkAttribute =>
+      Attribute(
+        id = AttributeConverter.toSplineId(attr.exprId),
+        dataType =  Some(dataTypeConverter.convert(attr.dataType, attr.nullable).id),
+        childIds = List.empty,
+        extra = Map.empty,
+        name = attr.name
+      )
   }
 }
+
+

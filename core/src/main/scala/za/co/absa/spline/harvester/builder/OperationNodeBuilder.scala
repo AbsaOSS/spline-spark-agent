@@ -16,11 +16,10 @@
 
 package za.co.absa.spline.harvester.builder
 
-import java.util.UUID
-
+import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.spline.harvester.ComponentCreatorFactory
-import za.co.absa.spline.harvester.builder.OperationNodeBuilder.Schema
+import za.co.absa.spline.harvester.builder.OperationNodeBuilder.OutputAttIds
 
 trait OperationNodeBuilder {
 
@@ -35,13 +34,21 @@ trait OperationNodeBuilder {
   def +=(childBuilder: OperationNodeBuilder): Unit = childBuilders :+= childBuilder
 
   protected def componentCreatorFactory: ComponentCreatorFactory
-  protected lazy val outputSchema: Schema = operation.output.map(componentCreatorFactory.attributeConverter.convert(_).id)
+  protected lazy val outputAttributes: OutputAttIds = {
+    val convert: Attribute => String =
+      if (isTerminal)
+        att => componentCreatorFactory.inputAttributeConverter.convert(att).id
+      else
+        att => componentCreatorFactory.expressionConverter.convert(att).id
+
+    operation.output.map(convert).toList
+  }
 
   protected def childIds: Seq[Int] = childBuilders.map(_.id)
-  protected def childOutputSchemas: Seq[Schema] = childBuilders.map(_.outputSchema)
+  protected def childOutputSchemas: Seq[OutputAttIds] = childBuilders.map(_.outputAttributes)
   protected def isTerminal: Boolean = childBuilders.isEmpty
 }
 
 object OperationNodeBuilder {
-  type Schema = Seq[UUID]
+  type OutputAttIds = List[String]
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 ABSA Group Limited
+ * Copyright 2020 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,24 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.model
+package za.co.absa.spline.harvester.converter
 
-import java.util.UUID
+import za.co.absa.commons.lang.Converter
+
+import scala.collection.mutable
 
 /**
-  * The case class represents an attribute of a Spark data set.
-  *
-  * @param id         An unique identifier of the attribute
-  * @param name       A name of the attribute
-  * @param dataTypeId A data type of the attribute
-  */
-case class Attribute(id: String, name: String, dataTypeId: UUID)
+ * converter that remembers all outputs
+ */
+trait OutputStoringConverter extends Converter {
 
+  private val store = mutable.Buffer[To]()
 
+  def values: Seq[To] = store
+
+  abstract override def convert(arg: From): To = {
+    val output = super.convert(arg)
+    store += output
+    output
+  }
+}

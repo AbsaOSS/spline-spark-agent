@@ -35,6 +35,7 @@ import za.co.absa.spline.harvester.builder.read.ReadCommandExtractor
 import za.co.absa.spline.harvester.builder.write.WriteCommandExtractor
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
+import za.co.absa.spline.harvester.converter.ExpressionConverter
 import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.logging.ObjectStructureDumper
@@ -97,13 +98,18 @@ class LineageHarvester(
       val plan = {
         val planExtra = Map[String, Any](
           ExecutionPlanExtra.AppName -> ctx.session.sparkContext.appName,
-          ExecutionPlanExtra.DataTypes -> componentCreatorFactory.dataTypeConverter.values,
-          ExecutionPlanExtra.Attributes -> componentCreatorFactory.attributeConverter.values
+          ExecutionPlanExtra.DataTypes -> componentCreatorFactory.dataTypeConverter.values
         )
+
+        val expressions = createExpressions(
+          componentCreatorFactory.expressionConverter.values,
+          componentCreatorFactory.inputAttributeConverter.values
+        )
+
         val p = ExecutionPlan(
           id = Some(UUID.randomUUID),
           operations = Operations(writeOp, opReads.asOption, opOthers.asOption),
-          expressions = None, // TODO
+          expressions = Some(expressions),
           systemInfo = NameAndVersion(AppMetaInfo.Spark, spark.SPARK_VERSION),
           agentInfo = Some(NameAndVersion(AppMetaInfo.Spline, SplineBuildInfo.Version)),
           extraInfo = planExtra.asOption
@@ -123,7 +129,7 @@ class LineageHarvester(
         ).optionally[Duration]((m, d) => m + (ExecutionEventExtra.DurationNs -> d.toNanos), result.toOption)
 
         val ev = ExecutionEvent(
-          planId = plan.id.get, // Wierd ???
+          planId = plan.id.get,
           timestamp = System.currentTimeMillis,
           error = result.left.toOption,
           extra = eventExtra.asOption)
@@ -135,6 +141,27 @@ class LineageHarvester(
         Some(plan -> event)
       }
     })
+  }
+
+  private def createExpressions(
+    all: Seq[ExpressionConverter.ExpressionLike],
+    inputAttributes: Seq[Attribute]
+  ): Expressions = {
+
+    val exprByType = all.toList.groupBy(i => i.asInstanceOf[Any].getClass().getSimpleName)
+
+    def getExprByType[T](simpleClassName: String): List[T] = {
+      exprByType
+        .get(simpleClassName)
+        .map(_.asInstanceOf[List[T]])
+        .getOrElse(List.empty[T])
+    }
+
+    Expressions(
+      attributes = inputAttributes.toList ::: getExprByType[Attribute]("Attribute"),
+      constants = getExprByType[Literal]("Literal"),
+      functions = getExprByType[FunctionalExpression]("FunctionalExpression")
+    )
   }
 
   private def createOperationBuildersRecursively(rootOp: LogicalPlan): Seq[OperationNodeBuilder] = {

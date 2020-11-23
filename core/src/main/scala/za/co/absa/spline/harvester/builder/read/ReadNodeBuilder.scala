@@ -29,6 +29,8 @@ class ReadNodeBuilder
   (val componentCreatorFactory: ComponentCreatorFactory, userExtraMetadataProvider: UserExtraMetadataProvider, ctx: HarvestingContext)
   extends OperationNodeBuilder {
 
+  val inputAttributeConverter = componentCreatorFactory.inputAttributeConverter
+
   import za.co.absa.spline.harvester.ExtraMetadataImplicits._
 
   override protected type R = ReadOperation
@@ -39,7 +41,9 @@ class ReadNodeBuilder
       childIds = Nil,
       inputSources = command.sourceIdentifier.uris.toList,
       id = id.toString,
+      output = outputAttributes,
       params = Map(command.params.toSeq: _*).asOption,
+      expressions = None, //TODO remove
       extra = Map(
         OperationExtras.Name -> operation.nodeName,
         OperationExtras.SourceType -> command.sourceIdentifier.format

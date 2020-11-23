@@ -16,8 +16,11 @@
 
 package za.co.absa.spline.harvester.dispatcher.httpdispatcher.modelmapper
 
+import java.util.UUID
+
 import za.co.absa.spline.producer.model.v1_0
 import za.co.absa.spline.producer.model.v1_1
+import za.co.absa.spline.producer.model.v1_1.Expressions
 
 import scala.collection.mutable
 
@@ -30,7 +33,7 @@ object ModelMapperV1 extends ModelMapper {
    * Convert ExecutionPlan v1.1 to ExecutionPlan v1.0
    */
   override def toDTO(plan: v1_1.ExecutionPlan): AnyRef = {
-    val converter = new PlanConverter()
+    val converter = new PlanConverter(plan.expressions)
 
     v1_0.ExecutionPlan(
       plan.id,
@@ -41,10 +44,23 @@ object ModelMapperV1 extends ModelMapper {
     )
   }
 
-  private class PlanConverter {
+  private class PlanConverter(maybeExpressions: Option[Expressions]) {
 
     private var lastId = -1
-    private val idMap: mutable.Map[String, Int] = mutable.Map()
+    //private val operationIdMap: mutable.Map[String, Int] = mutable.Map()
+    private val attributeIdMap: mutable.Map[String, UUID] = mutable.Map()
+
+//    val toV1Schema: String => Option[List[String]] = {
+//
+//      def toV1SchemaMethod(expressions: Expressions)(opId: String) =
+//        Some(expressions.mappingByOperation(opId).map(toV1AttributeId(_).toString()))
+//
+//      maybeExpressions
+//        .map(toV1SchemaMethod(_) _)
+//        .getOrElse(_ => None)
+//    }
+
+
 
     def toV1Operations(operations: v1_1.Operations) =
       v1_0.Operations(
@@ -58,33 +74,37 @@ object ModelMapperV1 extends ModelMapper {
         operation.outputSource,
         None, // schema ?
         operation.append,
-        toV1Id(operation.id),
-        operation.childIds.map(toV1Id(_)),
+        toV1OperationId(operation.id),
+        operation.childIds.map(toV1OperationId(_)),
         operation.params,
         operation.extra
       )
 
     private def toV1ReadOperation(operation: v1_1.ReadOperation) =
       v1_0.ReadOperation(
-        operation.childIds.map(toV1Id(_)),
+        operation.childIds.map(toV1OperationId(_)),
         operation.inputSources,
-        toV1Id(operation.id),
-        None, // schema ?
+        toV1OperationId(operation.id),
+        Some(operation.output),
         operation.params,
         operation.extra
       )
 
     private def toV1DataOperation(operation: v1_1.DataOperation) =
       v1_0.DataOperation(
-        toV1Id(operation.id),
-        operation.childIds.map(ops => ops.map(toV1Id(_))),
-        None, // schema ?
+        toV1OperationId(operation.id),
+        operation.childIds.map(ops => ops.map(toV1OperationId(_))),
+        Some(operation.output),
         operation.params,
         operation.extra
       )
 
-    private def toV1Id(idString: String) = {
-      idMap.getOrElseUpdate(idString, getAndIncrementLastId())
+    private def toV1OperationId(idString: String) =
+      idString.toInt
+      //operationIdMap.getOrElseUpdate(idString, getAndIncrementLastId())
+
+    private def toV1AttributeId(idString: String) = {
+      attributeIdMap.getOrElseUpdate(idString, UUID.randomUUID())
     }
 
     private def getAndIncrementLastId() = {

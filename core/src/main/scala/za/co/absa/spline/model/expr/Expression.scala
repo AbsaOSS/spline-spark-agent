@@ -81,7 +81,7 @@ case class Binary
 ) extends Expression
   with TypedExpression
 
-case class AttrRef(refId: UUID) extends Expression with LeafExpression with RefLikeExpression
+case class AttrRef(refId: String) extends Expression with LeafExpression with RefLikeExpression
 
 case class Literal
 (

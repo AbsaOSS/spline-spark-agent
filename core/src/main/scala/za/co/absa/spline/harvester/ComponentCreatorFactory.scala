@@ -20,16 +20,13 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import org.apache.spark.sql.catalyst.expressions.{ExprId, Attribute => SparkAttribute}
 import za.co.absa.commons.lang.CachingConverter
-import za.co.absa.spline.harvester.converter.{AttributeConverter, DataConverter, DataTypeConverter, ExpressionConverter, OperationParamsConverter}
+import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter, ExpressionConverter, InputAttributeConverter, OperationParamsConverter, OutputStoringConverter}
 
 class ComponentCreatorFactory {
   val dataConverter = new DataConverter
   val dataTypeConverter = new DataTypeConverter with CachingConverter
-  val attributeConverter = new AttributeConverter(dataTypeConverter) with CachingConverter {
-    override protected def keyOf(attribute: SparkAttribute): ExprId = attribute.exprId
-  }
-
-  val expressionConverter = new ExpressionConverter(dataConverter, dataTypeConverter, attributeConverter)
+  val inputAttributeConverter = new InputAttributeConverter(dataTypeConverter) with OutputStoringConverter
+  val expressionConverter = new ExpressionConverter(dataConverter, dataTypeConverter) with OutputStoringConverter
   val operationParamsConverter = new OperationParamsConverter(dataConverter, expressionConverter)
 
   private[this] val lastId = new AtomicInteger(0)

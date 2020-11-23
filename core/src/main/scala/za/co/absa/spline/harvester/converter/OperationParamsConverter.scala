@@ -24,6 +24,7 @@ import org.apache.spark.sql.types.DataType
 import za.co.absa.commons.lang.Converter
 import za.co.absa.commons.reflect.ReflectionUtils
 import za.co.absa.spline.harvester.converter.OperationParamsConverter._
+import za.co.absa.spline.model.ExpressionReference
 
 class OperationParamsConverter(
   dataConverter: DataConverter,
@@ -36,10 +37,10 @@ class OperationParamsConverter(
     case (row: InternalRow, rowType: DataType) => Some(dataConverter.convert((row, rowType)))
     case (jt: JoinType, _) => Some(jt.sql)
     case (so: SortOrder, _) => Some(Map(
-      "expression" -> expressionConverter.convert(so.child),
+      "expression" -> new ExpressionReference(expressionConverter.convert(so.child).id),
       "direction" -> so.direction.sql,
       "nullOrdering" -> so.nullOrdering.sql))
-    case (exp: Expression, _) => Some(expressionConverter.convert(exp))
+    case (exp: Expression, _) => Some(new ExpressionReference(expressionConverter.convert(exp).id))
   })
 
   override def convert(operation: LogicalPlan): Map[String, _] = {
@@ -61,6 +62,6 @@ class OperationParamsConverter(
 }
 
 object OperationParamsConverter {
-  private val KnownPropNames = Set("nodeName", "output", "children")
+  private val KnownPropNames = Set("nodeName", "output", "children") // "child" ?
   private val IgnoredPropNames = Set("data")
 }
