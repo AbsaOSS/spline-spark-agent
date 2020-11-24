@@ -29,7 +29,6 @@ trait ShortTypeHintForSpline03ModelSupport extends FormatsBuilder {
     "typeHintFieldName" -> "_typeHint",
     "typeHints" -> SplineShortTypeHints(Nil
       ++ directSubClassesOf[model.dt.DataType]
-      ++ directSubClassesOf[model.expr.Expression]
     ),
     "dateFormatterFn" -> DefaultFormats.losslessDate.get _))
 }

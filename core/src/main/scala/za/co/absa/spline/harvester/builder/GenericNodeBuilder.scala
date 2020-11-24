@@ -38,7 +38,6 @@ class GenericNodeBuilder
       childIds = childIds.toList.map(_.toString).asOption,
       output = outputAttributes,
       params = componentCreatorFactory.operationParamsConverter.convert(operation).asOption,
-      expressions = None, // TODO remove
       extra = Map(OperationExtras.Name -> operation.nodeName).asOption
     )
 

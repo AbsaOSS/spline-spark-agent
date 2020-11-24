@@ -16,110 +16,69 @@
 
 package za.co.absa.spline.harvester.dispatcher.httpdispatcher.modelmapper
 
-import java.util.UUID
-
-import za.co.absa.spline.producer.model.v1_0
-import za.co.absa.spline.producer.model.v1_1
-import za.co.absa.spline.producer.model.v1_1.Expressions
-
-import scala.collection.mutable
+import za.co.absa.spline.producer.model.{v1_0, v1_1}
 
 
 object ModelMapperV1 extends ModelMapper {
-
-  // TODO
 
   /**
    * Convert ExecutionPlan v1.1 to ExecutionPlan v1.0
    */
   override def toDTO(plan: v1_1.ExecutionPlan): AnyRef = {
-    val converter = new PlanConverter(plan.expressions)
-
     v1_0.ExecutionPlan(
       plan.id,
-      converter.toV1Operations(plan.operations),
-      converter.toV1SystemInfo(plan.systemInfo),
-      plan.agentInfo.map(converter.toV1AgentInfo(_)),
+      toV1Operations(plan.operations),
+      toV1SystemInfo(plan.systemInfo),
+      plan.agentInfo.map(toV1AgentInfo(_)),
       plan.extraInfo
     )
   }
 
-  private class PlanConverter(maybeExpressions: Option[Expressions]) {
+  def toV1Operations(operations: v1_1.Operations) =
+    v1_0.Operations(
+      toV1WriteOperation(operations.write),
+      operations.reads.map(ops => ops.map(toV1ReadOperation(_))),
+      operations.other.map(ops => ops.map(toV1DataOperation(_)))
+    )
 
-    private var lastId = -1
-    //private val operationIdMap: mutable.Map[String, Int] = mutable.Map()
-    private val attributeIdMap: mutable.Map[String, UUID] = mutable.Map()
+  private def toV1WriteOperation(operation: v1_1.WriteOperation) =
+    v1_0.WriteOperation(
+      operation.outputSource,
+      None,
+      operation.append,
+      toV1OperationId(operation.id),
+      operation.childIds.map(toV1OperationId(_)),
+      operation.params,
+      operation.extra
+    )
 
-//    val toV1Schema: String => Option[List[String]] = {
-//
-//      def toV1SchemaMethod(expressions: Expressions)(opId: String) =
-//        Some(expressions.mappingByOperation(opId).map(toV1AttributeId(_).toString()))
-//
-//      maybeExpressions
-//        .map(toV1SchemaMethod(_) _)
-//        .getOrElse(_ => None)
-//    }
+  private def toV1ReadOperation(operation: v1_1.ReadOperation) =
+    v1_0.ReadOperation(
+      operation.childIds.map(toV1OperationId(_)),
+      operation.inputSources,
+      toV1OperationId(operation.id),
+      None,
+      operation.params,
+      operation.extra
+    )
 
+  private def toV1DataOperation(operation: v1_1.DataOperation) =
+    v1_0.DataOperation(
+      toV1OperationId(operation.id),
+      operation.childIds.map(ops => ops.map(toV1OperationId(_))),
+      None,
+      operation.params,
+      operation.extra
+    )
 
+  private def toV1OperationId(idString: String) =
+    idString.toInt
 
-    def toV1Operations(operations: v1_1.Operations) =
-      v1_0.Operations(
-        toV1WriteOperation(operations.write),
-        operations.reads.map(ops => ops.map(toV1ReadOperation(_))),
-        operations.other.map(ops => ops.map(toV1DataOperation(_)))
-      )
+  def toV1SystemInfo(nameAndVersion: v1_1.NameAndVersion) =
+    v1_0.SystemInfo(nameAndVersion.name, nameAndVersion.version)
 
-    private def toV1WriteOperation(operation: v1_1.WriteOperation) =
-      v1_0.WriteOperation(
-        operation.outputSource,
-        None, // schema ?
-        operation.append,
-        toV1OperationId(operation.id),
-        operation.childIds.map(toV1OperationId(_)),
-        operation.params,
-        operation.extra
-      )
-
-    private def toV1ReadOperation(operation: v1_1.ReadOperation) =
-      v1_0.ReadOperation(
-        operation.childIds.map(toV1OperationId(_)),
-        operation.inputSources,
-        toV1OperationId(operation.id),
-        Some(operation.output),
-        operation.params,
-        operation.extra
-      )
-
-    private def toV1DataOperation(operation: v1_1.DataOperation) =
-      v1_0.DataOperation(
-        toV1OperationId(operation.id),
-        operation.childIds.map(ops => ops.map(toV1OperationId(_))),
-        Some(operation.output),
-        operation.params,
-        operation.extra
-      )
-
-    private def toV1OperationId(idString: String) =
-      idString.toInt
-      //operationIdMap.getOrElseUpdate(idString, getAndIncrementLastId())
-
-    private def toV1AttributeId(idString: String) = {
-      attributeIdMap.getOrElseUpdate(idString, UUID.randomUUID())
-    }
-
-    private def getAndIncrementLastId() = {
-      lastId = lastId + 1
-      lastId
-    }
-
-    def toV1SystemInfo(nameAndVersion: v1_1.NameAndVersion) =
-      v1_0.SystemInfo(nameAndVersion.name, nameAndVersion.version)
-
-    def toV1AgentInfo(nameAndVersion: v1_1.NameAndVersion) =
-      v1_0.AgentInfo(nameAndVersion.name, nameAndVersion.version)
-
-  }
-
+  def toV1AgentInfo(nameAndVersion: v1_1.NameAndVersion) =
+    v1_0.AgentInfo(nameAndVersion.name, nameAndVersion.version)
 
   /**
    * Convert ExecutionEvent v1.1 to ExecutionEvent v1.0

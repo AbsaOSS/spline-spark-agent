@@ -16,8 +16,9 @@
 
 package za.co.absa.spline.harvester.converter
 
-import org.apache.spark.sql.catalyst.expressions.{Expression, Attribute => SparkAttribute}
+import org.apache.spark.sql.catalyst.expressions.{ExprId, Expression, Attribute => SparkAttribute}
 import za.co.absa.commons.lang.Converter
+import za.co.absa.spline.harvester.converter.InputAttributeConverter.toSplineId
 import za.co.absa.spline.producer.model.v1_1.Attribute
 
 class InputAttributeConverter(dataTypeConverter: DataTypeConverter)
@@ -28,7 +29,7 @@ class InputAttributeConverter(dataTypeConverter: DataTypeConverter)
   override def convert(expr: Expression): Attribute = expr match {
     case attr: SparkAttribute =>
       Attribute(
-        id = AttributeConverter.toSplineId(attr.exprId),
+        id = toSplineId(attr.exprId),
         dataType =  Some(dataTypeConverter.convert(attr.dataType, attr.nullable).id),
         childIds = List.empty,
         extra = Map.empty,
@@ -36,5 +37,13 @@ class InputAttributeConverter(dataTypeConverter: DataTypeConverter)
       )
   }
 }
+
+object InputAttributeConverter {
+
+  def toSplineId(exprId: ExprId): String = {
+    s"${exprId.jvmId}:${exprId.id}"
+  }
+}
+
 
 

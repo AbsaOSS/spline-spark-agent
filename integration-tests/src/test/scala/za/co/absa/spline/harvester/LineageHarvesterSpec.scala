@@ -58,7 +58,7 @@ class LineageHarvesterSpec extends AnyFlatSpec
 
         inside(lineageOf(spark.emptyDataset[TestRow].write.save(tmpDest))) {
           case (ExecutionPlan(_, Operations(_, None, Some(Seq(op))), _, _, _, _), _) =>
-            //op.id should be(1)
+            op.id should be("1")
             op.childIds should be(empty)
             op.output should not be empty
             op.extra.get should contain("name" -> "LocalRelation")
@@ -87,16 +87,14 @@ class LineageHarvesterSpec extends AnyFlatSpec
             append = false,
             params = None,
             extra = None,
-            output = expectedAttributes.map(_.id).toList,
-            expressions = None
+            output = expectedAttributes.map(_.id).toList
           ),
           DataOperation(
             id = "1",
             childIds = None,
             output = expectedAttributes.map(_.id).toList,
             params = None,
-            extra = Map("name" -> "LocalRelation").asOption,
-            expressions = None))
+            extra = Map("name" -> "LocalRelation").asOption))
 
         val (plan, _) = lineageOf(df.write.save(tmpDest))
 
@@ -131,18 +129,17 @@ class LineageHarvesterSpec extends AnyFlatSpec
             append = false,
             params = None,
             extra = None,
-            output = outputAfterRename,
-            expressions = None
+            output = outputAfterRename
           ),
           DataOperation(
             "1", List("2").asOption, outputAfterRename,
-            None, None, Map("name" -> "Filter").asOption),
+            None, Map("name" -> "Filter").asOption),
           DataOperation(
             "2", List("3").asOption, outputAfterRename,
-            None, None, Map("name" -> "Project").asOption),
+            None, Map("name" -> "Project").asOption),
           DataOperation(
             "3", None, outputBeforeRename,
-            None, None, Map("name" -> "LocalRelation").asOption))
+            None, Map("name" -> "LocalRelation").asOption))
 
         val (plan, _) = lineageOf(df.write.save(tmpDest))
 
@@ -178,13 +175,12 @@ class LineageHarvesterSpec extends AnyFlatSpec
             append = false,
             params = None,
             extra = None,
-            output = outputAttIds,
-            expressions = None
+            output = outputAttIds
           ),
-          DataOperation("1", List("2", "4").asOption, outputAttIds, None, None, Map("name" -> "Union").asOption),
-          DataOperation("2", List("3").asOption, outputAttIds, None, None, Map("name" -> "Filter").asOption),
-          DataOperation("4", List("3").asOption, outputAttIds, None, None, Map("name" -> "Filter").asOption),
-          DataOperation("3", None, outputAttIds, None, None, Map("name" -> "LocalRelation").asOption))
+          DataOperation("1", List("2", "4").asOption, outputAttIds, None, Map("name" -> "Union").asOption),
+          DataOperation("2", List("3").asOption, outputAttIds, None, Map("name" -> "Filter").asOption),
+          DataOperation("4", List("3").asOption, outputAttIds, None, Map("name" -> "Filter").asOption),
+          DataOperation("3", None, outputAttIds, None, Map("name" -> "LocalRelation").asOption))
 
         val (plan, _) = lineageOf(df.write.save(tmpDest))
 
@@ -227,25 +223,24 @@ class LineageHarvesterSpec extends AnyFlatSpec
             append = false,
             params = None,
             extra = None,
-            output = expectedAttributes.map(_.id),
-            expressions = None
+            output = expectedAttributes.map(_.id)
           ),
           DataOperation(
             "1", List("2", "4").asOption, expectedAttributes.map(_.id),
             Map("joinType" -> Some("INNER")).asOption,
-            None, Map("name" -> "Join").asOption),
+            Map("name" -> "Join").asOption),
           DataOperation(
             "2", List("3").asOption, List(expectedAttributes(0).id, expectedAttributes(1).id, expectedAttributes(2).id),
-            None, None, Map("name" -> "Filter").asOption),
+            None, Map("name" -> "Filter").asOption),
           DataOperation(
             "3", None, List(expectedAttributes(0).id, expectedAttributes(1).id, expectedAttributes(2).id),
-            None, None, Map("name" -> "LocalRelation").asOption),
+            None, Map("name" -> "LocalRelation").asOption),
           DataOperation(
             "4", List("5").asOption, List(expectedAttributes(3).id, expectedAttributes(4).id, expectedAttributes(5).id),
-            None, None, Map("name" -> "Aggregate").asOption),
+            None, Map("name" -> "Aggregate").asOption),
           DataOperation(
             "5", List("3").asOption, List(expectedAttributes(3).id, expectedAttributes(1).id, expectedAttributes(2).id),
-            None, None, Map("name" -> "Project").asOption))
+            None, Map("name" -> "Project").asOption))
 
         val (plan, _) = lineageOf(df.write.save(tmpDest))
 

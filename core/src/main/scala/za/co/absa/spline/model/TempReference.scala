@@ -16,4 +16,4 @@
 
 package za.co.absa.spline.model
 
-case class TempReference(val id: String)
+case class TempReference(id: String)

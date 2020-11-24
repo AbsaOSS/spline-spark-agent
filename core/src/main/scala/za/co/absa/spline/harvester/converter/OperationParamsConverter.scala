@@ -62,6 +62,6 @@ class OperationParamsConverter(
 }
 
 object OperationParamsConverter {
-  private val KnownPropNames = Set("nodeName", "output", "children") // "child" ?
+  private val KnownPropNames = Set("nodeName", "output", "children", "child")
   private val IgnoredPropNames = Set("data")
 }

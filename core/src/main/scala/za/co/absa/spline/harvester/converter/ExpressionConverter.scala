@@ -22,12 +22,9 @@ import org.apache.commons.lang3.StringUtils.substringAfter
 import org.apache.spark.sql.catalyst.expressions
 import org.apache.spark.sql.catalyst.expressions.{Expression => SparkExpression}
 import za.co.absa.commons.lang.Converter
-import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.reflect.ReflectionUtils
 import za.co.absa.spline.model.TempReference
 import za.co.absa.spline.producer.model.v1_1._
-
-import scala.:+
 
 
 class ExpressionConverter(
@@ -44,106 +41,88 @@ class ExpressionConverter(
 
     case a: expressions.Alias =>
       Attribute(
-        id = AttributeConverter.toSplineId(a.exprId),
-        dataType = Some(getDataType(a).id),
+        id = InputAttributeConverter.toSplineId(a.exprId),
+        dataType = convertDataType(a),
         childIds = List(convert(a.child).id),
-        extra = Map("_typeHint" -> "expr.Attribute"), // this was Alias
+        extra = Map("_typeHint" -> "expr.Attribute"),
         name = a.name
       )
 
     case a: expressions.AttributeReference =>
-      TempReference(AttributeConverter.toSplineId(a.exprId))
+      TempReference(InputAttributeConverter.toSplineId(a.exprId))
 
     case lit: expressions.Literal =>
       Literal(
-        id = UUID.randomUUID().toString,
-        dataType = Some(getDataType(lit).id),
+        id = randomUUIDString,
+        dataType = convertDataType(lit),
         extra = Map("_typeHint" -> "expr.Literal"),
         value = dataConverter.convert(Tuple2.apply(lit.value, lit.dataType))
       )
-//      expr.Literal.apply(dataConverter.convert(Tuple2.apply(lit.value, lit.dataType)), getDataType(lit).id)
 
     case bo: expressions.BinaryOperator =>
       FunctionalExpression(
-        id = UUID.randomUUID().toString,
-        dataType = Some(getDataType(bo).id),
-        childIds = bo.children.map(convert).map(_.id).toList,
+        id = randomUUIDString,
+        dataType = convertDataType(bo),
+        childIds = convertChildren(bo),
         extra = Map("_typeHint" -> "expr.Binary"),
-        name = bo.prettyName,
+        name = getExpressionSimpleClassName(bo),
         params = getExpressionExtraParameters(bo) + ("symbol" -> bo.symbol)
       )
-//      expr.Binary(
-//        bo.symbol,
-//        getDataType(bo).id,
-//        bo.children map convert)
-//
 
     case u: expressions.ScalaUDF =>
       FunctionalExpression(
-        id = UUID.randomUUID().toString,
-        dataType = Some(getDataType(u).id),
-        childIds = u.children.map(convert).map(_.id).toList,
+        id = randomUUIDString,
+        dataType = convertDataType(u),
+        childIds = convertChildren(u),
         extra = Map("_typeHint" -> "expr.UDF"),
         name = u.udfName getOrElse u.function.getClass.getName,
         params = getExpressionExtraParameters(u)
       )
-//      expr.UDF(
-//        u.udfName getOrElse u.function.getClass.getName,
-//        getDataType(u).id,
-//        u.children map convert)
-//
 
     case e: expressions.LeafExpression =>
       FunctionalExpression(
-        id = UUID.randomUUID().toString,
-        dataType = Some(getDataType(e).id),
+        id = randomUUIDString,
+        dataType = convertDataType(e),
         childIds = List.empty,
         extra = Map("_typeHint" -> "expr.GenericLeaf"),
-        name = e.prettyName,
-        params = getExpressionExtraParameters(e) // params
+        name = getExpressionSimpleClassName(e),
+        params = getExpressionExtraParameters(e)
       )
-//      expr.GenericLeaf(
-//        e.prettyName,
-//        getDataType(e).id,
-//        getExpressionSimpleClassName(e),
-//        getExpressionExtraParameters(e))
-//
 
     case _: expressions.WindowSpecDefinition | _: expressions.WindowFrame =>
       FunctionalExpression(
-        id = UUID.randomUUID().toString,
+        id = randomUUIDString,
         dataType = None,
-        childIds = sparkExpr.children.map(convert).map(_.id).toList,
+        childIds = convertChildren(sparkExpr),
         extra = Map("_typeHint" -> "expr.UntypedExpression"),
-        name = sparkExpr.prettyName,
-        params = getExpressionExtraParameters(sparkExpr) // params
+        name = getExpressionSimpleClassName(sparkExpr),
+        params = getExpressionExtraParameters(sparkExpr)
       )
-//      expr.UntypedExpression(
-//        sparkExpr.prettyName,
-//        sparkExpr.children map convert,
-//        getExpressionSimpleClassName(sparkExpr), // exprType
-//        getExpressionExtraParameters(sparkExpr)) // params
-//
 
     case e: expressions.Expression =>
       FunctionalExpression(
-        id = UUID.randomUUID().toString,
-        dataType = Some(getDataType(e).id),
-        childIds = e.children.map(convert).map(_.id).toList,
+        id = randomUUIDString,
+        dataType = convertDataType(e),
+        childIds = convertChildren(e),
         extra = Map("_typeHint" -> "expr.Generic"),
-        name = sparkExpr.prettyName,
-        params = getExpressionExtraParameters(sparkExpr) // params
+        name = getExpressionSimpleClassName(e),
+        params = getExpressionExtraParameters(e)
       )
-
-//      expr.Generic(
-//        e.prettyName,
-//        getDataType(e).id,
-//        e.children map convert,
-//        getExpressionSimpleClassName(e),
-//        getExpressionExtraParameters(e))
   }
 
-  private def getDataType(expr: SparkExpression) = dataTypeConverter.convert(expr.dataType, expr.nullable)
+  private def randomUUIDString = {
+    UUID.randomUUID().toString
+  }
+
+  private def convertDataType(expr: SparkExpression) = {
+    val dataType = dataTypeConverter.convert(expr.dataType, expr.nullable)
+    Some(dataType.id)
+  }
+
+  private def convertChildren(e: SparkExpression) = {
+    e.children.map(convert).map(_.id).toList
+  }
+
 }
 
 object ExpressionConverter {

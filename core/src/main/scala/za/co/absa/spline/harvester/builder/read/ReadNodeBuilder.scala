@@ -43,7 +43,6 @@ class ReadNodeBuilder
       id = id.toString,
       output = outputAttributes,
       params = Map(command.params.toSeq: _*).asOption,
-      expressions = None, //TODO remove
       extra = Map(
         OperationExtras.Name -> operation.nodeName,
         OperationExtras.SourceType -> command.sourceIdentifier.format

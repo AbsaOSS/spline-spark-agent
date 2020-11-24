@@ -144,11 +144,11 @@ class LineageHarvester(
   }
 
   private def createExpressions(
-    all: Seq[ExpressionConverter.ExpressionLike],
+    unsortedExpressions: Seq[ExpressionConverter.ExpressionLike],
     inputAttributes: Seq[Attribute]
   ): Expressions = {
 
-    val exprByType = all.toList.groupBy(i => i.asInstanceOf[Any].getClass().getSimpleName)
+    val exprByType = unsortedExpressions.toList.groupBy(i => i.asInstanceOf[Any].getClass().getSimpleName)
 
     def getExprByType[T](simpleClassName: String): List[T] = {
       exprByType

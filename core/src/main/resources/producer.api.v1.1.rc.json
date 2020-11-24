@@ -222,6 +222,15 @@
             "type": "object"
           }
         },
+        "expressions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
         "extra": {
           "type": "object",
           "additionalProperties": {
@@ -461,6 +470,15 @@
             "type": "object"
           }
         },
+        "expressions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
         "extra": {
           "type": "object",
           "additionalProperties": {
@@ -505,6 +523,15 @@
           "type": "object",
           "additionalProperties": {
             "type": "object"
+          }
+        },
+        "expressions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "extra": {
