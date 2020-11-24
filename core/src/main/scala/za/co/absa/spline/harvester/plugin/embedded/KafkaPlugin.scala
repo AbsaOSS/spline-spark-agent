@@ -20,8 +20,8 @@ import java.util.Properties
 
 import javax.annotation.Priority
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.common.TopicPartition
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
-import org.apache.spark.sql.kafka010.{AssignStrategy, ConsumerStrategy, SubscribePatternStrategy, SubscribeStrategy}
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
@@ -31,6 +31,7 @@ import za.co.absa.spline.harvester.plugin.embedded.KafkaPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, Plugin, RelationProviderProcessing}
 
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 @Priority(Precedence.Normal)
 class KafkaPlugin
@@ -41,11 +42,25 @@ class KafkaPlugin
   override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: KafkaRelation`(kr), _) =>
       val options = extractFieldValue[Map[String, String]](kr, "sourceOptions")
-      val topics: Seq[String] = extractFieldValue[ConsumerStrategy](kr, "strategy") match {
-        case AssignStrategy(partitions) => partitions.map(_.topic)
-        case SubscribeStrategy(topics) => topics
-        case SubscribePatternStrategy(pattern) => kafkaTopics(options("kafka.bootstrap.servers")).filter(_.matches(pattern))
-      }
+      // org.apache.spark.sql.kafka010.ConsumerStrategy - private classes cannot be used directly
+      val consumerStrategy = extractFieldValue[AnyRef](kr, "strategy")
+
+      def tryAssignStrategy(): Try[Seq[String]] =
+        Try(extractFieldValue[Array[TopicPartition]](consumerStrategy, "partitions"))
+          .map(partitions => partitions.map(_.topic()))
+
+      def trySubscribeStrategy(): Try[Seq[String]] =
+        Try(extractFieldValue[Seq[String]](consumerStrategy, "topics"))
+
+      def trySubscribePatternStrategy(): Try[Seq[String]] =
+        Try(extractFieldValue[String](consumerStrategy, "topicPattern"))
+          .map(pattern => kafkaTopics(options("kafka.bootstrap.servers")).filter(_.matches(pattern)))
+
+      val topics: Seq[String] =
+        tryAssignStrategy
+          .getOrElse(trySubscribeStrategy
+            .getOrElse(trySubscribePatternStrategy.get))
+
       val sourceId = SourceIdentifier(Some("kafka"), topics.map(asURI): _*)
       (sourceId, options ++ Map(
         "startingOffsets" -> extractFieldValue[AnyRef](kr, "startingOffsets"),
