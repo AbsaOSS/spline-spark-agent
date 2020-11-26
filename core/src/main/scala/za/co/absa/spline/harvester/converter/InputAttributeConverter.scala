@@ -17,22 +17,31 @@
 package za.co.absa.spline.harvester.converter
 
 import org.apache.spark.sql.catalyst.expressions.{ExprId, Expression, Attribute => SparkAttribute}
-import za.co.absa.commons.lang.Converter
+import za.co.absa.spline.harvester.builder.OperationNodeBuilder.OperationId
 import za.co.absa.spline.harvester.converter.InputAttributeConverter.toSplineId
 import za.co.absa.spline.producer.model.v1_1.Attribute
 
-class InputAttributeConverter(dataTypeConverter: DataTypeConverter)
-  extends Converter {
-  override type From = Expression
-  override type To = Attribute
+import scala.collection.mutable
 
-  override def convert(expr: Expression): Attribute = expr match {
+class InputAttributeConverter(dataTypeConverter: DataTypeConverter) {
+
+  private val store = mutable.Buffer[Attribute]()
+
+  def values: Seq[Attribute] = store
+
+  def convert(sparkExpr: Expression, operationId: String): Attribute = {
+    val output = convertInternal(sparkExpr, operationId)
+    store += output
+    output
+  }
+
+  def convertInternal(expr: Expression, operationId: OperationId): Attribute = expr match {
     case attr: SparkAttribute =>
       Attribute(
         id = toSplineId(attr.exprId),
         dataType =  Some(dataTypeConverter.convert(attr.dataType, attr.nullable).id),
         childIds = List.empty,
-        extra = Map.empty,
+        extra = ExpressionConverter.createExtra(attr, "expr.Attribute", operationId),
         name = attr.name
       )
   }

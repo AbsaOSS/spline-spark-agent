@@ -34,10 +34,10 @@ class GenericNodeBuilder
 
   override def build(): DataOperation = {
     val dop = DataOperation(
-      id = id.toString,
-      childIds = childIds.toList.map(_.toString).asOption,
+      id = id,
+      childIds = childIds.asOption,
       output = outputAttributes,
-      params = componentCreatorFactory.operationParamsConverter.convert(operation).asOption,
+      params = componentCreatorFactory.operationParamsConverter.convert((operation, id)).asOption,
       extra = Map(OperationExtras.Name -> operation.nodeName).asOption
     )
 

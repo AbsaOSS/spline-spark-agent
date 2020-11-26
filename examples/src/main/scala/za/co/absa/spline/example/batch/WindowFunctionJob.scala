@@ -75,6 +75,6 @@ object WindowFunctionJob extends SparkApp("Window Function Job") {
     .write
     .format("com.crealytics.spark.excel")
     .option("header", "true")
-    .mode("ignore")
+    .mode("overwrite")
     .save(filePath1)
 }

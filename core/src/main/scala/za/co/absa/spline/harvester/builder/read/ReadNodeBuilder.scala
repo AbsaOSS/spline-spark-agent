@@ -40,7 +40,7 @@ class ReadNodeBuilder
     val rop = ReadOperation(
       childIds = Nil,
       inputSources = command.sourceIdentifier.uris.toList,
-      id = id.toString,
+      id = id,
       output = outputAttributes,
       params = Map(command.params.toSeq: _*).asOption,
       extra = Map(

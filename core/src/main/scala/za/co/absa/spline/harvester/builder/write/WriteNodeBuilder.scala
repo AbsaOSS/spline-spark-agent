@@ -41,8 +41,8 @@ class WriteNodeBuilder
       output = outputAttributes,
       outputSource = uri,
       append = command.mode == SaveMode.Append,
-      id = id.toString,
-      childIds = childIds.map(_.toString).toList,
+      id = id,
+      childIds = childIds,
       params = Map(command.params.toSeq: _*).asOption,
       extra = Map(
         OperationExtras.Name -> command.name,

@@ -30,20 +30,22 @@ class OperationParamsConverter(
   dataConverter: DataConverter,
   expressionConverter: ExpressionConverter
 ) extends Converter {
-  override type From = LogicalPlan
+  override type From = (LogicalPlan, String)
   override type To = Map[String, _]
 
-  private val renderer = ValueDecomposer.addHandler(_ => {
+  private def renderer(operationId: String) = ValueDecomposer.addHandler(_ => {
     case (row: InternalRow, rowType: DataType) => Some(dataConverter.convert((row, rowType)))
     case (jt: JoinType, _) => Some(jt.sql)
     case (so: SortOrder, _) => Some(Map(
-      "expression" -> new ExpressionReference(expressionConverter.convert(so.child).id),
+      "expression" -> new ExpressionReference(expressionConverter.convert(so.child, operationId).id),
       "direction" -> so.direction.sql,
       "nullOrdering" -> so.nullOrdering.sql))
-    case (exp: Expression, _) => Some(new ExpressionReference(expressionConverter.convert(exp).id))
+    case (exp: Expression, _) => Some(new ExpressionReference(expressionConverter.convert(exp, operationId).id))
   })
 
-  override def convert(operation: LogicalPlan): Map[String, _] = {
+  override def convert(operationAndId: (LogicalPlan, String)): Map[String, _] = {
+    val (operation, operationId) = operationAndId
+
     val isChildOperation: Any => Boolean = {
       val children = operation.children.toSet
       PartialFunction.cond(_) {
@@ -57,7 +59,7 @@ class OperationParamsConverter(
       if !IgnoredPropNames(p)
       if !isChildOperation(v)
     } yield
-      p -> renderer.decompose(v, operation.schema)
+      p -> renderer(operationId).decompose(v, operation.schema)
   }
 }
 

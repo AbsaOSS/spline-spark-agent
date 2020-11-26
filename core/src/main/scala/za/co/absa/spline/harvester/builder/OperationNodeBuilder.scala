@@ -19,13 +19,13 @@ package za.co.absa.spline.harvester.builder
 import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.spline.harvester.ComponentCreatorFactory
-import za.co.absa.spline.harvester.builder.OperationNodeBuilder.OutputAttIds
+import za.co.absa.spline.harvester.builder.OperationNodeBuilder.{OperationId, OutputAttIds}
 
 trait OperationNodeBuilder {
 
   protected type R
 
-  val id: Int = componentCreatorFactory.nextId
+  val id: OperationId = componentCreatorFactory.nextId.toString
 
   private var childBuilders: Seq[OperationNodeBuilder] = Nil
 
@@ -37,18 +37,19 @@ trait OperationNodeBuilder {
   protected lazy val outputAttributes: OutputAttIds = {
     val convert: Attribute => String =
       if (isTerminal)
-        att => componentCreatorFactory.inputAttributeConverter.convert(att).id
+        att => componentCreatorFactory.inputAttributeConverter.convert(att, id).id
       else
-        att => componentCreatorFactory.expressionConverter.convert(att).id
+        att => componentCreatorFactory.expressionConverter.convert(att, id).id
 
     operation.output.map(convert).toList
   }
 
-  protected def childIds: Seq[Int] = childBuilders.map(_.id)
+  protected def childIds: List[OperationId] = childBuilders.map(_.id).toList
   protected def childOutputSchemas: Seq[OutputAttIds] = childBuilders.map(_.outputAttributes)
   protected def isTerminal: Boolean = childBuilders.isEmpty
 }
 
 object OperationNodeBuilder {
+  type OperationId = String
   type OutputAttIds = List[String]
 }
