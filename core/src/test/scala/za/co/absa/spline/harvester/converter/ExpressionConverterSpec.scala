@@ -39,7 +39,7 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
   behavior of "Converting arbitrary Spark Expression"
 
   private val dtConverterMock = mock[DataTypeConverter]
-  private val converter = new ExpressionConverter(new DataConverter, dtConverterMock)
+  private val converter = new GenericExpressionConverter(new DataConverter, dtConverterMock)
 
   when(dtConverterMock convert NullType -> true) thenReturn nullDataType
   when(dtConverterMock convert StringType -> false) thenReturn stringDataType

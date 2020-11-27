@@ -18,18 +18,19 @@ package za.co.absa.spline.harvester
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import org.apache.spark.sql.catalyst.expressions.{ExprId, Attribute => SparkAttribute}
 import za.co.absa.commons.lang.CachingConverter
-import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter, ExpressionConverter, InputAttributeConverter, OperationParamsConverter}
+import za.co.absa.spline.harvester.converter._
 
 class ComponentCreatorFactory {
   val dataConverter = new DataConverter
   val dataTypeConverter = new DataTypeConverter with CachingConverter
   val inputAttributeConverter = new InputAttributeConverter(dataTypeConverter)
-  val expressionConverter = new ExpressionConverter(dataConverter, dataTypeConverter)
+  val expressionConverter = new GenericExpressionConverter(dataConverter, dataTypeConverter)
   val operationParamsConverter = new OperationParamsConverter(dataConverter, expressionConverter)
 
   private[this] val lastId = new AtomicInteger(0)
 
   def nextId: Int = lastId.getAndIncrement()
+
+  def expressionConverters():List[ExpressionConverter] = inputAttributeConverter :: expressionConverter :: Nil
 }

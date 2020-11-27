@@ -35,7 +35,6 @@ import za.co.absa.spline.harvester.builder.read.ReadCommandExtractor
 import za.co.absa.spline.harvester.builder.write.WriteCommandExtractor
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
-import za.co.absa.spline.harvester.converter.ExpressionConverter
 import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.logging.ObjectStructureDumper
@@ -101,9 +100,11 @@ class LineageHarvester(
           ExecutionPlanExtra.DataTypes -> componentCreatorFactory.dataTypeConverter.values
         )
 
-        val expressions = createExpressions(
-          componentCreatorFactory.expressionConverter.values,
-          componentCreatorFactory.inputAttributeConverter.values
+        val exprConverters = componentCreatorFactory.expressionConverters
+        val expressions = Expressions(
+          attributes = exprConverters.flatMap(_.attributes),
+          constants = exprConverters.flatMap(_.literals),
+          functions = exprConverters.flatMap(_.functionalExpressions)
         )
 
         val p = ExecutionPlan(
@@ -141,27 +142,6 @@ class LineageHarvester(
         Some(plan -> event)
       }
     })
-  }
-
-  private def createExpressions(
-    unsortedExpressions: Seq[ExpressionConverter.ExpressionLike],
-    inputAttributes: Seq[Attribute]
-  ): Expressions = {
-
-    val exprByType = unsortedExpressions.toList.groupBy(i => i.asInstanceOf[Any].getClass().getSimpleName)
-
-    def getExprByType[T](simpleClassName: String): List[T] = {
-      exprByType
-        .get(simpleClassName)
-        .map(_.asInstanceOf[List[T]])
-        .getOrElse(List.empty[T])
-    }
-
-    Expressions(
-      attributes = inputAttributes.toList ::: getExprByType[Attribute]("Attribute"),
-      constants = getExprByType[Literal]("Literal"),
-      functions = getExprByType[FunctionalExpression]("FunctionalExpression")
-    )
   }
 
   private def createOperationBuildersRecursively(rootOp: LogicalPlan): Seq[OperationNodeBuilder] = {

@@ -28,7 +28,7 @@ import za.co.absa.spline.model.ExpressionReference
 
 class OperationParamsConverter(
   dataConverter: DataConverter,
-  expressionConverter: ExpressionConverter
+  expressionConverter: GenericExpressionConverter
 ) extends Converter {
   override type From = (LogicalPlan, String)
   override type To = Map[String, _]
