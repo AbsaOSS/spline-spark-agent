@@ -23,10 +23,8 @@ import za.co.absa.spline.producer.model.v1_1.Attribute
 
 class InputAttributeConverter(dataTypeConverter: DataTypeConverter) extends ExpressionConverter {
 
-  def convert(sparkExpr: Expression, operationId: String): ExpressionLike = {
-    val output = convertInternal(sparkExpr, operationId)
-    store(output)
-    output
+  def convert(expressionAndOperationId: From): To = expressionAndOperationId match {
+    case (sparkExpr, operationId) => convertInternal(sparkExpr, operationId)
   }
 
   def convertInternal(expr: Expression, operationId: OperationId): ExpressionLike = expr match {

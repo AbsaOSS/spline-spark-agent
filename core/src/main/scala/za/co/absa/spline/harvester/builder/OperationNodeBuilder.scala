@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.harvester.builder
 
-import org.apache.spark.sql.catalyst.expressions.Attribute
+import org.apache.spark.sql.catalyst.expressions.{Attribute => SparAttribute}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.spline.harvester.ComponentCreatorFactory
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder.{OperationId, OutputAttIds}
@@ -34,15 +34,14 @@ trait OperationNodeBuilder {
   def +=(childBuilder: OperationNodeBuilder): Unit = childBuilders :+= childBuilder
 
   protected def componentCreatorFactory: ComponentCreatorFactory
-  protected lazy val outputAttributes: OutputAttIds = {
-    val convert: Attribute => String =
-      if (isTerminal)
-        att => componentCreatorFactory.inputAttributeConverter.convert(att, id).id
-      else
-        att => componentCreatorFactory.expressionConverter.convert(att, id).id
+  private lazy val attributeConverter =
+    if (isTerminal)
+      componentCreatorFactory.inputAttributeConverter
+    else
+      componentCreatorFactory.expressionConverter
 
-    operation.output.map(convert).toList
-  }
+  private def convert(att: SparAttribute): String = attributeConverter.convert((att, id)).id
+  protected lazy val outputAttributes: OutputAttIds = operation.output.map(convert).toList
 
   protected def childIds: List[OperationId] = childBuilders.map(_.id).toList
   protected def childOutputSchemas: Seq[OutputAttIds] = childBuilders.map(_.outputAttributes)

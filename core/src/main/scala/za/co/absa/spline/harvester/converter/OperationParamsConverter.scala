@@ -37,10 +37,10 @@ class OperationParamsConverter(
     case (row: InternalRow, rowType: DataType) => Some(dataConverter.convert((row, rowType)))
     case (jt: JoinType, _) => Some(jt.sql)
     case (so: SortOrder, _) => Some(Map(
-      "expression" -> new ExpressionReference(expressionConverter.convert(so.child, operationId).id),
+      "expression" -> ExpressionReference(expressionConverter.convert((so.child, operationId)).id),
       "direction" -> so.direction.sql,
       "nullOrdering" -> so.nullOrdering.sql))
-    case (exp: Expression, _) => Some(new ExpressionReference(expressionConverter.convert(exp, operationId).id))
+    case (exp: Expression, _) => Some(ExpressionReference(expressionConverter.convert((exp, operationId)).id))
   })
 
   override def convert(operationAndId: (LogicalPlan, String)): Map[String, _] = {

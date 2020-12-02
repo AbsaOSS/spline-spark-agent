@@ -94,6 +94,7 @@ class LineageHarvester(
           case ((accRead, accOther), opOther: DataOperation) => (accRead, accOther :+ opOther)
         }
 
+      val planId = UUID.randomUUID
       val plan = {
         val planExtra = Map[String, Any](
           ExecutionPlanExtra.AppName -> ctx.session.sparkContext.appName,
@@ -108,7 +109,7 @@ class LineageHarvester(
         )
 
         val p = ExecutionPlan(
-          id = Some(UUID.randomUUID),
+          id = Some(planId),
           operations = Operations(writeOp, opReads.asOption, opOthers.asOption),
           expressions = Some(expressions),
           systemInfo = NameAndVersion(AppMetaInfo.Spark, spark.SPARK_VERSION),
@@ -130,7 +131,7 @@ class LineageHarvester(
         ).optionally[Duration]((m, d) => m + (ExecutionEventExtra.DurationNs -> d.toNanos), result.toOption)
 
         val ev = ExecutionEvent(
-          planId = plan.id.get,
+          planId = planId,
           timestamp = System.currentTimeMillis,
           error = result.left.toOption,
           extra = eventExtra.asOption)

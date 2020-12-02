@@ -16,7 +16,6 @@
 
 package za.co.absa.spline.model
 
-class ExpressionReference(val `@exprId`: String) {
+case class ExpressionReference(`@exprId`: String) {
   def exprId: String = `@exprId`
 }
-

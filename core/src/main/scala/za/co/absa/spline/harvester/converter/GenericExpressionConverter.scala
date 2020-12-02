@@ -21,8 +21,7 @@ import java.util.UUID
 import org.apache.spark.sql.catalyst.expressions
 import org.apache.spark.sql.catalyst.expressions.{Expression => SparkExpression}
 import za.co.absa.commons.reflect.ReflectionUtils
-import za.co.absa.spline.harvester.converter.ExpressionConverter.{ExpressionLike, createExtra, toSplineAttrId}
-import za.co.absa.spline.model.TempReference
+import za.co.absa.spline.harvester.converter.ExpressionConverter._
 import za.co.absa.spline.producer.model.v1_1._
 
 
@@ -33,15 +32,13 @@ class GenericExpressionConverter(
 
   import GenericExpressionConverter._
 
-  override def convert(sparkExpr: SparkExpression, operationId: String): ExpressionLike = {
-    val output = convertInternal(sparkExpr, operationId)
-    store(output)
-    output
+  def convert(expressionAndOperationId: From): To = expressionAndOperationId match {
+    case (sparkExpr, operationId) => convertInternal(sparkExpr, operationId)
   }
 
   private def convertInternal(sparkExpr: SparkExpression, operationId: String): ExpressionLike = sparkExpr match {
 
-  case a: expressions.Alias =>
+    case a: expressions.Alias =>
       Attribute(
         id = toSplineAttrId(a.exprId),
         dataType = convertDataType(a),
@@ -122,18 +119,14 @@ class GenericExpressionConverter(
   }
 
   private def convertChildren(e: SparkExpression, operationId: String) = {
-    e.children.map(convert(_, operationId)).map(_.id).toList
+    e.children.map(expr => convert((expr, operationId))).map(_.id).toList
   }
-
 
 }
 
 object GenericExpressionConverter {
 
   private val basicProperties = Set("children", "dataType", "nullable")
-
-  val foo = basicProperties.getClass()
-
 
   private def getExpressionExtraParameters(e: SparkExpression): Map[String, Any] = {
     val isChildExpression: Any => Boolean = {

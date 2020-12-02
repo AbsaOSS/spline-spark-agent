@@ -19,30 +19,14 @@ package za.co.absa.spline.harvester.converter
 import org.apache.commons.lang3.StringUtils.substringAfter
 import org.apache.spark.sql.catalyst.expressions
 import org.apache.spark.sql.catalyst.expressions.ExprId
+import za.co.absa.commons.lang.Converter
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder.OperationId
-import za.co.absa.spline.harvester.converter.ExpressionConverter.ExpressionLike
-import za.co.absa.spline.model.TempReference
-import za.co.absa.spline.producer.model.v1_1.{Attribute, FunctionalExpression, Literal}
+import za.co.absa.spline.harvester.converter.ExpressionConverter._
 
-import scala.collection.mutable
+trait ExpressionConverter extends Converter {
 
-trait ExpressionConverter {
-  def convert(sparkExpr: expressions.Expression, operationId: String): ExpressionLike
-
-  private val attributeStorage = mutable.Buffer[Attribute]()
-  private val literalStorage = mutable.Buffer[Literal]()
-  private val functionalExpressionStorage = mutable.Buffer[FunctionalExpression]()
-
-  def attributes: List[Attribute] = attributeStorage.toList
-  def literals: List[Literal] = literalStorage.toList
-  def functionalExpressions: List[FunctionalExpression] = functionalExpressionStorage.toList
-
-  protected def store(expr: ExpressionLike): Unit = expr match {
-    case a: Attribute => attributeStorage += a
-    case l: Literal => literalStorage += l
-    case fe: FunctionalExpression => functionalExpressionStorage += fe
-    case _: TempReference => // do nothing
-  }
+  override type From = (expressions.Expression, String)
+  override type To = ExpressionLike
 }
 
 object ExpressionConverter {
@@ -50,6 +34,11 @@ object ExpressionConverter {
   type ExpressionLike = {
     def id: String
   }
+
+  /**
+   * Serves as an expression placeholder for cases where there is no actual expression just id/reference of such.
+   */
+  case class TempReference(id: String)
 
   def toSplineAttrId(exprId: ExprId): String = {
     s"${exprId.jvmId}:${exprId.id}"
