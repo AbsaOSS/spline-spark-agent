@@ -29,12 +29,12 @@ import za.co.absa.commons.io.{TempDirectory, TempFile}
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version._
-import za.co.absa.spline.harvester.builder.OperationNodeBuilder.Schema
+import za.co.absa.spline.harvester.builder.OperationNodeBuilder.OutputAttIds
 import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
-import za.co.absa.spline.model.{Attribute, dt}
-import za.co.absa.spline.producer.model._
+import za.co.absa.spline.model.dt
+import za.co.absa.spline.producer.model.v1_1._
 import za.co.absa.spline.test.fixture.spline.SplineFixture.EMPTY_CONF
 import za.co.absa.spline.test.fixture.spline.{LineageCaptor, LineageCapturingDispatcher, SplineFixture}
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
@@ -47,6 +47,7 @@ class LineageHarvesterSpec extends AnyFlatSpec
   with SplineFixture
   with SparkDatabaseFixture {
 
+
   import za.co.absa.spline.harvester.LineageHarvesterSpec._
 
   "When harvest method is called with an empty data frame" should "return a data lineage with one node." in
@@ -56,10 +57,10 @@ class LineageHarvesterSpec extends AnyFlatSpec
         import spark.implicits._
 
         inside(lineageOf(spark.emptyDataset[TestRow].write.save(tmpDest))) {
-          case (ExecutionPlan(_, Operations(_, None, Some(Seq(op))), _, _, _), _) =>
-            op.id should be(1)
+          case (ExecutionPlan(_, Operations(_, None, Some(Seq(op))), _, _, _, _), _) =>
+            op.id should be("1")
             op.childIds should be(empty)
-            op.schema should not be empty
+            op.output should not be empty
             op.extra.get should contain("name" -> "LocalRelation")
         }
       }
@@ -74,24 +75,24 @@ class LineageHarvesterSpec extends AnyFlatSpec
         val df = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
 
         val expectedAttributes = Seq(
-          Attribute(randomUUID, "i", integerType.id),
-          Attribute(randomUUID, "d", doubleType.id),
-          Attribute(randomUUID, "s", stringType.id))
+          Attribute(randomUUID.toString, Some(integerType.id), List.empty, Map.empty, "i"),
+          Attribute(randomUUID.toString, Some(doubleType.id), List.empty, Map.empty, "d"),
+          Attribute(randomUUID.toString, Some(stringType.id), List.empty, Map.empty, "s"))
 
         val expectedOperations = Seq(
           WriteOperation(
-            id = 0,
-            childIds = List(1),
+            id = "0",
+            childIds = List("1"),
             outputSource = s"file:$tmpDest",
             append = false,
-            schema = None,
             params = None,
-            extra = None
+            extra = None,
+            output = expectedAttributes.map(_.id).toList
           ),
           DataOperation(
-            id = 1,
+            id = "1",
             childIds = None,
-            schema = Some(expectedAttributes.map(_.id)),
+            output = expectedAttributes.map(_.id).toList,
             params = None,
             extra = Map("name" -> "LocalRelation").asOption))
 
@@ -112,33 +113,33 @@ class LineageHarvesterSpec extends AnyFlatSpec
           .filter($"A".notEqual(5))
 
         val expectedAttributes = Seq(
-          Attribute(randomUUID, "i", integerType.id),
-          Attribute(randomUUID, "d", doubleType.id),
-          Attribute(randomUUID, "s", stringType.id),
-          Attribute(randomUUID, "A", integerType.id))
+          Attribute(randomUUID.toString, Some(integerType.id), List.empty, Map.empty, "i"),
+          Attribute(randomUUID.toString, Some(doubleType.id), List.empty, Map.empty, "d"),
+          Attribute(randomUUID.toString, Some(stringType.id), List.empty, Map.empty, "s"),
+          Attribute(randomUUID.toString, Some(integerType.id), List.empty, Map.empty, "A"))
+
+        val outputBeforeRename = List(expectedAttributes(0).id, expectedAttributes(1).id, expectedAttributes(2).id)
+        val outputAfterRename = List(expectedAttributes(3).id, expectedAttributes(1).id, expectedAttributes(2).id)
 
         val expectedOperations = Seq(
           WriteOperation(
-            id = 0,
-            childIds = List(1),
+            id = "0",
+            childIds = List("1"),
             outputSource = s"file:$tmpDest",
             append = false,
-            schema = None,
             params = None,
-            extra = None
+            extra = None,
+            output = outputAfterRename
           ),
           DataOperation(
-            1, List(2).asOption, None,
-            None,
-            Map("name" -> "Filter").asOption),
+            "1", List("2").asOption, outputAfterRename,
+            None, Map("name" -> "Filter").asOption),
           DataOperation(
-            2, List(3).asOption, Some(Seq(expectedAttributes(3).id, expectedAttributes(1).id, expectedAttributes(2).id)),
-            None,
-            Map("name" -> "Project").asOption),
+            "2", List("3").asOption, outputAfterRename,
+            None, Map("name" -> "Project").asOption),
           DataOperation(
-            3, None, Some(Seq(expectedAttributes(0).id, expectedAttributes(1).id, expectedAttributes(2).id)),
-            None,
-            Map("name" -> "LocalRelation").asOption))
+            "3", None, outputBeforeRename,
+            None, Map("name" -> "LocalRelation").asOption))
 
         val (plan, _) = lineageOf(df.write.save(tmpDest))
 
@@ -158,28 +159,28 @@ class LineageHarvesterSpec extends AnyFlatSpec
         val df = filteredDF1.union(filteredDF2)
 
         val expectedAttributes =
-          Seq(
-            Attribute(randomUUID, "i", integerType.id),
-            Attribute(randomUUID, "d", doubleType.id),
-            Attribute(randomUUID, "s", stringType.id)
+          List(
+            Attribute(randomUUID.toString, Some(integerType.id), List.empty, Map.empty, "i"),
+            Attribute(randomUUID.toString, Some(doubleType.id), List.empty, Map.empty, "d"),
+            Attribute(randomUUID.toString, Some(stringType.id), List.empty, Map.empty, "s")
           )
 
-        val schema = expectedAttributes.map(_.id)
+        val outputAttIds = expectedAttributes.map(_.id)
 
         val expectedOperations = Seq(
           WriteOperation(
-            id = 0,
-            childIds = List(1),
+            id = "0",
+            childIds = List("1"),
             outputSource = s"file:$tmpDest",
             append = false,
-            schema = None,
             params = None,
-            extra = None
+            extra = None,
+            output = outputAttIds
           ),
-          DataOperation(1, List(2, 4).asOption, None, None, Map("name" -> "Union").asOption),
-          DataOperation(2, List(3).asOption, None, None, Map("name" -> "Filter").asOption),
-          DataOperation(4, List(3).asOption, None, None, Map("name" -> "Filter").asOption),
-          DataOperation(3, None, Some(schema), None, Map("name" -> "LocalRelation").asOption))
+          DataOperation("1", List("2", "4").asOption, outputAttIds, None, Map("name" -> "Union").asOption),
+          DataOperation("2", List("3").asOption, outputAttIds, None, Map("name" -> "Filter").asOption),
+          DataOperation("4", List("3").asOption, outputAttIds, None, Map("name" -> "Filter").asOption),
+          DataOperation("3", None, outputAttIds, None, Map("name" -> "LocalRelation").asOption))
 
         val (plan, _) = lineageOf(df.write.save(tmpDest))
 
@@ -206,45 +207,40 @@ class LineageHarvesterSpec extends AnyFlatSpec
 
         val df = filteredDF.join(aggregatedDF, filteredDF.col("i").eqNullSafe(aggregatedDF.col("A")), "inner")
 
-        val expectedAttributes = Seq(
-          Attribute(randomUUID, "i", integerType.id),
-          Attribute(randomUUID, "d", doubleType.id),
-          Attribute(randomUUID, "s", stringType.id),
-          Attribute(randomUUID, "A", integerType.id),
-          Attribute(randomUUID, "MIN", doubleNullableType.id),
-          Attribute(randomUUID, "MAX", stringType.id)
-        )
+        val expectedAttributes = List(
+          Attribute(randomUUID.toString, Some(integerType.id), List.empty, Map.empty, "i"),
+          Attribute(randomUUID.toString, Some(doubleType.id), List.empty, Map.empty, "d"),
+          Attribute(randomUUID.toString, Some(stringType.id), List.empty, Map.empty, "s"),
+          Attribute(randomUUID.toString, Some(integerType.id), List.empty, Map.empty, "A"),
+          Attribute(randomUUID.toString, Some(doubleNullableType.id), List.empty, Map.empty, "MIN"),
+          Attribute(randomUUID.toString, Some(stringType.id), List.empty, Map.empty, "MAX"))
 
         val expectedOperations = Seq(
           WriteOperation(
-            id = 0,
-            childIds = List(1),
+            id = "0",
+            childIds = List("1"),
             outputSource = s"file:$tmpDest",
             append = false,
-            schema = None,
             params = None,
-            extra = None
+            extra = None,
+            output = expectedAttributes.map(_.id)
           ),
           DataOperation(
-            1, List(2, 4).asOption, Some(expectedAttributes.map(_.id)),
+            "1", List("2", "4").asOption, expectedAttributes.map(_.id),
             Map("joinType" -> Some("INNER")).asOption,
             Map("name" -> "Join").asOption),
           DataOperation(
-            2, List(3).asOption, None,
-            None,
-            Map("name" -> "Filter").asOption),
+            "2", List("3").asOption, List(expectedAttributes(0).id, expectedAttributes(1).id, expectedAttributes(2).id),
+            None, Map("name" -> "Filter").asOption),
           DataOperation(
-            3, None, Some(Seq(expectedAttributes(0).id, expectedAttributes(1).id, expectedAttributes(2).id)),
-            None,
-            Map("name" -> "LocalRelation").asOption),
+            "3", None, List(expectedAttributes(0).id, expectedAttributes(1).id, expectedAttributes(2).id),
+            None, Map("name" -> "LocalRelation").asOption),
           DataOperation(
-            4, List(5).asOption, Some(Seq(expectedAttributes(3).id, expectedAttributes(4).id, expectedAttributes(5).id)),
-            None,
-            Map("name" -> "Aggregate").asOption),
+            "4", List("5").asOption, List(expectedAttributes(3).id, expectedAttributes(4).id, expectedAttributes(5).id),
+            None, Map("name" -> "Aggregate").asOption),
           DataOperation(
-            5, List(3).asOption, Some(Seq(expectedAttributes(3).id, expectedAttributes(1).id, expectedAttributes(2).id)),
-            None,
-            Map("name" -> "Project").asOption))
+            "5", List("3").asOption, List(expectedAttributes(3).id, expectedAttributes(1).id, expectedAttributes(2).id),
+            None, Map("name" -> "Project").asOption))
 
         val (plan, _) = lineageOf(df.write.save(tmpDest))
 
@@ -274,25 +270,25 @@ class LineageHarvesterSpec extends AnyFlatSpec
           })
 
           val writeOperation = plan.operations.write
-          writeOperation.id shouldEqual 0
+          writeOperation.id shouldEqual "0"
           writeOperation.append shouldEqual false
-          writeOperation.childIds shouldEqual Seq(1)
+          writeOperation.childIds shouldEqual Seq("1")
           writeOperation.extra.get("destinationType") shouldEqual Some("hive")
 
           val otherOperations = plan.operations.other.get.sortBy(_.id)
 
           val firstOperation = otherOperations(0)
-          firstOperation.id shouldEqual 1
-          firstOperation.childIds.get shouldEqual Seq(2)
+          firstOperation.id shouldEqual "1"
+          firstOperation.childIds.get shouldEqual Seq("2")
           firstOperation.extra.get("name") shouldEqual "Project"
 
           val secondOperation = otherOperations(1)
-          secondOperation.id shouldEqual 2
-          secondOperation.childIds.get shouldEqual Seq(3)
+          secondOperation.id shouldEqual "2"
+          secondOperation.childIds.get shouldEqual Seq("3")
           secondOperation.extra.get("name") should (equal("SubqueryAlias") or equal(Some("`tempview`"))) // Spark 2.3/2.4
 
           val thirdOperation = otherOperations(2)
-          thirdOperation.id shouldEqual 3
+          thirdOperation.id shouldEqual "3"
           thirdOperation.childIds shouldEqual None
           thirdOperation.extra.get("name") shouldEqual "LocalRelation"
         }
@@ -398,20 +394,20 @@ object LineageHarvesterSpec extends Matchers {
     stringType)
     .map(t => t.id -> t).toMap
 
-  implicit class ReferenceMatchers(schema: Schema) {
+  implicit class ReferenceMatchers(outputAttIds: OutputAttIds) {
 
     import ReferenceMatchers._
 
-    def shouldReference(references: Seq[Attribute]) = new ReferenceMatcher[Attribute](schema, references)
+    def shouldReference(references: Seq[Attribute]) = new ReferenceMatcher[Attribute](outputAttIds, references)
 
-    def references(references: Seq[Attribute]) = new ReferenceMatcher[Attribute](schema, references)
+    def references(references: Seq[Attribute]) = new ReferenceMatcher[Attribute](outputAttIds, references)
   }
 
   object ReferenceMatchers {
 
     import scala.language.reflectiveCalls
 
-    type ID = UUID
+    type ID = String
     type Refs = Seq[ID]
 
     class ReferenceMatcher[A <: {def id: ID}](val refs: Refs, val attributes: Seq[A]) {
@@ -437,9 +433,9 @@ object LineageHarvesterSpec extends Matchers {
 
   object OperationsAdapter {
     type OperationLike = {
-      def id: Integer
+      def id: String
       def childIds: Any
-      def schema: Option[Any]
+      def output: List[String]
       def params: Option[Map[String, Any]]
       def extra: Option[Map[String, Any]]
     }
@@ -463,10 +459,10 @@ object LineageHarvesterSpec extends Matchers {
 
     actualPlan.operations shouldNot be(null)
 
-    val actualAttributes = actualPlan.extraInfo.get("attributes").asInstanceOf[Seq[Attribute]]
+    val actualAttributes = actualPlan.expressions.get.attributes
     val actualDataTypes = actualPlan.extraInfo.get("dataTypes").asInstanceOf[Seq[dt.DataType]].map(t => t.id -> t).toMap
 
-    val actualOperationsSorted = actualPlan.operations.all.sortBy(_.id)
+    val actualOperationsSorted = actualPlan.operations.all.sortBy(x => x.id)
     val expectedOperationsSorted = expectedOperations.map(_.asInstanceOf[OperationLike]).sortBy(_.id)
 
     for ((opActual, opExpected) <- actualOperationsSorted.zip(expectedOperationsSorted)) {
@@ -475,20 +471,18 @@ object LineageHarvesterSpec extends Matchers {
       for (expectedParams <- opExpected.params) opActual.params.get should contain allElementsOf expectedParams
       for (expectedExtra <- opExpected.extra) opActual.extra.get should contain allElementsOf expectedExtra
 
-      for {
-        actualSchema <- opActual.schema.asInstanceOf[Option[Schema]]
-        expectedSchema <- opExpected.schema.asInstanceOf[Option[Schema]]
-      } {
-        actualSchema shouldReference actualAttributes as (expectedSchema references expectedAttributes)
-      }
 
-      opActual.schema.isDefined shouldBe opExpected.schema.isDefined
+      val actualOutput = opActual.output
+      val expectedOutput = opExpected.output
+      actualOutput shouldReference actualAttributes as (expectedOutput references expectedAttributes)
+
+      opActual.output.size shouldEqual opExpected.output.size
     }
 
     for ((attrActual: Attribute, attrExpected: Attribute) <- actualAttributes.zip(expectedAttributes)) {
       attrActual.name shouldEqual attrExpected.name
-      val typeActual = actualDataTypes(attrActual.dataTypeId)
-      val typeExpected = testTypesById(attrExpected.dataTypeId)
+      val typeActual = actualDataTypes(attrActual.dataType.get.asInstanceOf[UUID])
+      val typeExpected = testTypesById(attrExpected.dataType.get.asInstanceOf[UUID])
       inside(typeActual) {
         case dt.Simple(_, typeName, nullable) =>
           typeName should be(typeExpected.name)
@@ -496,4 +490,5 @@ object LineageHarvesterSpec extends Matchers {
       }
     }
   }
+
 }

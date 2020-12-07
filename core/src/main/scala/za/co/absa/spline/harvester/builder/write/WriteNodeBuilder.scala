@@ -23,7 +23,7 @@ import za.co.absa.spline.harvester.ModelConstants.OperationExtras
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder
 import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
 import za.co.absa.spline.harvester.{ComponentCreatorFactory, HarvestingContext}
-import za.co.absa.spline.producer.model.WriteOperation
+import za.co.absa.spline.producer.model.v1_1.WriteOperation
 
 class WriteNodeBuilder
   (command: WriteCommand)
@@ -38,11 +38,11 @@ class WriteNodeBuilder
   override def build(): WriteOperation = {
     val Seq(uri) = command.sourceIdentifier.uris
     val wop = WriteOperation(
+      output = outputAttributes,
       outputSource = uri,
       append = command.mode == SaveMode.Append,
       id = id,
       childIds = childIds.toList,
-      schema = None,
       params = Map(command.params.toSeq: _*).asOption,
       extra = Map(
         OperationExtras.Name -> command.name,

@@ -28,7 +28,7 @@ import za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest.{RestClient, R
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.{ProducerApiCompatibilityManager, ProducerApiVersion}
 import za.co.absa.spline.harvester.exception.SplineInitializationException
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
-import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
+import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 
 import scala.concurrent.duration._
 import scala.util.Try
