@@ -32,5 +32,5 @@ class ComponentCreatorFactory {
 
   def nextId: Int = lastId.getAndIncrement()
 
-  def expressionConverters(): List[ExpressionStoringConverter] = List(inputAttributeConverter, expressionConverter)
+  val expressionConverters: List[ExpressionStoringConverter] = List(inputAttributeConverter, expressionConverter)
 }

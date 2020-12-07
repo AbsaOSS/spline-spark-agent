@@ -25,9 +25,9 @@ trait ExpressionStoringConverter extends ExpressionConverter {
   private var literalStorage = List.empty[Literal]
   private var functionalExpressionStorage = List.empty[FunctionalExpression]
 
-  def attributes: List[Attribute] = attributeStorage.reverse
-  def literals: List[Literal] = literalStorage.reverse
-  def functionalExpressions: List[FunctionalExpression] = functionalExpressionStorage.reverse
+  def attributes: Seq[Attribute] = attributeStorage.reverse
+  def literals: Seq[Literal] = literalStorage.reverse
+  def functionalExpressions: Seq[FunctionalExpression] = functionalExpressionStorage.reverse
 
   protected def store(expr: ExpressionLike): Unit = expr match {
     case a: Attribute => attributeStorage = a :: attributeStorage

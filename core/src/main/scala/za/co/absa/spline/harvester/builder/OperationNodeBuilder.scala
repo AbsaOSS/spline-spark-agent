@@ -43,7 +43,7 @@ trait OperationNodeBuilder {
   private def convert(att: SparAttribute): String = attributeConverter.convert((att, id)).id
   protected lazy val outputAttributes: OutputAttIds = operation.output.map(convert).toList
 
-  protected def childIds: List[OperationId] = childBuilders.map(_.id).toList
+  protected def childIds: Seq[OperationId] = childBuilders.map(_.id)
   protected def childOutputSchemas: Seq[OutputAttIds] = childBuilders.map(_.outputAttributes)
   protected def isTerminal: Boolean = childBuilders.isEmpty
 }
