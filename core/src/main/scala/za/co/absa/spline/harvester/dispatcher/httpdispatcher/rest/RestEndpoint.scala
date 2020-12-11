@@ -16,15 +16,16 @@
 
 package za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest
 
+import java.io.ByteArrayOutputStream
+import java.util.zip.GZIPOutputStream
+
+import javax.ws.rs.HttpMethod
+import javax.ws.rs.core.MediaType
 import org.apache.http.HttpHeaders
 import scalaj.http.{HttpRequest, HttpResponse}
 import za.co.absa.commons.lang.ARM.using
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.HttpConstants.Encoding
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest.RestEndpoint._
-
-import java.io.ByteArrayOutputStream
-import java.util.zip.GZIPOutputStream
-import javax.ws.rs.HttpMethod
 
 class RestEndpoint(val request: HttpRequest) {
 
@@ -34,7 +35,7 @@ class RestEndpoint(val request: HttpRequest) {
 
   def post(json: String, enableRequestCompression: Boolean): HttpResponse[String] = {
     val jsonRequest = request
-      .header(HttpHeaders.CONTENT_TYPE, ContentType)
+      .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
 
     if (enableRequestCompression && json.length > GzipCompressionLengthThreshold) {
       jsonRequest
@@ -51,8 +52,6 @@ class RestEndpoint(val request: HttpRequest) {
 
 object RestEndpoint {
   private val GzipCompressionLengthThreshold: Int = 2048
-
-  private val ContentType = "application/vnd.absa.spline.producer.v1.1+json"
 
   private def gzipContent(bytes: Array[Byte]): Array[Byte] = {
     val byteStream = new ByteArrayOutputStream(bytes.length)
