@@ -17,26 +17,23 @@
 package za.co.absa.spline.harvester.builder
 
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito.when
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.spline.harvester.builder.read.{ReadCommand, ReadNodeBuilder}
-import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
+import za.co.absa.spline.harvester.postprocessing.{NoOpFilter, PostProcessor}
 import za.co.absa.spline.harvester.{ComponentCreatorFactory, HarvestingContext}
-import za.co.absa.spline.producer.model.v1_1.ReadOperation
 
 class BuilderSpec extends AnyFlatSpec with Matchers with MockitoSugar {
 
   it should "not force lowercase on keys of the params Map when" in {
     val ctxMock = mock[HarvestingContext]
     val componentCreatorFactoryMock = mock[ComponentCreatorFactory]
-    val userExtraMetadataProviderMock = mock[UserExtraMetadataProvider]
+    val noOpPostProcessor = new PostProcessor(Seq(new NoOpFilter), ctxMock)
     val logicalPlanStub = mock[LogicalPlan]
 
     when(logicalPlanStub.output) thenReturn Seq.empty
-    when(userExtraMetadataProviderMock.forOperation(any[ReadOperation](), any())) thenReturn Map.empty[String, Any]
 
     val command = ReadCommand(
       SourceIdentifier(Some("CSV"), "whaateverpath"),
@@ -45,7 +42,7 @@ class BuilderSpec extends AnyFlatSpec with Matchers with MockitoSugar {
     )
 
     val readNode =
-      new ReadNodeBuilder(command)(componentCreatorFactoryMock, userExtraMetadataProviderMock, ctxMock)
+      new ReadNodeBuilder(command)(componentCreatorFactoryMock, noOpPostProcessor)
         .build()
 
     readNode.params.get.keySet should contain("caseSensitiveKey")

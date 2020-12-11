@@ -17,23 +17,21 @@
 package za.co.absa.spline.harvester.builder
 
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import za.co.absa.spline.harvester.ComponentCreatorFactory
 import za.co.absa.spline.harvester.builder.read.{ReadCommand, ReadNodeBuilder}
 import za.co.absa.spline.harvester.builder.write.{WriteCommand, WriteNodeBuilder}
-import za.co.absa.spline.harvester.{ComponentCreatorFactory, HarvestingContext}
-import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
+import za.co.absa.spline.harvester.postprocessing.PostProcessor
 
 class OperationNodeBuilderFactory(
-  userExtraMetadataProvider: UserExtraMetadataProvider,
-  componentCreatorFactory: ComponentCreatorFactory,
-  ctx: HarvestingContext
+  postProcessor: PostProcessor,
+  componentCreatorFactory: ComponentCreatorFactory
 ) {
-
   def writeNodeBuilder(wc: WriteCommand): WriteNodeBuilder =
-    new WriteNodeBuilder(wc)(componentCreatorFactory, userExtraMetadataProvider, ctx)
+    new WriteNodeBuilder(wc)(componentCreatorFactory, postProcessor)
 
   def readNodeBuilder(rc: ReadCommand): ReadNodeBuilder =
-    new ReadNodeBuilder(rc)(componentCreatorFactory, userExtraMetadataProvider, ctx)
+    new ReadNodeBuilder(rc)(componentCreatorFactory, postProcessor)
 
   def genericNodeBuilder(lp: LogicalPlan): GenericNodeBuilder =
-    new GenericNodeBuilder(lp)(componentCreatorFactory, userExtraMetadataProvider, ctx)
+    new GenericNodeBuilder(lp)(componentCreatorFactory, postProcessor)
 }
