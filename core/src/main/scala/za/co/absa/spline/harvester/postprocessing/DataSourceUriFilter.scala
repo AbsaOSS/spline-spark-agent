@@ -32,7 +32,7 @@ class DataSourceUriFilter extends NoOpFilter {
     op.copy(outputSource = filter(op.outputSource))
 
   protected val replacement = "*****"
-  protected val regex = """password=([^;\s]+)""".r
+  protected val regex = """password=([^;\s]+)""".r //NOSONAR
 
   protected val replacer = new CaptureGroupReplacer(replacement)
 
