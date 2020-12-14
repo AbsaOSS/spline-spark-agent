@@ -32,7 +32,7 @@ class DataSourceUriLineageFilterSpec extends AnyFlatSpec with Matchers with Mock
       "" +
         "jdbc:sqlserver://database.windows.net:1433" +
         ";user=sample" +
-        ";password=123456" +
+        ";password=123456" + //NOSONAR
         ";encrypt=true" +
         ";trustServerCertificate=false" +
         ";hostNameInCertificate=*.database.windows.net" +
@@ -45,7 +45,7 @@ class DataSourceUriLineageFilterSpec extends AnyFlatSpec with Matchers with Mock
     filteredOp.outputSource shouldEqual "" +
       "jdbc:sqlserver://database.windows.net:1433" +
       ";user=sample" +
-      ";password=*****" + // <-- PASSWORD SHOULD BE SANITIZED
+      ";password=*****" + //NOSONAR <-- PASSWORD SHOULD BE SANITIZED
       ";encrypt=true" +
       ";trustServerCertificate=false" +
       ";hostNameInCertificate=*.database.windows.net" +
