@@ -16,21 +16,20 @@
 
 package za.co.absa.commons
 
+import scala.annotation.tailrec
 import scala.util.matching.Regex
 
 class CaptureGroupReplacer(replacement: String) {
 
-  def replace(str: String, regexes: Seq[Regex]): String = {
-    if (regexes.isEmpty)
-      str
-    else {
-      val nextStr = regexes.head
+  @tailrec
+  final def replace(str: String, regexes: Seq[Regex]): String = regexes match {
+    case Nil => str
+    case regex :: nextRegexes =>
+      val nextStr = regex
         .findFirstMatchIn(str)
         .map(regMatch => replaceMatchedGroups(regMatch, str))
         .getOrElse(str)
-
-      replace(nextStr, regexes.tail)
-    }
+      replace(nextStr, nextRegexes)
   }
 
   private def replaceMatchedGroups(regMatch: Regex.Match, str: String): String = {

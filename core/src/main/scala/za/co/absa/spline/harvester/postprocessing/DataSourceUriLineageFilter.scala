@@ -21,7 +21,12 @@ import za.co.absa.commons.CaptureGroupReplacer
 import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.producer.model.v1_1.{ReadOperation, WriteOperation}
 
-class DataSourceUriFilter extends NoOpFilter {
+import scala.util.matching.Regex
+
+class DataSourceUriLineageFilter(
+  replacement: String = "*****",
+  regex: Regex = """password=([^;\s]+)""".r //NOSONAR
+) extends AbstractLineageFilter {
 
   def this(conf: Configuration) = this()
 
@@ -31,11 +36,8 @@ class DataSourceUriFilter extends NoOpFilter {
   override def processWriteOperation(op: WriteOperation, ctx: HarvestingContext): WriteOperation =
     op.copy(outputSource = filter(op.outputSource))
 
-  protected val replacement = "*****"
-  protected val regex = """password=([^;\s]+)""".r //NOSONAR
+  private val replacer = new CaptureGroupReplacer(replacement)
 
-  protected val replacer = new CaptureGroupReplacer(replacement)
-
-  protected def filter(uri: String): String =
+  private def filter(uri: String): String =
     replacer.replace(uri, Seq(regex))
 }

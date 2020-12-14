@@ -19,13 +19,17 @@ package za.co.absa.spline.harvester.postprocessing
 import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.producer.model.v1_1._
 
-class PostProcessor(filters: Seq[Filter], ctx: HarvestingContext) {
+class PostProcessor(filters: Seq[LineageFilter], ctx: HarvestingContext) {
 
   private def provideCtx[E](f: (E, HarvestingContext) => E): E => E =
     (e: E) => f(e, ctx)
 
-  private def chainFilters[E](f: Filter => (E, HarvestingContext) => E): E => E =
-    filters.map(f(_)).map(provideCtx).reduce(_.andThen(_))
+  private def chainFilters[E](f: LineageFilter => (E, HarvestingContext) => E): E => E =
+    filters
+      .map(f(_))
+      .map(provideCtx)
+      .reduceOption(_.andThen(_))
+      .getOrElse(identity)
 
   def process(event: ExecutionEvent): ExecutionEvent =
     chainFilters(_.processExecutionEvent)(event)

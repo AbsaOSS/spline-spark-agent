@@ -19,10 +19,15 @@ package za.co.absa.spline.harvester.postprocessing
 import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.producer.model.v1_1._
 
-trait Filter {
-  def processExecutionEvent(event: ExecutionEvent, ctx: HarvestingContext): ExecutionEvent
-  def processExecutionPlan(plan: ExecutionPlan, ctx: HarvestingContext): ExecutionPlan
-  def processReadOperation(op: ReadOperation, ctx: HarvestingContext): ReadOperation
-  def processWriteOperation(op: WriteOperation, ctx: HarvestingContext): WriteOperation
-  def processDataOperation(op: DataOperation, ctx: HarvestingContext): DataOperation
+trait AbstractLineageFilter extends LineageFilter {
+
+  override def processExecutionEvent(event: ExecutionEvent, ctx: HarvestingContext): ExecutionEvent = event
+
+  override def processExecutionPlan(plan: ExecutionPlan, ctx: HarvestingContext): ExecutionPlan = plan
+
+  override def processReadOperation(op: ReadOperation, ctx: HarvestingContext): ReadOperation = op
+
+  override def processWriteOperation(op: WriteOperation, ctx: HarvestingContext): WriteOperation = op
+
+  override def processDataOperation(op: DataOperation, ctx: HarvestingContext): DataOperation = op
 }

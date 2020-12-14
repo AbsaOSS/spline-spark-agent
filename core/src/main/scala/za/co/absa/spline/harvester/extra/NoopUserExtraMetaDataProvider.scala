@@ -20,6 +20,7 @@ import org.apache.commons.configuration.Configuration
 import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.producer.model.v1_1._
 
+@deprecated("Use LineageFilter instead", "0.6.0")
 class NoopUserExtraMetaDataProvider() extends UserExtraMetadataProvider {
 
   def this(conf: Configuration) = this()
