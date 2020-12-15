@@ -17,15 +17,15 @@
 package za.co.absa.spline.harvester.conf
 
 import java.lang.reflect.InvocationTargetException
-
 import org.apache.commons.configuration.{CompositeConfiguration, Configuration, PropertiesConfiguration}
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import za.co.absa.commons.config.ConfigurationImplicits
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
-import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
+import za.co.absa.spline.harvester.extra.{UserExtraAppendingLineageFilter, UserExtraMetadataProvider}
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
+import za.co.absa.spline.harvester.postprocessing.LineageFilter
 import za.co.absa.spline.harvester.{LineageHarvesterFactory, QueryExecutionEventHandler}
 
 import scala.reflect.ClassTag
@@ -53,9 +53,14 @@ object DefaultSplineConfigurer {
     val IgnoreWriteDetectionStrategyClass = "spline.iwd_strategy.className"
 
     /**
-     * Which strategy should be used to detect mode=ignore writes
+     * Class allowing to add extra info to generated lineage (Deprecated: use filter instead)
      */
     val UserExtraMetadataProviderClass = "spline.user_extra_meta_provider.className"
+
+    /**
+     * User defined filters: allowing modification and enrichment of generated lineage
+     */
+    val PostProcessingFilterClasses = "spline.postprocessing_filter.classNames"
   }
 
   def apply(sparkSession: SparkSession): DefaultSplineConfigurer = {
@@ -95,6 +100,12 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
   protected def ignoredWriteDetectionStrategy: IgnoredWriteDetectionStrategy = instantiate[IgnoredWriteDetectionStrategy](
     configuration.getRequiredString(IgnoreWriteDetectionStrategyClass))
 
+  protected def postProcessingFilters: Seq[LineageFilter] =
+    configuration
+      .getStringArray(PostProcessingFilterClasses)
+      .filter(_.nonEmpty)
+      .map(instantiate[LineageFilter])
+
   protected def userExtraMetadataProvider: UserExtraMetadataProvider = instantiate[UserExtraMetadataProvider](
     configuration.getRequiredString(UserExtraMetadataProviderClass))
 
@@ -102,7 +113,7 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
     sparkSession,
     splineMode,
     ignoredWriteDetectionStrategy,
-    userExtraMetadataProvider
+    postProcessingFilters :+ new UserExtraAppendingLineageFilter(userExtraMetadataProvider)
   )
 
   private def instantiate[T: ClassTag](className: String): T = {

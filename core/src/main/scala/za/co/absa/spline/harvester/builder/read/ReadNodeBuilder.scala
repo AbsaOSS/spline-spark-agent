@@ -18,20 +18,18 @@ package za.co.absa.spline.harvester.builder.read
 
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.commons.lang.OptionImplicits._
+import za.co.absa.spline.harvester.ComponentCreatorFactory
 import za.co.absa.spline.harvester.ModelConstants.OperationExtras
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder
-import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
-import za.co.absa.spline.harvester.{ComponentCreatorFactory, HarvestingContext}
+import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.v1_1.ReadOperation
 
 class ReadNodeBuilder
   (val command: ReadCommand)
-  (val componentCreatorFactory: ComponentCreatorFactory, userExtraMetadataProvider: UserExtraMetadataProvider, ctx: HarvestingContext)
+  (val componentCreatorFactory: ComponentCreatorFactory, postProcessor: PostProcessor)
   extends OperationNodeBuilder {
 
   val inputAttributeConverter = componentCreatorFactory.inputAttributeConverter
-
-  import za.co.absa.spline.harvester.ExtraMetadataImplicits._
 
   override protected type R = ReadOperation
   override val operation: LogicalPlan = command.operation
@@ -48,6 +46,6 @@ class ReadNodeBuilder
         OperationExtras.SourceType -> command.sourceIdentifier.format
       ).asOption)
 
-    rop.withAddedExtra(userExtraMetadataProvider.forOperation(rop, ctx))
+    postProcessor.process(rop)
   }
 }
