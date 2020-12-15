@@ -24,7 +24,7 @@ import za.co.absa.spline.producer.model.v1_1.WriteOperation
 
 class PostProcessorSpec extends AnyFlatSpec with Matchers with MockitoSugar {
 
-  class UriAppendingLineageFilter(str: String) extends AbstractLineageFilter {
+  class UriAppendingLineageFilterMock(str: String) extends AbstractLineageFilter {
     override def processWriteOperation(op: WriteOperation, ctx: HarvestingContext): WriteOperation =
       op.copy(outputSource = op.outputSource + str)
   }
@@ -33,7 +33,7 @@ class PostProcessorSpec extends AnyFlatSpec with Matchers with MockitoSugar {
 
   it should "apply one filter" in {
 
-    val filter = new UriAppendingLineageFilter("@")
+    val filter = new UriAppendingLineageFilterMock("@")
     val pp = new PostProcessor(Seq(filter), mock[HarvestingContext])
 
     val filteredOp = pp.process(wop)
@@ -43,7 +43,12 @@ class PostProcessorSpec extends AnyFlatSpec with Matchers with MockitoSugar {
 
   it should "apply filter chain in correct order" in {
 
-    val filters = Seq("@", "#", "%").map(new UriAppendingLineageFilter(_))
+    val filters = Seq(
+      new UriAppendingLineageFilterMock("@"),
+      new UriAppendingLineageFilterMock("#"),
+      new UriAppendingLineageFilterMock("%")
+    )
+
     val pp = new PostProcessor(filters, mock[HarvestingContext])
 
     val filteredOp = pp.process(wop)
