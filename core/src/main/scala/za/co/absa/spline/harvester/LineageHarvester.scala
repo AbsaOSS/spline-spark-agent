@@ -87,7 +87,7 @@ class LineageHarvester(
       val restOps = restOpBuilders.map(_.build())
 
       val (opReads, opOthers) =
-        ((List.empty[ReadOperation], List.empty[DataOperation]) /: restOps) {
+        ((Vector.empty[ReadOperation], Vector.empty[DataOperation]) /: restOps) {
           case ((accRead, accOther), opRead: ReadOperation) => (accRead :+ opRead, accOther)
           case ((accRead, accOther), opOther: DataOperation) => (accRead, accOther :+ opOther)
         }
@@ -99,16 +99,17 @@ class LineageHarvester(
           ExecutionPlanExtra.DataTypes -> componentCreatorFactory.dataTypeConverter.values
         )
 
-        val exprConverters = componentCreatorFactory.expressionConverters
+        val exprs = componentCreatorFactory.expressionConverter.values
+        val attributes = componentCreatorFactory.attributeConverter.values
         val expressions = Expressions(
-          attributes = exprConverters.flatMap(_.attributes),
-          constants = exprConverters.flatMap(_.literals),
-          functions = exprConverters.flatMap(_.functionalExpressions)
+          constants = exprs.collect({ case le: Literal => le }).asOption,
+          functions = exprs.collect({ case fe: FunctionalExpression => fe }).asOption
         )
 
         val p = ExecutionPlan(
           id = Some(planId),
           operations = Operations(writeOp, opReads.asOption, opOthers.asOption),
+          attributes = attributes.asOption,
           expressions = Some(expressions),
           systemInfo = NameAndVersion(AppMetaInfo.Spark, spark.SPARK_VERSION),
           agentInfo = Some(NameAndVersion(AppMetaInfo.Spline, SplineBuildInfo.Version)),

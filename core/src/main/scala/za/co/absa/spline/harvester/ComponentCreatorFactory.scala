@@ -16,21 +16,20 @@
 
 package za.co.absa.spline.harvester
 
-import java.util.concurrent.atomic.AtomicInteger
-
 import za.co.absa.commons.lang.CachingConverter
 import za.co.absa.spline.harvester.converter._
+
+import java.util.concurrent.atomic.AtomicInteger
 
 class ComponentCreatorFactory {
   val dataConverter = new DataConverter
   val dataTypeConverter = new DataTypeConverter with CachingConverter
-  val inputAttributeConverter = new InputAttributeConverter(dataTypeConverter) with ExpressionStoringConverter
-  val expressionConverter = new GenericExpressionConverter(dataConverter, dataTypeConverter) with ExpressionStoringConverter
-  val operationParamsConverter = new OperationParamsConverter(dataConverter, expressionConverter)
+  val attributeConverter = new AttributeConverter(dataTypeConverter) with CachingConverter
+  val exprToRefConverter = new ExprToRefConverter(this)
+  val expressionConverter = new ExpressionConverter(dataConverter, dataTypeConverter, exprToRefConverter) with CachingConverter
+  val operationParamsConverter = new OperationParamsConverter(dataConverter, exprToRefConverter)
 
   private[this] val lastId = new AtomicInteger(0)
 
   def nextId: Int = lastId.getAndIncrement()
-
-  val expressionConverters: List[ExpressionStoringConverter] = List(inputAttributeConverter, expressionConverter)
 }

@@ -157,11 +157,21 @@
     }
   },
   "definitions": {
+    "AttrOrExprRef": {
+      "type": "object",
+      "properties": {
+        "_attrId": {
+          "type": "string"
+        },
+        "_exprId": {
+          "type": "string"
+        }
+      },
+      "title": "AttrOrExprRef"
+    },
     "Attribute": {
       "type": "object",
       "required": [
-        "childIds",
-        "extra",
         "id",
         "name"
       ],
@@ -175,7 +185,7 @@
         "childIds": {
           "type": "array",
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/AttrOrExprRef"
           }
         },
         "extra": {
@@ -272,6 +282,12 @@
         "operations": {
           "$ref": "#/definitions/Operations"
         },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Attribute"
+          }
+        },
         "expressions": {
           "$ref": "#/definitions/Expressions"
         },
@@ -292,18 +308,7 @@
     },
     "Expressions": {
       "type": "object",
-      "required": [
-        "attributes",
-        "constants",
-        "functions"
-      ],
       "properties": {
-        "attributes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Attribute"
-          }
-        },
         "functions": {
           "type": "array",
           "items": {
@@ -322,11 +327,8 @@
     "FunctionalExpression": {
       "type": "object",
       "required": [
-        "childIds",
-        "extra",
         "id",
-        "name",
-        "params"
+        "name"
       ],
       "properties": {
         "id": {
@@ -338,7 +340,7 @@
         "childIds": {
           "type": "array",
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/AttrOrExprRef"
           }
         },
         "extra": {
@@ -362,7 +364,6 @@
     "Literal": {
       "type": "object",
       "required": [
-        "extra",
         "id",
         "value"
       ],

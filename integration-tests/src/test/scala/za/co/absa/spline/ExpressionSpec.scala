@@ -22,7 +22,8 @@ import org.apache.spark.sql.functions.col
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.TempFile
-import za.co.absa.spline.producer.model.v1_1.{Attribute, Expressions, FunctionalExpression, Literal}
+import za.co.absa.commons.lang.OptionImplicits.NonOptionWrapper
+import za.co.absa.spline.producer.model.v1_1._
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 
@@ -33,7 +34,7 @@ class ExpressionSpec extends AnyFlatSpec
 
   import za.co.absa.spline.ExpressionSpec._
 
-  private val filePath = TempFile("spline-expressions", ".parquet", false).deleteOnExit().path.toAbsolutePath.toString
+  private val filePath = TempFile("spline-expressions", ".parquet", pathOnly = false).deleteOnExit().path.toAbsolutePath.toString
 
   it should "convert sum of two columns" in
     withNewSparkSession(spark =>
@@ -46,17 +47,20 @@ class ExpressionSpec extends AnyFlatSpec
 
           val (plan, _) = lineageCaptor.lineageOf(df.write.mode("overwrite").save(filePath))
 
-          val expected = Expressions(
-            List(
-              attribute("_1", List.empty),
-              attribute("_2", List.empty),
-              attribute("sum", List("f-sum"))),
-            List(
-              function("f-sum", List("_1", "_2"))),
-            List.empty
-          )
+          assertStructuralEquivalence(
+            plan.attributes.get,
+            Seq(
+              attribute("_1", Seq.empty),
+              attribute("_2", Seq.empty),
+              attribute("sum", Seq("f-sum"))))
 
-          assertStructuralEquivalence(plan.expressions.get, expected)
+          assertStructuralEquivalence(
+            plan.expressions.get,
+            Expressions(
+              Some(Seq(
+                function("f-sum", Seq("_1", "_2")))),
+              None
+            ))
         }
       })
 
@@ -73,24 +77,27 @@ class ExpressionSpec extends AnyFlatSpec
 
           val (plan, _) = lineageCaptor.lineageOf(df.write.mode("overwrite").save(filePath))
 
-          val expected = Expressions(
-            List(
-              attribute("_1", List.empty),
-              attribute("_2", List.empty),
-              attribute("sum", List("f-sum")),
-              attribute("dif", List("f-dif")),
-              attribute("mul", List("f-mul")),
-              attribute("res", List("f-res"))),
-            List(
-              function("f-sum", List("_1", "_2")),
-              function("f-dif", List("_1", "_2")),
-              function("f-mul", List("sum", "dif")),
-              function("f-res", List("mul", "l-42"))),
-            List(
-              literal("l-42", 42))
-          )
+          assertStructuralEquivalence(
+            plan.attributes.get,
+            Seq(
+              attribute("_1", Seq.empty),
+              attribute("_2", Seq.empty),
+              attribute("sum", Seq("f-sum")),
+              attribute("dif", Seq("f-dif")),
+              attribute("mul", Seq("f-mul")),
+              attribute("res", Seq("f-res"))))
 
-          assertStructuralEquivalence(plan.expressions.get, expected)
+          assertStructuralEquivalence(
+            plan.expressions.get,
+            Expressions(
+              Some(Seq(
+                function("f-sum", Seq("_1", "_2")),
+                function("f-dif", Seq("_1", "_2")),
+                function("f-mul", Seq("sum", "dif")),
+                function("f-res", Seq("mul", "l-42")))),
+              Some(Seq(
+                literal("l-42", 42)))
+            ))
         }
       })
 
@@ -105,18 +112,21 @@ class ExpressionSpec extends AnyFlatSpec
 
           val (plan, _) = lineageCaptor.lineageOf(df.write.mode("overwrite").save(filePath))
 
-          val expected = Expressions(
-            List(
-              attribute("_1", List.empty),
-              attribute("_2", List.empty),
-              attribute("max2", List("f-aggExp"))),
-            List(
-              function("f-max", List("_2")),
-              function("f-aggExp", List("f-max"))),
-            List.empty
-          )
+          assertStructuralEquivalence(
+            plan.attributes.get,
+            Seq(
+              attribute("_1", Seq.empty),
+              attribute("_2", Seq.empty),
+              attribute("max2", Seq("f-aggExp"))))
 
-          assertStructuralEquivalence(plan.expressions.get, expected)
+          assertStructuralEquivalence(
+            plan.expressions.get,
+            Expressions(
+              Some(Seq(
+                function("f-max", Seq("_2")),
+                function("f-aggExp", Seq("f-max")))),
+              None
+            ))
         }
       })
 }
@@ -125,55 +135,50 @@ object ExpressionSpec extends Matchers {
 
   type Expr = Any // Literal | Attribute | FunctionalExpression
 
-  def attribute(name: String, childIds: List[String]): Attribute =
-    Attribute(name, None, childIds, Map.empty, name)
+  def attribute(name: String, childIds: Seq[String]): Attribute =
+    Attribute(name, None, childIds.map(x => AttrOrExprRef(Some(x), None)).asOption, None, name)
 
-  def function(name: String, childIds: List[String]): FunctionalExpression =
-    FunctionalExpression(name, None, childIds, Map.empty, name, Map.empty)
+  def function(name: String, childIds: Seq[String]): FunctionalExpression =
+    FunctionalExpression(name, None, childIds.map(x => AttrOrExprRef(None, Some(x))).asOption, None, name, None)
 
   def literal(name: String, value: Any): Literal =
-    Literal(name, None, Map.empty, value)
+    Literal(name, None, None, value)
 
   /**
    * for this to work expected attribute names must match the actual attribute names
    */
   def assertStructuralEquivalence(actual: Expressions, expected: Expressions): Unit = {
-    actual.attributes.size shouldBe expected.attributes.size
     actual.functions.size shouldBe expected.functions.size
     actual.constants.size shouldBe expected.constants.size
+  }
 
-    val actualAttNameMap = actual.attributes.map(att => att.name -> att).toMap
+  /**
+   * for this to work expected attribute names must match the actual attribute names
+   */
+  def assertStructuralEquivalence(actual: Seq[Attribute], expected: Seq[Attribute]): Unit = {
+    actual.size shouldBe expected.size
 
-    val attExpIdToActId = expected.attributes.map { expAtt =>
+    val actualAttNameMap = actual.map(att => att.name -> att).toMap
+
+    val attExpIdToActId = expected.map { expAtt =>
       val actualAtt = actualAttNameMap(expAtt.name)
-      expAtt.id -> actualAtt.id
+      AttrOrExprRef(Some(expAtt.id), None) -> AttrOrExprRef(Some(actualAtt.id), None)
     }.toMap
 
-    def toIdMap(expressions: Expressions): Map[String, Expr] = {
-      val attMap = expressions.attributes.map(a => a.id -> a).toMap
-      val funMap = expressions.functions.map(f => f.id -> f).toMap
-      val litMap = expressions.constants.map(l => l.id -> l).toMap
-      attMap ++ funMap ++ litMap
+    def toIdMap(attributes: Seq[Attribute]): Map[AttrOrExprRef, Attribute] = {
+      attributes.map(a => AttrOrExprRef(Some(a.id), None) -> a).toMap
     }
 
     val actualIdMap = toIdMap(actual)
     val expectedIdMap = toIdMap(expected)
 
-    def compareReferences(actualExpr: Expr, expectedExpr: Expr): Unit = (actualExpr, expectedExpr) match {
-      case (al: Literal, el: Literal) => al.value shouldBe el.value
-      case (aa: Attribute, ea: Attribute) => aa.id shouldBe attExpIdToActId(ea.id)
-      case (af: FunctionalExpression, ef: FunctionalExpression) =>
-        val childrenPairs = af.childIds.zip(ef.childIds)
-        childrenPairs.foreach {
-          case (aId, eId) => compareReferences(actualIdMap(aId), expectedIdMap(eId))
-        }
-    }
-
-    expected.attributes.foreach { eAtt =>
-      val aAtt = actualIdMap(attExpIdToActId(eAtt.id)).asInstanceOf[Attribute]
-      val childrenPairs = aAtt.childIds.zip(eAtt.childIds)
+    expected.foreach { eAtt =>
+      val aAtt = actualIdMap(attExpIdToActId(AttrOrExprRef(Some(eAtt.id), None)))
+      val childrenPairs =
+        aAtt.childIds.getOrElse(Nil)
+          .zip(eAtt.childIds.getOrElse(Nil))
       childrenPairs.foreach {
-        case (aId, eId) => compareReferences(actualIdMap(aId), expectedIdMap(eId))
+        case (aId, eId) => actualIdMap(aId) shouldBe expectedIdMap(eId)
       }
     }
   }
