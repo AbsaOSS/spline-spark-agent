@@ -16,17 +16,10 @@
 
 package za.co.absa.spline.harvester.dispatcher.httpdispatcher
 
-import za.co.absa.commons.version.Version
-import za.co.absa.commons.version.Version._
+object SplineHttpHeaders {
+  private val Prefix = "ABSA-Spline"
 
-object ProducerApiVersion {
-  val V1: Version = ver"1"
-  val V1_1: Version = ver"1.1"
-  val Default: Version = V1
-
-  object SupportedApiRange {
-    val Min: Version = V1
-    val Max: Version = V1_1
-  }
-
+  val ApiVersion = s"$Prefix-API-Version"
+  val ApiLTSVersion = s"$Prefix-API-LTS-Version"
+  val AcceptRequestEncoding = s"$Prefix-Accept-Request-Encoding"
 }

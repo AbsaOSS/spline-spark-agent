@@ -18,7 +18,7 @@ package za.co.absa.spline.harvester.dispatcher.httpdispatcher.modelmapper
 
 import za.co.absa.commons.version.Version
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.ProducerApiVersion
-import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
+import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 
 trait ModelMapper {
   def toDTO(plan: ExecutionPlan): AnyRef
@@ -27,6 +27,7 @@ trait ModelMapper {
 
 object ModelMapper {
   def forApiVersion(version: Version): ModelMapper = version match {
+    case ProducerApiVersion.V1_1 => ModelMapperV1_1
     case ProducerApiVersion.V1 => ModelMapperV1
   }
 }

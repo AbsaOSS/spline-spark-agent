@@ -126,13 +126,28 @@
                 <version>3.0.16</version>
                 <executions>
                     <execution>
+                        <id>swagger.api.v1_0</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
                         <configuration>
                             <language>scala</language>
-                            <inputSpec>${project.basedir}/src/main/resources/producer.api.json</inputSpec>
-                            <modelPackage>za.co.absa.spline.producer.model</modelPackage>
+                            <inputSpec>${project.basedir}/src/main/resources/producer.api.v1.0.json</inputSpec>
+                            <modelPackage>za.co.absa.spline.producer.model.v1_0</modelPackage>
+                            <generateModels>true</generateModels>
+                            <generateApis>false</generateApis>
+                            <generateSupportingFiles>false</generateSupportingFiles>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>swagger.api.v1_1</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <language>scala</language>
+                            <inputSpec>${project.basedir}/src/main/resources/producer.api.v1.1.json</inputSpec>
+                            <modelPackage>za.co.absa.spline.producer.model.v1_1</modelPackage>
                             <generateModels>true</generateModels>
                             <generateApis>false</generateApis>
                             <generateSupportingFiles>false</generateSupportingFiles>

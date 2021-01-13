@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.dispatcher.httpdispatcher
+package za.co.absa.commons
 
-import za.co.absa.commons.version.Version
-import za.co.absa.commons.version.Version._
+import org.json4s.Extraction.decompose
+import org.json4s.Formats
+import za.co.absa.commons.json.DefaultJacksonJsonSerDe
 
-object ProducerApiVersion {
-  val V1: Version = ver"1"
-  val V1_1: Version = ver"1.1"
-  val Default: Version = V1
+object JsonUtils extends DefaultJacksonJsonSerDe {
+  private[this] implicit val _formats: Formats = formats
 
-  object SupportedApiRange {
-    val Min: Version = V1
-    val Max: Version = V1_1
+  def prettifyJson(jsonStr: String): String = {
+    val obj = jsonStr.fromJson[Map[String, Any]]
+    pretty(decompose(obj))
   }
-
 }

@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.dispatcher.httpdispatcher
+package za.co.absa.spline.harvester.dispatcher.httpdispatcher.modelmapper
 
-import za.co.absa.commons.version.Version
-import za.co.absa.commons.version.Version._
+import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 
-object ProducerApiVersion {
-  val V1: Version = ver"1"
-  val V1_1: Version = ver"1.1"
-  val Default: Version = V1
+object ModelMapperV1_1 extends ModelMapper {
 
-  object SupportedApiRange {
-    val Min: Version = V1
-    val Max: Version = V1_1
-  }
+  // v1.1 is the latest api version supported so no conversion is needed
 
+  override def toDTO(plan: ExecutionPlan): AnyRef = plan
+
+  override def toDTO(event: ExecutionEvent): AnyRef = event
 }

@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.extra
+package za.co.absa.spline.harvester.postprocessing
 
 import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.producer.model.v1_1._
 
-@deprecated("Use LineageFilter instead", "0.6.0")
-trait UserExtraMetadataProvider {
-  def forExecEvent(event: ExecutionEvent, ctx: HarvestingContext): Map[String, Any]
-  def forExecPlan(plan: ExecutionPlan, ctx: HarvestingContext): Map[String, Any]
-  def forOperation(op: ReadOperation, ctx: HarvestingContext): Map[String, Any]
-  def forOperation(op: WriteOperation, ctx: HarvestingContext): Map[String, Any]
-  def forOperation(op: DataOperation, ctx: HarvestingContext): Map[String, Any]
+trait LineageFilter {
+  def processExecutionEvent(event: ExecutionEvent, ctx: HarvestingContext): ExecutionEvent
+  def processExecutionPlan(plan: ExecutionPlan, ctx: HarvestingContext): ExecutionPlan
+  def processReadOperation(op: ReadOperation, ctx: HarvestingContext): ReadOperation
+  def processWriteOperation(op: WriteOperation, ctx: HarvestingContext): WriteOperation
+  def processDataOperation(op: DataOperation, ctx: HarvestingContext): DataOperation
 }

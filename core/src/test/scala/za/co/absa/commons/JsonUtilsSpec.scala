@@ -14,19 +14,24 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.dispatcher.httpdispatcher
+package za.co.absa.commons
 
-import za.co.absa.commons.version.Version
-import za.co.absa.commons.version.Version._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-object ProducerApiVersion {
-  val V1: Version = ver"1"
-  val V1_1: Version = ver"1.1"
-  val Default: Version = V1
+class JsonUtilsSpec extends AnyFlatSpec with Matchers {
+  "prettifyJson()" should "prettify json" in {
+    val compactJson = """{"a":42,"b":{"c":111,"d":222},"x":[1,2]}"""
+    val prettyJson = JsonUtils.prettifyJson(compactJson)
 
-  object SupportedApiRange {
-    val Min: Version = V1
-    val Max: Version = V1_1
+    prettyJson should equal(
+      """{
+        |  "a" : 42,
+        |  "b" : {
+        |    "c" : 111,
+        |    "d" : 222
+        |  },
+        |  "x" : [ 1, 2 ]
+        |}""".stripMargin)
   }
-
 }
