@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester
 import org.apache.spark
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SaveMode
-import org.apache.spark.sql.catalyst.plans.logical._
+import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, _}
 import org.apache.spark.sql.execution.{LeafExecNode, SparkPlan}
 import scalaz.Scalaz._
 import za.co.absa.commons.lang.OptionImplicits._
@@ -81,13 +81,13 @@ class LineageHarvester(
       val writeOpBuilder = opNodeBuilderFactory.writeNodeBuilder(writeCommand)
       val restOpBuilders = createOperationBuildersRecursively(writeCommand.query)
 
-      restOpBuilders.lastOption.foreach(writeOpBuilder.+=)
+      restOpBuilders.lastOption.foreach(writeOpBuilder.addChild)
 
-      val writeOp = writeOpBuilder.build()
       val restOps = restOpBuilders.map(_.build())
+      val writeOp = writeOpBuilder.build()
 
       val (opReads, opOthers) =
-        ((List.empty[ReadOperation], List.empty[DataOperation]) /: restOps) {
+        ((Vector.empty[ReadOperation], Vector.empty[DataOperation]) /: restOps) {
           case ((accRead, accOther), opRead: ReadOperation) => (accRead :+ opRead, accOther)
           case ((accRead, accOther), opOther: DataOperation) => (accRead, accOther :+ opOther)
         }
@@ -99,16 +99,16 @@ class LineageHarvester(
           ExecutionPlanExtra.DataTypes -> componentCreatorFactory.dataTypeConverter.values
         )
 
-        val exprConverters = componentCreatorFactory.expressionConverters
+        val exprAccumulators = componentCreatorFactory.expressionAccumulators
         val expressions = Expressions(
-          attributes = exprConverters.flatMap(_.attributes),
-          constants = exprConverters.flatMap(_.literals),
-          functions = exprConverters.flatMap(_.functionalExpressions)
+          constants = exprAccumulators.flatMap(_.literals).asOption,
+          functions = exprAccumulators.flatMap(_.functionalExpressions).asOption
         )
 
         val p = ExecutionPlan(
           id = Some(planId),
           operations = Operations(writeOp, opReads.asOption, opOthers.asOption),
+          attributes = exprAccumulators.flatMap(_.attributes).asOption,
           expressions = Some(expressions),
           systemInfo = NameAndVersion(AppMetaInfo.Spark, spark.SPARK_VERSION),
           agentInfo = Some(NameAndVersion(AppMetaInfo.Spline, SplineBuildInfo.Version)),
@@ -142,37 +142,45 @@ class LineageHarvester(
     })
   }
 
+  private trait StackItem
+  private case class NewItem(plan: LogicalPlan, parentBuilder: OperationNodeBuilder) extends StackItem
+  private case class ProcessedItem(builder: OperationNodeBuilder) extends StackItem
+
   private def createOperationBuildersRecursively(rootOp: LogicalPlan): Seq[OperationNodeBuilder] = {
     @scala.annotation.tailrec
     def traverseAndCollect(
       accBuilders: Seq[OperationNodeBuilder],
       processedEntries: Map[LogicalPlan, OperationNodeBuilder],
-      enqueuedEntries: Seq[(LogicalPlan, OperationNodeBuilder)]
+      stackedEntries: Seq[StackItem]
+
     ): Seq[OperationNodeBuilder] = {
-      enqueuedEntries match {
-        case Nil => accBuilders
-        case (curOpNode, parentBuilder) +: restEnqueuedEntries =>
+      stackedEntries match {
+        case Nil => accBuilders.reverse
+
+        case ProcessedItem(builder) +: restEnqueuedEntries =>
+          traverseAndCollect(builder +: accBuilders, processedEntries, restEnqueuedEntries)
+
+        case NewItem(curOpNode, parentBuilder) +: restEnqueuedEntries =>
           val maybeExistingBuilder = processedEntries.get(curOpNode)
           val curBuilder = maybeExistingBuilder.getOrElse(createOperationBuilder(curOpNode))
 
-          if (parentBuilder != null) parentBuilder += curBuilder
+          if (parentBuilder != null) parentBuilder.addChild(curBuilder)
 
           if (maybeExistingBuilder.isEmpty) {
 
-            val newNodesToProcess = extractChildren(curOpNode)
+            val newNodesToProcess = extractChildren(curOpNode).map(n => NewItem(n, curBuilder))
 
             traverseAndCollect(
-              curBuilder +: accBuilders,
+              accBuilders,
               processedEntries + (curOpNode -> curBuilder),
-              newNodesToProcess.map(_ -> curBuilder) ++ restEnqueuedEntries)
-
+              newNodesToProcess ++ (ProcessedItem(curBuilder) +: restEnqueuedEntries))
           } else {
             traverseAndCollect(accBuilders, processedEntries, restEnqueuedEntries)
           }
       }
     }
 
-    traverseAndCollect(Nil, Map.empty, Seq((rootOp, null)))
+    traverseAndCollect(Nil, Map.empty, List(NewItem(rootOp, null)))
   }
 
   private def createOperationBuilder(op: LogicalPlan): OperationNodeBuilder =

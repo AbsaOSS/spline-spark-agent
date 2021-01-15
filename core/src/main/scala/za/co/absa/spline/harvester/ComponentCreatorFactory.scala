@@ -24,13 +24,21 @@ import za.co.absa.spline.harvester.converter._
 class ComponentCreatorFactory {
   val dataConverter = new DataConverter
   val dataTypeConverter = new DataTypeConverter with CachingConverter
-  val inputAttributeConverter = new InputAttributeConverter(dataTypeConverter) with ExpressionStoringConverter
-  val expressionConverter = new GenericExpressionConverter(dataConverter, dataTypeConverter) with ExpressionStoringConverter
+  val attributeIdResolver = new AttributeIdResolver
+  val inputAttributeConverter = new InputAttributeConverter(dataTypeConverter, attributeIdResolver)
+    with ExpressionStoringConverter
+  val expressionConverter = new GenericExpressionConverter(dataConverter, dataTypeConverter, attributeIdResolver)
+    with ExpressionStoringConverter
   val operationParamsConverter = new OperationParamsConverter(dataConverter, expressionConverter)
+  val unionCreator = new UnionLineageCreator(dataTypeConverter, attributeIdResolver)
 
   private[this] val lastId = new AtomicInteger(0)
 
   def nextId: Int = lastId.getAndIncrement()
 
-  val expressionConverters: List[ExpressionStoringConverter] = List(inputAttributeConverter, expressionConverter)
+  val expressionAccumulators: Seq[ExpressionAccumulator] = Seq(
+    inputAttributeConverter.expressionAccumulator,
+    expressionConverter.expressionAccumulator,
+    unionCreator.expressionAccumulator
+  )
 }

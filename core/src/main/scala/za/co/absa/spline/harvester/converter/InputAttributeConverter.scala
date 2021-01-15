@@ -16,24 +16,22 @@
 
 package za.co.absa.spline.harvester.converter
 
-import org.apache.spark.sql.catalyst.expressions.{Expression, Attribute => SparkAttribute}
-import za.co.absa.spline.harvester.builder.OperationNodeBuilder.OperationId
-import za.co.absa.spline.harvester.converter.ExpressionConverter.{ExpressionLike, toSplineAttrId, createExtra}
+import org.apache.spark.sql.catalyst.expressions.{Attribute => SparkAttribute, Expression => SparkExpression}
+import za.co.absa.spline.harvester.converter.ExpressionConverter.{ExpressionLike, createExtra}
 import za.co.absa.spline.producer.model.v1_1.Attribute
 
-class InputAttributeConverter(dataTypeConverter: DataTypeConverter) extends ExpressionConverter {
+class InputAttributeConverter(
+  dataTypeConverter: DataTypeConverter,
+  attributeIdResolver: AttributeIdResolver
+) extends ExpressionConverter {
 
-  def convert(expressionAndOperationId: From): To = expressionAndOperationId match {
-    case (sparkExpr, operationId) => convertInternal(sparkExpr, operationId)
-  }
-
-  def convertInternal(expr: Expression, operationId: OperationId): ExpressionLike = expr match {
+  override def convert(expr: SparkExpression): ExpressionLike = expr match {
     case attr: SparkAttribute =>
       Attribute(
-        id = toSplineAttrId(attr.exprId),
+        id = attributeIdResolver.resolve(attr.exprId),
         dataType =  Some(dataTypeConverter.convert(attr.dataType, attr.nullable).id),
-        childIds = List.empty,
-        extra = createExtra(attr, "expr.Attribute", operationId),
+        childIds = None,
+        extra = createExtra(attr, "expr.Attribute"),
         name = attr.name
       )
   }

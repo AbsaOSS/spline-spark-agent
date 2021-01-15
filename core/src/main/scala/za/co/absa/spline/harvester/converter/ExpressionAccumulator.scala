@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ABSA Group Limited
+ * Copyright 2021 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,19 @@ package za.co.absa.spline.harvester.converter
 import za.co.absa.spline.harvester.converter.ExpressionConverter.{ExpressionLike, TempReference}
 import za.co.absa.spline.producer.model.v1_1.{Attribute, FunctionalExpression, Literal}
 
-trait ExpressionStoringConverter extends ExpressionConverter{
+class ExpressionAccumulator {
+  private var attributeStorage = List.empty[Attribute]
+  private var literalStorage = List.empty[Literal]
+  private var functionalExpressionStorage = List.empty[FunctionalExpression]
 
-  val expressionAccumulator = new ExpressionAccumulator
+  def attributes: Seq[Attribute] = attributeStorage.reverse
+  def literals: Seq[Literal] = literalStorage.reverse
+  def functionalExpressions: Seq[FunctionalExpression] = functionalExpressionStorage.reverse
 
-  abstract override def convert(arg: From): To = {
-    val result = super.convert(arg)
-    expressionAccumulator.store(result)
-    result
+  private[converter] def store(expr: ExpressionLike): Unit = expr match {
+    case a: Attribute => attributeStorage = a :: attributeStorage
+    case l: Literal => literalStorage = l :: literalStorage
+    case fe: FunctionalExpression => functionalExpressionStorage = fe :: functionalExpressionStorage
+    case _: TempReference => // do nothing
   }
-
 }

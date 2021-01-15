@@ -17,9 +17,9 @@
 package za.co.absa.spline.harvester.converter
 
 import java.util.UUID
-
 import org.apache.spark.sql.catalyst.expressions
 import org.apache.spark.sql.catalyst.expressions.{Expression => SparkExpression}
+import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.reflect.ReflectionUtils
 import za.co.absa.spline.harvester.converter.ExpressionConverter._
 import za.co.absa.spline.producer.model.v1_1._
@@ -27,34 +27,31 @@ import za.co.absa.spline.producer.model.v1_1._
 
 class GenericExpressionConverter(
   dataConverter: DataConverter,
-  dataTypeConverter: DataTypeConverter)
-  extends  ExpressionConverter {
+  dataTypeConverter: DataTypeConverter,
+  attributeIdResolver: AttributeIdResolver
+) extends  ExpressionConverter {
 
   import GenericExpressionConverter._
 
-  def convert(expressionAndOperationId: From): To = expressionAndOperationId match {
-    case (sparkExpr, operationId) => convertInternal(sparkExpr, operationId)
-  }
-
-  private def convertInternal(sparkExpr: SparkExpression, operationId: String): ExpressionLike = sparkExpr match {
+  override def convert(sparkExpr: SparkExpression): ExpressionLike = sparkExpr match {
 
     case a: expressions.Alias =>
       Attribute(
-        id = toSplineAttrId(a.exprId),
+        id = attributeIdResolver.resolve(a.exprId),
         dataType = convertDataType(a),
-        childIds = List(convert(a.child, operationId).id),
-        extra = createExtra(a, "expr.Attribute", operationId),
+        childIds = List(toAttrOrExprRef(convert(a.child))).asOption,
+        extra = createExtra(a, "expr.Attribute"),
         name = a.name
       )
 
     case a: expressions.Attribute =>
-      TempReference(toSplineAttrId(a.exprId))
+      TempReference(attributeIdResolver.resolve(a.exprId))
 
     case lit: expressions.Literal =>
       Literal(
         id = randomUUIDString,
         dataType = convertDataType(lit),
-        extra = createExtra(lit, "expr.Literal", operationId),
+        extra = createExtra(lit, "expr.Literal"),
         value = dataConverter.convert(Tuple2.apply(lit.value, lit.dataType))
       )
 
@@ -62,18 +59,20 @@ class GenericExpressionConverter(
       FunctionalExpression(
         id = randomUUIDString,
         dataType = convertDataType(bo),
-        childIds = convertChildren(bo, operationId),
-        extra = createExtra(bo, "expr.Binary", operationId),
+        childIds = convertChildren(bo),
+        extra = createExtra(bo, "expr.Binary"),
         name = bo.prettyName,
-        params = getExpressionExtraParameters(bo) + ("symbol" -> bo.symbol)
+        params = getExpressionExtraParameters(bo)
+          .orElse(Some(Map.empty[String, Any]))
+          .map(_ + ("symbol" -> bo.symbol))
       )
 
     case u: expressions.ScalaUDF =>
       FunctionalExpression(
         id = randomUUIDString,
         dataType = convertDataType(u),
-        childIds = convertChildren(u, operationId),
-        extra = createExtra(u, "expr.UDF", operationId),
+        childIds = convertChildren(u),
+        extra = createExtra(u, "expr.UDF"),
         name = u.udfName getOrElse u.function.getClass.getName,
         params = getExpressionExtraParameters(u)
       )
@@ -82,8 +81,8 @@ class GenericExpressionConverter(
       FunctionalExpression(
         id = randomUUIDString,
         dataType = convertDataType(e),
-        childIds = List.empty,
-        extra = createExtra(e, "expr.GenericLeaf", operationId),
+        childIds = None,
+        extra = createExtra(e, "expr.GenericLeaf"),
         name = e.prettyName,
         params = getExpressionExtraParameters(e)
       )
@@ -92,8 +91,8 @@ class GenericExpressionConverter(
       FunctionalExpression(
         id = randomUUIDString,
         dataType = None,
-        childIds = convertChildren(sparkExpr, operationId),
-        extra = createExtra(sparkExpr, "expr.UntypedExpression", operationId),
+        childIds = convertChildren(sparkExpr),
+        extra = createExtra(sparkExpr, "expr.UntypedExpression"),
         name = sparkExpr.prettyName,
         params = getExpressionExtraParameters(sparkExpr)
       )
@@ -102,8 +101,8 @@ class GenericExpressionConverter(
       FunctionalExpression(
         id = randomUUIDString,
         dataType = convertDataType(e),
-        childIds = convertChildren(e, operationId),
-        extra = createExtra(e, "expr.Generic", operationId),
+        childIds = convertChildren(e),
+        extra = createExtra(e, "expr.Generic"),
         name = e.prettyName,
         params = getExpressionExtraParameters(e)
       )
@@ -118,17 +117,25 @@ class GenericExpressionConverter(
     Some(dataType.id)
   }
 
-  private def convertChildren(e: SparkExpression, operationId: String) = {
-    e.children.map(expr => convert((expr, operationId))).map(_.id).toList
+  private def convertChildren(e: SparkExpression) = {
+    e.children
+      .map(expr => convert(expr))
+      .map(toAttrOrExprRef)
+      .asOption
   }
 
+  def toAttrOrExprRef(exprLike: ExpressionLike): AttrOrExprRef = exprLike match {
+    case a: Attribute => AttrOrExprRef(Some(a.id), None)
+    case ar: TempReference => AttrOrExprRef(Some(ar.id), None)
+    case e: ExpressionLike => AttrOrExprRef(None, Some(e.id))
+  }
 }
 
 object GenericExpressionConverter {
 
   private val basicProperties = Set("children", "dataType", "nullable")
 
-  private def getExpressionExtraParameters(e: SparkExpression): Map[String, Any] = {
+  private def getExpressionExtraParameters(e: SparkExpression): Option[Map[String, Any]] = {
     val isChildExpression: Any => Boolean = {
       val children = e.children.toSet
       PartialFunction.cond(_) {
@@ -144,7 +151,7 @@ object GenericExpressionConverter {
         w <- ValueDecomposer.decompose(v, Unit)
       } yield p -> w
 
-    renderedParams
+    renderedParams.asOption
   }
 
 }

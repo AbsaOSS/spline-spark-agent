@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ABSA Group Limited
+ * Copyright 2021 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,21 @@
 
 package za.co.absa.spline.harvester.converter
 
-import za.co.absa.spline.harvester.converter.ExpressionConverter.{ExpressionLike, TempReference}
-import za.co.absa.spline.producer.model.v1_1.{Attribute, FunctionalExpression, Literal}
+import org.apache.spark.sql.catalyst.expressions.ExprId
 
-trait ExpressionStoringConverter extends ExpressionConverter{
+import scala.collection.mutable
 
-  val expressionAccumulator = new ExpressionAccumulator
+class AttributeIdResolver {
 
-  abstract override def convert(arg: From): To = {
-    val result = super.convert(arg)
-    expressionAccumulator.store(result)
-    result
+  private val attributeMap = new mutable.HashMap[ExprId, String]()
+
+  def resolve(sparkId: ExprId): String =
+    attributeMap.getOrElseUpdate(sparkId, toSplineAttrId(sparkId))
+
+  def updateMapping(sparkId: ExprId, newSplineId: String) =
+    attributeMap.update(sparkId, newSplineId)
+
+  private def toSplineAttrId(exprId: ExprId): String = {
+    s"${exprId.jvmId}:${exprId.id}"
   }
-
 }

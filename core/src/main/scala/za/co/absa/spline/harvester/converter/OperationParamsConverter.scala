@@ -24,27 +24,25 @@ import org.apache.spark.sql.types.DataType
 import za.co.absa.commons.lang.Converter
 import za.co.absa.commons.reflect.ReflectionUtils
 import za.co.absa.spline.harvester.converter.OperationParamsConverter._
-import za.co.absa.spline.model.ExpressionReference
 
 class OperationParamsConverter(
   dataConverter: DataConverter,
   expressionConverter: GenericExpressionConverter
 ) extends Converter {
-  override type From = (LogicalPlan, String)
+  override type From = LogicalPlan
   override type To = Map[String, _]
 
-  private def renderer(operationId: String) = ValueDecomposer.addHandler(_ => {
+  private def valueDecomposer = ValueDecomposer.addHandler(_ => {
     case (row: InternalRow, rowType: DataType) => Some(dataConverter.convert((row, rowType)))
     case (jt: JoinType, _) => Some(jt.sql)
     case (so: SortOrder, _) => Some(Map(
-      "expression" -> ExpressionReference(expressionConverter.convert((so.child, operationId)).id),
+      "expression" -> expressionConverter.toAttrOrExprRef(expressionConverter.convert(so.child)),
       "direction" -> so.direction.sql,
       "nullOrdering" -> so.nullOrdering.sql))
-    case (exp: Expression, _) => Some(ExpressionReference(expressionConverter.convert((exp, operationId)).id))
+    case (exp: Expression, _) => Some(expressionConverter.toAttrOrExprRef(expressionConverter.convert(exp)))
   })
 
-  override def convert(operationAndId: (LogicalPlan, String)): Map[String, _] = {
-    val (operation, operationId) = operationAndId
+  override def convert(operation: LogicalPlan): Map[String, _] = {
 
     val isChildOperation: Any => Boolean = {
       val children = operation.children.toSet
@@ -59,7 +57,7 @@ class OperationParamsConverter(
       if !IgnoredPropNames(p)
       if !isChildOperation(v)
     } yield
-      p -> renderer(operationId).decompose(v, operation.schema)
+      p -> valueDecomposer.decompose(v, operation.schema)
   }
 }
 

@@ -29,7 +29,7 @@ class PostProcessorSpec extends AnyFlatSpec with Matchers with MockitoSugar {
       op.copy(outputSource = op.outputSource + str)
   }
 
-  val wop = WriteOperation(List.empty, "foo", false, "42", List.empty, None, None)
+  private val wop = WriteOperation(Seq.empty, "foo", append = false, "42", Seq.empty, None, None)
 
   it should "apply one filter" in {
 

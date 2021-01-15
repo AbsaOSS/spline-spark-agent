@@ -20,12 +20,13 @@ import org.apache.commons.lang3.StringUtils.substringAfter
 import org.apache.spark.sql.catalyst.expressions
 import org.apache.spark.sql.catalyst.expressions.ExprId
 import za.co.absa.commons.lang.Converter
+import za.co.absa.commons.lang.OptionImplicits.NonOptionWrapper
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder.OperationId
 import za.co.absa.spline.harvester.converter.ExpressionConverter._
 
 trait ExpressionConverter extends Converter {
 
-  override type From = (expressions.Expression, String)
+  override type From = expressions.Expression
   override type To = ExpressionLike
 }
 
@@ -40,20 +41,15 @@ object ExpressionConverter {
    */
   case class TempReference(id: String)
 
-  def toSplineAttrId(exprId: ExprId): String = {
-    s"${exprId.jvmId}:${exprId.id}"
-  }
-
   private def getExpressionSimpleClassName(expr: expressions.Expression) = {
     val fullName = expr.getClass.getName
     val simpleName = substringAfter(fullName, "org.apache.spark.sql.catalyst.expressions.")
     if (simpleName.nonEmpty) simpleName else fullName
   }
 
-  def createExtra(expr: expressions.Expression, typeHint: String, operationId: OperationId) = Map(
+  def createExtra(expr: expressions.Expression, typeHint: String) = Map(
     "simpleClassName" -> getExpressionSimpleClassName(expr),
-    "_typeHint" -> typeHint,
-    "operationId" -> operationId
-  )
+    "_typeHint" -> typeHint
+  ).asOption
 
 }

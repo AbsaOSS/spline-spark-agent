@@ -31,7 +31,7 @@ trait OperationNodeBuilder {
 
   def operation: LogicalPlan
   def build(): R
-  def +=(childBuilder: OperationNodeBuilder): Unit = childBuilders :+= childBuilder
+  def addChild(childBuilder: OperationNodeBuilder): Unit = childBuilders :+= childBuilder
 
   protected def componentCreatorFactory: ComponentCreatorFactory
   private lazy val attributeConverter =
@@ -40,15 +40,14 @@ trait OperationNodeBuilder {
     else
       componentCreatorFactory.expressionConverter
 
-  private def convert(att: SparAttribute): String = attributeConverter.convert((att, id)).id
+  private def convert(att: SparAttribute): String = attributeConverter.convert(att).id
   protected lazy val outputAttributes: OutputAttIds = operation.output.map(convert).toList
 
   protected def childIds: Seq[OperationId] = childBuilders.map(_.id)
-  protected def childOutputSchemas: Seq[OutputAttIds] = childBuilders.map(_.outputAttributes)
   protected def isTerminal: Boolean = childBuilders.isEmpty
 }
 
 object OperationNodeBuilder {
   type OperationId = String
-  type OutputAttIds = List[String]
+  type OutputAttIds = Seq[String]
 }

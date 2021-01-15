@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.harvester.builder
 
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, Union}
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.harvester.ComponentCreatorFactory
 import za.co.absa.spline.harvester.ModelConstants.OperationExtras
@@ -31,14 +31,22 @@ class GenericNodeBuilder
   override protected type R = DataOperation
 
   override def build(): DataOperation = {
+
+    enrich(operation)
+
     val dop = DataOperation(
       id = id,
       childIds = childIds.toList.asOption,
       output = outputAttributes,
-      params = componentCreatorFactory.operationParamsConverter.convert((operation, id)).asOption,
+      params = componentCreatorFactory.operationParamsConverter.convert(operation).asOption,
       extra = Map(OperationExtras.Name -> operation.nodeName).asOption
     )
 
     postProcessor.process(dop)
+  }
+
+  private def enrich(logicalPlan: LogicalPlan): Unit = logicalPlan match {
+    case u: Union => componentCreatorFactory.unionCreator.create(u)
+    case _ => Unit
   }
 }
