@@ -37,7 +37,7 @@ trait OperationNodeBuilder {
   protected lazy val outputAttributes: OutputAttIds =
     operation.output.map(attr => componentCreatorFactory.attributeConverter.convert(attr).id)
 
-  protected def childIds: Seq[OperationId] = childBuilders.map(_.id)
+  def childIds: Seq[OperationId] = childBuilders.map(_.id)
   protected def childOutputSchemas: Seq[OutputAttIds] = childBuilders.map(_.outputAttributes)
   protected def isTerminal: Boolean = childBuilders.isEmpty
 }

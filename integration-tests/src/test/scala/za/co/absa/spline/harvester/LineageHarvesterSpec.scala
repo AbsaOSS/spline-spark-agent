@@ -113,14 +113,14 @@ class LineageHarvesterSpec extends AnyFlatSpec
           .filter($"A".notEqual(5))
 
         val expectedAttributes = Seq(
-          Attribute(randomUUID.toString, Some(integerType.id), None, None, "A"),
+          Attribute(randomUUID.toString, Some(integerType.id), None, None, "i"),
           Attribute(randomUUID.toString, Some(doubleType.id), None, None, "d"),
           Attribute(randomUUID.toString, Some(stringType.id), None, None, "s"),
-          Attribute(randomUUID.toString, Some(integerType.id), None, None, "i")
+          Attribute(randomUUID.toString, Some(integerType.id), None, None, "A")
         )
 
-        val outputBeforeRename = Seq(expectedAttributes(3).id, expectedAttributes(1).id, expectedAttributes(2).id)
-        val outputAfterRename = Seq(expectedAttributes(0).id, expectedAttributes(1).id, expectedAttributes(2).id)
+        val outputBeforeRename = Seq(expectedAttributes(0).id, expectedAttributes(1).id, expectedAttributes(2).id)
+        val outputAfterRename = Seq(expectedAttributes(3).id, expectedAttributes(1).id, expectedAttributes(2).id)
 
         val expectedOperations = Seq(
           WriteOperation(

@@ -16,6 +16,9 @@
 
 package za.co.absa.spline.harvester
 
+import scalax.collection.Graph
+import scalax.collection.GraphEdge.DiEdge
+import scalax.collection.GraphPredef.EdgeAssoc
 import org.apache.spark
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SaveMode
@@ -83,8 +86,8 @@ class LineageHarvester(
 
       restOpBuilders.lastOption.foreach(writeOpBuilder.+=)
 
-      val writeOp = writeOpBuilder.build()
       val restOps = restOpBuilders.map(_.build())
+      val writeOp = writeOpBuilder.build()
 
       val (opReads, opOthers) =
         ((Vector.empty[ReadOperation], Vector.empty[DataOperation]) /: restOps) {
@@ -173,7 +176,8 @@ class LineageHarvester(
       }
     }
 
-    traverseAndCollect(Nil, Map.empty, Seq((rootOp, null)))
+    val builders = traverseAndCollect(Nil, Map.empty, Seq((rootOp, null)))
+    sortedInTopologicalOrder(builders)
   }
 
   private def createOperationBuilder(op: LogicalPlan): OperationNodeBuilder =
@@ -219,4 +223,21 @@ object LineageHarvester {
   object AnalysisBarrierExtractor extends SafeTypeMatchingExtractor[LogicalPlan](
     "org.apache.spark.sql.catalyst.plans.logical.AnalysisBarrier")
 
+  private def sortedInTopologicalOrder(items: Seq[OperationNodeBuilder]): Seq[OperationNodeBuilder] = {
+    if (items.length < 2) items
+    else {
+      val itemById = items.map(op => op.id -> op).toMap
+      val itemEdges: Seq[DiEdge[OperationNodeBuilder]] =
+        for {
+          item <- items
+          childId <- item.childIds
+        } yield itemById(childId) ~> item
+
+      Graph
+        .from(edges = itemEdges)
+        .topologicalSort match {
+        case Right(x) => x.toOuter.toSeq
+      }
+    }
+  }
 }
