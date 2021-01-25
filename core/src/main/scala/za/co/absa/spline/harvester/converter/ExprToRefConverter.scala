@@ -16,27 +16,30 @@
 
 package za.co.absa.spline.harvester.converter
 
-import org.apache.spark.sql.catalyst.expressions.{Expression => SparkExpression}
+import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.Converter
-import za.co.absa.spline.harvester.ComponentCreatorFactory
 import za.co.absa.spline.producer.model.v1_1.AttrOrExprRef
 
-import scala.util.Try
+class ExprToRefConverter(
+  attributeConverter: AttributeConverter,
+  expressionConverter: ExpressionConverter,
+  literalConverter: LiteralConverter
+) extends Converter {
 
-// todo: use concrete converters instead of a factory? What about cyclic dependency on `expressionConverter`?
-class ExprToRefConverter(converterFactory: ComponentCreatorFactory) extends Converter {
-  override type From = SparkExpression
+  override type From = sparkExprssions.Expression
   override type To = AttrOrExprRef
 
-  override def convert(arg: SparkExpression): AttrOrExprRef = {
-    // todo: refactor it to partial functions
-    Try {
-      val attr = converterFactory.attributeConverter.convert(arg)
+  override def convert(arg: sparkExprssions.Expression): AttrOrExprRef = arg match {
+    case sa: sparkExprssions.Attribute =>
+      val attr = attributeConverter.convert(sa)
       AttrOrExprRef(Some(attr.id), None)
-    }.recover {
-      case _ =>
-        val expr = converterFactory.expressionConverter.convert(arg)
-        AttrOrExprRef(None, Some(expr.id))
-    }.get
+
+    case l: sparkExprssions.Literal =>
+      val literal = literalConverter.convert(l)
+      AttrOrExprRef(None, Some(literal.id))
+
+    case _ =>
+      val expr = expressionConverter.convert(arg)
+      AttrOrExprRef(None, Some(expr.id))
   }
 }

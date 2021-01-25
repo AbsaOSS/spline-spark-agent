@@ -16,20 +16,30 @@
 
 package za.co.absa.spline.harvester.converter
 
-import org.apache.spark.sql.catalyst.expressions.{Attribute => SparkAttribute, Expression => SparkExpression}
+import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.Converter
-import za.co.absa.spline.producer.model.v1_1
+import za.co.absa.spline.producer.model.v1_1.Attribute
 
-class AttributeConverter(dataTypeConverter: DataTypeConverter) extends Converter {
+class AttributeConverter(
+  dataTypeConverter: DataTypeConverter,
+  resolveAttributeChild: sparkExprssions.Attribute => Option[sparkExprssions.Expression],
+  outputExprToAttMap: Map[sparkExprssions.ExprId, Attribute],
+  exprToRefConverter: => ExprToRefConverter
+) extends Converter {
 
-  override type From = SparkExpression
-  override type To = v1_1.Attribute
+  override type From = sparkExprssions.Attribute
+  override type To = Attribute
 
   def convert(expr: From): To = expr match {
-    case attr: SparkAttribute =>
-      v1_1.Attribute(
+    case attr: sparkExprssions.Attribute if outputExprToAttMap.contains(attr.exprId) =>
+      outputExprToAttMap(attr.exprId)
+
+    case attr: sparkExprssions.Attribute =>
+      Attribute(
         id = attr.exprId.id.toString,
         dataType = Some(dataTypeConverter.convert(attr.dataType, attr.nullable).id),
+        childIds = resolveAttributeChild(attr)
+          .map(expr => Seq(exprToRefConverter.convert(expr))),
         name = attr.name
       )
   }

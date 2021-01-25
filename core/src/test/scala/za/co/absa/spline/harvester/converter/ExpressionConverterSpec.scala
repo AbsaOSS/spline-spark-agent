@@ -39,7 +39,7 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
 
   private val dtConverterMock = mock[DataTypeConverter]
   private val exprToRefConverterMock = mock[ExprToRefConverter]
-  private val converter = new ExpressionConverter(new DataConverter, dtConverterMock, exprToRefConverterMock)
+  private val converter = new ExpressionConverter(dtConverterMock, exprToRefConverterMock)
 
   when(dtConverterMock convert NullType -> true) thenReturn nullDataType
   when(dtConverterMock convert StringType -> false) thenReturn stringDataType
@@ -139,59 +139,6 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
     inside(converter.convert(expression)) {
       case fe: FunctionalExpression =>
         fe.params.get should contain("any" -> "CASE WHEN 42 THEN Moo ELSE Meh END")
-    }
-  }
-
-  it should "support array of struct literals" in {
-    val testLiteral = Literal.create(Array(
-      Tuple2("a1", "b1"),
-      Tuple2("a2", "b2")
-    ))
-
-    val dummyType = dt.Simple("dummy", nullable = false)
-    when(dtConverterMock convert testLiteral.dataType -> false) thenReturn dummyType
-
-    val expression = converter.convert(testLiteral)
-
-    expression shouldBe a[SplineLiteral]
-
-    val literal = expression.asInstanceOf[SplineLiteral]
-
-    literal.value shouldEqual Seq(Seq("a1", "b1"), Seq("a2", "b2"))
-    literal.dataType shouldEqual Some(dummyType.id)
-    literal.extra.get should contain("_typeHint" -> "expr.Literal")
-  }
-
-  it should "support array of struct of array of struct literals" in {
-    val testLiteral = Literal.create(Array(
-      Tuple2("row1", Array(
-        Tuple3("a1", Some(true), Map("b1" -> 100)),
-        Tuple3("c1", None, Map("d1" -> 200, "e1" -> 300))
-      )),
-      Tuple2("row2", Array(
-        Tuple3("a2", Some(false), Map("b2" -> 400)),
-        Tuple3("c2", None, Map("d2" -> 500, "e2" -> 600, "f2" -> 700))
-      ))
-    ))
-
-    val dummyType = dt.Simple("dummy", nullable = false)
-    when(dtConverterMock convert testLiteral.dataType -> false) thenReturn dummyType
-
-    val expression = converter.convert(testLiteral)
-    val literal = expression.asInstanceOf[SplineLiteral]
-
-    literal.dataType shouldEqual Some(dummyType.id)
-    literal.value should be {
-      Seq(
-        Seq("row1", Seq(
-          Seq("a1", true, Map("b1" -> 100)),
-          Seq("c1", null, Map("d1" -> 200, "e1" -> 300))
-        )),
-        Seq("row2", Seq(
-          Seq("a2", false, Map("b2" -> 400)),
-          Seq("c2", null, Map("d2" -> 500, "e2" -> 600, "f2" -> 700))
-        ))
-      )
     }
   }
 

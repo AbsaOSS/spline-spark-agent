@@ -18,7 +18,6 @@ package za.co.absa.spline.harvester
 
 import java.util.UUID
 import java.util.UUID.randomUUID
-
 import org.apache.commons.io.FileUtils
 import org.apache.spark.SPARK_VERSION
 import org.scalatest.Assertion
@@ -34,7 +33,7 @@ import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
 import za.co.absa.spline.model.dt
-import za.co.absa.spline.producer.model.v1_1._
+import za.co.absa.spline.producer.model.v1_1.{Attribute, _}
 import za.co.absa.spline.test.fixture.spline.SplineFixture.EMPTY_CONF
 import za.co.absa.spline.test.fixture.spline.{LineageCaptor, LineageCapturingDispatcher, SplineFixture}
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
@@ -163,10 +162,14 @@ class LineageHarvesterSpec extends AnyFlatSpec
           Seq(
             Attribute(randomUUID.toString, Some(integerType.id), None, None, "i"),
             Attribute(randomUUID.toString, Some(doubleType.id), None, None, "d"),
-            Attribute(randomUUID.toString, Some(stringType.id), None, None, "s")
+            Attribute(randomUUID.toString, Some(stringType.id), None, None, "s"),
+            Attribute(randomUUID.toString, Some(integerType.id), None, None, "union of i, i"),
+            Attribute(randomUUID.toString, Some(doubleType.id), None, None, "union of d, d"),
+            Attribute(randomUUID.toString, Some(stringType.id), None, None, "union of s, s")
           )
 
-        val outputAttIds = expectedAttributes.map(_.id)
+        val inputAttIds = expectedAttributes.slice(0, 3).map(_.id)
+        val outputAttIds = expectedAttributes.slice(3, 6).map(_.id)
 
         val expectedOperations = Seq(
           WriteOperation(
@@ -179,9 +182,9 @@ class LineageHarvesterSpec extends AnyFlatSpec
             output = outputAttIds
           ),
           DataOperation("1", Seq("2", "4").asOption, outputAttIds, None, Map("name" -> "Union").asOption),
-          DataOperation("2", Seq("3").asOption, outputAttIds, None, Map("name" -> "Filter").asOption),
-          DataOperation("4", Seq("3").asOption, outputAttIds, None, Map("name" -> "Filter").asOption),
-          DataOperation("3", None, outputAttIds, None, Map("name" -> "LocalRelation").asOption))
+          DataOperation("2", Seq("3").asOption, inputAttIds, None, Map("name" -> "Filter").asOption),
+          DataOperation("4", Seq("3").asOption, inputAttIds, None, Map("name" -> "Filter").asOption),
+          DataOperation("3", None, inputAttIds, None, Map("name" -> "LocalRelation").asOption))
 
         val (plan, _) = lineageOf(df.write.save(tmpDest))
 

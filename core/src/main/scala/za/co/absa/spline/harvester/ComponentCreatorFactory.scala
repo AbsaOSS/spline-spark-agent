@@ -24,10 +24,6 @@ import java.util.concurrent.atomic.AtomicInteger
 class ComponentCreatorFactory {
   val dataConverter = new DataConverter
   val dataTypeConverter = new DataTypeConverter with CachingConverter
-  val attributeConverter = new AttributeConverter(dataTypeConverter) with CachingConverter
-  val exprToRefConverter = new ExprToRefConverter(this)
-  val expressionConverter = new ExpressionConverter(dataConverter, dataTypeConverter, exprToRefConverter) with CachingConverter
-  val operationParamsConverter = new OperationParamsConverter(dataConverter, exprToRefConverter)
 
   private[this] val lastId = new AtomicInteger(0)
 

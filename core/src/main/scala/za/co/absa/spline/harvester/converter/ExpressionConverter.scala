@@ -27,25 +27,26 @@ import scala.language.reflectiveCalls
 
 
 class ExpressionConverter(
-  dataConverter: DataConverter,
   dataTypeConverter: DataTypeConverter,
-  exprTpRefConverter: ExprToRefConverter
-)
-  extends Converter {
+  exprTpRefConverter: => ExprToRefConverter
+) extends Converter {
 
   import ExpressionConverter._
   import za.co.absa.commons.lang.OptionImplicits._
 
   override type From = sparkExprssions.Expression
-  override type To = Identifiable
+  override type To = FunctionalExpression
 
   def convert(sparkExpr: From): To = sparkExpr match {
-    case lit: sparkExprssions.Literal =>
-      Literal(
+
+    case a: sparkExprssions.Alias =>
+      FunctionalExpression(
         id = randomUUIDString,
-        dataType = convertDataType(lit),
-        extra = createExtra(lit, "expr.Literal").asOption,
-        value = dataConverter.convert(Tuple2.apply(lit.value, lit.dataType))
+        dataType = convertDataType(a),
+        childIds = convertChildren(a).asOption,
+        extra = createExtra(sparkExpr, "expr.Alias").asOption,
+        name = a.name,
+        params = getExpressionParameters(a).asOption
       )
 
     case bo: sparkExprssions.BinaryOperator =>
@@ -55,7 +56,7 @@ class ExpressionConverter(
         childIds = convertChildren(bo).asOption,
         extra = createExtra(bo, "expr.Binary").asOption,
         name = bo.prettyName,
-        params = (getExpressionExtraParameters(bo) + ("symbol" -> bo.symbol)).asOption
+        params = (getExpressionParameters(bo) + ("symbol" -> bo.symbol)).asOption
       )
 
     case u: sparkExprssions.ScalaUDF =>
@@ -65,7 +66,7 @@ class ExpressionConverter(
         childIds = convertChildren(u).asOption,
         extra = createExtra(u, "expr.UDF").asOption,
         name = u.udfName getOrElse u.function.getClass.getName,
-        params = getExpressionExtraParameters(u).asOption
+        params = getExpressionParameters(u).asOption
       )
 
     case e: sparkExprssions.LeafExpression =>
@@ -75,7 +76,7 @@ class ExpressionConverter(
         childIds = None,
         extra = createExtra(e, "expr.GenericLeaf").asOption,
         name = e.prettyName,
-        params = getExpressionExtraParameters(e).asOption
+        params = getExpressionParameters(e).asOption
       )
 
     case _: sparkExprssions.WindowSpecDefinition
@@ -86,7 +87,7 @@ class ExpressionConverter(
         childIds = convertChildren(sparkExpr).asOption,
         extra = createExtra(sparkExpr, "expr.UntypedExpression").asOption,
         name = sparkExpr.prettyName,
-        params = getExpressionExtraParameters(sparkExpr).asOption
+        params = getExpressionParameters(sparkExpr).asOption
       )
 
     case e: sparkExprssions.Expression =>
@@ -96,7 +97,7 @@ class ExpressionConverter(
         childIds = convertChildren(e).asOption,
         extra = createExtra(e, "expr.Generic").asOption,
         name = e.prettyName,
-        params = getExpressionExtraParameters(e).asOption
+        params = getExpressionParameters(e).asOption
       )
   }
 
@@ -117,11 +118,6 @@ class ExpressionConverter(
 
 object ExpressionConverter {
 
-  // todo: remove this !!!
-  type Identifiable = {
-    def id: String
-  }
-
   private val basicProperties = Set("children", "dataType", "nullable")
 
   private def getExpressionSimpleClassName(expr: sparkExprssions.Expression) = {
@@ -130,12 +126,12 @@ object ExpressionConverter {
     if (simpleName.nonEmpty) simpleName else fullName
   }
 
-  private def createExtra(expr: sparkExprssions.Expression, typeHint: String) = Map(
+  def createExtra(expr: sparkExprssions.Expression, typeHint: String) = Map(
     "simpleClassName" -> getExpressionSimpleClassName(expr),
     "_typeHint" -> typeHint
   )
 
-  private def getExpressionExtraParameters(e: sparkExprssions.Expression): Map[String, Any] = {
+  private def getExpressionParameters(e: sparkExprssions.Expression): Map[String, Any] = {
     val isChildExpression: Any => Boolean = {
       val children = e.children.toSet
       PartialFunction.cond(_) {

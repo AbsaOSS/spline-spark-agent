@@ -20,6 +20,7 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.harvester.ComponentCreatorFactory
 import za.co.absa.spline.harvester.ModelConstants.OperationExtras
+import za.co.absa.spline.harvester.converter.OperationParamsConverter
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.v1_1.DataOperation
 
@@ -30,12 +31,15 @@ class GenericNodeBuilder
 
   override protected type R = DataOperation
 
+  protected lazy val operationParamsConverter =
+    new OperationParamsConverter(componentCreatorFactory.dataConverter, exprToRefConverter)
+
   override def build(): DataOperation = {
     val dop = DataOperation(
       id = id,
       childIds = childIds.asOption,
-      output = outputAttributes,
-      params = componentCreatorFactory.operationParamsConverter.convert(operation).asOption,
+      output = outputAttributes.map(_.id),
+      params = operationParamsConverter.convert(operation).asOption,
       extra = Map(OperationExtras.Name -> operation.nodeName).asOption
     )
 

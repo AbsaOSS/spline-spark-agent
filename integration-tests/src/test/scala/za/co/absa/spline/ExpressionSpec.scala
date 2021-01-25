@@ -18,11 +18,11 @@
 package za.co.absa.spline
 
 import org.apache.spark.sql.functions
-import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions.{col, explode}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.TempFile
-import za.co.absa.commons.lang.OptionImplicits.NonOptionWrapper
+import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.producer.model.v1_1._
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
@@ -47,20 +47,17 @@ class ExpressionSpec extends AnyFlatSpec
 
           val (plan, _) = lineageCaptor.lineageOf(df.write.mode("overwrite").save(filePath))
 
-          assertStructuralEquivalence(
-            plan.attributes.get,
+          assertStructuralEquivalence(plan)(
             Seq(
               attribute("_1", Seq.empty),
-              attribute("_2", Seq.empty),
-              attribute("sum", Seq("f-sum"))))
-
-          assertStructuralEquivalence(
-            plan.expressions.get,
-            Expressions(
-              Some(Seq(
-                function("f-sum", Seq("_1", "_2")))),
-              None
-            ))
+              attribute("_2", Seq.empty)),
+            Seq(
+              function("f-sum", Seq("_1", "_2")),
+              function("f-alias-sum", Seq("f-sum"))),
+            Seq.empty,
+            Seq(
+              attribute("sum", Seq("f-alias-sum")))
+          )
         }
       })
 
@@ -77,27 +74,27 @@ class ExpressionSpec extends AnyFlatSpec
 
           val (plan, _) = lineageCaptor.lineageOf(df.write.mode("overwrite").save(filePath))
 
-          assertStructuralEquivalence(
-            plan.attributes.get,
+          assertStructuralEquivalence(plan)(
             Seq(
               attribute("_1", Seq.empty),
               attribute("_2", Seq.empty),
-              attribute("sum", Seq("f-sum")),
-              attribute("dif", Seq("f-dif")),
-              attribute("mul", Seq("f-mul")),
-              attribute("res", Seq("f-res"))))
-
-          assertStructuralEquivalence(
-            plan.expressions.get,
-            Expressions(
-              Some(Seq(
-                function("f-sum", Seq("_1", "_2")),
-                function("f-dif", Seq("_1", "_2")),
-                function("f-mul", Seq("sum", "dif")),
-                function("f-res", Seq("mul", "l-42")))),
-              Some(Seq(
-                literal("l-42", 42)))
-            ))
+              attribute("sum", Seq("f-alias-sum")),
+              attribute("dif", Seq("f-alias-dif")),
+              attribute("mul", Seq("f-alias-mul"))),
+            Seq(
+              function("f-sum", Seq("_1", "_2")),
+              function("f-dif", Seq("_1", "_2")),
+              function("f-mul", Seq("sum", "dif")),
+              function("f-res", Seq("mul", "l-42")),
+              function("f-alias-sum", Seq("f-sum")),
+              function("f-alias-dif", Seq("f-dif")),
+              function("f-alias-mul", Seq("f-mul")),
+              function("f-alias-res", Seq("f-res"))),
+            Seq(
+              literal("l-42", 42)),
+            Seq(
+              attribute("res", Seq("f-alias-res")))
+          )
         }
       })
 
@@ -112,21 +109,72 @@ class ExpressionSpec extends AnyFlatSpec
 
           val (plan, _) = lineageCaptor.lineageOf(df.write.mode("overwrite").save(filePath))
 
-          assertStructuralEquivalence(
-            plan.attributes.get,
+          assertStructuralEquivalence(plan)(
+            Seq(
+              attribute("_2", Seq.empty)),
+            Seq(
+              function("f-max", Seq("_2")),
+              function("f-aggExp", Seq("f-max")),
+              function("f-alias-max2", Seq("f-aggExp"))),
+            Seq.empty,
+            Seq(
+              attribute("_1", Seq.empty),
+              attribute("max2", Seq("f-alias-max2")))
+          )
+        }
+      })
+
+  it should "convert union" in
+    withNewSparkSession(spark =>
+      withLineageTracking(spark) {
+        lineageCaptor => {
+          import spark.implicits._
+
+          val df1 = Seq((1, 2)).toDF()
+          val df2 = Seq((3, 4)).toDF()
+
+          val unionizedDf = df1.union(df2)
+
+          val (plan, _) = lineageCaptor.lineageOf(unionizedDf.write.mode("overwrite").save(filePath))
+
+          assertStructuralEquivalence(plan)(
             Seq(
               attribute("_1", Seq.empty),
               attribute("_2", Seq.empty),
-              attribute("max2", Seq("f-aggExp"))))
+              attribute("_3", Seq.empty),
+              attribute("_4", Seq.empty)),
+            Seq(
+              function("f-union-13", Seq("_1", "_3")),
+              function("f-union-24", Seq("_2", "_4"))),
+            Seq.empty,
+            Seq(
+              attribute("union-13", Seq("f-union-13")),
+              attribute("union-24", Seq("f-union-24")))
+          )
+        }
+      })
 
-          assertStructuralEquivalence(
-            plan.expressions.get,
-            Expressions(
-              Some(Seq(
-                function("f-max", Seq("_2")),
-                function("f-aggExp", Seq("f-max")))),
-              None
-            ))
+  it should "convert explode (generator)" in
+    withNewSparkSession(spark =>
+      withLineageTracking(spark) {
+        lineageCaptor => {
+          import spark.implicits._
+
+          val df1 = Seq(Seq(1, 2, 3, 4)).toDF()
+
+          val dfRes = df1.select(explode(col("value")) as "res")
+
+          val (plan, _) = lineageCaptor.lineageOf(dfRes.write.mode("overwrite").save(filePath))
+
+          assertStructuralEquivalence(plan)(
+            Seq(
+              attribute("value", Seq.empty)),
+            Seq(
+              function("f-explode", Seq("value"))),
+            Seq.empty,
+            Seq(
+              attribute("res", Seq("f-explode")))
+          )
         }
       })
 }
@@ -136,50 +184,103 @@ object ExpressionSpec extends Matchers {
   type Expr = Any // Literal | Attribute | FunctionalExpression
 
   def attribute(name: String, childIds: Seq[String]): Attribute =
-    Attribute(name, None, childIds.map(x => AttrOrExprRef(Some(x), None)).asOption, None, name)
+    Attribute(name, None, childIds.map(idToAttrOrExprRef).asOption, None, name)
 
   def function(name: String, childIds: Seq[String]): FunctionalExpression =
-    FunctionalExpression(name, None, childIds.map(x => AttrOrExprRef(None, Some(x))).asOption, None, name, None)
+    FunctionalExpression(name, None, childIds.map(idToAttrOrExprRef).asOption, None, name, None)
 
   def literal(name: String, value: Any): Literal =
     Literal(name, None, None, value)
 
-  /**
-   * for this to work expected attribute names must match the actual attribute names
-   */
-  def assertStructuralEquivalence(actual: Expressions, expected: Expressions): Unit = {
-    actual.functions.size shouldBe expected.functions.size
-    actual.constants.size shouldBe expected.constants.size
+  private def idToAttrOrExprRef(id: String) = id match {
+    case i: String if i.startsWith("f-") => AttrOrExprRef(None, Some(i))
+    case i: String if i.startsWith("l-") => AttrOrExprRef(None, Some(i))
+    case i: String => AttrOrExprRef(Some(i), None)
   }
 
-  /**
-   * for this to work expected attribute names must match the actual attribute names
-   */
-  def assertStructuralEquivalence(actual: Seq[Attribute], expected: Seq[Attribute]): Unit = {
-    actual.size shouldBe expected.size
+  def assertStructuralEquivalence(
+    actualPlan: ExecutionPlan
+  )(
+    expectedAttributes: Seq[Attribute],
+    expectedFunctions: Seq[FunctionalExpression],
+    expectedLiterals: Seq[Literal],
+    expectedOutput: Seq[Attribute]
+  ): Unit = {
+    val actualAttributes: Seq[Attribute] = actualPlan.attributes.get
+    val actualFunctions: Seq[FunctionalExpression] = actualPlan.expressions.flatMap(_.functions).getOrElse(Seq.empty)
+    val actualLiterals: Seq[Literal] = actualPlan.expressions.flatMap(_.constants).getOrElse(Seq.empty)
 
-    val actualAttNameMap = actual.map(att => att.name -> att).toMap
+    actualAttributes.size shouldBe expectedAttributes.size + expectedOutput.size
+    actualFunctions.size shouldBe actualFunctions.size
+    actualLiterals.size shouldBe actualLiterals.size
 
-    val attExpIdToActId = expected.map { expAtt =>
-      val actualAtt = actualAttNameMap(expAtt.name)
-      AttrOrExprRef(Some(expAtt.id), None) -> AttrOrExprRef(Some(actualAtt.id), None)
-    }.toMap
+    val actualIdMap = new IdMap(actualAttributes, actualFunctions, actualLiterals)
+    val expectedIdMap = new IdMap(expectedAttributes ++ expectedOutput, expectedFunctions, expectedLiterals)
 
-    def toIdMap(attributes: Seq[Attribute]): Map[AttrOrExprRef, Attribute] = {
-      attributes.map(a => AttrOrExprRef(Some(a.id), None) -> a).toMap
+    val actualOutput: Seq[Attribute] = actualPlan.operations.write.output.map(actualIdMap.getAttribute)
+
+    actualOutput.size shouldBe expectedOutput.size
+
+    @scala.annotation.tailrec
+    def assertDAGsIsomorphism(
+      processedEntries: Set[(Expr, Expr)],
+      stackedEntries: Seq[(Expr, Expr)]
+    ): Set[(Expr, Expr)] = {
+      stackedEntries match {
+        case Nil => processedEntries
+
+        case (actual, expected) +: restEnqueuedEntries if processedEntries((actual, expected)) =>
+          assertDAGsIsomorphism(processedEntries, restEnqueuedEntries)
+
+        case (actual, expected) +: restEnqueuedEntries =>
+          assertSemiEquivalence(actual, expected)
+          val children = getChildrenPairs(actual, expected)
+          assertDAGsIsomorphism(
+            processedEntries + stackedEntries.head,
+            children ++ restEnqueuedEntries)
+      }
     }
 
-    val actualIdMap = toIdMap(actual)
-    val expectedIdMap = toIdMap(expected)
+    actualOutput.zip(expectedOutput).foldLeft(Set.empty[(Expr, Expr)]){
+      (processedPairs, pair) => assertDAGsIsomorphism(processedPairs, Seq(pair))
+    }
 
-    expected.foreach { eAtt =>
-      val aAtt = actualIdMap(attExpIdToActId(AttrOrExprRef(Some(eAtt.id), None)))
-      val childrenPairs =
-        aAtt.childIds.getOrElse(Nil)
-          .zip(eAtt.childIds.getOrElse(Nil))
-      childrenPairs.foreach {
-        case (aId, eId) => actualIdMap(aId) shouldBe expectedIdMap(eId)
-      }
+    def assertSemiEquivalence(actual: Expr, expected: Expr): Unit = (actual, expected) match {
+      case (al: Literal, el: Literal) =>
+        al.value shouldBe el.value
+      case (aa: Attribute, ea: Attribute) =>
+        aa.childIds.map(_.size).getOrElse(0) shouldBe ea.childIds.map(_.size).getOrElse(0)
+      case (af: FunctionalExpression, ef: FunctionalExpression) =>
+        af.childIds.map(_.size).getOrElse(0) shouldBe ef.childIds.map(_.size).getOrElse(0)
+    }
+
+    def getChildrenPairs(actual: Expr, expected: Expr): Seq[(Expr, Expr)] = (actual, expected) match {
+      case (_: Literal, _: Literal) =>
+        Seq.empty
+      case (aa: Attribute, ea: Attribute) =>
+        zipChildren(aa.childIds, ea.childIds)
+      case (af: FunctionalExpression, ef: FunctionalExpression) =>
+        zipChildren(af.childIds, ef.childIds)
+    }
+
+    def zipChildren(
+      actual: Option[Seq[AttrOrExprRef]],
+      expected: Option[Seq[AttrOrExprRef]]
+    ) = (actual, expected) match {
+      case (None, None) => Seq.empty
+      case (Some(al), Some(el)) => al.map(actualIdMap(_)).zip(el.map(expectedIdMap(_)))
+    }
+  }
+
+  private class IdMap(attributes: Seq[Attribute], functions: Seq[FunctionalExpression], literals: Seq[Literal]) {
+    val attMap = attributes.map(a => a.id -> a).toMap
+    val expMap = functions.map(f => f.id -> f).toMap ++ literals.map(l => l.id -> l).toMap
+
+    def getAttribute(id: String): Attribute = attMap(id)
+
+    def apply(ref: AttrOrExprRef): Expr = ref match {
+      case AttrOrExprRef(Some(attrId), None) => attMap(attrId)
+      case AttrOrExprRef(None, Some(exprId)) => expMap(exprId)
     }
   }
 }

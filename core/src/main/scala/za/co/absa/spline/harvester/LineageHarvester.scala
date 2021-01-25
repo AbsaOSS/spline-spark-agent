@@ -85,6 +85,7 @@ class LineageHarvester(
       val restOpBuilders = createOperationBuildersRecursively(writeCommand.query)
 
       restOpBuilders.lastOption.foreach(writeOpBuilder.+=)
+      val builders = restOpBuilders :+ writeOpBuilder
 
       val restOps = restOpBuilders.map(_.build())
       val writeOp = writeOpBuilder.build()
@@ -102,11 +103,10 @@ class LineageHarvester(
           ExecutionPlanExtra.DataTypes -> componentCreatorFactory.dataTypeConverter.values
         )
 
-        val exprs = componentCreatorFactory.expressionConverter.values
-        val attributes = componentCreatorFactory.attributeConverter.values
+        val attributes = builders.map(_.outputAttributes).reduce(_ ++ _).distinct
         val expressions = Expressions(
-          constants = exprs.collect({ case le: Literal => le }).asOption,
-          functions = exprs.collect({ case fe: FunctionalExpression => fe }).asOption
+          constants = builders.map(_.literals).reduce(_ ++ _).asOption,
+          functions = builders.map(_.functionalExpressions).reduce(_ ++ _).asOption
         )
 
         val p = ExecutionPlan(

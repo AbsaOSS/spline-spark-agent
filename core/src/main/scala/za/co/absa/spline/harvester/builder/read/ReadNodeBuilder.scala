@@ -37,7 +37,7 @@ class ReadNodeBuilder
       childIds = Nil,
       inputSources = command.sourceIdentifier.uris,
       id = id,
-      output = outputAttributes,
+      output = outputAttributes.map(_.id),
       params = Map(command.params.toSeq: _*).asOption,
       extra = Map(
         OperationExtras.Name -> operation.nodeName,
