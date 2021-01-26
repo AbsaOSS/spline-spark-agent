@@ -29,16 +29,16 @@ object ModelMapperV1 extends ModelMapper {
       plan.id,
       toV1Operations(plan.operations),
       toV1SystemInfo(plan.systemInfo),
-      plan.agentInfo.map(toV1AgentInfo(_)),
+      plan.agentInfo.map(toV1AgentInfo),
       plan.extraInfo
     )
   }
 
-  def toV1Operations(operations: v1_1.Operations) =
+  private def toV1Operations(operations: v1_1.Operations) =
     v1_0.Operations(
       toV1WriteOperation(operations.write),
-      operations.reads.map(ops => ops.map(toV1ReadOperation(_))),
-      operations.other.map(ops => ops.map(toV1DataOperation(_)))
+      operations.reads.map(ops => ops.map(toV1ReadOperation)),
+      operations.other.map(ops => ops.map(toV1DataOperation))
     )
 
   private def toV1WriteOperation(operation: v1_1.WriteOperation) =
@@ -47,14 +47,14 @@ object ModelMapperV1 extends ModelMapper {
       None,
       operation.append,
       toV1OperationId(operation.id),
-      operation.childIds.map(toV1OperationId(_)),
+      operation.childIds.map(toV1OperationId),
       operation.params,
       operation.extra
     )
 
   private def toV1ReadOperation(operation: v1_1.ReadOperation) =
     v1_0.ReadOperation(
-      operation.childIds.map(toV1OperationId(_)),
+      operation.childIds.map(toV1OperationId),
       operation.inputSources,
       toV1OperationId(operation.id),
       None,
@@ -65,7 +65,7 @@ object ModelMapperV1 extends ModelMapper {
   private def toV1DataOperation(operation: v1_1.DataOperation) =
     v1_0.DataOperation(
       toV1OperationId(operation.id),
-      operation.childIds.map(ops => ops.map(toV1OperationId(_))),
+      operation.childIds.map(ops => ops.map(toV1OperationId)),
       None,
       operation.params,
       operation.extra
@@ -74,10 +74,10 @@ object ModelMapperV1 extends ModelMapper {
   private def toV1OperationId(idString: String) =
     idString.toInt
 
-  def toV1SystemInfo(nameAndVersion: v1_1.NameAndVersion) =
+  private def toV1SystemInfo(nameAndVersion: v1_1.NameAndVersion) =
     v1_0.SystemInfo(nameAndVersion.name, nameAndVersion.version)
 
-  def toV1AgentInfo(nameAndVersion: v1_1.NameAndVersion) =
+  private def toV1AgentInfo(nameAndVersion: v1_1.NameAndVersion) =
     v1_0.AgentInfo(nameAndVersion.name, nameAndVersion.version)
 
   /**

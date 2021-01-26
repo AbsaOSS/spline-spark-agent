@@ -18,7 +18,6 @@ package za.co.absa.spline.harvester.dispatcher
 import org.apache.commons.configuration.Configuration
 import org.apache.spark.internal.Logging
 import scalaj.http.{Http, HttpStatusException}
-import za.co.absa.commons.JsonUtils
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.version.Version
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.HttpConstants.Encoding
@@ -68,7 +67,7 @@ class HttpLineageDispatcher(restClient: RestClient)
 
   private def sendJson(json: String, endpoint: RestEndpoint) = {
     val url = endpoint.request.url
-    logTrace(s"sendJson $url : \n${JsonUtils.prettifyJson(json)}")
+    logTrace(s"sendJson $url : \n${json.asPrettyJson}")
 
     val contentType =
       if (apiVersion == ProducerApiVersion.V1) MediaType.APPLICATION_JSON

@@ -15,7 +15,8 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>agent-core_2.11</artifactId>
@@ -42,7 +43,7 @@
         <dependency>
             <groupId>za.co.absa.commons</groupId>
             <artifactId>commons_${scala.binary.version}</artifactId>
-            <version>0.0.18</version>
+            <version>0.0.20</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -91,6 +92,11 @@
             <version>4.8.87</version>
         </dependency>
         <dependency>
+            <groupId>org.scala-graph</groupId>
+            <artifactId>graph-core_${scala.binary.version}</artifactId>
+            <version>1.12.5</version>
+        </dependency>
+        <dependency>
             <groupId>com.datastax.spark</groupId>
             <artifactId>spark-cassandra-connector_${scala.binary.version}</artifactId>
             <optional>true</optional>
@@ -123,7 +129,17 @@
             <plugin>
                 <groupId>io.swagger.codegen.v3</groupId>
                 <artifactId>swagger-codegen-maven-plugin</artifactId>
-                <version>3.0.16</version>
+                <version>3.0.23</version>
+                <configuration>
+                    <language>scala</language>
+                    <generateModels>true</generateModels>
+                    <generateApis>false</generateApis>
+                    <generateSupportingFiles>false</generateSupportingFiles>
+                    <typeMappings>array=Seq</typeMappings>
+                    <configOptions>
+                        <modelPropertyNaming>original</modelPropertyNaming>
+                    </configOptions>
+                </configuration>
                 <executions>
                     <execution>
                         <id>swagger.api.v1_0</id>
@@ -131,12 +147,8 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <language>scala</language>
                             <inputSpec>${project.basedir}/src/main/resources/producer.api.v1.0.json</inputSpec>
                             <modelPackage>za.co.absa.spline.producer.model.v1_0</modelPackage>
-                            <generateModels>true</generateModels>
-                            <generateApis>false</generateApis>
-                            <generateSupportingFiles>false</generateSupportingFiles>
                         </configuration>
                     </execution>
                     <execution>
@@ -145,12 +157,8 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <language>scala</language>
                             <inputSpec>${project.basedir}/src/main/resources/producer.api.v1.1.json</inputSpec>
                             <modelPackage>za.co.absa.spline.producer.model.v1_1</modelPackage>
-                            <generateModels>true</generateModels>
-                            <generateApis>false</generateApis>
-                            <generateSupportingFiles>false</generateSupportingFiles>
                         </configuration>
                     </execution>
                 </executions>

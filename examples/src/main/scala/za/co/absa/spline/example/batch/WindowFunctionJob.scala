@@ -31,7 +31,7 @@ import za.co.absa.spline.harvester.SparkLineageInitializer._
  */
 object WindowFunctionJob extends SparkApp("Window Function Job") {
 
-  private val filePath1 = TempFile("file1", ".xlsx", false).deleteOnExit().path.toAbsolutePath.toString
+  private val filePath1 = TempFile("file1", ".xlsx", pathOnly = false).deleteOnExit().path.toAbsolutePath.toString
 
   // Initializing library to hook up to Apache Spark
   spark.enableLineageTracking()
@@ -43,7 +43,7 @@ object WindowFunctionJob extends SparkApp("Window Function Job") {
       StructField("category", StringType, nullable = false),
       StructField("revenue", IntegerType, nullable = false)
     ))
-    val rdd = spark.sparkContext.parallelize(List(
+    val rdd = spark.sparkContext.parallelize(Seq(
       Row("Thin", "Cell phone", 6000),
       Row("Normal", "Tablet", 1500),
       Row("Mini", "Tablet", 5500),

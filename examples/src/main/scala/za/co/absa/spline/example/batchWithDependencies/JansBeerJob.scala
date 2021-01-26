@@ -27,12 +27,13 @@ object JansBeerJob extends SparkApp("Jan's Beer Job", conf = Seq("spark.sql.shuf
 
   spark.enableLineageTracking()
 
-  val beerConsumption = spark.read.option("header", "true").csv("data/input/batchWithDependencies/beerConsum.csv")
+  spark.sparkContext.setLogLevel("TRACE")
 
+  val beerConsumption = spark.read.option("header", "true").csv("data/input/batchWithDependencies/beerConsum.csv")
   val population = spark.read.option("header", "true").csv("data/input/batchWithDependencies/population.csv")
 
   def calculateConsumptionPerCapita(year: String) =
-    (col(year) * 100) / col("y" + year) as "Year" + year
+    (col(year) * 100) / col(s"y$year") as s"Year$year"
 
 
   val result = beerConsumption

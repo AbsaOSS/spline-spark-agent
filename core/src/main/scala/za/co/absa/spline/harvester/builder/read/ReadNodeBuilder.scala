@@ -29,17 +29,15 @@ class ReadNodeBuilder
   (val componentCreatorFactory: ComponentCreatorFactory, postProcessor: PostProcessor)
   extends OperationNodeBuilder {
 
-  val inputAttributeConverter = componentCreatorFactory.inputAttributeConverter
-
   override protected type R = ReadOperation
   override val operation: LogicalPlan = command.operation
 
   override def build(): ReadOperation = {
     val rop = ReadOperation(
       childIds = Nil,
-      inputSources = command.sourceIdentifier.uris.toList,
+      inputSources = command.sourceIdentifier.uris,
       id = id,
-      output = outputAttributes,
+      output = outputAttributes.map(_.id),
       params = Map(command.params.toSeq: _*).asOption,
       extra = Map(
         OperationExtras.Name -> operation.nodeName,

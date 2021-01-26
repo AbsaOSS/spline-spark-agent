@@ -27,8 +27,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.{Inside, OneInstancePerTest}
 import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.spline.model.dt
-import za.co.absa.spline.producer.model.v1_1.FunctionalExpression
-import za.co.absa.spline.producer.model.v1_1.{Literal => SplineLiteral}
+import za.co.absa.spline.producer.model.v1_1.{FunctionalExpression, Literal => SplineLiteral}
 
 class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with MockitoSugar with Matchers with Inside {
 
@@ -39,7 +38,8 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
   behavior of "Converting arbitrary Spark Expression"
 
   private val dtConverterMock = mock[DataTypeConverter]
-  private val converter = new GenericExpressionConverter(new DataConverter, dtConverterMock)
+  private val exprToRefConverterMock = mock[ExprToRefConverter]
+  private val converter = new ExpressionConverter(dtConverterMock, exprToRefConverterMock)
 
   when(dtConverterMock convert NullType -> true) thenReturn nullDataType
   when(dtConverterMock convert StringType -> false) thenReturn stringDataType
@@ -47,22 +47,22 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
   it should "support secondary constructor, but only capture params from the primary one" in {
     val expression = new Foo("this parameter should not be captured")
 
-    inside(converter.convert(expression, opId)) {
+    inside(converter.convert(expression)) {
       case FunctionalExpression(id, Some(dataTypeId), children, extra, name, params) =>
         name shouldEqual "foo"
         dataTypeId shouldEqual nullDataType.id
-        children should have size 0
-        extra should contain("_typeHint" -> "expr.Generic")
-        params shouldNot contain key "aParamOfSecondaryConstructor"
+        children should be(None)
+        extra.get should contain("_typeHint" -> "expr.Generic")
+        params.get shouldNot contain key "aParamOfSecondaryConstructor"
     }
   }
 
   it should "ignore properties with null or None value" in {
     val expression = Foo.empty
 
-    inside(converter.convert(expression, opId)) {
+    inside(converter.convert(expression)) {
       case fe: FunctionalExpression =>
-        val params = fe.params
+        val params = fe.params.get
         params shouldNot contain key "otherExpression"
         params shouldNot contain key "string"
         params shouldNot contain key "javaInteger"
@@ -76,9 +76,9 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
   it should "support java boxed primitives as well as scala primitives" in {
     val expression = Foo.empty.copy(javaInteger = 1, scalaInt = 2)
 
-    inside(converter.convert(expression, opId)) {
+    inside(converter.convert(expression)) {
       case fe: FunctionalExpression =>
-        fe.params should contain allOf(
+        fe.params.get should contain allOf(
           "javaInteger" -> 1,
           "scalaInt" -> 2
         )
@@ -99,9 +99,9 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
       seq = null
     )
 
-    inside(converter.convert(expression, opId)) {
+    inside(converter.convert(expression)) {
       case fe: FunctionalExpression =>
-        fe.params should contain allOf(
+        fe.params.get should contain allOf(
           "optionWithDefault" -> "this is a default value",
           "scalaIntWithDefault" -> 42
         )
@@ -118,80 +118,27 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
           42 -> Some(Some(Some(Some(42)))),
           777 -> None))))
 
-    inside(converter.convert(expression, opId)) {
+    inside(converter.convert(expression)) {
       case fe: FunctionalExpression =>
-        fe.params should contain("option" -> Map("1" -> 10, "2" -> Seq(null, 20), "3" -> Map("42" -> 42)))
+        fe.params.get should contain("option" -> Map("1" -> 10, "2" -> Seq(null, 20), "3" -> Map("42" -> 42)))
     }
   }
 
   it should "support objects" in {
     val expression = Foo.empty.copy(any = Bar)
 
-    inside(converter.convert(expression, opId)) {
+    inside(converter.convert(expression)) {
       case fe: FunctionalExpression =>
-        fe.params should contain("any" -> "Bar")
+        fe.params.get should contain("any" -> "Bar")
     }
   }
 
   it should "support expressions" in {
     val expression = Foo.empty.copy(any = CaseWhen(Seq(Literal(42) -> Literal("Moo")), Literal("Meh")))
 
-    inside(converter.convert(expression, opId)) {
+    inside(converter.convert(expression)) {
       case fe: FunctionalExpression =>
-        fe.params should contain("any" -> "CASE WHEN 42 THEN Moo ELSE Meh END")
-    }
-  }
-
-  it should "support array of struct literals" in {
-    val testLiteral = Literal.create(Array(
-      Tuple2("a1", "b1"),
-      Tuple2("a2", "b2")
-    ))
-
-    val dummyType = dt.Simple("dummy", nullable = false)
-    when(dtConverterMock convert testLiteral.dataType -> false) thenReturn dummyType
-
-    val expression = converter.convert(testLiteral, opId)
-
-    expression shouldBe a[SplineLiteral]
-
-    val literal = expression.asInstanceOf[SplineLiteral]
-
-    literal.value shouldEqual Seq(Seq("a1", "b1"), Seq("a2", "b2"))
-    literal.dataType shouldEqual Some(dummyType.id)
-    literal.extra should contain("_typeHint" -> "expr.Literal")
-  }
-
-  it should "support array of struct of array of struct literals" in {
-    val testLiteral = Literal.create(Array(
-      Tuple2("row1", Array(
-        Tuple3("a1", Some(true), Map("b1" -> 100)),
-        Tuple3("c1", None, Map("d1" -> 200, "e1" -> 300))
-      )),
-      Tuple2("row2", Array(
-        Tuple3("a2", Some(false), Map("b2" -> 400)),
-        Tuple3("c2", None, Map("d2" -> 500, "e2" -> 600, "f2" -> 700))
-      ))
-    ))
-
-    val dummyType = dt.Simple("dummy", nullable = false)
-    when(dtConverterMock convert testLiteral.dataType -> false) thenReturn dummyType
-
-    val expression = converter.convert(testLiteral, opId)
-    val literal = expression.asInstanceOf[SplineLiteral]
-
-    literal.dataType shouldEqual Some(dummyType.id)
-    literal.value should be {
-      Seq(
-        Seq("row1", Seq(
-          Seq("a1", true, Map("b1" -> 100)),
-          Seq("c1", null, Map("d1" -> 200, "e1" -> 300))
-        )),
-        Seq("row2", Seq(
-          Seq("a2", false, Map("b2" -> 400)),
-          Seq("c2", null, Map("d2" -> 500, "e2" -> 600, "f2" -> 700))
-        ))
-      )
+        fe.params.get should contain("any" -> "CASE WHEN 42 THEN Moo ELSE Meh END")
     }
   }
 
@@ -206,9 +153,9 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
       }))
     )
 
-    inside(converter.convert(expression, opId)) {
+    inside(converter.convert(expression)) {
       case fe: FunctionalExpression =>
-        fe.params should contain allOf(
+        fe.params.get should contain allOf(
           "any" -> "Bar",
           "option" -> "blah",
           "seq" -> Seq(Map("Some(this is some Bar object)" -> "blah"))
@@ -224,9 +171,9 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
       otherExpression = Literal("this isn't a child")
     )
 
-    inside(converter.convert(expression, opId)) {
+    inside(converter.convert(expression)) {
       case fe: FunctionalExpression =>
-        val params = fe.params
+        val params = fe.params.get
         params shouldNot contain key "nullable"
 
         params shouldNot contain key "dataType"
@@ -244,9 +191,9 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
       otherExpression = aChild
     )
 
-    inside(converter.convert(expression, opId)) {
+    inside(converter.convert(expression)) {
       case fe: FunctionalExpression =>
-        fe.params shouldNot contain key "otherExpression"
+        fe.params.get shouldNot contain key "otherExpression"
     }
   }
 }
@@ -255,8 +202,6 @@ object ExpressionConverterSpec {
 
   val nullDataType = dt.Simple("Null", nullable = true)
   val stringDataType = dt.Simple("String", nullable = false)
-
-  val opId = "42"
 
   case class Foo(
     returnType: DataType,
