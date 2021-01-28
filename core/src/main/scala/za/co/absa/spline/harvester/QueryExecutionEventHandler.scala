@@ -42,9 +42,8 @@ class QueryExecutionEventHandler(
       .harvest(Try(durationNs.nanos))
       .foreach({
         case (plan, event) =>
-          val idAsJson = lineageDispatcher.send(plan)
-          val savedPlanId = UUID.fromString(idAsJson.fromJson[String])
-          lineageDispatcher.send(event.copy(planId = savedPlanId))
+          val id = lineageDispatcher.send(plan)
+          lineageDispatcher.send(event.copy(planId = id))
       })
   }
 

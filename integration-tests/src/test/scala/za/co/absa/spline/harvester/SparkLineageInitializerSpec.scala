@@ -172,7 +172,7 @@ object SparkLineageInitializerSpec {
 
     MockLineageDispatcher.onConstruction()
 
-    override def send(plan: ExecutionPlan): String = MockLineageDispatcher.theMock.send(plan)
+    override def send(plan: ExecutionPlan): UUID = MockLineageDispatcher.theMock.send(plan)
 
     override def send(event: ExecutionEvent): Unit = MockLineageDispatcher.theMock.send(event)
   }
@@ -193,7 +193,7 @@ object SparkLineageInitializerSpec {
       this._instanceCount = 0
       this.throwableOnConstruction = None
       Mockito.reset(theMock)
-      when(theMock.send(any[ExecutionPlan]())) thenReturn UUID.randomUUID.toString.toJson
+      when(theMock.send(any[ExecutionPlan]())) thenReturn UUID.randomUUID
     }
 
     def onConstructionThrow(th: Throwable): Unit = {

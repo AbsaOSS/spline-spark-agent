@@ -29,6 +29,7 @@ import za.co.absa.spline.harvester.exception.SplineInitializationException
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 
+import java.util.UUID
 import javax.ws.rs.core.MediaType
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -55,7 +56,7 @@ class HttpLineageDispatcher(restClient: RestClient)
     serverHeaders(SplineHttpHeaders.AcceptRequestEncoding)
       .exists(_.toLowerCase == Encoding.GZIP)
 
-  override def send(executionPlan: ExecutionPlan): String = {
+  override def send(executionPlan: ExecutionPlan): UUID = {
     val execPlanDTO = modelMapper.toDTO(executionPlan)
     sendJson(execPlanDTO.toJson, executionPlansEndpoint)
   }
@@ -74,11 +75,12 @@ class HttpLineageDispatcher(restClient: RestClient)
       else s"application/vnd.absa.spline.producer.v${apiVersion.asString}+json"
 
     try {
-      endpoint
+      val idString = endpoint
         .post(json, contentType, requestCompressionSupported)
         .throwError
         .body
 
+      UUID.fromString(idString)
     } catch {
       case HttpStatusException(code, _, body) =>
         throw new RuntimeException(createHttpErrorMessage(s"Cannot send lineage data to $url", code, body))
