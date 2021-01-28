@@ -19,6 +19,8 @@ package za.co.absa.spline.harvester.dispatcher
 import za.co.absa.spline.harvester.exception.SplineInitializationException
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 
+import java.util.UUID
+
 /**
  * <p>
  * This trait deals with the captured lineage information.
@@ -49,7 +51,7 @@ import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 @throws[SplineInitializationException]
 trait LineageDispatcher {
 
-  def send(executionPlan: ExecutionPlan): String
+  def send(executionPlan: ExecutionPlan): UUID
 
   def send(event: ExecutionEvent): Unit
 }
