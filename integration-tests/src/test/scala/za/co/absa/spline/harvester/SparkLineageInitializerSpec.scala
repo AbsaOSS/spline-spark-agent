@@ -17,7 +17,6 @@
 package za.co.absa.spline.harvester
 
 import java.util.UUID
-
 import org.apache.commons.configuration.{Configuration, SystemConfiguration}
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SparkSession
@@ -53,7 +52,8 @@ class SparkLineageInitializerSpec
     with SystemFixture.IsolatedSystemPropertiesPerTest {
 
   before {
-    sys.props.put(LineageDispatcherClass, classOf[MockLineageDispatcher].getName)
+    sys.props.put(LineageDispatcherName, "test")
+    sys.props.put(s"$LineageDispatcherName.test.className", classOf[MockLineageDispatcher].getName)
     MockLineageDispatcher.reset()
   }
 
