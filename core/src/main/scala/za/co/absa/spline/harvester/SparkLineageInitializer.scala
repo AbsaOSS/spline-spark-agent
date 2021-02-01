@@ -54,7 +54,7 @@ object SparkLineageInitializer extends Logging {
     }
   }
 
-  val InitFlagKey = "spline.initialized_flag"
+  val InitFlagKey = "spline.initializedFlag"
 
   val SparkQueryExecutionListenersKey = "spark.sql.queryExecutionListeners"
 }

@@ -306,17 +306,23 @@ class LineageHarvesterSpec extends AnyFlatSpec
       val testSplineConfigurer = new DefaultSplineConfigurer(spark, EMPTY_CONF) {
         override protected def lineageDispatcher: LineageDispatcher = new LineageCapturingDispatcher(lineageCaptor.setter)
 
-        override protected def userExtraMetadataProvider: UserExtraMetadataProvider = new UserExtraMetadataProvider {
-          override def forExecEvent(event: ExecutionEvent, ctx: HarvestingContext): Map[String, Any] = Map("test.extra" -> event)
+        override protected def maybeUserExtraMetadataProvider: Option[UserExtraMetadataProvider] = Some(
+          new UserExtraMetadataProvider {
+            override def forExecEvent(event: ExecutionEvent, ctx: HarvestingContext): Map[String, Any] =
+              Map("test.extra" -> event)
 
-          override def forExecPlan(plan: ExecutionPlan, ctx: HarvestingContext): Map[String, Any] = Map("test.extra" -> plan)
+            override def forExecPlan(plan: ExecutionPlan, ctx: HarvestingContext): Map[String, Any] =
+              Map("test.extra" -> plan)
 
-          override def forOperation(op: ReadOperation, ctx: HarvestingContext): Map[String, Any] = Map("test.extra" -> op)
+            override def forOperation(op: ReadOperation, ctx: HarvestingContext): Map[String, Any] =
+              Map("test.extra" -> op)
 
-          override def forOperation(op: WriteOperation, ctx: HarvestingContext): Map[String, Any] = Map("test.extra" -> op)
+            override def forOperation(op: WriteOperation, ctx: HarvestingContext): Map[String, Any] =
+              Map("test.extra" -> op)
 
-          override def forOperation(op: DataOperation, ctx: HarvestingContext): Map[String, Any] = Map("test.extra" -> op)
-        }
+            override def forOperation(op: DataOperation, ctx: HarvestingContext): Map[String, Any] =
+              Map("test.extra" -> op)
+          })
       }
 
       import SparkLineageInitializer._

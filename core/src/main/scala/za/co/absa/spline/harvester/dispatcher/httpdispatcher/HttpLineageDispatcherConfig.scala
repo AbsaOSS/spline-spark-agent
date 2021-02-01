@@ -17,15 +17,15 @@
 package za.co.absa.spline.harvester.dispatcher.httpdispatcher
 
 import org.apache.commons.configuration.Configuration
-import za.co.absa.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
+import za.co.absa.commons.config.ConfigurationImplicits._
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.HttpLineageDispatcherConfig._
 
 import scala.concurrent.duration._
 
 object HttpLineageDispatcherConfig {
-  val ProducerUrlProperty = "spline.producer.url"
-  val ConnectionTimeoutMsKey = "spline.timeout.connection"
-  val ReadTimeoutMsKey = "spline.timeout.read"
+  val ProducerUrlProperty = "producer.url"
+  val ConnectionTimeoutMsKey = "timeout.connection"
+  val ReadTimeoutMsKey = "timeout.read"
 
   val DefaultConnectionTimeout: Duration = 1.second
   val DefaultReadTimeout: Duration = 20.second
@@ -33,8 +33,16 @@ object HttpLineageDispatcherConfig {
   def apply(c: Configuration) = new HttpLineageDispatcherConfig(c)
 }
 
-class HttpLineageDispatcherConfig(c: Configuration) {
-  val producerUrl: String = c.getRequiredString(ProducerUrlProperty)
-  val connTimeout: Duration = c.getLong(ConnectionTimeoutMsKey, DefaultConnectionTimeout.toMillis).millis
-  val readTimeout: Duration = c.getLong(ReadTimeoutMsKey, DefaultReadTimeout.toMillis).millis
+class HttpLineageDispatcherConfig(config: Configuration) {
+  val producerUrl: String = config.getRequiredString(ProducerUrlProperty)
+
+  val connTimeout: Duration = config
+    .getOptionalLong(ConnectionTimeoutMsKey)
+    .map(_.millis)
+    .getOrElse(DefaultConnectionTimeout)
+
+  val readTimeout: Duration = config
+    .getOptionalLong(ReadTimeoutMsKey)
+    .map(_.millis)
+    .getOrElse(DefaultReadTimeout)
 }

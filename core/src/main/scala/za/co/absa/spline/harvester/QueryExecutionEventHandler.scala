@@ -42,8 +42,8 @@ class QueryExecutionEventHandler(
       .harvest(Try(durationNs.nanos))
       .foreach({
         case (plan, event) =>
-          val id = lineageDispatcher.send(plan)
-          lineageDispatcher.send(event.copy(planId = id))
+          lineageDispatcher.send(plan)
+          lineageDispatcher.send(event)
       })
   }
 
