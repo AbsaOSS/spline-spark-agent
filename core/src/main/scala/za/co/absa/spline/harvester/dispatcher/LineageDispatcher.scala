@@ -19,8 +19,6 @@ package za.co.absa.spline.harvester.dispatcher
 import za.co.absa.spline.harvester.exception.SplineInitializationException
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 
-import java.util.UUID
-
 /**
  * <p>
  * This trait deals with the captured lineage information.
@@ -31,8 +29,10 @@ import java.util.UUID
  * </p>
  * <br>
  * <p>
- * If you are using default Spline configurer a custom lineage dispatcher can be registered via the configuration property
- * [[za.co.absa.spline.harvester.conf.DefaultSplineConfigurer.ConfProperty#LINEAGE_DISPATCHER_CLASS]]
+ * If you are using default Spline configurer a custom lineage dispatcher can be registered via the configuration properties.
+ * First you define name and then class for that dispatcher same way as it's done in spline.default.properties
+ * for the default http dispatcher.
+ *
  * <br>
  * See: [[za.co.absa.spline.harvester.conf.StandardSplineConfigurationStack]]
  * </p>
@@ -51,7 +51,7 @@ import java.util.UUID
 @throws[SplineInitializationException]
 trait LineageDispatcher {
 
-  def send(executionPlan: ExecutionPlan): UUID
+  def send(executionPlan: ExecutionPlan): Unit
 
   def send(event: ExecutionEvent): Unit
 }

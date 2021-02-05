@@ -22,9 +22,8 @@ import java.util.UUID
 
 class LineageCapturingDispatcher(lineageCaptor: LineageCaptor.Setter) extends LineageDispatcher {
 
-  override def send(plan: ExecutionPlan): UUID = {
+  override def send(plan: ExecutionPlan): Unit = {
     lineageCaptor.capture(plan)
-    plan.id.getOrElse(UUID.randomUUID())
   }
 
   override def send(event: ExecutionEvent): Unit = {

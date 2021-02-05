@@ -97,8 +97,9 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
 
   protected def lineageDispatcher: LineageDispatcher = {
     val dispatcherName = configuration.getRequiredString(LineageDispatcherName)
+    val dispatcherNamespace = s"$LineageDispatcherName.$dispatcherName"
     val dispatcherClassName = configuration.getRequiredString(s"$LineageDispatcherName.$dispatcherName.className")
-    instantiate[LineageDispatcher](dispatcherClassName, Some(dispatcherName))
+    instantiate[LineageDispatcher](dispatcherClassName, Some(dispatcherNamespace))
   }
 
   protected def ignoredWriteDetectionStrategy: IgnoredWriteDetectionStrategy =

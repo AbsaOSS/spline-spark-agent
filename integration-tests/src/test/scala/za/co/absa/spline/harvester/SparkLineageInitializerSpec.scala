@@ -16,7 +16,6 @@
 
 package za.co.absa.spline.harvester
 
-import java.util.UUID
 import org.apache.commons.configuration.{Configuration, SystemConfiguration}
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SparkSession
@@ -172,7 +171,7 @@ object SparkLineageInitializerSpec {
 
     MockLineageDispatcher.onConstruction()
 
-    override def send(plan: ExecutionPlan): UUID = MockLineageDispatcher.theMock.send(plan)
+    override def send(plan: ExecutionPlan): Unit = MockLineageDispatcher.theMock.send(plan)
 
     override def send(event: ExecutionEvent): Unit = MockLineageDispatcher.theMock.send(event)
   }
@@ -193,7 +192,6 @@ object SparkLineageInitializerSpec {
       this._instanceCount = 0
       this.throwableOnConstruction = None
       Mockito.reset(theMock)
-      when(theMock.send(any[ExecutionPlan]())) thenReturn UUID.randomUUID
     }
 
     def onConstructionThrow(th: Throwable): Unit = {
