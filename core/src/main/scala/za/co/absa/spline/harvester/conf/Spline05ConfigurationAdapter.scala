@@ -18,6 +18,7 @@ package za.co.absa.spline.harvester.conf
 
 import org.apache.commons.configuration.Configuration
 import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer.ConfProperty._
+import za.co.absa.spline.harvester.conf.HierarchicalObjectFactory.ClassName
 import za.co.absa.spline.harvester.conf.Spline05ConfigurationAdapter._
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.HttpLineageDispatcherConfig._
 import za.co.absa.spline.harvester.iwd.DefaultIgnoredWriteDetectionStrategy._
@@ -29,7 +30,7 @@ class Spline05ConfigurationAdapter(configuration: Configuration) extends ReadOnl
 
   private val defaultValues =
     if (configuration.containsKey(DeprecatedDispatcherClassName))
-      Map(LineageDispatcherName -> DefaultDispatcherNameValue)
+      Map(RootLineageDispatcher -> DefaultDispatcherNameValue)
     else
       Map.empty[String, AnyRef]
 
@@ -56,7 +57,7 @@ object Spline05ConfigurationAdapter {
   private val DefaultDispatcherNameValue = "http"
 
   private val DefaultDispatcherPrefix =
-    s"$LineageDispatcherName.$DefaultDispatcherNameValue"
+    s"$RootLineageDispatcher.$DefaultDispatcherNameValue"
 
   private val DeprecatedDispatcherClassName = "spline.lineage_dispatcher.className"
 
@@ -65,7 +66,7 @@ object Spline05ConfigurationAdapter {
     OnMissingMetricsKey -> "spline.iwd_strategy.default.on_missing_metrics",
     UserExtraMetadataProviderClass -> "spline.user_extra_meta_provider.className",
     PostProcessingFilterClasses -> "spline.postprocessing_filter.classNames",
-    s"$DefaultDispatcherPrefix.className" -> DeprecatedDispatcherClassName,
+    s"$DefaultDispatcherPrefix.$ClassName" -> DeprecatedDispatcherClassName,
     s"$DefaultDispatcherPrefix.$ProducerUrlProperty" -> "spline.producer.url",
     s"$DefaultDispatcherPrefix.$ConnectionTimeoutMsKey" -> "spline.timeout.connection",
     s"$DefaultDispatcherPrefix.$ReadTimeoutMsKey" -> "spline.timeout.read"
