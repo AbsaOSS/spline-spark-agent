@@ -49,7 +49,7 @@ class LineageHarvesterSpec extends AnyFlatSpec
 
   import za.co.absa.spline.harvester.LineageHarvesterSpec._
 
-  "When harvest method is called with an empty data frame" should "return a data lineage with one node." in
+  it should "support empty data frame" in
     withNewSparkSession(spark => {
       withLineageTracking(spark) { lineageCaptor =>
         import lineageCaptor._
@@ -65,7 +65,7 @@ class LineageHarvesterSpec extends AnyFlatSpec
       }
     })
 
-  "When harvest method is called with a simple non-empty data frame" should "return a data lineage with one node." in
+  it should "support simple non-empty data frame" in
     withNewSparkSession(spark => {
       withLineageTracking(spark) { lineageCaptor =>
         import lineageCaptor._
@@ -101,7 +101,7 @@ class LineageHarvesterSpec extends AnyFlatSpec
       }
     })
 
-  "When harvest method is called with a filtered data frame" should "return a data lineage forming a path with three nodes." in
+  it should "support filter and column renaming operations" in
     withNewSparkSession(spark => {
       withLineageTracking(spark) { lineageCaptor =>
         import lineageCaptor._
@@ -147,7 +147,7 @@ class LineageHarvesterSpec extends AnyFlatSpec
       }
     })
 
-  "When harvest method is called with an union data frame" should "return a data lineage forming a diamond graph." in
+  it should "support union operation, forming a diamond graph" in
     withNewSparkSession(spark => {
       withLineageTracking(spark) { lineageCaptor =>
         import lineageCaptor._
@@ -192,7 +192,7 @@ class LineageHarvesterSpec extends AnyFlatSpec
       }
     })
 
-  "When harvest method is called with a joined data frame" should "return a data lineage forming a diamond graph." in
+  it should "support join operation, forming a diamond graph" in
     withNewSparkSession(spark => {
       withLineageTracking(spark) { lineageCaptor =>
         import lineageCaptor._
@@ -252,7 +252,7 @@ class LineageHarvesterSpec extends AnyFlatSpec
       }
     })
 
-  "Create table as" should "produce lineage when creating a Hive table from temp view" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in
+  it should "support `CREATE TABLE ... AS SELECT` in Hive" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in
     withRestartingSparkContext {
       withCustomSparkSession(_
         .enableHiveSupport()
@@ -299,7 +299,7 @@ class LineageHarvesterSpec extends AnyFlatSpec
       }
     }
 
-  "harvest()" should "collect user extra metadata" in {
+  it should "collect user extra metadata" in {
     withNewSparkSession(spark => {
       val lineageCaptor = new LineageCaptor
 
