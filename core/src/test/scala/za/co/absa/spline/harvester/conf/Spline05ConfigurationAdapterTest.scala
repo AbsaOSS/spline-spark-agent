@@ -66,16 +66,16 @@ class Spline05ConfigurationAdapterTest extends AnyFlatSpec with Matchers with Sp
       "spline.lineage_dispatcher.className" -> "foo.bar.Baz.class"
     ))
 
-    config.containsKey(ConfProperty.LineageDispatcherName) shouldEqual true
-    config.getProperty(ConfProperty.LineageDispatcherName) shouldEqual "http"
-    config.getProperty(s"${ConfProperty.LineageDispatcherName}.http.className") shouldEqual "foo.bar.Baz.class"
+    config.containsKey(ConfProperty.RootLineageDispatcher) shouldEqual true
+    config.getProperty(ConfProperty.RootLineageDispatcher) shouldEqual "http"
+    config.getProperty(s"${ConfProperty.RootLineageDispatcher}.http.className") shouldEqual "foo.bar.Baz.class"
 
     val keys = config.getKeys.asScala.toSeq
-    keys.contains(ConfProperty.LineageDispatcherName) shouldEqual true
+    keys.contains(ConfProperty.RootLineageDispatcher) shouldEqual true
 
     val emptyConfig = createConfigAdapter(Map.empty)
 
-    emptyConfig.containsKey(ConfProperty.LineageDispatcherName) shouldEqual false
+    emptyConfig.containsKey(ConfProperty.RootLineageDispatcher) shouldEqual false
   }
 
 }
