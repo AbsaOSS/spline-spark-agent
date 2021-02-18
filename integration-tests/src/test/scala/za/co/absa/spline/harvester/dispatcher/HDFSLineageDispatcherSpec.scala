@@ -17,10 +17,13 @@
 package za.co.absa.spline.harvester.dispatcher
 
 import org.apache.commons.io.FileUtils.readFileToString
+import org.apache.spark.SPARK_VERSION
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.TempDirectory
 import za.co.absa.commons.json.DefaultJacksonJsonSerDe
+import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
+import za.co.absa.commons.version.Version._
 import za.co.absa.spline.harvester.SparkLineageInitializer.SparkSessionWrapper
 import za.co.absa.spline.test.fixture.SparkFixture
 
@@ -34,7 +37,7 @@ class HDFSLineageDispatcherSpec
 
   behavior of "HDFSLineageDispatcher"
 
-  it should "save lineage file to a filesystem" in {
+  it should "save lineage file to a filesystem" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
     withCustomSparkSession(_
       .config("spark.spline.lineageDispatcher", "hdfs")
       .config("spark.spline.lineageDispatcher.hdfs.className", classOf[HDFSLineageDispatcher].getName)) {
