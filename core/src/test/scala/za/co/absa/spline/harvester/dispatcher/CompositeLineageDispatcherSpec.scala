@@ -35,26 +35,61 @@ class CompositeLineageDispatcherSpec
 
   it should "delegate calls" in {
     val dummyExecPlan = mock[ExecutionPlan]
-    val dummyExecEven = mock[ExecutionEvent]
+    val dummyExecEvent = mock[ExecutionEvent]
     val mockDispatcher1 = mock[LineageDispatcher]
     val mockDispatcher2 = mock[LineageDispatcher]
 
-    val compositeDispatcher = new CompositeLineageDispatcher(mockDispatcher1, mockDispatcher2)
+    val compositeDispatcher = new CompositeLineageDispatcher(Seq(mockDispatcher1, mockDispatcher2), failOnErrors = true)
     compositeDispatcher.send(dummyExecPlan)
-    compositeDispatcher.send(dummyExecEven)
+    compositeDispatcher.send(dummyExecEvent)
 
     verify(mockDispatcher1).send(dummyExecPlan)
     verify(mockDispatcher2).send(dummyExecPlan)
 
-    verify(mockDispatcher1).send(dummyExecEven)
-    verify(mockDispatcher2).send(dummyExecEven)
+    verify(mockDispatcher1).send(dummyExecEvent)
+    verify(mockDispatcher2).send(dummyExecEvent)
 
     verifyNoMoreInteractions(mockDispatcher1)
     verifyNoMoreInteractions(mockDispatcher2)
   }
 
+  it should "fail on errors" in {
+    val dummyExecPlan = mock[ExecutionPlan]
+    val dummyExecEvent = mock[ExecutionEvent]
+    val mockDispatcher1 = mock[LineageDispatcher]
+    val mockDispatcher2 = mock[LineageDispatcher]
+
+    when(mockDispatcher1.send(dummyExecPlan)) thenThrow new RuntimeException("boom")
+    when(mockDispatcher1.send(dummyExecEvent)) thenThrow new RuntimeException("bam")
+
+    val compositeDispatcher = new CompositeLineageDispatcher(Seq(mockDispatcher1, mockDispatcher2), failOnErrors = true)
+    the[Exception] thrownBy compositeDispatcher.send(dummyExecPlan) should have message "boom"
+    the[Exception] thrownBy compositeDispatcher.send(dummyExecEvent) should have message "bam"
+
+    verifyNoMoreInteractions(mockDispatcher2)
+  }
+
+  it should "suppress errors" in {
+    val dummyExecPlan = mock[ExecutionPlan]
+    val dummyExecEvent = mock[ExecutionEvent]
+    val mockDispatcher1 = mock[LineageDispatcher]
+    val mockDispatcher2 = mock[LineageDispatcher]
+
+    when(mockDispatcher1.send(dummyExecPlan)) thenThrow new RuntimeException("boom")
+    when(mockDispatcher1.send(dummyExecEvent)) thenThrow new RuntimeException("bam")
+
+    val compositeDispatcher = new CompositeLineageDispatcher(Seq(mockDispatcher1, mockDispatcher2), failOnErrors = false)
+    compositeDispatcher.send(dummyExecPlan)
+    compositeDispatcher.send(dummyExecEvent)
+
+    verify(mockDispatcher2).send(dummyExecPlan)
+    verify(mockDispatcher2).send(dummyExecEvent)
+
+    verifyNoMoreInteractions(mockDispatcher2)
+  }
+
   it should "not break on empty delegatees" in {
-    val compositeDispatcher = new CompositeLineageDispatcher()
+    val compositeDispatcher = new CompositeLineageDispatcher(Seq.empty, failOnErrors = true)
 
     compositeDispatcher.send(mock[ExecutionPlan])
     compositeDispatcher.send(mock[ExecutionEvent])

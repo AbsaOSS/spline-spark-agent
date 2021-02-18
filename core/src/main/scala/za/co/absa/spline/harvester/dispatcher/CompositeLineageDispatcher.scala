@@ -16,14 +16,22 @@
 
 package za.co.absa.spline.harvester.dispatcher
 
+import org.apache.spark.internal.Logging
 import za.co.absa.commons.config.ConfigurationImplicits._
 import za.co.absa.spline.harvester.conf.HierarchicalObjectFactory
 import za.co.absa.spline.harvester.dispatcher.CompositeLineageDispatcher._
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 
-class CompositeLineageDispatcher(delegatees: LineageDispatcher*) extends LineageDispatcher {
+import scala.util.control.NonFatal
 
-  def this(objectFactory: HierarchicalObjectFactory) = this(getDispatchers(objectFactory): _*)
+class CompositeLineageDispatcher(delegatees: Seq[LineageDispatcher], failOnErrors: Boolean)
+  extends LineageDispatcher
+    with Logging {
+
+  def this(objectFactory: HierarchicalObjectFactory) = this(
+    getDispatchers(objectFactory),
+    objectFactory.configuration.getBoolean(FailOnErrorsKey, DefaultFailOnErrors)
+  )
 
   override def send(plan: ExecutionPlan): Unit = delegate {
     _.send(plan)
@@ -34,16 +42,28 @@ class CompositeLineageDispatcher(delegatees: LineageDispatcher*) extends Lineage
   }
 
   private def delegate(call: LineageDispatcher => Unit): Unit = {
-    delegatees.foreach(call)
+    delegatees.foreach(withErrorHandling(call))
+  }
+
+  private def withErrorHandling(call: LineageDispatcher => Unit): LineageDispatcher => Unit = { disp =>
+    try call(disp)
+    catch {
+      case NonFatal(e) =>
+        if (failOnErrors) throw e
+        else log.warn(s"Proceeding after an error occurred in an underlying dispatcher: ${disp.getClass.getName}", e)
+    }
   }
 }
 
 object CompositeLineageDispatcher {
 
-  private[this] val Dispatchers = "dispatchers"
+  private val DispatchersKey = "dispatchers"
+  private val FailOnErrorsKey = "failOnErrors"
+
+  private val DefaultFailOnErrors = false
 
   private[dispatcher] def getDispatchers(objectFactory: HierarchicalObjectFactory): Seq[LineageDispatcher] = {
-    val dispatcherNames: Array[String] = objectFactory.configuration.getRequiredStringArray(Dispatchers)
+    val dispatcherNames: Array[String] = objectFactory.configuration.getRequiredStringArray(DispatchersKey)
     for (dispatcherName <- dispatcherNames) yield {
       objectFactory
         .parent
