@@ -51,8 +51,8 @@ class SparkLineageInitializerSpec
     with SystemFixture.IsolatedSystemPropertiesPerTest {
 
   before {
-    sys.props.put(LineageDispatcherName, "test")
-    sys.props.put(s"$LineageDispatcherName.test.className", classOf[MockLineageDispatcher].getName)
+    sys.props.put(RootLineageDispatcher, "test")
+    sys.props.put(s"$RootLineageDispatcher.test.className", classOf[MockLineageDispatcher].getName)
     MockLineageDispatcher.reset()
   }
 

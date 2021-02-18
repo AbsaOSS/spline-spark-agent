@@ -16,9 +16,7 @@
 
 package za.co.absa.spline.harvester.conf
 
-import java.lang.reflect.InvocationTargetException
 import org.apache.commons.configuration.{CompositeConfiguration, Configuration, PropertiesConfiguration}
-import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import za.co.absa.commons.config.ConfigurationImplicits
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
@@ -27,8 +25,6 @@ import za.co.absa.spline.harvester.extra.{UserExtraAppendingLineageFilter, UserE
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.postprocessing.LineageFilter
 import za.co.absa.spline.harvester.{LineageHarvesterFactory, QueryExecutionEventHandler}
-
-import scala.reflect.ClassTag
 
 object DefaultSplineConfigurer {
   private val defaultPropertiesFileName = "spline.default.properties"
@@ -45,7 +41,7 @@ object DefaultSplineConfigurer {
     /**
      * Lineage dispatcher name - defining namespace for rest of properties for that dispatcher
      */
-    val LineageDispatcherName = "spline.lineageDispatcher"
+    val RootLineageDispatcher = "spline.lineageDispatcher"
 
     /**
      * Strategy used to detect ignored writes
@@ -68,7 +64,7 @@ object DefaultSplineConfigurer {
   }
 }
 
-class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Configuration) extends SplineConfigurer with Logging {
+class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Configuration) extends SplineConfigurer {
 
   import ConfigurationImplicits._
   import DefaultSplineConfigurer.ConfProperty._
@@ -83,6 +79,8 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
     new PropertiesConfiguration(defaultPropertiesFileName)
   ).asJava)
 
+  private lazy val objectFactory = new HierarchicalObjectFactory(configuration)
+
   lazy val splineMode: SplineMode = {
     val modeName = configuration.getRequiredString(Mode)
     try SplineMode withName modeName
@@ -96,25 +94,26 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
     new QueryExecutionEventHandler(harvesterFactory, lineageDispatcher)
 
   protected def lineageDispatcher: LineageDispatcher = {
-    val dispatcherName = configuration.getRequiredString(LineageDispatcherName)
-    val dispatcherNamespace = s"$LineageDispatcherName.$dispatcherName"
-    val dispatcherClassName = configuration.getRequiredString(s"$LineageDispatcherName.$dispatcherName.className")
-    instantiate[LineageDispatcher](dispatcherClassName, Some(dispatcherNamespace))
+    val dispatcherName = configuration.getRequiredString(RootLineageDispatcher)
+    objectFactory
+      .child(RootLineageDispatcher)
+      .child(dispatcherName)
+      .instantiate[LineageDispatcher]()
   }
 
   protected def ignoredWriteDetectionStrategy: IgnoredWriteDetectionStrategy =
-    instantiate[IgnoredWriteDetectionStrategy](configuration.getRequiredString(IgnoreWriteDetectionStrategyClass))
+    objectFactory.instantiate[IgnoredWriteDetectionStrategy](configuration.getRequiredString(IgnoreWriteDetectionStrategyClass))
 
   protected def postProcessingFilters: Seq[LineageFilter] =
     configuration
       .getStringArray(PostProcessingFilterClasses)
       .filter(_.nonEmpty)
-      .map(instantiate[LineageFilter])
+      .map(objectFactory.instantiate[LineageFilter])
 
   protected def maybeUserExtraMetadataProvider: Option[UserExtraMetadataProvider] =
     configuration
       .getOptionalString(UserExtraMetadataProviderClass)
-      .map(instantiate[UserExtraMetadataProvider])
+      .map(objectFactory.instantiate[UserExtraMetadataProvider])
 
   private def harvesterFactory = new LineageHarvesterFactory(
     sparkSession,
@@ -124,21 +123,4 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
       .map(postProcessingFilters :+ new UserExtraAppendingLineageFilter(_))
       .getOrElse(postProcessingFilters)
   )
-
-  private def instantiate[T: ClassTag](className: String): T =
-    instantiate[T](className, None)
-
-  private def instantiate[T: ClassTag](className: String, maybeConfigNamespace: Option[String]): T = {
-    val interfaceName = scala.reflect.classTag[T].runtimeClass.getSimpleName
-    logDebug(s"Instantiating $interfaceName for class name: $className")
-    try {
-      Class.forName(className.trim)
-        .getConstructor(classOf[Configuration])
-        .newInstance(maybeConfigNamespace.map(configuration.subset).getOrElse(configuration))
-        .asInstanceOf[T]
-    }
-    catch {
-      case e: InvocationTargetException => throw e.getTargetException
-    }
-  }
 }
