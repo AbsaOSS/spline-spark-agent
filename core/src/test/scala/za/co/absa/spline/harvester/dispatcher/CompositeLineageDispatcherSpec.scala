@@ -118,7 +118,7 @@ class CompositeLineageDispatcherSpec
 object CompositeLineageDispatcherSpec {
 
   trait DummyLineageDispatcher extends LineageDispatcher {
-    override def send(executionPlan: ExecutionPlan): Unit = ()
+    override def send(plan: ExecutionPlan): Unit = ()
     override def send(event: ExecutionEvent): Unit = ()
   }
 
