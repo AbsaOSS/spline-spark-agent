@@ -75,12 +75,12 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
   }
 
   private def persistToHdfs(content: String, path: Path): Unit = blocking {
-    log.debug(s"Opening HDFS output stream to $path")
+    logDebug(s"Opening HDFS output stream to $path")
     val replication = HadoopFileSystem.getDefaultReplication(path)
     val blockSize = HadoopFileSystem.getDefaultBlockSize(path)
     val outputStream = HadoopFileSystem.create(path, permission, true, bufferSize, replication, blockSize, null)
 
-    log.debug(s"Writing lineage to $path")
+    logDebug(s"Writing lineage to $path")
     using(outputStream) {
       _.write(content.getBytes("UTF-8"))
     }

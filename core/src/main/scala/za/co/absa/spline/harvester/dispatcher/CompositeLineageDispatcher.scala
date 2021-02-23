@@ -50,7 +50,7 @@ class CompositeLineageDispatcher(delegatees: Seq[LineageDispatcher], failOnError
     catch {
       case NonFatal(e) =>
         if (failOnErrors) throw e
-        else log.warn(s"Proceeding after an error occurred in an underlying dispatcher: ${disp.getClass.getName}", e)
+        else logWarning(s"Proceeding after an error occurred in an underlying dispatcher: ${disp.getClass.getName}", e)
     }
   }
 }
