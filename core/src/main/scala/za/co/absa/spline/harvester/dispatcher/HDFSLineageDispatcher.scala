@@ -22,6 +22,7 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.SparkContext
 import org.apache.spark.annotation.InterfaceStability.Unstable
 import org.apache.spark.internal.Logging
+import za.co.absa.commons.config.ConfigurationImplicits._
 import za.co.absa.commons.json.DefaultJacksonJsonSerDe
 import za.co.absa.commons.lang.ARM._
 import za.co.absa.spline.harvester.dispatcher.HDFSLineageDispatcher._
@@ -45,9 +46,9 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
     with Logging {
 
   def this(conf: Configuration) = this(
-    filename = conf.getString(FileNameKey, DefaultFileName),
-    permission = new FsPermission(conf.getString(FilePermissionsKey, DefaultFilePermission.toShort.toString)),
-    bufferSize = HadoopConfiguration.getInt(BufferSizeKey, DefaultBufferSize)
+    filename = conf.getRequiredString(FileNameKey),
+    permission = new FsPermission(conf.getOptionalString(FilePermissionsKey).getOrElse(DefaultFilePermission.toShort.toString)),
+    bufferSize = conf.getRequiredInt(BufferSizeKey)
   )
 
   @volatile
@@ -94,9 +95,6 @@ object HDFSLineageDispatcher {
   private val FileNameKey = "fileName"
   private val FilePermissionsKey = "filePermissions"
   private val BufferSizeKey = "fileBufferSize"
-
-  private val DefaultFileName = "_LINEAGE"
-  private val DefaultBufferSize = 4096
 
   private val DefaultFilePermission = {
     val umask = FsPermission.getUMask(HadoopFileSystem.getConf)
