@@ -30,7 +30,7 @@ class CompositeLineageDispatcher(delegatees: Seq[LineageDispatcher], failOnError
 
   def this(objectFactory: HierarchicalObjectFactory) = this(
     getDispatchers(objectFactory),
-    objectFactory.configuration.getBoolean(FailOnErrorsKey, DefaultFailOnErrors)
+    objectFactory.configuration.getRequiredBoolean(FailOnErrorsKey)
   )
 
   override def send(plan: ExecutionPlan): Unit = delegate {
@@ -50,7 +50,7 @@ class CompositeLineageDispatcher(delegatees: Seq[LineageDispatcher], failOnError
     catch {
       case NonFatal(e) =>
         if (failOnErrors) throw e
-        else log.warn(s"Proceeding after an error occurred in an underlying dispatcher: ${disp.getClass.getName}", e)
+        else logWarning(s"Proceeding after an error occurred in an underlying dispatcher: ${disp.getClass.getName}", e)
     }
   }
 }
@@ -59,8 +59,6 @@ object CompositeLineageDispatcher {
 
   private val DispatchersKey = "dispatchers"
   private val FailOnErrorsKey = "failOnErrors"
-
-  private val DefaultFailOnErrors = false
 
   private[dispatcher] def getDispatchers(objectFactory: HierarchicalObjectFactory): Seq[LineageDispatcher] = {
     val dispatcherNames: Array[String] = objectFactory.configuration.getRequiredStringArray(DispatchersKey)
