@@ -54,9 +54,9 @@ class ExpressionConverter(
         id = randomUUIDString,
         dataType = convertDataType(bo),
         childIds = convertChildren(bo).asOption,
-        extra = createExtra(bo, "expr.Binary").asOption,
+        extra = (createExtra(bo, "expr.Binary") + ("symbol" -> bo.symbol)).asOption,
         name = bo.prettyName,
-        params = (getExpressionParameters(bo) + ("symbol" -> bo.symbol)).asOption
+        params = getExpressionParameters(bo).asOption
       )
 
     case u: sparkExprssions.ScalaUDF =>
