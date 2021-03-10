@@ -17,13 +17,12 @@
 package za.co.absa.spline.harvester.dispatcher.kafkadispatcher
 
 import org.apache.kafka.common.header.Header
-import za.co.absa.commons.Charset
-
+import java.nio.charset.StandardCharsets
 
 class KafkaHeader(key: String, value: String) extends Header {
 
   override def key(): String = key
 
-  override def value(): Array[Byte] = value.getBytes(Charset.`UTF-8`)
+  override def value(): Array[Byte] = value.getBytes(StandardCharsets.UTF_8)
 }
 

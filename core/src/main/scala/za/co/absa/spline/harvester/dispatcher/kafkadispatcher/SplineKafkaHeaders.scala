@@ -20,4 +20,5 @@ object SplineKafkaHeaders {
   private val Prefix = "ABSA-Spline"
 
   val ApiVersion = s"$Prefix-API-Version"
+  val TypeId =  "__TypeId__"
 }
