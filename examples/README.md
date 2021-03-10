@@ -6,7 +6,7 @@
     ```shell script
     git clone git@github.com:AbsaOSS/spline-spark-agent.git
     cd spline-spark-agent
-    git checkout master
+    mvn install -DskipTests
     cd examples
     ```
 
