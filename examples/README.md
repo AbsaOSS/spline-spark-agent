@@ -60,8 +60,18 @@ mvn test -P examples -D spline.mode=REQUIRED
   - [Python](src/main/python/)
   - [Shell script](src/main/shell/) - custom, non-Spark example, using REST API
 
+## Run Spline examples using docker image
 
- 
+1. Build docker image
+```shell script
+# from /root folder build docker image
+docker build -f examples/Dockerfile . -t spline-spark-agent-examples:v0.1.0
+```
+
+2. Run docker image
+```shell script
+docker run -e "SPLINE_PRODUCER_URL=http://localhost:8080/producer" spline-spark-agent-examples:v0.1.1
+```
 
 ---
 
