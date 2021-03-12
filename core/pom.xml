@@ -43,7 +43,7 @@
         <dependency>
             <groupId>za.co.absa.commons</groupId>
             <artifactId>commons_${scala.binary.version}</artifactId>
-            <version>0.0.22</version>
+            <version>0.0.24</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -71,6 +71,11 @@
         <dependency>
             <groupId>com.crealytics</groupId>
             <artifactId>spark-excel_${scala.binary.version}</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
             <optional>true</optional>
         </dependency>
         <dependency>
