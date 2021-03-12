@@ -18,12 +18,15 @@ package za.co.absa.spline
 
 
 import com.datastax.driver.core.Cluster
+import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode}
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.TempDirectory
+import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
+import za.co.absa.commons.version.Version.VersionStringInterpolator
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 
@@ -33,7 +36,7 @@ class CassandraSpec
     with SparkFixture
     with SplineFixture {
 
-  it should "support Cassandra as a write source" in {
+  it should "support Cassandra as a write source" taggedAs ignoreIf(ver"$SPARK_VERSION" >= ver"3.0.0") in {
     withNewSparkSession(spark => {
       withLineageTracking(spark)(lineageCaptor => {
 

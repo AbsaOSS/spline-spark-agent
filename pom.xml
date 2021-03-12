@@ -19,7 +19,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>za.co.absa.spline.agent.spark</groupId>
-    <artifactId>spline-spark-agent_2.11</artifactId>
+    <artifactId>spline-spark-agent_2.12</artifactId>
     <name>Spline Spark Agent</name>
     <description>Spline Agent for Apache Spark</description>
     <version>0.6.0-SNAPSHOT</version>
@@ -87,7 +87,7 @@
         <spark-22.version>2.2.2</spark-22.version>
         <spark-23.version>2.3.2</spark-23.version>
         <spark-24.version>2.4.2</spark-24.version>
-        <spark-30.version>3.0.1</spark-30.version>
+        <spark-30.version>3.0.2</spark-30.version>
 
         <!-- Cross build properties -->
 
@@ -98,8 +98,8 @@
         <scala_2.12.version>2.12.10</scala_2.12.version>
 
         <!-- Controlled by `scala-cross-build` plugin -->
-        <scala.version>2.11.12</scala.version>
-        <scala.binary.version>2.11</scala.binary.version>
+        <scala.version>2.12.10</scala.version>
+        <scala.binary.version>2.12</scala.binary.version>
     </properties>
 
     <scm>
@@ -355,7 +355,7 @@
             <dependency>
                 <groupId>com.crealytics</groupId>
                 <artifactId>spark-excel_${scala.binary.version}</artifactId>
-                <version>0.13.0</version>
+                <version>0.13.7</version>
             </dependency>
             <dependency>
                 <groupId>com.datastax.spark</groupId>
@@ -522,6 +522,11 @@
                 <scala.binary.version>2.11</scala.binary.version>
                 <scala.version>${scala_2.11.version}</scala.version>
             </properties>
+            <modules>
+                <module>bundle-2.2</module>
+                <module>bundle-2.3</module>
+                <module>bundle-2.4</module>
+            </modules>
         </profile>
         <profile>
             <id>scala-2.12</id>
@@ -529,6 +534,10 @@
                 <scala.binary.version>2.12</scala.binary.version>
                 <scala.version>${scala_2.12.version}</scala.version>
             </properties>
+            <modules>
+                <module>bundle-2.4</module>
+                <module>bundle-3.0</module>
+            </modules>
         </profile>
 
         <!-- Spark profiles -->
@@ -539,9 +548,6 @@
                 <spark.version>${spark-22.version}</spark.version>
                 <json4s.version>${json4s-32.version}</json4s.version>
             </properties>
-            <modules>
-                <module>bundle-2.2</module>
-            </modules>
         </profile>
         <profile>
             <id>spark-2.3</id>
@@ -549,9 +555,6 @@
                 <spark.version>${spark-23.version}</spark.version>
                 <json4s.version>${json4s-32.version}</json4s.version>
             </properties>
-            <modules>
-                <module>bundle-2.3</module>
-            </modules>
         </profile>
         <profile>
             <id>spark-2.4</id>
@@ -559,9 +562,6 @@
                 <spark.version>${spark-24.version}</spark.version>
                 <json4s.version>${json4s-35.version}</json4s.version>
             </properties>
-            <modules>
-                <module>bundle-2.4</module>
-            </modules>
         </profile>
         <profile>
             <id>spark-3.0</id>
@@ -569,9 +569,6 @@
                 <spark.version>${spark-30.version}</spark.version>
                 <json4s.version>${json4s-36.version}</json4s.version>
             </properties>
-            <modules>
-                <module>bundle-3.0</module>
-            </modules>
         </profile>
 
         <!-- Deployment profiles -->

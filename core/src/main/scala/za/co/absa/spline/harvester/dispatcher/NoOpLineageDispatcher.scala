@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.test.fixture.spline
+package za.co.absa.spline.harvester.dispatcher
 
-import org.apache.spark.sql.SparkSession
+import org.apache.commons.configuration.Configuration
+import za.co.absa.spline.producer.model.v1_1.ExecutionEvent
+import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
 
-
-trait SplineFixture2 {
-
-  def withLineageTracking[T](testBody: LineageCaptor2 => T)(implicit session: SparkSession): T = {
-    testBody(new LineageCaptor2(false))
-  }
-
-  def withRealConfigLineageTracking[T](testBody: LineageCaptor2 => T)(implicit session: SparkSession): T = {
-    testBody(new LineageCaptor2(true))
-  }
+class NoOpLineageDispatcher extends LineageDispatcher {
+  def this(conf: Configuration) = this()
+  override def send(plan: ExecutionPlan): Unit = ()
+  override def send(event: ExecutionEvent): Unit = ()
 }

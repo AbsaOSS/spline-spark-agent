@@ -19,110 +19,115 @@ package za.co.absa.spline
 
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SaveMode.Overwrite
-import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.flatspec.{AnyFlatSpec, AsyncFlatSpec}
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.TempDirectory
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version._
-import za.co.absa.spline.test.fixture.SparkFixture
-import za.co.absa.spline.test.fixture.spline.SplineFixture
+import za.co.absa.spline.test.fixture.{SparkFixture, SparkFixture2}
+import za.co.absa.spline.test.fixture.spline.{SplineFixture, SplineFixture2}
 
-class SQLCommandsSpec extends AnyFlatSpec
+class SQLCommandsSpec extends AsyncFlatSpec
   with Matchers
-  with SparkFixture
-  with SplineFixture {
+  with SparkFixture2
+  with SplineFixture2 {
 
   behavior of "spark.sql()"
 
   it should "capture lineage of 'CREATE TABLE AS` - Hive" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in
-    withRestartingSparkContext {
-      withCustomSparkSession(_.enableHiveSupport) { spark =>
-        withLineageTracking(spark)(lineageCaptor => {
+    withAsyncRestartingSparkContext {
+      withCustomSparkSession(_.enableHiveSupport) { implicit spark =>
+        withLineageTracking { captor =>
           import spark.implicits._
-          spark.sql("CREATE TABLE sourceTable (id int, name string)")
 
-          val sourceDF = Seq(
-            (1, "AA"),
-            (2, "BB"),
-            (3, "CC"),
-            (4, "DD")
-          ).toDF("id", "name")
+          for {
+            (_, _) <- captor.lineageOf(
+              spark.sql("CREATE TABLE sourceTable (id int, name string)"))
 
-          val (plan1, _) = lineageCaptor.lineageOf(sourceDF
-            .write.mode(Overwrite).insertInto("sourceTable"))
+            (plan1, _) <- captor.lineageOf(
+              Seq((1, "AA"), (2, "BB"), (3, "CC"), (4, "DD"))
+                .toDF("id", "name")
+                .write.mode(Overwrite).insertInto("sourceTable"))
 
-          val (plan2, _) = lineageCaptor.lineageOf(spark
-            .sql(
-              """CREATE TABLE targetTable AS
-                | SELECT id, name
-                | FROM sourceTable
-                | WHERE id > 1""".stripMargin))
+            (plan2, _) <- captor.lineageOf(
+              spark.sql(
+                """CREATE TABLE targetTable AS
+                  | SELECT id, name
+                  | FROM sourceTable
+                  | WHERE id > 1""".stripMargin))
 
-          plan1.operations.write.outputSource should be(s"file:$warehouseDir/sourcetable")
-          plan2.operations.reads.get.head.inputSources.head should be(plan1.operations.write.outputSource)
-          plan2.operations.write.outputSource should be(s"file:$warehouseDir/targettable")
-        })
+          } yield {
+            plan1.operations.write.outputSource should be(s"file:$warehouseDir/sourcetable")
+            plan2.operations.reads.get.head.inputSources.head should be(plan1.operations.write.outputSource)
+            plan2.operations.write.outputSource should be(s"file:$warehouseDir/targettable")
+          }
+        }
       }
     }
 
   it should "capture lineage of 'INSERT OVERWRITE AS` - Hive" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in
-    withRestartingSparkContext {
-      withCustomSparkSession(_.enableHiveSupport) { spark =>
-        withLineageTracking(spark)(lineageCaptor => {
+    withAsyncRestartingSparkContext {
+      withCustomSparkSession(_.enableHiveSupport) { implicit spark =>
+        withLineageTracking { captor =>
           import spark.implicits._
-          spark.sql("CREATE TABLE sourceTable (id int, name string)")
 
           val dir = TempDirectory("spline", ".table", pathOnly = true).deleteOnExit().path
 
-          Seq(
-            (1, "AA"),
-            (2, "BB"),
-            (3, "CC"),
-            (4, "DD")
-          ).toDF("id", "name").write.insertInto("sourceTable")
+          withNewSparkSession { innerSpark =>
+            innerSpark.sql("CREATE TABLE IF NOT EXISTS sourceTable (id int, name string)")
+          }
 
-          val (plan, _) = lineageCaptor.lineageOf(spark
-            .sql(
-              s"""INSERT OVERWRITE DIRECTORY '${dir.toUri}'
-                 | SELECT id, name
-                 | FROM sourceTable
-                 | WHERE id > 1""".stripMargin))
-
-          plan.operations.reads.get.head.inputSources.head should be(s"file:$warehouseDir/sourcetable")
-          plan.operations.write.outputSource should be(dir.toUri.toString.init)
-        })
+          for {
+            (_, _) <- captor.lineageOf(
+              Seq((1, "AA"), (2, "BB"), (3, "CC"), (4, "DD"))
+                .toDF("id", "name")
+                .write.mode(Overwrite).insertInto("sourceTable"))
+            (plan, _) <- captor.lineageOf(
+              spark.sql(
+                s"""INSERT OVERWRITE DIRECTORY '${dir.toUri}'
+                   | SELECT id, name
+                   | FROM sourceTable
+                   | WHERE id > 1""".stripMargin))
+          } yield {
+            plan.operations.reads.get.head.inputSources.head should be(s"file:$warehouseDir/sourcetable")
+            plan.operations.write.outputSource should be(dir.toUri.toString.init)
+          }
+        }
       }
     }
 
   it should "capture lineage of 'INSERT OVERWRITE AS` - non-Hive" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in
-    withRestartingSparkContext {
-      withNewSparkSession { spark =>
-        withLineageTracking(spark)(lineageCaptor => {
+    withAsyncRestartingSparkContext {
+      withCustomSparkSession(_.enableHiveSupport) { implicit spark =>
+        withLineageTracking { captor =>
           import spark.implicits._
-          spark.sql("CREATE TABLE sourceTable (id int, name string)")
 
           val csvFile = TempDirectory("spline", ".csv").deleteOnExit().path
 
-          Seq(
-            (1, "AA"),
-            (2, "BB"),
-            (3, "CC"),
-            (4, "DD")
-          ).toDF("id", "name").write.insertInto("sourceTable")
+          withNewSparkSession{ innerSpark =>
+            innerSpark.sql("CREATE TABLE sourceTable (id int, name string)")
+          }
 
-          val (plan, _) = lineageCaptor.lineageOf(spark
-            .sql(
-              s"""INSERT OVERWRITE DIRECTORY '${csvFile.toUri}'
-                 | USING CSV
-                 | SELECT id, name
-                 | FROM sourceTable
-                 | WHERE id > 1""".stripMargin))
+          for {
+            (_, _) <- captor.lineageOf(
+              Seq((1, "AA"), (2, "BB"), (3, "CC"), (4, "DD"))
+                .toDF("id", "name")
+                .write.insertInto("sourceTable")
+            )
 
-          plan.operations.reads.get.head.inputSources.head should be(s"file:$warehouseDir/sourcetable")
-          plan.operations.write.outputSource should be(csvFile.toUri.toString.init)
-        })
+            (plan, _) <- captor.lineageOf(
+              spark.sql(
+                s"""INSERT OVERWRITE DIRECTORY '${csvFile.toUri}'
+                   | USING CSV
+                   | SELECT id, name
+                   | FROM sourceTable
+                   | WHERE id > 1""".stripMargin)
+            )
+          } yield {
+            plan.operations.reads.get.head.inputSources.head should be(s"file:$warehouseDir/sourcetable")
+            plan.operations.write.outputSource should be(csvFile.toUri.toString.init)
+          }
+        }
       }
     }
 }
-
-

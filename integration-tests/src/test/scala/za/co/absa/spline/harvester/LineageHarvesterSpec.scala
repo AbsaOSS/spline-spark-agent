@@ -16,59 +16,60 @@
 
 package za.co.absa.spline.harvester
 
-import java.util.UUID
-import java.util.UUID.randomUUID
+import org.apache.commons.configuration.Configuration
 import org.apache.commons.io.FileUtils
 import org.apache.spark.SPARK_VERSION
-import org.scalatest.Assertion
 import org.scalatest.Inside._
-import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.{Assertion, AsyncFlatSpec, Succeeded}
 import za.co.absa.commons.io.{TempDirectory, TempFile}
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version._
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder.OutputAttIds
-import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer
-import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
-import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
+import za.co.absa.spline.harvester.conf.CodeBasedSplineConfigurer
+import za.co.absa.spline.harvester.dispatcher.{HDFSLineageDispatcher, LineageDispatcher, NoOpLineageDispatcher}
+import za.co.absa.spline.harvester.extra.{UserExtraAppendingLineageFilter, UserExtraMetadataProvider}
 import za.co.absa.spline.model.dt
 import za.co.absa.spline.producer.model.v1_1.{Attribute, _}
-import za.co.absa.spline.test.fixture.spline.SplineFixture.EMPTY_CONF
-import za.co.absa.spline.test.fixture.spline.{LineageCaptor, LineageCapturingDispatcher, SplineFixture}
-import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
+import za.co.absa.spline.test.fixture.spline.{LineageCaptor2, SplineFixture2}
+import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture, SparkFixture2}
 
+import java.util.UUID
+import java.util.UUID.randomUUID
 import scala.language.reflectiveCalls
 
-class LineageHarvesterSpec extends AnyFlatSpec
+class LineageHarvesterSpec extends AsyncFlatSpec
   with Matchers
-  with SparkFixture
-  with SplineFixture
+  with SparkFixture2
+  with SplineFixture2
   with SparkDatabaseFixture {
 
 
   import za.co.absa.spline.harvester.LineageHarvesterSpec._
 
   it should "support empty data frame" in
-    withNewSparkSession(spark => {
-      withLineageTracking(spark) { lineageCaptor =>
-        import lineageCaptor._
+    withNewSparkSession { implicit spark =>
+      withLineageTracking { captor =>
         import spark.implicits._
 
-        inside(lineageOf(spark.emptyDataset[TestRow].write.save(tmpDest))) {
-          case (ExecutionPlan(_, Operations(_, None, Some(Seq(op))), _, _, _, _, _), _) =>
-            op.id should be("1")
-            op.childIds should be(None)
-            op.output should not be None
-            op.extra.get should contain("name" -> "LocalRelation")
+        for {
+          (plan, _) <- captor.lineageOf(spark.emptyDataset[TestRow].write.save(tmpDest))
+        } yield {
+          inside(plan) {
+            case ExecutionPlan(_, Operations(_, None, Some(Seq(op))), _, _, _, _, _) =>
+              op.id should be("1")
+              op.childIds should be(None)
+              op.output should not be None
+              op.extra.get should contain("name" -> "LocalRelation")
+          }
         }
       }
-    })
+    }
 
   it should "support simple non-empty data frame" in
-    withNewSparkSession(spark => {
-      withLineageTracking(spark) { lineageCaptor =>
-        import lineageCaptor._
+    withNewSparkSession { implicit spark =>
+      withLineageTracking { captor =>
         import spark.implicits._
 
         val df = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
@@ -95,16 +96,17 @@ class LineageHarvesterSpec extends AnyFlatSpec
             params = None,
             extra = Map("name" -> "LocalRelation").asOption))
 
-        val (plan, _) = lineageOf(df.write.save(tmpDest))
-
-        assertDataLineage(expectedOperations, expectedAttributes, plan)
+        for {
+          (plan, _) <- captor.lineageOf(df.write.save(tmpDest))
+        } yield {
+          assertDataLineage(expectedOperations, expectedAttributes, plan)
+        }
       }
-    })
+    }
 
   it should "support filter and column renaming operations" in
-    withNewSparkSession(spark => {
-      withLineageTracking(spark) { lineageCaptor =>
-        import lineageCaptor._
+    withNewSparkSession { implicit spark =>
+      withLineageTracking { captor =>
         import spark.implicits._
 
         val df = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
@@ -141,21 +143,22 @@ class LineageHarvesterSpec extends AnyFlatSpec
             "3", None, outputBeforeRename,
             None, Map("name" -> "LocalRelation").asOption))
 
-        val (plan, _) = lineageOf(df.write.save(tmpDest))
-
-        assertDataLineage(expectedOperations, expectedAttributes, plan)
+        for {
+          (plan, _) <- captor.lineageOf(df.write.save(tmpDest))
+        } yield {
+          assertDataLineage(expectedOperations, expectedAttributes, plan)
+        }
       }
-    })
+    }
 
-  it should "support union operation, forming a diamond graph" in
-    withNewSparkSession(spark => {
-      withLineageTracking(spark) { lineageCaptor =>
-        import lineageCaptor._
+  it should "support union operation, forming a diamond graph" taggedAs ignoreIf(ver"$SPARK_VERSION" >= ver"3.0.0") in
+    withNewSparkSession { implicit spark =>
+      withLineageTracking { captor =>
         import spark.implicits._
 
         val initialDF = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
         val filteredDF1 = initialDF.filter($"i".notEqual(5))
-        val filteredDF2 = initialDF.filter($"d".notEqual(5))
+        val filteredDF2 = initialDF.filter($"d".notEqual(5.0))
         val df = filteredDF1.union(filteredDF2)
 
         val expectedAttributes =
@@ -185,17 +188,17 @@ class LineageHarvesterSpec extends AnyFlatSpec
           DataOperation("2", Seq("3").asOption, inputAttIds, None, Map("name" -> "Filter").asOption),
           DataOperation("4", Seq("3").asOption, inputAttIds, None, Map("name" -> "Filter").asOption),
           DataOperation("3", None, inputAttIds, None, Map("name" -> "LocalRelation").asOption))
-
-        val (plan, _) = lineageOf(df.write.save(tmpDest))
-
-        assertDataLineage(expectedOperations, expectedAttributes, plan)
+        for {
+          (plan, _) <- captor.lineageOf(df.write.save(tmpDest))
+        } yield {
+          assertDataLineage(expectedOperations, expectedAttributes, plan)
+        }
       }
-    })
+    }
 
   it should "support join operation, forming a diamond graph" in
-    withNewSparkSession(spark => {
-      withLineageTracking(spark) { lineageCaptor =>
-        import lineageCaptor._
+    withNewSparkSession { implicit spark =>
+      withLineageTracking { captor =>
         import org.apache.spark.sql.functions._
         import spark.implicits._
 
@@ -209,7 +212,8 @@ class LineageHarvesterSpec extends AnyFlatSpec
             min("d").as("MIN"),
             max("s").as("MAX"))
 
-        val df = filteredDF.join(aggregatedDF, filteredDF.col("i").eqNullSafe(aggregatedDF.col("A")), "inner")
+        val joinExpr = filteredDF.col("i").eqNullSafe(aggregatedDF.col("A"))
+        val df = filteredDF.join(aggregatedDF, joinExpr, "inner")
 
         val expectedAttributes = Seq(
           Attribute(randomUUID.toString, Some(integerType.id), None, None, "i"),
@@ -245,145 +249,130 @@ class LineageHarvesterSpec extends AnyFlatSpec
           DataOperation(
             "5", Seq("3").asOption, Seq(expectedAttributes(3).id, expectedAttributes(1).id, expectedAttributes(2).id),
             None, Map("name" -> "Project").asOption))
-
-        val (plan, _) = lineageOf(df.write.save(tmpDest))
-
-        assertDataLineage(expectedOperations, expectedAttributes, plan)
-      }
-    })
-
-  it should "support `CREATE TABLE ... AS SELECT` in Hive" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in
-    withRestartingSparkContext {
-      withCustomSparkSession(_
-        .enableHiveSupport()
-        .config("hive.exec.dynamic.partition.mode", "nonstrict")) { spark =>
-
-        val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
-        withHiveDatabase(spark)(databaseName) {
-
-          val (plan, _) = withLineageTracking(spark)(lineageCaptor => {
-
-            import spark.implicits._
-
-            val df = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
-
-            lineageCaptor.lineageOf {
-              df.createOrReplaceTempView("tempView")
-              spark.sql("create table users_sales as select i, d, s from tempView ")
-            }
-          })
-
-          val writeOperation = plan.operations.write
-          writeOperation.id shouldEqual "0"
-          writeOperation.append shouldEqual false
-          writeOperation.childIds shouldEqual Seq("1")
-          writeOperation.extra.get("destinationType") shouldEqual Some("hive")
-
-          val otherOperations = plan.operations.other.get.sortBy(_.id)
-
-          val firstOperation = otherOperations(0)
-          firstOperation.id shouldEqual "1"
-          firstOperation.childIds.get shouldEqual Seq("2")
-          firstOperation.extra.get("name") shouldEqual "Project"
-
-          val secondOperation = otherOperations(1)
-          secondOperation.id shouldEqual "2"
-          secondOperation.childIds.get shouldEqual Seq("3")
-          secondOperation.extra.get("name") should (equal("SubqueryAlias") or equal(Some("`tempview`"))) // Spark 2.3/2.4
-
-          val thirdOperation = otherOperations(2)
-          thirdOperation.id shouldEqual "3"
-          thirdOperation.childIds shouldEqual None
-          thirdOperation.extra.get("name") shouldEqual "LocalRelation"
+        for {
+          (plan, _) <- captor.lineageOf(df.write.save(tmpDest))
+        } yield {
+          assertDataLineage(expectedOperations, expectedAttributes, plan)
         }
       }
     }
 
-  it should "collect user extra metadata" in {
-    withNewSparkSession(spark => {
-      val lineageCaptor = new LineageCaptor
+  it should "support `CREATE TABLE ... AS SELECT` in Hive" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in
+    withAsyncRestartingSparkContext {
+      withCustomSparkSession(_
+        .enableHiveSupport()
+        .config("hive.exec.dynamic.partition.mode", "nonstrict")
+      ) { implicit spark =>
 
-      val testSplineConfigurer = new DefaultSplineConfigurer(spark, EMPTY_CONF) {
-        override protected def lineageDispatcher: LineageDispatcher = new LineageCapturingDispatcher(lineageCaptor.setter)
+        val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
+        withHiveDatabase(spark)(databaseName) {
 
-        override protected def maybeUserExtraMetadataProvider: Option[UserExtraMetadataProvider] = Some(
-          new UserExtraMetadataProvider {
-            override def forExecEvent(event: ExecutionEvent, ctx: HarvestingContext): Map[String, Any] =
-              Map("test.extra" -> event)
+          withLineageTracking { captor =>
+            import spark.implicits._
 
-            override def forExecPlan(plan: ExecutionPlan, ctx: HarvestingContext): Map[String, Any] =
-              Map("test.extra" -> plan)
+            val df = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
 
-            override def forOperation(op: ReadOperation, ctx: HarvestingContext): Map[String, Any] =
-              Map("test.extra" -> op)
+            for {
+              (plan, _) <- captor.lineageOf {
+                df.createOrReplaceTempView("tempView")
+                spark.sql("create table users_sales as select i, d, s from tempView ")
+              }
+            } yield {
+              val writeOperation = plan.operations.write
+              writeOperation.id shouldEqual "0"
+              writeOperation.append shouldEqual false
+              writeOperation.childIds shouldEqual Seq("1")
+              writeOperation.extra.get("destinationType") shouldEqual Some("hive")
 
-            override def forOperation(op: WriteOperation, ctx: HarvestingContext): Map[String, Any] =
-              Map("test.extra" -> op)
+              val otherOperations = plan.operations.other.get.sortBy(_.id)
 
-            override def forOperation(op: DataOperation, ctx: HarvestingContext): Map[String, Any] =
-              Map("test.extra" -> op)
-          })
+              val firstOperation = otherOperations(0)
+              firstOperation.id shouldEqual "1"
+              firstOperation.childIds.get shouldEqual Seq("2")
+              firstOperation.extra.get("name") shouldEqual "Project"
+
+              val secondOperation = otherOperations(1)
+              secondOperation.id shouldEqual "2"
+              secondOperation.childIds.get shouldEqual Seq("3")
+              secondOperation.extra.get("name") should (equal("SubqueryAlias") or equal(Some("`tempview`"))) // Spark 2.3/2.4
+
+              val thirdOperation = otherOperations(2)
+              thirdOperation.id shouldEqual "3"
+              thirdOperation.childIds shouldEqual None
+              thirdOperation.extra.get("name") shouldEqual "LocalRelation"
+            }
+          }
+        }
       }
+    }
 
-      import SparkLineageInitializer._
-      import spark.implicits._
-      spark.enableLineageTracking(testSplineConfigurer)
+  it should "collect user extra metadata" in
+    withCustomSparkSession(_
+      .config("spark.spline.userExtraMetaProvider.className", classOf[TestMetadataProvider].getName)
+      .config("spark.spline.lineageDispatcher", "noOp")
+      .config("spark.spline.lineageDispatcher.noOp.className", classOf[NoOpLineageDispatcher].getName)
+    ) { implicit spark =>
+      withRealConfigLineageTracking { captor =>
+        import spark.implicits._
 
-      val dummyCSVFile = TempFile(prefix = "spline-test", suffix = ".csv").deleteOnExit().path
-      FileUtils.write(dummyCSVFile.toFile, "1,2,3", "UTF-8")
+        val dummyCSVFile = TempFile(prefix = "spline-test", suffix = ".csv").deleteOnExit().path
+        FileUtils.write(dummyCSVFile.toFile, "1,2,3", "UTF-8")
 
-      val (plan, Seq(event)) = lineageCaptor.getter.lineageOf {
-        spark
-          .read.csv(dummyCSVFile.toString)
-          .filter($"_c0" =!= 42)
-          .write.save(tmpDest)
+        for {
+          (plan, Seq(event)) <- captor.lineageOf {
+            spark
+              .read.csv(dummyCSVFile.toString)
+              .filter($"_c0" =!= 42)
+              .write.save(tmpDest)
+          }
+        } yield {
+          inside(plan.operations) {
+            case Operations(wop, Some(Seq(rop)), Some(Seq(dop))) =>
+              wop.extra.get("test.extra") should equal(wop.copy(extra = Some(wop.extra.get - "test.extra")))
+              rop.extra.get("test.extra") should equal(rop.copy(extra = Some(rop.extra.get - "test.extra")))
+              dop.extra.get("test.extra") should equal(dop.copy(extra = Some(dop.extra.get - "test.extra")))
+          }
+
+          plan.extraInfo.get("test.extra") should equal(plan.copy(extraInfo = Some(plan.extraInfo.get - "test.extra")))
+          event.extra.get("test.extra") should equal(event.copy(extra = Some(event.extra.get - "test.extra")))
+        }
       }
-
-      inside(plan.operations) {
-        case Operations(wop, Some(Seq(rop)), Some(Seq(dop))) =>
-          wop.extra.get("test.extra") should equal(wop.copy(extra = Some(wop.extra.get - "test.extra")))
-          rop.extra.get("test.extra") should equal(rop.copy(extra = Some(rop.extra.get - "test.extra")))
-          dop.extra.get("test.extra") should equal(dop.copy(extra = Some(dop.extra.get - "test.extra")))
-      }
-
-      plan.extraInfo.get("test.extra") should equal(plan.copy(extraInfo = Some(plan.extraInfo.get - "test.extra")))
-      event.extra.get("test.extra") should equal(event.copy(extra = Some(event.extra.get - "test.extra")))
-    })
-  }
+    }
 
   // https://github.com/AbsaOSS/spline-spark-agent/issues/39
-  it should "not capture 'data'" in {
-    withNewSparkSession(spark => {
-      withLineageTracking(spark) { lineageCaptor =>
-        import lineageCaptor._
+  it should "not capture 'data'" in
+    withNewSparkSession { implicit spark =>
+      withLineageTracking { captor =>
         import spark.implicits._
 
-        val (plan, _) = lineageOf {
-          spark.createDataset(Seq(TestRow(1, 2.3, "text"))).write.save(tmpDest)
-        }
+        for {
+          (plan, _) <- captor.lineageOf {
+            spark.createDataset(Seq(TestRow(1, 2.3, "text"))).write.save(tmpDest)
+          }
+        } yield {
 
-        val localRelation = plan.operations.other.get.find(_.extra.get("name") == "LocalRelation").get
-        assert(localRelation.params.forall(p => !p.contains("data")))
+          val localRelation = plan.operations.other.get.find(_.extra.get("name") == "LocalRelation").get
+          assert(localRelation.params.forall(p => !p.contains("data")))
+        }
       }
-    })
-  }
+    }
 
   // https://github.com/AbsaOSS/spline-spark-agent/issues/72
-  it should "support lambdas" in {
-    withNewSparkSession(spark => {
-      withLineageTracking(spark) { lineageCaptor =>
-        import lineageCaptor._
+  it should "support lambdas" in
+    withNewSparkSession { implicit spark =>
+      withLineageTracking { captor =>
         import spark.implicits._
 
-        val (plan, _) = lineageOf {
-          spark.createDataset(Seq(TestRow(1, 2.3, "text"))).map(_.copy(i = 2)).write.save(tmpDest)
+        for {
+          (plan, _) <- captor.lineageOf {
+            spark.createDataset(Seq(TestRow(1, 2.3, "text"))).map(_.copy(i = 2)).write.save(tmpDest)
+          }
+        } yield {
+          plan.operations.other.get should have size 4 // LocalRelation, DeserializeToObject, Map, SerializeFromObject
+          plan.operations.other.get(2).params.get should contain key "func"
         }
-
-        plan.operations.other.get should have size 4 // LocalRelation, DeserializeToObject, Map, SerializeFromObject
-        plan.operations.other.get(2).params.get should contain key "func"
       }
-    })
-  }
+    }
 
 }
 
@@ -463,7 +452,7 @@ object LineageHarvesterSpec extends Matchers {
   def assertDataLineage(
     expectedOperations: Seq[AnyRef],
     expectedAttributes: Seq[Attribute],
-    actualPlan: ExecutionPlan): Unit = {
+    actualPlan: ExecutionPlan): Assertion = {
 
     import za.co.absa.spline.harvester.LineageHarvesterSpec.OperationsAdapter._
 
@@ -499,6 +488,28 @@ object LineageHarvesterSpec extends Matchers {
           nullable should be(typeExpected.nullable)
       }
     }
+
+    Succeeded
+  }
+
+  class TestMetadataProvider extends UserExtraMetadataProvider {
+
+    def this(conf: Configuration) = this()
+
+    override def forExecEvent(event: ExecutionEvent, ctx: HarvestingContext): Map[String, Any] =
+      Map("test.extra" -> event)
+
+    override def forExecPlan(plan: ExecutionPlan, ctx: HarvestingContext): Map[String, Any] =
+      Map("test.extra" -> plan)
+
+    override def forOperation(op: ReadOperation, ctx: HarvestingContext): Map[String, Any] =
+      Map("test.extra" -> op)
+
+    override def forOperation(op: WriteOperation, ctx: HarvestingContext): Map[String, Any] =
+      Map("test.extra" -> op)
+
+    override def forOperation(op: DataOperation, ctx: HarvestingContext): Map[String, Any] =
+      Map("test.extra" -> op)
   }
 
 }

@@ -30,6 +30,8 @@ import za.co.absa.spline.test.fixture.{JDBCFixture, SparkDatabaseFixture, SparkF
 
 import scala.collection.JavaConverters._
 
+
+// TODO - do this as last one
 /**
  * Tests in this class serve as a way to produce unimplemented spark commands.
  * They can be used as a template once the implementation begins.
@@ -270,5 +272,3 @@ class SparkUnimplementedCommandsSpec extends AnyFlatSpec
       })
     })
 }
-
-

@@ -22,7 +22,8 @@ import org.apache.spark.sql.SparkSession
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.Mockito._
-import org.scalatest.BeforeAndAfter
+import org.scalatest.concurrent.Eventually
+import org.scalatest.{AsyncFunSpec, BeforeAndAfter}
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
@@ -42,11 +43,16 @@ import za.co.absa.spline.harvester.listener.SplineQueryExecutionListener
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 import za.co.absa.spline.test.fixture.{SparkFixture, SystemFixture}
 
+import scala.concurrent.duration.DurationInt
+
+// TODO - how to test async method was called just once?
+
 class SparkLineageInitializerSpec
   extends AnyFunSpec
     with BeforeAndAfter
     with Matchers
     with MockitoSugar
+    with Eventually
     with SparkFixture.NewPerTest
     with SystemFixture.IsolatedSystemPropertiesPerTest {
 
@@ -63,23 +69,23 @@ class SparkLineageInitializerSpec
       withSparkSession(session => {
         session.enableLineageTracking()
         runDummySparkJob(session)
-        MockLineageDispatcher.verifyTheOnlyLineageCaptured()
-        MockLineageDispatcher.instanceCount should be(1)
+
+        eventually (timeout(10 seconds), interval(10 millis)) {
+          MockLineageDispatcher.verifyTheOnlyLineageCaptured()
+          MockLineageDispatcher.instanceCount should be(1)
+        }
       })
     }
 
     it("should propagate to child sessions", ignoreIf(ver"$SPARK_VERSION" < ver"2.3")) {
       sys.props.put(SparkQueryExecutionListenersKey, classOf[SplineQueryExecutionListener].getName)
       withSparkSession(session => {
-        runDummySparkJob(session)
-        MockLineageDispatcher.verifyTheOnlyLineageCaptured()
-        MockLineageDispatcher.instanceCount should be(1)
-
-        MockLineageDispatcher.reset()
-
         runDummySparkJob(session.newSession())
-        MockLineageDispatcher.verifyTheOnlyLineageCaptured()
-        MockLineageDispatcher.instanceCount should be(1)
+
+        eventually (timeout(10 seconds), interval(1 seconds)) {
+          MockLineageDispatcher.verifyTheOnlyLineageCaptured()
+          MockLineageDispatcher.instanceCount should be(2)
+        }
       })
     }
   }
@@ -100,12 +106,14 @@ class SparkLineageInitializerSpec
       withSparkSession(sparkSession => {
         sparkSession.enableLineageTracking(createFailingConfigurer())
         runDummySparkJob(sparkSession)
-        MockLineageDispatcher.verifyNoLineageCaptured()
 
         // second attempt
         sparkSession.enableLineageTracking()
         runDummySparkJob(sparkSession)
-        MockLineageDispatcher.verifyTheOnlyLineageCaptured()
+
+        eventually (timeout(10 seconds), interval(250 milliseconds)) {
+          MockLineageDispatcher.verifyTheOnlyLineageCaptured()
+        }
       })
     }
 

@@ -20,8 +20,8 @@ import org.apache.commons.configuration.Configuration
 import org.apache.hadoop.fs.permission.FsPermission
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.SparkContext
-import org.apache.spark.annotation.InterfaceStability.Unstable
 import org.apache.spark.internal.Logging
+import za.co.absa.commons.annotation.Experimental
 import za.co.absa.commons.config.ConfigurationImplicits._
 import za.co.absa.commons.json.DefaultJacksonJsonSerDe
 import za.co.absa.commons.lang.ARM._
@@ -39,7 +39,7 @@ import scala.concurrent.blocking
  *
  * It is NOT thread-safe, strictly synchronous assuming a predefined order of method calls: `send(plan)` and then `send(event)`
  */
-@Unstable
+@Experimental
 class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSize: Int)
   extends LineageDispatcher
     with DefaultJacksonJsonSerDe

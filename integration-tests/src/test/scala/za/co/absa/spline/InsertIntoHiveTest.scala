@@ -17,53 +17,52 @@ package za.co.absa.spline
 
 import org.apache.spark.sql.SaveMode._
 import org.apache.spark.sql.functions._
-import org.scalatest.OneInstancePerTest
+import org.scalatest.compatible.Assertion
+import org.scalatest.{AsyncFlatSpec, OneInstancePerTest, Succeeded}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.TempDirectory
-import za.co.absa.spline.test.fixture.spline.SplineFixture
-import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
+import za.co.absa.spline.test.fixture.spline.{SplineFixture, SplineFixture2}
+import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkDatabaseFixture2, SparkFixture, SparkFixture2}
 
 class InsertIntoHiveTest
-  extends AnyFlatSpec
-    with OneInstancePerTest
+  extends AsyncFlatSpec
     with Matchers
-    with SparkFixture
-    with SparkDatabaseFixture
-    with SplineFixture {
+    with SparkFixture2
+    with SparkDatabaseFixture2
+    with SplineFixture2 {
 
   "InsertInto" should "produce lineage when inserting to partitioned table created as Hive table" in
-    withRestartingSparkContext {
       withCustomSparkSession(_
         .enableHiveSupport()
-        .config("hive.exec.dynamic.partition.mode", "nonstrict")) { spark =>
+      ) { implicit spark =>
 
         val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
         withHiveDatabase(spark)(databaseName,
-          ("path_archive", "(x String, ymd int) USING hive PARTITIONED BY (ymd)", Seq(("Tata", 20190401), ("Tere", 20190403))),
-          ("path", "(x String) USING hive", Seq("Monika", "Buba"))) {
+          ("path_archive", "(x String, ymd int) USING hive", Seq(("Tata", 20190401), ("Tere", 20190403))),
+          ("path", "(x String) USING hive", Seq("Monika", "Buba"))
+        ) {
+          val df = spark
+            .table("path")
+            .withColumn("ymd", lit(20190401))
 
-          withLineageTracking(spark) { lineageCaptor => {
-            val df = spark
-              .table("path")
-              .withColumn("ymd", lit(20190401))
+          withLineageTracking { captor =>
+            for {
+              (plan1, _) <- captor.lineageOf {
+                df.write.mode(Append).insertInto("path_archive")
+              }
 
-            val (plan1, _) = lineageCaptor.lineageOf {
-              df.write.mode(Append).insertInto("path_archive")
+              (plan2, _) <- captor.lineageOf {
+                spark
+                  .read.table("path_archive")
+                  .write.csv(TempDirectory(pathOnly = true).deleteOnExit().path.toString)
+              }
+            } yield {
+              plan1.operations.write.append should be(true)
+              plan1.operations.write.outputSource should be(s"file:$warehouseDir/${databaseName.toLowerCase}.db/path_archive")
+              plan2.operations.reads.get.head.inputSources.head shouldEqual plan1.operations.write.outputSource
             }
-
-            val (plan2, _) = lineageCaptor.lineageOf {
-              spark
-                .read.table("path_archive")
-                .write.csv(TempDirectory(pathOnly = true).deleteOnExit().path.toString)
-            }
-
-            plan1.operations.write.append should be(true)
-            plan1.operations.write.outputSource should be(s"file:$warehouseDir/${databaseName.toLowerCase}.db/path_archive")
-            plan2.operations.reads.get.head.inputSources.head shouldEqual plan1.operations.write.outputSource
-          }
           }
         }
       }
-    }
 }

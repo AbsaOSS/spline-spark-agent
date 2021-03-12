@@ -20,9 +20,11 @@ import org.apache.commons.configuration.{CompositeConfiguration, Configuration, 
 import org.apache.spark.sql.SparkSession
 import za.co.absa.commons.config.ConfigurationImplicits
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
+import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.extra.{UserExtraAppendingLineageFilter, UserExtraMetadataProvider}
-import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
+import za.co.absa.spline.harvester.iwd.DefaultIgnoredWriteDetectionStrategy.Behaviour
+import za.co.absa.spline.harvester.iwd.{DefaultIgnoredWriteDetectionStrategy, IgnoredWriteDetectionStrategy}
 import za.co.absa.spline.harvester.postprocessing.LineageFilter
 import za.co.absa.spline.harvester.{LineageHarvesterFactory, QueryExecutionEventHandler}
 
@@ -122,5 +124,24 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
     maybeUserExtraMetadataProvider
       .map(postProcessingFilters :+ new UserExtraAppendingLineageFilter(_))
       .getOrElse(postProcessingFilters)
+  )
+}
+
+case class CodeBasedSplineConfigurer(
+  sparkSession: SparkSession,
+  lineageDispatcher: LineageDispatcher,
+  splineMode: SplineMode = SplineMode.BEST_EFFORT,
+  ignoredWriteDetectionStrategy: IgnoredWriteDetectionStrategy = new DefaultIgnoredWriteDetectionStrategy(true),
+  postProcessingFilters: Seq[LineageFilter] = Seq.empty,
+) extends SplineConfigurer {
+
+  override def queryExecutionEventHandler: QueryExecutionEventHandler =
+    new QueryExecutionEventHandler(harvesterFactory, lineageDispatcher)
+
+  private def harvesterFactory = new LineageHarvesterFactory(
+    sparkSession,
+    splineMode,
+    ignoredWriteDetectionStrategy,
+    postProcessingFilters
   )
 }

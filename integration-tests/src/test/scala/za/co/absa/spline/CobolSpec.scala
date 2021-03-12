@@ -19,39 +19,41 @@ package za.co.absa.spline
 
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.SaveMode.Overwrite
-import org.scalatest.flatspec.AnyFlatSpec
+import org.apache.spark.sql.functions.{concat, min, sum}
+import org.scalatest.flatspec.{AnyFlatSpec, AsyncFlatSpec}
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.commons.io.TempDirectory
+import za.co.absa.commons.io.{TempDirectory, TempFile}
 import za.co.absa.spline.test.fixture.SparkFixture
-import za.co.absa.spline.test.fixture.spline.SplineFixture
+import za.co.absa.spline.test.fixture.spline.{SplineFixture, SplineFixture2}
 
-class CobolSpec extends AnyFlatSpec
+class CobolSpec extends AsyncFlatSpec
   with Matchers
   with SparkFixture
-  with SplineFixture {
+  with SplineFixture2 {
 
   import CobolSpec._
 
   it should "support Cobol as a source" in
-    withNewSparkSession(spark => {
-      withLineageTracking(spark)(lineageCaptor => {
-
-        val (plan1, _) = lineageCaptor.lineageOf(spark
-          .read
-          .format("cobol")
-          .option("copybook_contents", copybook)
-          .option("is_record_sequence", "true")
-          .option("schema_retention_policy", "collapse_root")
-          .option("segment_id_level0", "R")
-          .option("segment_id_prefix", "ID")
-          .load(copybookPath).write.mode(Overwrite).saveAsTable("somewhere")
-        )
-        plan1.operations.write.append shouldBe false
-        plan1.operations.reads.get.head.inputSources.head shouldBe copybookPath
-        plan1.operations.reads.get.head.extra.get("sourceType") shouldBe Some("cobol")
-
-
-      })
+    withNewSparkSession(implicit spark => {
+      withLineageTracking { captor =>
+        for {
+          (plan, _) <- captor.lineageOf {
+            spark.read
+              .format("cobol")
+              .option("copybook_contents", copybook)
+              .option("is_record_sequence", "true")
+              .option("schema_retention_policy", "collapse_root")
+              .option("segment_id_level0", "R")
+              .option("segment_id_prefix", "ID")
+              .load(copybookPath)
+              .write.mode(Overwrite).save(TempFile(pathOnly = true).deleteOnExit().path.toString)
+          }
+        } yield {
+          plan.operations.write.append shouldBe false
+          plan.operations.reads.get.head.inputSources.head shouldBe copybookPath
+          plan.operations.reads.get.head.extra.get("sourceType") shouldBe Some("cobol")
+        }
+      }
     })
 }
 
