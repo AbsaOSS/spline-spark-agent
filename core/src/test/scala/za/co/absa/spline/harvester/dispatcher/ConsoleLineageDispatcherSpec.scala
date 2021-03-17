@@ -33,7 +33,7 @@ class ConsoleLineageDispatcherSpec
     assertingStdOut(include("""["event",{"planId":null,"timestamp":999}]""")) {
       new ConsoleLineageDispatcher(new BaseConfiguration {
         addProperty("stream", "OUT")
-      }).send(ExecutionEvent(null, 999))
+      }).send(ExecutionEvent(null, 999, None, None))
     }
   }
 
@@ -41,7 +41,7 @@ class ConsoleLineageDispatcherSpec
     assertingStdErr(include("""["event",{"planId":null,"timestamp":999}]""")) {
       new ConsoleLineageDispatcher(new BaseConfiguration {
         addProperty("stream", "ERR")
-      }).send(ExecutionEvent(null, 999))
+      }).send(ExecutionEvent(null, 999, None, None))
     }
   }
 
