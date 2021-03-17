@@ -61,6 +61,7 @@ mvn test -P examples -D spline.mode=REQUIRED
   - [Shell script](src/main/shell/) - custom, non-Spark example, using REST API
 
 ## Run Spline examples using docker image
+Use docker settings at least cpu=2 and memory=4096M
 
 1. Build docker image
 ```shell script
