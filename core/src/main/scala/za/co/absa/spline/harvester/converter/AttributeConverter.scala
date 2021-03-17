@@ -40,6 +40,7 @@ class AttributeConverter(
         dataType = Some(dataTypeConverter.convert(attr.dataType, attr.nullable).id),
         childIds = resolveAttributeChild(attr)
           .map(expr => Seq(exprToRefConverter.convert(expr))),
+        extra = None,
         name = attr.name
       )
   }
