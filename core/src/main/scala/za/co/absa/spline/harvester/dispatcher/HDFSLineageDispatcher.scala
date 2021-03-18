@@ -16,6 +16,8 @@
 
 package za.co.absa.spline.harvester.dispatcher
 
+import java.net.URI
+
 import org.apache.commons.configuration.Configuration
 import org.apache.hadoop.fs.permission.FsPermission
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -29,6 +31,8 @@ import za.co.absa.spline.harvester.dispatcher.HDFSLineageDispatcher._
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 
 import scala.concurrent.blocking
+import za.co.absa.commons.S3Location.StringS3LocationExt
+import za.co.absa.commons.SimpleS3Location
 
 /**
  * A port of https://github.com/AbsaOSS/spline/tree/release/0.3.9/persistence/hdfs/src/main/scala/za/co/absa/spline/persistence/hdfs
@@ -64,22 +68,27 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
       throw new IllegalStateException("send(event) must be called strictly after send(plan) method with matching plan ID")
 
     try {
-      val path = new Path(this._lastSeenPlan.operations.write.outputSource, filename)
+      val path = s"${this._lastSeenPlan.operations.write.outputSource.stripSuffix("/")}/$filename"
       val planWithEvent = Map(
         "executionPlan" -> this._lastSeenPlan,
         "executionEvent" -> event
       )
-      persistToHdfs(planWithEvent.toJson, path)
+      persistToHadoopFs(planWithEvent.toJson, path)
     } finally {
       this._lastSeenPlan = null
     }
   }
 
-  private def persistToHdfs(content: String, path: Path): Unit = blocking {
-    logDebug(s"Opening HDFS output stream to $path")
-    val replication = HadoopFileSystem.getDefaultReplication(path)
-    val blockSize = HadoopFileSystem.getDefaultBlockSize(path)
-    val outputStream = HadoopFileSystem.create(path, permission, true, bufferSize, replication, blockSize, null)
+  private def persistToHadoopFs(content: String, fullLineagePath: String): Unit = blocking {
+    val (fs, path) = pathStringToFsWithPath(fullLineagePath)
+    logDebug(s"Opening HadoopFs output stream to $path")
+
+    val replication = fs.getDefaultReplication(path)
+    val blockSize = fs.getDefaultBlockSize(path)
+    val outputStream = fs.create(path, permission, true, bufferSize, replication, blockSize, null)
+
+    val umask = FsPermission.getUMask(fs.getConf)
+    FsPermission.getFileDefault.applyUMask(umask)
 
     logDebug(s"Writing lineage to $path")
     using(outputStream) {
@@ -90,14 +99,35 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
 
 object HDFSLineageDispatcher {
   private val HadoopConfiguration = SparkContext.getOrCreate().hadoopConfiguration
-  private val HadoopFileSystem = FileSystem.get(HadoopConfiguration)
 
   private val FileNameKey = "fileName"
   private val FilePermissionsKey = "filePermissions"
   private val BufferSizeKey = "fileBufferSize"
 
-  private val DefaultFilePermission = {
-    val umask = FsPermission.getUMask(HadoopFileSystem.getConf)
-    FsPermission.getFileDefault.applyUMask(umask)
+  private val DefaultFilePermission = new FsPermission("777")
+
+  /**
+   * Converts string full path to Hadoop FS and Path, e.g.
+   * `s3://mybucket1/path/to/file` -> S3 FS + `path/to/file`
+   * `/path/on/hdfs/to/file` -> local HDFS + `/path/on/hdfs/to/file`
+   *
+   * Note, that non-local HDFS paths are not supported in this method, e.g. hdfs://nameservice123:8020/path/on/hdfs/too.
+   *
+   * @param pathString path to convert to FS and relative path
+   * @return FS + relative path
+   **/
+  def pathStringToFsWithPath(pathString: String): (FileSystem, Path) = {
+    pathString.toS3Location match {
+      case Some(s3Location) =>
+        val s3Uri = new URI(s3Location.s3String) // s3://<bucket>
+        val s3Path = new Path(s"/${s3Location.path}") // /<text-file-object-path>
+
+        val fs = FileSystem.get(s3Uri, HadoopConfiguration)
+        (fs, s3Path)
+
+      case None => // local hdfs location
+        val fs = FileSystem.get(HadoopConfiguration)
+        (fs, new Path(pathString))
+    }
   }
 }
