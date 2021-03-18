@@ -27,7 +27,7 @@ import org.apache.spark.internal.Logging
 import za.co.absa.commons.config.ConfigurationImplicits._
 import za.co.absa.commons.json.DefaultJacksonJsonSerDe
 import za.co.absa.commons.lang.ARM._
-import za.co.absa.spline.harvester.dispatcher.HDFSLineageDispatcher._
+import za.co.absa.spline.harvester.dispatcher.HadoopFsLineageDispatcher._
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 
 import scala.concurrent.blocking
@@ -44,7 +44,7 @@ import za.co.absa.commons.SimpleS3Location
  * It is NOT thread-safe, strictly synchronous assuming a predefined order of method calls: `send(plan)` and then `send(event)`
  */
 @Unstable
-class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSize: Int)
+class HadoopFsLineageDispatcher(filename: String, permission: FsPermission, bufferSize: Int)
   extends LineageDispatcher
     with DefaultJacksonJsonSerDe
     with Logging {
@@ -97,7 +97,7 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
   }
 }
 
-object HDFSLineageDispatcher {
+object HadoopFsLineageDispatcher {
   private val HadoopConfiguration = SparkContext.getOrCreate().hadoopConfiguration
 
   private val FileNameKey = "fileName"
