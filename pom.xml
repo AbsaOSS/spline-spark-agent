@@ -260,6 +260,11 @@
                     <artifactId>maven-antrun-plugin</artifactId>
                     <version>1.8</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.spurint.maven.plugins</groupId>
+                    <artifactId>mima-maven-plugin</artifactId>
+                    <version>0.8.0</version>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -661,6 +666,28 @@
                                 <version>5.5.1.201910021850-r</version>
                             </dependency>
                         </dependencies>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Binary compatibility checking profile -->
+
+        <profile>
+            <id>binary-compat-check</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.spurint.maven.plugins</groupId>
+                        <artifactId>mima-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>check-abi</id>
+                                <goals>
+                                    <goal>check-abi</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
