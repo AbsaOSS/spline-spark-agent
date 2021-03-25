@@ -34,16 +34,10 @@ _exec_plan_json=$(
   cat <<END
 {
   "id": "$(uuidgen)",
-  "agentInfo": {
-    "name": "Bash",
-    "version": "$BASH_VERSION"
-  },
+  "appName": "Dummy Beer Job",
   "systemInfo": {
-    "name": "Dummy Example",
+    "name": "Foo Bar",
     "version": "0.0.0"
-  },
-  "extraInfo": {
-    "appName": "Dummy Beer Job"
   },
   "operations": {
     "write": {

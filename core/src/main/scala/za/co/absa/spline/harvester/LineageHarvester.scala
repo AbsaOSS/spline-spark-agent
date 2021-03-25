@@ -97,7 +97,6 @@ class LineageHarvester(
       val planId = UUID.randomUUID
       val plan = {
         val planExtra = Map[String, Any](
-          ExecutionPlanExtra.AppName -> ctx.session.sparkContext.appName,
           ExecutionPlanExtra.DataTypes -> componentCreatorFactory.dataTypeConverter.values
         )
 
@@ -108,12 +107,13 @@ class LineageHarvester(
         )
 
         val p = ExecutionPlan(
-          id = Some(planId),
+          id = planId.asOption,
+          appName = ctx.session.sparkContext.appName.asOption,
           operations = Operations(writeOp, opReads.asOption, opOthers.asOption),
           attributes = attributes.asOption,
-          expressions = Some(expressions),
+          expressions = expressions.asOption,
           systemInfo = NameAndVersion(AppMetaInfo.Spark, spark.SPARK_VERSION),
-          agentInfo = Some(NameAndVersion(AppMetaInfo.Spline, SplineBuildInfo.Version)),
+          agentInfo = NameAndVersion(AppMetaInfo.Spline, SplineBuildInfo.Version).asOption,
           extraInfo = planExtra.asOption
         )
         postProcessor.process(p)
