@@ -124,16 +124,21 @@ class LineageHarvester(
         None
       }
       else {
+        val errorOrDuration = result.toDisjunction.toEither
+        val maybeError = errorOrDuration.left.toOption
+        val maybeDuration = errorOrDuration.right.toOption
+
         val eventExtra = Map[String, Any](
           ExecutionEventExtra.AppId -> ctx.session.sparkContext.applicationId,
           ExecutionEventExtra.ReadMetrics -> readMetrics,
           ExecutionEventExtra.WriteMetrics -> writeMetrics
-        ).optionally[Duration]((m, d) => m + (ExecutionEventExtra.DurationNs -> d.toNanos), result.toOption)
+        )
 
         val ev = ExecutionEvent(
           planId = planId,
           timestamp = System.currentTimeMillis,
-          error = result.left.toOption,
+          durationNs = maybeDuration.map(_.toNanos),
+          error = maybeError,
           extra = eventExtra.asOption)
 
         val event = postProcessor.process(ev)

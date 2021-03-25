@@ -31,7 +31,6 @@ object ModelConstants {
     val AppId = "appId"
     val WriteMetrics = "writeMetrics"
     val ReadMetrics = "readMetrics"
-    val DurationNs = "durationNs"
   }
 
   object OperationParams {

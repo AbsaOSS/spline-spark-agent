@@ -256,6 +256,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "durationNs": {
+          "type": "object"
+        },
         "error": {
           "type": "object"
         },
