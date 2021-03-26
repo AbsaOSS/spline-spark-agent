@@ -306,7 +306,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
       }
     }
 
-  it should "collect user extra metadata" in
+  it should "collect user extra metadata" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in
     withCustomSparkSession(_
       .config("spark.spline.userExtraMetaProvider.className", classOf[TestMetadataProvider].getName)
       .config("spark.spline.lineageDispatcher", "noOp")

@@ -49,10 +49,16 @@ trait SparkDatabaseFixture2 extends SparkFixture2 {
             spark.sql(s"INSERT INTO $tableName VALUES (${values mkString ","})"))
     })
 
-    testBody.transform { resOrExp =>
-      dropDatabase(spark, databaseName)
-      resOrExp
-    }
+    testBody.transform(
+      resOrExp => {
+        dropDatabase(spark, databaseName)
+        resOrExp
+      },
+      exception => {
+        dropDatabase(spark, databaseName)
+        exception
+      }
+    )
   }
 
   def withDatabase
@@ -63,10 +69,16 @@ trait SparkDatabaseFixture2 extends SparkFixture2 {
 
     prepareDatabase(spark, databaseName)
 
-    testBody.transform { resOrExp =>
-      dropDatabase(spark, databaseName)
-      resOrExp
-    }
+    testBody.transform(
+      resOrExp => {
+        dropDatabase(spark, databaseName)
+        resOrExp
+      },
+      exception => {
+        dropDatabase(spark, databaseName)
+        exception
+      }
+    )
   }
 
   private def prepareDatabase(spark: SparkSession, databaseName: DatabaseName) :Unit = {

@@ -27,12 +27,14 @@ import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkDatabaseFixtur
 
 class InsertIntoHiveTest
   extends AsyncFlatSpec
+    with OneInstancePerTest
     with Matchers
     with SparkFixture2
     with SparkDatabaseFixture2
     with SplineFixture2 {
 
   "InsertInto" should "produce lineage when inserting to partitioned table created as Hive table" in
+    withAsyncRestartingSparkContext {
       withCustomSparkSession(_
         .enableHiveSupport()
       ) { implicit spark =>
@@ -65,4 +67,5 @@ class InsertIntoHiveTest
           }
         }
       }
+    }
 }

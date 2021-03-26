@@ -24,10 +24,8 @@ import za.co.absa.commons.io.TempDirectory
 import za.co.absa.commons.json.DefaultJacksonJsonSerDe
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version._
-import za.co.absa.spline.harvester.conf.{CodeBasedSplineConfigurer, StandardSplineConfigurationStack}
-import za.co.absa.spline.harvester.SparkLineageInitializer._
 import za.co.absa.spline.test.fixture.SparkFixture
-import za.co.absa.spline.test.fixture.spline.{LineageCaptor2, SplineFixture2}
+import za.co.absa.spline.test.fixture.spline.SplineFixture2
 
 import java.io.File
 

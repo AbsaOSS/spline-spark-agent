@@ -52,10 +52,17 @@ trait SparkFixture2 extends AsyncFlatSpec {
 
   def withAsyncRestartingSparkContext(testBody: => Future[Assertion]): Future[Assertion] = {
     haltSparkAndCleanup()
-    testBody.transform { resOrExp =>
-      haltSparkAndCleanup()
-      resOrExp
-    }
+    testBody.transform(
+      resOrExp => {
+        haltSparkAndCleanup()
+        resOrExp
+      },
+      exception => {
+        haltSparkAndCleanup()
+        exception
+      }
+    )
+
   }
 
   private[SparkFixture2] def haltSparkAndCleanup(): Unit = {

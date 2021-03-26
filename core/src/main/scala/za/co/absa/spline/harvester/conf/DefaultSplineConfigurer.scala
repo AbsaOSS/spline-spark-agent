@@ -132,7 +132,7 @@ case class CodeBasedSplineConfigurer(
   lineageDispatcher: LineageDispatcher,
   splineMode: SplineMode = SplineMode.BEST_EFFORT,
   ignoredWriteDetectionStrategy: IgnoredWriteDetectionStrategy = new DefaultIgnoredWriteDetectionStrategy(true),
-  postProcessingFilters: Seq[LineageFilter] = Seq.empty,
+  postProcessingFilters: Seq[LineageFilter] = Seq.empty
 ) extends SplineConfigurer {
 
   override def queryExecutionEventHandler: QueryExecutionEventHandler =
