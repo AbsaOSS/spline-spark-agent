@@ -25,8 +25,8 @@ import org.apache.spark.internal.Logging
 import za.co.absa.commons.config.ConfigurationImplicits._
 import za.co.absa.commons.lang.ARM._
 import za.co.absa.spline.harvester.dispatcher.HDFSLineageDispatcher._
-import za.co.absa.spline.harvester.dispatcher.serde.RuntimeLineageJsonSerDe
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
+import za.co.absa.spline.harvester.json.HarvesterJsonSerDe
 
 import scala.concurrent.blocking
 
@@ -69,7 +69,7 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
         "executionEvent" -> event
       )
 
-      import RuntimeLineageJsonSerDe.impl._
+      import HarvesterJsonSerDe.impl._
       persistToHdfs(planWithEvent.toJson, path)
     } finally {
       this._lastSeenPlan = null
