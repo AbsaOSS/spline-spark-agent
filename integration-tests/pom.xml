@@ -20,12 +20,12 @@
 
     <parent>
         <groupId>za.co.absa.spline.agent.spark</groupId>
-        <artifactId>spline-spark-agent_2.12</artifactId>
+        <artifactId>spline-spark-agent_2.11</artifactId>
         <relativePath>../pom.xml</relativePath>
         <version>0.6.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>integration-tests_2.12</artifactId>
+    <artifactId>integration-tests_2.11</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
