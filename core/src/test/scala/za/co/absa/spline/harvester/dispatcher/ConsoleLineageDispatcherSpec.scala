@@ -16,6 +16,8 @@
 
 package za.co.absa.spline.harvester.dispatcher
 
+import java.util.UUID
+
 import org.apache.commons.configuration.BaseConfiguration
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -29,20 +31,29 @@ class ConsoleLineageDispatcherSpec
 
   behavior of "ConsoleLineageDispatcher"
 
-  it should "send lineage to the stdout" in {
-    assertingStdOut(include("""["event",{"planId":null,"timestamp":999}]""")) {
-      new ConsoleLineageDispatcher(new BaseConfiguration {
-        addProperty("stream", "OUT")
-      }).send(ExecutionEvent(null, 999, None, None))
+  private val uuid1 = UUID.randomUUID()
+
+  Seq(
+    ("null planId", null, """["event",{"timestamp":999}]"""), // planId not present at all if null
+    ("non-null planId", uuid1, s"""["event",{"planId":"$uuid1","timestamp":999}]""")
+  ).foreach { case (testCaseName, planId, expectedSubstring) =>
+
+    it should s"send lineage to the stdout ($testCaseName)" in {
+      assertingStdOut(include(expectedSubstring)) {
+        new ConsoleLineageDispatcher(new BaseConfiguration {
+          addProperty("stream", "OUT")
+        }).send(ExecutionEvent(planId, 999, None, None))
+      }
+    }
+
+    it should s"send lineage to the stderr ($testCaseName)" in {
+      assertingStdErr(include(expectedSubstring)) {
+        new ConsoleLineageDispatcher(new BaseConfiguration {
+          addProperty("stream", "ERR")
+        }).send(ExecutionEvent(planId, 999, None, None))
+      }
     }
   }
 
-  it should "send lineage to the stderr" in {
-    assertingStdErr(include("""["event",{"planId":null,"timestamp":999}]""")) {
-      new ConsoleLineageDispatcher(new BaseConfiguration {
-        addProperty("stream", "ERR")
-      }).send(ExecutionEvent(null, 999, None, None))
-    }
-  }
 
 }

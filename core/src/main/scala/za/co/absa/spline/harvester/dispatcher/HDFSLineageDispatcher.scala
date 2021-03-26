@@ -22,15 +22,11 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.SparkContext
 import org.apache.spark.annotation.InterfaceStability.Unstable
 import org.apache.spark.internal.Logging
-import org.json4s.JValue
 import za.co.absa.commons.config.ConfigurationImplicits._
-import za.co.absa.commons.json.{AbstractJsonSerDe, DefaultJacksonJsonSerDe}
 import za.co.absa.commons.lang.ARM._
-import za.co.absa.commons.reflect.ReflectionUtils
 import za.co.absa.spline.harvester.dispatcher.HDFSLineageDispatcher._
+import za.co.absa.spline.harvester.dispatcher.serde.RuntimeLineageJsonSerDe
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
-import scala.reflect.runtime.universe._
-
 
 import scala.concurrent.blocking
 
@@ -73,7 +69,7 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
         "executionEvent" -> event
       )
 
-      import HDFSLineageDispatcher.LineageJsonSerDe.impl.EntityToJson
+      import RuntimeLineageJsonSerDe.impl._
       persistToHdfs(planWithEvent.toJson, path)
     } finally {
       this._lastSeenPlan = null
@@ -106,22 +102,4 @@ object HDFSLineageDispatcher {
     FsPermission.getFileDefault.applyUMask(umask)
   }
 
-  object LineageJsonSerDe {
-    // This delays the compilation (to bytecode) of that piece of code at runtime.
-    // Commons are build against json4s 3.5.5, spark 2.4 usually provides json4s 3.5.3 and these are not binary compatible!
-    val impl: AbstractJsonSerDe[JValue] = ReflectionUtils.compile(
-      q"""
-      import org.json4s._
-      import org.json4s.jackson._
-      import za.co.absa.commons.json._
-      import za.co.absa.commons.json.format._
-      import za.co.absa.spline.harvester.json._
-
-      new AbstractJsonSerDe[JValue]
-        with JsonMethods
-        with ShortTypeHintForSpline03ModelSupport
-        with NoEmptyValuesSupport
-        with JavaTypesSupport
-    """)(Map.empty)
-  }
 }
