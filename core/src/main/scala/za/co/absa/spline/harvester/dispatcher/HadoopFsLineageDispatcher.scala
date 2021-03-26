@@ -32,7 +32,6 @@ import za.co.absa.spline.harvester.json.HarvesterJsonSerDe
 
 import scala.concurrent.blocking
 import za.co.absa.commons.S3Location.StringS3LocationExt
-import za.co.absa.commons.SimpleS3Location
 
 /**
  * A port of https://github.com/AbsaOSS/spline/tree/release/0.3.9/persistence/hdfs/src/main/scala/za/co/absa/spline/persistence/hdfs
