@@ -1178,6 +1178,16 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.spurint.maven.plugins</groupId>
+                <artifactId>mima-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>check-abi</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>com.github.cerveada</groupId>
                 <artifactId>scalatest-maven-plugin</artifactId>
                 <configuration>

@@ -25,10 +25,10 @@ import org.apache.spark.SparkContext
 import org.apache.spark.annotation.InterfaceStability.Unstable
 import org.apache.spark.internal.Logging
 import za.co.absa.commons.config.ConfigurationImplicits._
-import za.co.absa.commons.json.DefaultJacksonJsonSerDe
 import za.co.absa.commons.lang.ARM._
 import za.co.absa.spline.harvester.dispatcher.HadoopFsLineageDispatcher._
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
+import za.co.absa.spline.harvester.json.HarvesterJsonSerDe
 
 import scala.concurrent.blocking
 import za.co.absa.commons.S3Location.StringS3LocationExt
@@ -46,7 +46,6 @@ import za.co.absa.commons.SimpleS3Location
 @Unstable
 class HadoopFsLineageDispatcher(filename: String, permission: FsPermission, bufferSize: Int)
   extends LineageDispatcher
-    with DefaultJacksonJsonSerDe
     with Logging {
 
   def this(conf: Configuration) = this(
@@ -73,6 +72,8 @@ class HadoopFsLineageDispatcher(filename: String, permission: FsPermission, buff
         "executionPlan" -> this._lastSeenPlan,
         "executionEvent" -> event
       )
+
+      import HarvesterJsonSerDe.impl._
       persistToHadoopFs(planWithEvent.toJson, path)
     } finally {
       this._lastSeenPlan = null
@@ -130,4 +131,5 @@ object HadoopFsLineageDispatcher {
         (fs, new Path(pathString))
     }
   }
+
 }

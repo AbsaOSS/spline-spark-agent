@@ -24,7 +24,7 @@ import za.co.absa.commons.io.TempDirectory
 import za.co.absa.commons.json.DefaultJacksonJsonSerDe
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version._
-import za.co.absa.spline.harvester.SparkLineageInitializer.SparkSessionWrapper
+import za.co.absa.spline.harvester.SparkLineageInitializer._
 import za.co.absa.spline.test.fixture.SparkFixture
 
 import java.io.File
