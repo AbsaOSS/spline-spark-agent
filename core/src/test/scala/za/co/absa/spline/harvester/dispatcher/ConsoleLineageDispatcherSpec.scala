@@ -31,29 +31,38 @@ class ConsoleLineageDispatcherSpec
 
   behavior of "ConsoleLineageDispatcher"
 
-  private val uuid1 = UUID.randomUUID()
+  private val uuid1 = UUID.fromString("12345678-90ab-cdef-1234-567890abcdef")
 
-  Seq(
-    ("null planId", null, """["event",{"timestamp":999}]"""), // planId not present at all if null
-    ("non-null planId", uuid1, s"""["event",{"planId":"$uuid1","timestamp":999}]""")
-  ).foreach { case (testCaseName, planId, expectedSubstring) =>
-
-    it should s"send lineage to the stdout ($testCaseName)" in {
-      assertingStdOut(include(expectedSubstring)) {
-        new ConsoleLineageDispatcher(new BaseConfiguration {
-          addProperty("stream", "OUT")
-        }).send(ExecutionEvent(planId, 999, None, None))
-      }
-    }
-
-    it should s"send lineage to the stderr ($testCaseName)" in {
-      assertingStdErr(include(expectedSubstring)) {
-        new ConsoleLineageDispatcher(new BaseConfiguration {
-          addProperty("stream", "ERR")
-        }).send(ExecutionEvent(planId, 999, None, None))
-      }
+  it should "send lineage to the stdout (null planId)" in {
+    assertingStdOut(include("""["event",{"timestamp":999}]""")) {
+      new ConsoleLineageDispatcher(new BaseConfiguration {
+        addProperty("stream", "OUT")
+      }).send(ExecutionEvent(null, 999, None, None))
     }
   }
 
+  it should "send lineage to the stdout (non-null planId)" in {
+    assertingStdOut(include("""["event",{"planId":"12345678-90ab-cdef-1234-567890abcdef","timestamp":999}]""")) {
+      new ConsoleLineageDispatcher(new BaseConfiguration {
+        addProperty("stream", "OUT")
+      }).send(ExecutionEvent(uuid1, 999, None, None))
+    }
+  }
+
+  it should "send lineage to the stderr (null planId)" in {
+    assertingStdErr(include("""["event",{"timestamp":999}]""")) {
+      new ConsoleLineageDispatcher(new BaseConfiguration {
+        addProperty("stream", "ERR")
+      }).send(ExecutionEvent(null, 999, None, None))
+    }
+  }
+
+  it should "send lineage to the stderr (non-null planId)" in {
+    assertingStdErr(include("""["event",{"planId":"12345678-90ab-cdef-1234-567890abcdef","timestamp":999}]""")) {
+      new ConsoleLineageDispatcher(new BaseConfiguration {
+        addProperty("stream", "ERR")
+      }).send(ExecutionEvent(uuid1, 999, None, None))
+    }
+  }
 
 }
