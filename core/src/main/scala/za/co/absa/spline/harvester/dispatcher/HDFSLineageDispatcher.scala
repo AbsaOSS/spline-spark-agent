@@ -23,10 +23,10 @@ import org.apache.spark.SparkContext
 import org.apache.spark.annotation.InterfaceStability.Unstable
 import org.apache.spark.internal.Logging
 import za.co.absa.commons.config.ConfigurationImplicits._
-import za.co.absa.commons.json.DefaultJacksonJsonSerDe
 import za.co.absa.commons.lang.ARM._
 import za.co.absa.spline.harvester.dispatcher.HDFSLineageDispatcher._
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
+import za.co.absa.spline.harvester.json.HarvesterJsonSerDe
 
 import scala.concurrent.blocking
 
@@ -42,7 +42,6 @@ import scala.concurrent.blocking
 @Unstable
 class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSize: Int)
   extends LineageDispatcher
-    with DefaultJacksonJsonSerDe
     with Logging {
 
   def this(conf: Configuration) = this(
@@ -69,6 +68,8 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
         "executionPlan" -> this._lastSeenPlan,
         "executionEvent" -> event
       )
+
+      import HarvesterJsonSerDe.impl._
       persistToHdfs(planWithEvent.toJson, path)
     } finally {
       this._lastSeenPlan = null
@@ -100,4 +101,5 @@ object HDFSLineageDispatcher {
     val umask = FsPermission.getUMask(HadoopFileSystem.getConf)
     FsPermission.getFileDefault.applyUMask(umask)
   }
+
 }
