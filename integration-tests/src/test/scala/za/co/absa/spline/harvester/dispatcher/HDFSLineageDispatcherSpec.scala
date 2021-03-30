@@ -29,18 +29,18 @@ import za.co.absa.spline.test.fixture.SparkFixture
 
 import java.io.File
 
-class HadoopFsLineageDispatcherSpec
+class HDFSLineageDispatcherSpec
   extends AnyFlatSpec
     with Matchers
     with SparkFixture
     with DefaultJacksonJsonSerDe {
 
-  behavior of "HadoopFsLineageDispatcher"
+  behavior of "HDFSLineageDispatcher"
 
   it should "save lineage file to a filesystem" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
     withCustomSparkSession(_
-      .config("spark.spline.lineageDispatcher", "hadoopFs")
-      .config("spark.spline.lineageDispatcher.hadoopFs.className", classOf[HadoopFsLineageDispatcher].getName)) {
+      .config("spark.spline.lineageDispatcher", "hdfs")
+      .config("spark.spline.lineageDispatcher.hdfs.className", classOf[HDFSLineageDispatcher].getName)) {
       spark =>
         import spark.implicits._
         val dummyDF = Seq((1, 2)).toDF

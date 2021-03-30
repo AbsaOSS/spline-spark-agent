@@ -26,7 +26,7 @@ import org.apache.spark.annotation.InterfaceStability.Unstable
 import org.apache.spark.internal.Logging
 import za.co.absa.commons.config.ConfigurationImplicits._
 import za.co.absa.commons.lang.ARM._
-import za.co.absa.spline.harvester.dispatcher.HadoopFsLineageDispatcher._
+import za.co.absa.spline.harvester.dispatcher.HDFSLineageDispatcher._
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe
 
@@ -43,7 +43,7 @@ import za.co.absa.commons.S3Location.StringS3LocationExt
  * It is NOT thread-safe, strictly synchronous assuming a predefined order of method calls: `send(plan)` and then `send(event)`
  */
 @Unstable
-class HadoopFsLineageDispatcher(filename: String, permission: FsPermission, bufferSize: Int)
+class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSize: Int)
   extends LineageDispatcher
     with Logging {
 
@@ -97,7 +97,7 @@ class HadoopFsLineageDispatcher(filename: String, permission: FsPermission, buff
   }
 }
 
-object HadoopFsLineageDispatcher {
+object HDFSLineageDispatcher {
   private val HadoopConfiguration = SparkContext.getOrCreate().hadoopConfiguration
 
   private val FileNameKey = "fileName"
@@ -130,5 +130,4 @@ object HadoopFsLineageDispatcher {
         (fs, new Path(pathString))
     }
   }
-
 }
