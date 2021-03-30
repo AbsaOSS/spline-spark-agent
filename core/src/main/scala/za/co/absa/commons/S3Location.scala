@@ -28,11 +28,9 @@ object S3Location {
 
   implicit class StringS3LocationExt(path: String) {
 
-    def toS3Location: Option[SimpleS3Location] = {
-      path match {
-        case S3LocationRx(protocol, bucketName, relativePath) => Some(SimpleS3Location(protocol, bucketName, relativePath))
-        case _ => None
-      }
+    def toS3Location: Option[SimpleS3Location] = PartialFunction.condOpt(s) {
+      case S3LocationRx(protocol, bucketName, relativePath) => 
+        SimpleS3Location(protocol, bucketName, relativePath)
     }
 
     def toS3LocationOrFail: SimpleS3Location = {
