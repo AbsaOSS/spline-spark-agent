@@ -18,7 +18,7 @@ package za.co.absa.spline.example.dce
 
 import za.co.absa.spline.SparkApp
 
-object MyOtherJobA extends SparkApp("Other Job A") {
+object MyOtherAJob extends SparkApp("Other Job A") {
 
   import za.co.absa.spline.harvester.SparkLineageInitializer._
 
