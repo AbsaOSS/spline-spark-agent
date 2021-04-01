@@ -18,9 +18,10 @@ package za.co.absa.spline.example.batch
 
 import org.apache.spark.sql.SaveMode
 import za.co.absa.spline.SparkApp
-import za.co.absa.spline.harvester.SparkLineageInitializer._
 
 object UnionJob extends SparkApp("Union Job") {
+
+  import za.co.absa.spline.harvester.SparkLineageInitializer._
 
   spark.enableLineageTracking()
 

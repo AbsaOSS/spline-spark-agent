@@ -16,11 +16,12 @@
 
 package za.co.absa.spline.example.dce
 
-import org.apache.spark.sql.functions._
 import za.co.absa.spline.SparkApp
-import za.co.absa.spline.harvester.SparkLineageInitializer.SparkSessionWrapper
 
 object J1StandardizationJob extends SparkApp("My Standardization") {
+
+  import org.apache.spark.sql.functions._
+  import za.co.absa.spline.harvester.SparkLineageInitializer._
 
   spark.enableLineageTracking()
 

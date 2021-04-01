@@ -17,9 +17,10 @@
 package za.co.absa.spline.example.dce
 
 import za.co.absa.spline.SparkApp
-import za.co.absa.spline.harvester.SparkLineageInitializer.SparkSessionWrapper
 
 object MyOtherJobB extends SparkApp("Other Job B") {
+
+  import za.co.absa.spline.harvester.SparkLineageInitializer._
 
   spark.enableLineageTracking()
 
