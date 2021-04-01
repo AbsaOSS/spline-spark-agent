@@ -23,6 +23,8 @@ import za.co.absa.commons.reflect.ReflectionUtils
 import scala.reflect.runtime.universe._
 
 object HarvesterJsonSerDe {
+  // This delays the compilation (to bytecode) of that piece of code at runtime.
+  // Commons are build against json4s 3.5.5, spark 2.4 usually provides json4s 3.5.3 and these are not binary compatible!
   val impl: AbstractJsonSerDe[JValue] = ReflectionUtils.compile(
     q"""
       import org.json4s._

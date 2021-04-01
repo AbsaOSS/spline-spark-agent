@@ -16,6 +16,8 @@
 
 package za.co.absa.spline.harvester.dispatcher
 
+import java.util.UUID
+
 import org.apache.commons.configuration.BaseConfiguration
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -29,19 +31,37 @@ class ConsoleLineageDispatcherSpec
 
   behavior of "ConsoleLineageDispatcher"
 
-  it should "send lineage to the stdout" in {
-    assertingStdOut(include("""["event",{"planId":null,"timestamp":999}]""")) {
+  private val uuid1 = UUID.fromString("12345678-90ab-cdef-1234-567890abcdef")
+
+  it should "send lineage to the stdout (null planId)" in {
+    assertingStdOut(include("""["event",{"timestamp":999}]""")) {
       new ConsoleLineageDispatcher(new BaseConfiguration {
         addProperty("stream", "OUT")
       }).send(ExecutionEvent(null, 999, None, None))
     }
   }
 
-  it should "send lineage to the stderr" in {
-    assertingStdErr(include("""["event",{"planId":null,"timestamp":999}]""")) {
+  it should "send lineage to the stdout (non-null planId)" in {
+    assertingStdOut(include("""["event",{"planId":"12345678-90ab-cdef-1234-567890abcdef","timestamp":999}]""")) {
+      new ConsoleLineageDispatcher(new BaseConfiguration {
+        addProperty("stream", "OUT")
+      }).send(ExecutionEvent(uuid1, 999, None, None))
+    }
+  }
+
+  it should "send lineage to the stderr (null planId)" in {
+    assertingStdErr(include("""["event",{"timestamp":999}]""")) {
       new ConsoleLineageDispatcher(new BaseConfiguration {
         addProperty("stream", "ERR")
       }).send(ExecutionEvent(null, 999, None, None))
+    }
+  }
+
+  it should "send lineage to the stderr (non-null planId)" in {
+    assertingStdErr(include("""["event",{"planId":"12345678-90ab-cdef-1234-567890abcdef","timestamp":999}]""")) {
+      new ConsoleLineageDispatcher(new BaseConfiguration {
+        addProperty("stream", "ERR")
+      }).send(ExecutionEvent(uuid1, 999, None, None))
     }
   }
 

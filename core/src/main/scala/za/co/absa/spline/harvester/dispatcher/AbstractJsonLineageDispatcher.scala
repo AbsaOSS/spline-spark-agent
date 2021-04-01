@@ -17,16 +17,17 @@
 package za.co.absa.spline.harvester.dispatcher
 
 import za.co.absa.commons.EnumUtils.EnumOps
-import za.co.absa.commons.json.DefaultJacksonJsonSerDe
 import za.co.absa.commons.reflect.EnumerationMacros
 import za.co.absa.spline.harvester.dispatcher.AbstractJsonLineageDispatcher.ModelEntity
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 
+import za.co.absa.spline.harvester.json.HarvesterJsonSerDe
+
 abstract class AbstractJsonLineageDispatcher
-  extends LineageDispatcher
-    with DefaultJacksonJsonSerDe {
+  extends LineageDispatcher {
 
   import ModelEntity.Implicits._
+  import HarvesterJsonSerDe.impl._
 
   final override def send(plan: ExecutionPlan): Unit = send(Array(getEntityName(ModelEntity.Plan), plan).toJson)
 
