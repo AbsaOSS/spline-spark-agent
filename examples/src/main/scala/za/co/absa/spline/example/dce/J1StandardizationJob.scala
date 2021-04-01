@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 ABSA Group Limited
+ * Copyright 2020 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,28 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.example.batch
+package za.co.absa.spline.example.dce
 
-import org.apache.spark.sql.SaveMode
 import za.co.absa.spline.SparkApp
 
-object UnionJob extends SparkApp("Union Job") {
+object J1StandardizationJob extends SparkApp("My Standardization") {
 
+  import org.apache.spark.sql.functions._
   import za.co.absa.spline.harvester.SparkLineageInitializer._
 
   spark.enableLineageTracking()
 
-  val df1 = Seq((1, 2, 3)).toDF()
-  val df2 = Seq((4, 5, 6)).toDF()
+  spark.read
+    .csv("data/input/dce/raw/Transactions/2020/01/01/v1/Transactions.csv")
+    .withColumn("client_id", '_c0 cast "long")
+    .withColumn("date", to_date('_c1, "dd.MM.yyyy"))
+    .withColumn("merchant", '_c2)
+    .withColumn("city", '_c3)
+    .withColumn("country", '_c4)
+    .withColumn("amount", '_c5 cast "integer")
+    .withColumn("currency", '_c6)
+    .write
+    .mode("overwrite")
+    .save("data/_temp/standard/dce/Transactions/2020/01/01/v1")
 
-  val unionizedDf = df1.union(df2)
-
-  unionizedDf.write.mode(SaveMode.Overwrite).parquet("data/output/batch/union_job_results")
 }

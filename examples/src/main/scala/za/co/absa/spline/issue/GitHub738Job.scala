@@ -20,11 +20,12 @@ import org.apache.commons.io.FileUtils
 import org.apache.spark.internal.Logging
 import za.co.absa.commons.io.TempFile
 import za.co.absa.spline.SparkApp
-import za.co.absa.spline.harvester.SparkLineageInitializer._
 
 import scala.util.Random
 
 object GitHub738Job extends SparkApp("GitHub spline-738") with Logging {
+
+  import za.co.absa.spline.harvester.SparkLineageInitializer._
 
   spark.enableLineageTracking()
 

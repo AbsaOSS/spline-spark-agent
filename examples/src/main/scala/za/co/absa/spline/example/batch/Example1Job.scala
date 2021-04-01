@@ -16,11 +16,12 @@
 
 package za.co.absa.spline.example.batch
 
-import org.apache.spark.sql.SaveMode
 import za.co.absa.spline.SparkApp
-import za.co.absa.spline.harvester.SparkLineageInitializer._
 
 object Example1Job extends SparkApp("Example 1") {
+
+  import org.apache.spark.sql._
+  import za.co.absa.spline.harvester.SparkLineageInitializer._
 
   // Initializing library to hook up to Apache Spark
   spark.enableLineageTracking()
