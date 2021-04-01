@@ -19,7 +19,9 @@
 #
 
 SCALA_VERSIONS=(2.11 2.12)
+
 BASE_DIR=$(dirname "$0")
+MODULE_DIRS=$(find "$BASE_DIR" -type f -name "pom.xml" -printf '%h\n')
 
 log() {
   echo "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░"
@@ -30,7 +32,10 @@ log() {
 cross_build() {
   bin_ver=$1
   log "Building with Scala $bin_ver"
-  find "$BASE_DIR"/target/* -type d -exec rm -rf {} \; 2> /dev/null
+
+  for dir in $MODULE_DIRS; do
+    rm -rf "$dir"/target
+  done
 
   mvn scala-cross-build:change-version -Pscala-$bin_ver
   mvn install -Pscala-$bin_ver
@@ -43,5 +48,11 @@ for v in "${SCALA_VERSIONS[@]}"; do
 done
 
 log "Restoring POM-files"
+
 scala_profiles=$(for v in ${SCALA_VERSIONS[*]}; do echo "-Pscala-$v"; done)
+
 mvn scala-cross-build:restore-version $scala_profiles
+
+for dir in $MODULE_DIRS; do
+  rm -f "$dir"/pom.xml.bkp
+done
