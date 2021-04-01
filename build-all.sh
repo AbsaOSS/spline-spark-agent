@@ -24,8 +24,9 @@ SCALA_VERSIONS=(2.11 2.12)
 
 BASE_DIR=$(dirname "$0")
 MODULE_DIRS=$(find "$BASE_DIR" -type f -name "pom.xml" -printf '%h\n')
+MVN_EXEC="mvn"
 
-log() {
+print_title() {
   echo "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░"
   echo "                           $1                                                  "
   echo "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░"
@@ -33,14 +34,17 @@ log() {
 
 cross_build() {
   bin_ver=$1
-  log "Building with Scala $bin_ver"
 
+  # pre-cleaning
   for dir in $MODULE_DIRS; do
     rm -rf "$dir"/target
   done
 
-  mvn scala-cross-build:change-version -Pscala-$bin_ver
-  mvn install -Pscala-$bin_ver
+  print_title "Switching to Scala $bin_ver"
+  $MVN_EXEC scala-cross-build:change-version -Pscala-"$bin_ver"
+
+  print_title "Building with Scala $bin_ver"
+  $MVN_EXEC install -Pscala-"$bin_ver" || exit 1
 }
 
 # -------------------------------------------------------------------------------
@@ -49,12 +53,10 @@ for v in "${SCALA_VERSIONS[@]}"; do
   cross_build "$v"
 done
 
-log "Restoring POM-files"
+print_title "Restoring POM-files"
+$MVN_EXEC scala-cross-build:restore-version "$(printf -- "-Pscala-%s " "${SCALA_VERSIONS[@]}")"
 
-scala_profiles=$(for v in ${SCALA_VERSIONS[*]}; do echo "-Pscala-$v"; done)
-
-mvn scala-cross-build:restore-version $scala_profiles
-
+# remove backup files
 for dir in $MODULE_DIRS; do
   rm -f "$dir"/pom.xml.bkp
 done
