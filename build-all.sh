@@ -17,6 +17,8 @@
 #
 # THIS SCRIPT IS INTENDED FOR LOCAL DEV USAGE ONLY
 #
+# Build Spline Agent artifacts for all supported Scala versions and install them to local maven repository.
+#
 
 SCALA_VERSIONS=(2.11 2.12)
 
