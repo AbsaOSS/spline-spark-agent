@@ -24,6 +24,7 @@ object ModelConstants {
   }
 
   object ExecutionPlanExtra {
+    val AppName = "appName"
     val DataTypes = "dataTypes"
   }
 

@@ -58,9 +58,10 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           inside(plan) {
             case ExecutionPlan(_, _, Operations(_, None, Some(Seq(op))), _, _, _, _, _) =>
               op.id should be("1")
+              op.name should be(Some("LocalRelation"))
               op.childIds should be(None)
               op.output should not be None
-              op.extra.get should contain("name" -> "LocalRelation")
+              op.extra should be(empty)
           }
         }
       }
@@ -81,19 +82,20 @@ class LineageHarvesterSpec extends AsyncFlatSpec
         val expectedOperations = Seq(
           WriteOperation(
             id = "0",
+            name = Some("AAA"),
             childIds = Seq("1"),
             outputSource = s"file:$tmpDest",
             append = false,
             params = None,
-            extra = None,
-            output = expectedAttributes.map(_.id)
+            extra = None
           ),
           DataOperation(
             id = "1",
+            name = Some("LocalRelation"),
             childIds = None,
-            output = expectedAttributes.map(_.id),
+            output = expectedAttributes.map(_.id).asOption,
             params = None,
-            extra = Map("name" -> "LocalRelation").asOption))
+            extra = None))
 
         for {
           (plan, _) <- captor.lineageOf(df.write.save(tmpDest))
@@ -125,22 +127,22 @@ class LineageHarvesterSpec extends AsyncFlatSpec
         val expectedOperations = Seq(
           WriteOperation(
             id = "0",
+            name = Some("BBB"),
             childIds = Seq("1"),
             outputSource = s"file:$tmpDest",
             append = false,
             params = None,
-            extra = None,
-            output = outputAfterRename
+            extra = None
           ),
           DataOperation(
-            "1", Seq("2").asOption, outputAfterRename,
-            None, Map("name" -> "Filter").asOption),
+            "1", Some("Filter"), Seq("2").asOption, outputAfterRename.asOption,
+            None, None),
           DataOperation(
-            "2", Seq("3").asOption, outputAfterRename,
-            None, Map("name" -> "Project").asOption),
+            "2", Some("Project"), Seq("3").asOption, outputAfterRename.asOption,
+            None, None),
           DataOperation(
-            "3", None, outputBeforeRename,
-            None, Map("name" -> "LocalRelation").asOption))
+            "3", Some("LocalRelation"), None, outputBeforeRename.asOption,
+            None, None))
 
         for {
           (plan, _) <- captor.lineageOf(df.write.save(tmpDest))
@@ -176,17 +178,17 @@ class LineageHarvesterSpec extends AsyncFlatSpec
         val expectedOperations = Seq(
           WriteOperation(
             id = "0",
+            name = Some("CCC"),
             childIds = Seq("1"),
             outputSource = s"file:$tmpDest",
             append = false,
             params = None,
-            extra = None,
-            output = outputAttIds
+            extra = None
           ),
-          DataOperation("1", Seq("2", "4").asOption, outputAttIds, None, Map("name" -> "Union").asOption),
-          DataOperation("2", Seq("3").asOption, inputAttIds, None, Map("name" -> "Filter").asOption),
-          DataOperation("4", Seq("3").asOption, inputAttIds, None, Map("name" -> "Filter").asOption),
-          DataOperation("3", None, inputAttIds, None, Map("name" -> "LocalRelation").asOption))
+          DataOperation("1", Some("Union"), Seq("2", "4").asOption, outputAttIds.asOption, None, None),
+          DataOperation("2", Some("Filter"), Seq("3").asOption, inputAttIds.asOption, None, None),
+          DataOperation("4", Some("Filter"), Seq("3").asOption, inputAttIds.asOption, None, None),
+          DataOperation("3", Some("LocalRelation"), None, inputAttIds.asOption, None, None))
         for {
           (plan, _) <- captor.lineageOf(df.write.save(tmpDest))
         } yield {
@@ -225,29 +227,28 @@ class LineageHarvesterSpec extends AsyncFlatSpec
         val expectedOperations = Seq(
           WriteOperation(
             id = "0",
+            name = Some("DDD"),
             childIds = Seq("1"),
             outputSource = s"file:$tmpDest",
             append = false,
             params = None,
-            extra = None,
-            output = expectedAttributes.map(_.id)
+            extra = None
           ),
           DataOperation(
-            "1", Seq("2", "4").asOption, expectedAttributes.map(_.id),
-            Map("joinType" -> Some("INNER")).asOption,
-            Map("name" -> "Join").asOption),
+            "1", Some("Join"), Seq("2", "4").asOption, expectedAttributes.map(_.id).asOption,
+            Map("joinType" -> Some("INNER")).asOption, None),
           DataOperation(
-            "2", Seq("3").asOption, Seq(expectedAttributes(0).id, expectedAttributes(1).id, expectedAttributes(2).id),
-            None, Map("name" -> "Filter").asOption),
+            "2", Some("Filter"), Seq("3").asOption, Seq(expectedAttributes(0).id, expectedAttributes(1).id, expectedAttributes(2).id).asOption,
+            None, None),
           DataOperation(
-            "3", None, Seq(expectedAttributes(0).id, expectedAttributes(1).id, expectedAttributes(2).id),
-            None, Map("name" -> "LocalRelation").asOption),
+            "3", Some("LocalRelation"), None, Seq(expectedAttributes(0).id, expectedAttributes(1).id, expectedAttributes(2).id).asOption,
+            None, None),
           DataOperation(
-            "4", Seq("5").asOption, Seq(expectedAttributes(3).id, expectedAttributes(4).id, expectedAttributes(5).id),
-            None, Map("name" -> "Aggregate").asOption),
+            "4", Some("Aggregate"), Seq("5").asOption, Seq(expectedAttributes(3).id, expectedAttributes(4).id, expectedAttributes(5).id).asOption,
+            None, None),
           DataOperation(
-            "5", Seq("3").asOption, Seq(expectedAttributes(3).id, expectedAttributes(1).id, expectedAttributes(2).id),
-            None, Map("name" -> "Project").asOption))
+            "5", Some("Project"), Seq("3").asOption, Seq(expectedAttributes(3).id, expectedAttributes(1).id, expectedAttributes(2).id).asOption,
+            None, None))
         for {
           (plan, _) <- captor.lineageOf(df.write.save(tmpDest))
         } yield {
@@ -262,10 +263,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
         .enableHiveSupport()
         .config("hive.exec.dynamic.partition.mode", "nonstrict")
       ) { implicit spark =>
-
-        val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
-        withDatabase(databaseName) {
-
+        withDatabase(s"unitTestDatabase_${this.getClass.getSimpleName}") {
           withLineageTracking { captor =>
             import spark.implicits._
 
@@ -288,17 +286,20 @@ class LineageHarvesterSpec extends AsyncFlatSpec
               val firstOperation = otherOperations(0)
               firstOperation.id shouldEqual "1"
               firstOperation.childIds.get shouldEqual Seq("2")
-              firstOperation.extra.get("name") shouldEqual "Project"
+              firstOperation.name shouldEqual Some("Project")
+              firstOperation.extra shouldBe empty
 
               val secondOperation = otherOperations(1)
               secondOperation.id shouldEqual "2"
               secondOperation.childIds.get shouldEqual Seq("3")
-              secondOperation.extra.get("name") should (equal("SubqueryAlias") or equal(Some("`tempview`"))) // Spark 2.3/2.4
+              secondOperation.name should (equal(Some("SubqueryAlias")) or equal(Some("`tempview`"))) // Spark 2.3/2.4
+              secondOperation.extra shouldBe empty
 
               val thirdOperation = otherOperations(2)
               thirdOperation.id shouldEqual "3"
               thirdOperation.childIds shouldEqual None
-              thirdOperation.extra.get("name") shouldEqual "LocalRelation"
+              thirdOperation.name shouldEqual Some("LocalRelation")
+              thirdOperation.extra shouldBe empty
             }
           }
         }
@@ -329,7 +330,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
             case Operations(wop, Some(Seq(rop)), Some(Seq(dop))) =>
               wop.extra.get("test.extra") should equal(wop.copy(extra = Some(wop.extra.get - "test.extra")))
               rop.extra.get("test.extra") should equal(rop.copy(extra = Some(rop.extra.get - "test.extra")))
-              dop.extra.get("test.extra") should equal(dop.copy(extra = Some(dop.extra.get - "test.extra")))
+              dop.extra.get("test.extra") should equal(dop.copy(extra = None))
           }
 
           plan.extraInfo.get("test.extra") should equal(plan.copy(extraInfo = Some(plan.extraInfo.get - "test.extra")))
@@ -350,8 +351,10 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           }
         } yield {
 
-          val localRelation = plan.operations.other.get.find(_.extra.get("name") == "LocalRelation").get
-          assert(localRelation.params.forall(p => !p.contains("data")))
+          inside(plan.operations.other.toSeq.flatten.filter(_.name contains "LocalRelation")) {
+            case Seq(localRelation) =>
+              assert(localRelation.params.forall(p => !p.contains("data")))
+          }
         }
       }
     }
@@ -372,7 +375,6 @@ class LineageHarvesterSpec extends AsyncFlatSpec
         }
       }
     }
-
 }
 
 object LineageHarvesterSpec extends Matchers {
@@ -433,7 +435,6 @@ object LineageHarvesterSpec extends Matchers {
     type OperationLike = {
       def id: String
       def childIds: Any
-      def output: Seq[String]
       def params: Option[Map[String, Any]]
       def extra: Option[Map[String, Any]]
     }
@@ -442,6 +443,12 @@ object LineageHarvesterSpec extends Matchers {
       def childIdList: Seq[_] = op.childIds match {
         case ids: Seq[_] => ids
         case Some(ids: Seq[_]) => ids
+        case _ => Nil
+      }
+
+      def output: Seq[String] = op match {
+        case rop: ReadOperation => rop.output.getOrElse(Nil)
+        case dop: DataOperation => dop.output.getOrElse(Nil)
         case _ => Nil
       }
     }

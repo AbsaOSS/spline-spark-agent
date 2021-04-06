@@ -97,6 +97,7 @@ class LineageHarvester(
       val planId = UUID.randomUUID
       val plan = {
         val planExtra = Map[String, Any](
+          ExecutionPlanExtra.AppName -> ctx.session.sparkContext.appName,
           ExecutionPlanExtra.DataTypes -> componentCreatorFactory.dataTypeConverter.values
         )
 
@@ -108,7 +109,7 @@ class LineageHarvester(
 
         val p = ExecutionPlan(
           id = planId.asOption,
-          appName = ctx.session.sparkContext.appName.asOption,
+          name = ctx.session.sparkContext.appName.asOption, // `appName` for now, but could be different (user defined) in the future
           operations = Operations(writeOp, opReads.asOption, opOthers.asOption),
           attributes = attributes.asOption,
           expressions = expressions.asOption,

@@ -34,13 +34,12 @@ class ReadNodeBuilder
 
   override def build(): ReadOperation = {
     val rop = ReadOperation(
-      childIds = Nil,
       inputSources = command.sourceIdentifier.uris,
       id = id,
-      output = outputAttributes.map(_.id),
+      name = operation.nodeName.asOption,
+      output = outputAttributes.map(_.id).asOption,
       params = Map(command.params.toSeq: _*).asOption,
       extra = Map(
-        OperationExtras.Name -> operation.nodeName,
         OperationExtras.SourceType -> command.sourceIdentifier.format
       ).asOption)
 

@@ -43,7 +43,7 @@ class ExpressionConverter(
       FunctionalExpression(
         id = randomUUIDString,
         dataType = convertDataType(a),
-        childIds = convertChildren(a).asOption,
+        childRefs = convertChildren(a).asOption,
         extra = createExtra(sparkExpr, "expr.Alias").asOption,
         name = a.name,
         params = getExpressionParameters(a).asOption
@@ -53,7 +53,7 @@ class ExpressionConverter(
       FunctionalExpression(
         id = randomUUIDString,
         dataType = convertDataType(bo),
-        childIds = convertChildren(bo).asOption,
+        childRefs = convertChildren(bo).asOption,
         extra = (createExtra(bo, "expr.Binary") + ("symbol" -> bo.symbol)).asOption,
         name = bo.prettyName,
         params = getExpressionParameters(bo).asOption
@@ -63,7 +63,7 @@ class ExpressionConverter(
       FunctionalExpression(
         id = randomUUIDString,
         dataType = convertDataType(u),
-        childIds = convertChildren(u).asOption,
+        childRefs = convertChildren(u).asOption,
         extra = createExtra(u, "expr.UDF").asOption,
         name = u.udfName getOrElse u.function.getClass.getName,
         params = getExpressionParameters(u).asOption
@@ -73,7 +73,7 @@ class ExpressionConverter(
       FunctionalExpression(
         id = randomUUIDString,
         dataType = convertDataType(e),
-        childIds = None,
+        childRefs = None,
         extra = createExtra(e, "expr.GenericLeaf").asOption,
         name = e.prettyName,
         params = getExpressionParameters(e).asOption
@@ -84,7 +84,7 @@ class ExpressionConverter(
       FunctionalExpression(
         id = randomUUIDString,
         dataType = None,
-        childIds = convertChildren(sparkExpr).asOption,
+        childRefs = convertChildren(sparkExpr).asOption,
         extra = createExtra(sparkExpr, "expr.UntypedExpression").asOption,
         name = sparkExpr.prettyName,
         params = getExpressionParameters(sparkExpr).asOption
@@ -94,7 +94,7 @@ class ExpressionConverter(
       FunctionalExpression(
         id = randomUUIDString,
         dataType = convertDataType(e),
-        childIds = convertChildren(e).asOption,
+        childRefs = convertChildren(e).asOption,
         extra = createExtra(e, "expr.Generic").asOption,
         name = e.prettyName,
         params = getExpressionParameters(e).asOption

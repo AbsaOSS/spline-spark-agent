@@ -223,7 +223,15 @@ object ExpressionSpec extends Matchers {
     val actualIdMap = new IdMap(actualAttributes, actualFunctions, actualLiterals)
     val expectedIdMap = new IdMap(expectedAttributes ++ expectedOutput, expectedFunctions, expectedLiterals)
 
-    val actualOutput: Seq[Attribute] = actualPlan.operations.write.output.map(actualIdMap.getAttribute)
+    val outputByOpId =
+      (Map.empty
+        ++ actualPlan.operations.reads.getOrElse(Nil).map(op => op.id -> op.output.get)
+        ++ actualPlan.operations.other.getOrElse(Nil).map(op => op.id -> op.output.get)
+        ).toMap
+
+    val actualOutput: Seq[Attribute] =
+      outputByOpId(actualPlan.operations.write.childIds.head)
+        .map(actualIdMap.getAttribute)
 
     actualOutput.size shouldBe expectedOutput.size
 
@@ -255,18 +263,18 @@ object ExpressionSpec extends Matchers {
       case (al: Literal, el: Literal) =>
         al.value shouldBe el.value
       case (aa: Attribute, ea: Attribute) =>
-        aa.childIds.map(_.size).getOrElse(0) shouldBe ea.childIds.map(_.size).getOrElse(0)
+        aa.childRefs.map(_.size).getOrElse(0) shouldBe ea.childRefs.map(_.size).getOrElse(0)
       case (af: FunctionalExpression, ef: FunctionalExpression) =>
-        af.childIds.map(_.size).getOrElse(0) shouldBe ef.childIds.map(_.size).getOrElse(0)
+        af.childRefs.map(_.size).getOrElse(0) shouldBe ef.childRefs.map(_.size).getOrElse(0)
     }
 
     def getChildrenPairs(actual: Expr, expected: Expr): Seq[(Expr, Expr)] = (actual, expected) match {
       case (_: Literal, _: Literal) =>
         Seq.empty
       case (aa: Attribute, ea: Attribute) =>
-        zipChildren(aa.childIds, ea.childIds)
+        zipChildren(aa.childRefs, ea.childRefs)
       case (af: FunctionalExpression, ef: FunctionalExpression) =>
-        zipChildren(af.childIds, ef.childIds)
+        zipChildren(af.childRefs, ef.childRefs)
     }
 
     def zipChildren(

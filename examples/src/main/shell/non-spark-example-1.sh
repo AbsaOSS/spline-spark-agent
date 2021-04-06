@@ -34,7 +34,7 @@ _exec_plan_json=$(
   cat <<END
 {
   "id": "$(uuidgen)",
-  "appName": "Dummy Beer Job",
+  "name": "Dummy Beer Job",
   "systemInfo": {
     "name": "Foo Bar",
     "version": "0.0.0"
@@ -44,24 +44,16 @@ _exec_plan_json=$(
       "id": 0,
       "outputSource": $_job1_output_datasource,
       "append": false,
-      "childIds": [1],
-      "extra": {
-        "name": "Write"
-      }
+      "childIds": [1]
     },
     "other": [{
+      "name": "Filter",
       "id": 1,
-      "childIds": [2],
-      "extra": {
-        "name": "Filter"
-      }
+      "childIds": [2]
     }],
     "reads": [{
       "id": 2,
-      "inputSources": [$_job1_output_datasource],
-      "extra": {
-        "name": "Read"
-      }
+      "inputSources": [$_job1_output_datasource]
     }]
   }
 }
@@ -69,7 +61,7 @@ END
 )
 
 # POST execution plan
-_exec_plan_id=$(curl -s -d "$_exec_plan_json" -H 'Content-Type: application/json' $_producer_url/execution-plans)
+_exec_plan_id=$(curl -s -d "$_exec_plan_json" -H 'Content-Type: application/vnd.absa.spline.producer.v1.1+json' $_producer_url/execution-plans)
 
 # Prepare execution event
 _exec_event_json=$(
@@ -82,7 +74,7 @@ END
 )
 
 # POST execution event
-curl -d "$_exec_event_json" -H 'Content-Type: application/json' $_producer_url/execution-events
+curl -d "$_exec_event_json" -H 'Content-Type: application/vnd.absa.spline.producer.v1.1+json' $_producer_url/execution-events
 
 echo "
   Non-Spark Lineage recorded:
