@@ -16,11 +16,12 @@
 
 package za.co.absa.spline.example.batchWithDependencies
 
-import org.apache.spark.sql.SaveMode
-import org.apache.spark.sql.functions.col
 import za.co.absa.spline.SparkApp
 
 object JansBeerJob extends SparkApp("Jan's Beer Job", conf = Seq("spark.sql.shuffle.partitions" -> "4")) {
+
+  import org.apache.spark.sql._
+  import org.apache.spark.sql.functions._
 
   // Initializing library to hook up to Apache Spark
   import za.co.absa.spline.harvester.SparkLineageInitializer._

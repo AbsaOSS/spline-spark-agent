@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # ------------------------------------------------------------------------
 # Copyright 2020 ABSA Group Limited
 #
@@ -17,22 +17,44 @@
 #
 # THIS SCRIPT IS INTENDED FOR LOCAL DEV USAGE ONLY
 #
+# Build Spline Agent artifacts for all supported Scala versions and install them to local maven repository.
+#
+
+SCALA_VERSIONS=(2.11 2.12)
 
 BASE_DIR=$(dirname "$0")
+MODULE_DIRS=$(find "$BASE_DIR" -type f -name "pom.xml" -printf '%h\n')
 
-cross_build() {
-  SCALA_VER=$1
-  echo "Building with Scala $SCALA_VER"
-  find $BASE_DIR/target/* -type d -exec rm -rf {} \;
-  mvn scala-cross-build:change-version -Pscala-$SCALA_VER
-  mvn install -Pscala-$SCALA_VER
+log() {
+  echo "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░"
+  echo "                           $1                                                  "
+  echo "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░"
 }
 
-# ------------------------------------------------
+cross_build() {
+  bin_ver=$1
+  log "Building with Scala $bin_ver"
 
-mvn clean
+  for dir in $MODULE_DIRS; do
+    rm -rf "$dir"/target
+  done
 
-cross_build 2.11
-cross_build 2.12
+  mvn scala-cross-build:change-version -Pscala-$bin_ver
+  mvn install -Pscala-$bin_ver
+}
 
-mvn scala-cross-build:restore-version
+# -------------------------------------------------------------------------------
+
+for v in "${SCALA_VERSIONS[@]}"; do
+  cross_build "$v"
+done
+
+log "Restoring POM-files"
+
+scala_profiles=$(for v in ${SCALA_VERSIONS[*]}; do echo "-Pscala-$v"; done)
+
+mvn scala-cross-build:restore-version $scala_profiles
+
+for dir in $MODULE_DIRS; do
+  rm -f "$dir"/pom.xml.bkp
+done
