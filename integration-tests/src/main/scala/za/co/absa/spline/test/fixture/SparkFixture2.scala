@@ -18,7 +18,7 @@ package za.co.absa.spline.test.fixture
 
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.SparkSession
-import org.scalatest.Assertion
+import org.scalatest.{Assertion, AsyncTestSuite}
 import org.scalatest.flatspec.AsyncFlatSpec
 import za.co.absa.commons.io.TempDirectory
 
@@ -27,7 +27,9 @@ import java.sql.DriverManager
 import scala.concurrent.Future
 import scala.util.Try
 
-trait SparkFixture2 extends AsyncFlatSpec {
+trait SparkFixture2 extends AsyncTestSuite {
+
+  import za.co.absa.commons.FutureImplicits.FutureWrapper
 
   val warehouseDir: String = TempDirectory("SparkFixture", "UnitTest", pathOnly = true).deleteOnExit().path.toString.stripSuffix("/")
 
@@ -52,17 +54,7 @@ trait SparkFixture2 extends AsyncFlatSpec {
 
   def withAsyncRestartingSparkContext(testBody: => Future[Assertion]): Future[Assertion] = {
     haltSparkAndCleanup()
-    testBody.transform(
-      resOrExp => {
-        haltSparkAndCleanup()
-        resOrExp
-      },
-      exception => {
-        haltSparkAndCleanup()
-        exception
-      }
-    )
-
+    testBody.finallyDo(haltSparkAndCleanup())
   }
 
   private[SparkFixture2] def haltSparkAndCleanup(): Unit = {

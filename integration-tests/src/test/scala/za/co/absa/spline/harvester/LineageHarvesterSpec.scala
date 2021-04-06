@@ -27,13 +27,12 @@ import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version._
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder.OutputAttIds
-import za.co.absa.spline.harvester.conf.CodeBasedSplineConfigurer
-import za.co.absa.spline.harvester.dispatcher.{HDFSLineageDispatcher, LineageDispatcher, NoOpLineageDispatcher}
-import za.co.absa.spline.harvester.extra.{UserExtraAppendingLineageFilter, UserExtraMetadataProvider}
+import za.co.absa.spline.harvester.dispatcher.NoOpLineageDispatcher
+import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
 import za.co.absa.spline.model.dt
 import za.co.absa.spline.producer.model.v1_1.{Attribute, _}
-import za.co.absa.spline.test.fixture.spline.{LineageCaptor2, SplineFixture2}
-import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture, SparkFixture2}
+import za.co.absa.spline.test.fixture.spline.SplineFixture2
+import za.co.absa.spline.test.fixture.{SparkDatabaseFixture2, SparkFixture2}
 
 import java.util.UUID
 import java.util.UUID.randomUUID
@@ -43,7 +42,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
   with Matchers
   with SparkFixture2
   with SplineFixture2
-  with SparkDatabaseFixture {
+  with SparkDatabaseFixture2 {
 
 
   import za.co.absa.spline.harvester.LineageHarvesterSpec._
@@ -265,7 +264,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
       ) { implicit spark =>
 
         val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
-        withHiveDatabase(spark)(databaseName) {
+        withDatabase(databaseName) {
 
           withLineageTracking { captor =>
             import spark.implicits._

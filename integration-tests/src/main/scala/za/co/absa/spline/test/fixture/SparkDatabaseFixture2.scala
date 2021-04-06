@@ -17,28 +17,39 @@
 package za.co.absa.spline.test.fixture
 
 import org.apache.spark.sql.SparkSession
-import org.scalatest.Assertion
-import org.scalatest.flatspec.AsyncFlatSpec
-import za.co.absa.commons.io.TempDirectory
+import org.scalatest.{Assertion, AsyncTestSuite}
 
 import scala.concurrent.Future
 
-trait SparkDatabaseFixture2 extends SparkFixture2 {
+trait SparkDatabaseFixture2 extends AsyncTestSuite {
   private type DatabaseName = String
   private type TableName = String
   private type TableDef = String
   private type TableData = Seq[Any]
 
-  /**
-   * this function creates tables in a way that is hive dependent, therefore hive must be enabled for this to work
-   */
-  def withHiveDatabase(spark : SparkSession)
+  import za.co.absa.commons.FutureImplicits.FutureWrapper
+
+  def withDatabase
       (databaseName: DatabaseName, tableDefs: (TableName, TableDef, TableData)*)
-      (testBody: => Future[Assertion]): Future[Assertion] = {
+      (testBody: => Future[Assertion])
+      (implicit spark: SparkSession): Future[Assertion] = {
 
-    //val spark = sessionBuilder.getOrCreate().newSession()
+    val innerSpark = spark.newSession()
 
-    prepareDatabase(spark, databaseName)
+    prepareDatabase(innerSpark, databaseName, tableDefs)
+    spark.sql(s"USE $databaseName")
+
+    testBody.finallyDo(dropDatabase(innerSpark, databaseName))
+  }
+
+  private def prepareDatabase(
+    spark: SparkSession,
+    databaseName: DatabaseName,
+    tableDefs: Seq[(TableName, TableDef, TableData)]
+  ): Unit = {
+    dropDatabase(spark, databaseName)
+    spark.sql(s"CREATE DATABASE $databaseName")
+    spark.sql(s"USE $databaseName")
 
     tableDefs.foreach({
       case (tableName, tableDef, rows) =>
@@ -48,43 +59,6 @@ trait SparkDatabaseFixture2 extends SparkFixture2 {
           .foreach(values =>
             spark.sql(s"INSERT INTO $tableName VALUES (${values mkString ","})"))
     })
-
-    testBody.transform(
-      resOrExp => {
-        dropDatabase(spark, databaseName)
-        resOrExp
-      },
-      exception => {
-        dropDatabase(spark, databaseName)
-        exception
-      }
-    )
-  }
-
-  def withDatabase
-    (databaseName: DatabaseName)
-    (testBody: => Future[Assertion]): Future[Assertion] = {
-
-    val spark = sessionBuilder.getOrCreate().newSession()
-
-    prepareDatabase(spark, databaseName)
-
-    testBody.transform(
-      resOrExp => {
-        dropDatabase(spark, databaseName)
-        resOrExp
-      },
-      exception => {
-        dropDatabase(spark, databaseName)
-        exception
-      }
-    )
-  }
-
-  private def prepareDatabase(spark: SparkSession, databaseName: DatabaseName) :Unit = {
-    spark.sql(s"DROP DATABASE IF EXISTS $databaseName CASCADE")
-    spark.sql(s"CREATE DATABASE $databaseName")
-    spark.sql(s"USE $databaseName")
   }
 
   private def dropDatabase(spark: SparkSession, databaseName: DatabaseName) :Unit = {

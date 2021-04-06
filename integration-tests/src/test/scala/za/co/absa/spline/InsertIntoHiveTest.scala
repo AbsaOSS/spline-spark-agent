@@ -15,15 +15,16 @@
  */
 package za.co.absa.spline
 
+import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.SaveMode._
+import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.functions._
-import org.scalatest.compatible.Assertion
-import org.scalatest.{AsyncFlatSpec, OneInstancePerTest, Succeeded}
-import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.{AsyncFlatSpec, OneInstancePerTest}
 import za.co.absa.commons.io.TempDirectory
-import za.co.absa.spline.test.fixture.spline.{SplineFixture, SplineFixture2}
-import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkDatabaseFixture2, SparkFixture, SparkFixture2}
+import za.co.absa.spline.InsertIntoHiveTest._
+import za.co.absa.spline.test.fixture.spline.SplineFixture2
+import za.co.absa.spline.test.fixture.{SparkDatabaseFixture2, SparkFixture2}
 
 class InsertIntoHiveTest
   extends AsyncFlatSpec
@@ -33,22 +34,20 @@ class InsertIntoHiveTest
     with SparkDatabaseFixture2
     with SplineFixture2 {
 
-  "InsertInto" should "produce lineage when inserting to partitioned table created as Hive table" in
+  "InsertInto" should "produce lineage when inserting into Hive table" in
     withAsyncRestartingSparkContext {
-      withCustomSparkSession(_
-        .enableHiveSupport()
-      ) { implicit spark =>
+      withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
+        withLineageTracking { captor =>
+          val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
+          withDatabase(databaseName,
+            ("path_archive", "(x String, ymd int) USING hive", Seq(("Tata", 20190401), ("Tere", 20190403))),
+            ("path", "(x String) USING hive", Seq("Monika", "Buba"))
+          ) {
+            val df = spark
+              .table("path")
+              .withColumn("ymd", lit(20190401))
 
-        val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
-        withHiveDatabase(spark)(databaseName,
-          ("path_archive", "(x String, ymd int) USING hive", Seq(("Tata", 20190401), ("Tere", 20190403))),
-          ("path", "(x String) USING hive", Seq("Monika", "Buba"))
-        ) {
-          val df = spark
-            .table("path")
-            .withColumn("ymd", lit(20190401))
 
-          withLineageTracking { captor =>
             for {
               (plan1, _) <- captor.lineageOf {
                 df.write.mode(Append).insertInto("path_archive")
@@ -68,4 +67,123 @@ class InsertIntoHiveTest
         }
       }
     }
+
+  "CsvSerdeTable" should "Produce CatalogTable params" in
+    withAsyncRestartingSparkContext {
+      withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
+        withLineageTracking { captor =>
+          withDatabase("test",
+            (
+              "path_archive_csvserde",
+              "(x String, ymd int) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'",
+              Seq(("Tata", 20190401), ("Tere", 20190403))
+            ),
+            (
+              "path_csvserde",
+              "(x String) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'",
+              Seq("Monika", "Buba")
+            )
+          ) {
+            val df = spark
+              .table("test.path_csvserde")
+              .withColumn("ymd", lit(20190401))
+
+            for {
+              (plan, _) <- captor.lineageOf {
+                df.write.mode(SaveMode.Overwrite).insertInto("test.path_archive_csvserde")
+              }
+            } yield {
+              plan.operations.write.outputSource should include("path_archive")
+              plan.operations.write.append should be(false)
+              val writeTable = extractTableIdentifier(plan.operations.write.params)
+              val readTable = extractTableIdentifier(plan.operations.reads.get.head.params)
+              writeTable.table should be("path_archive_csvserde")
+              writeTable.database should be(Some("test"))
+              readTable.table should be("path_csvserde")
+              readTable.database should be(Some("test"))
+            }
+          }
+        }
+      }
+    }
+
+  "ParquetSerdeTable" should "Produce CatalogTable params" in
+    withAsyncRestartingSparkContext {
+      withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
+        withLineageTracking { captor =>
+          withDatabase("test",
+            (
+              "path_archive_parquetserde", "(x String, ymd int) stored as PARQUET",
+              Seq(("Tata", 20190401), ("Tere", 20190403))
+            ),
+            (
+              "path_parquetserde", "(x String) stored as PARQUET",
+              Seq("Monika", "Buba")
+            )
+          ) {
+            val df = spark
+              .table("test.path_parquetserde")
+              .withColumn("ymd", lit(20190401))
+
+            for {
+              (plan, _) <- captor.lineageOf {
+                df.write.mode(SaveMode.Overwrite).insertInto("test.path_archive_parquetserde")
+              }
+            } yield {
+              plan.operations.write.outputSource should include("path_archive")
+              plan.operations.write.append should be(false)
+              val writeTable = extractTableIdentifier(plan.operations.write.params)
+              val readTable = extractTableIdentifier(plan.operations.reads.get.head.params)
+              writeTable.table should be("path_archive_parquetserde")
+              writeTable.database should be(Some("test"))
+              readTable.database should be(Some("test"))
+              readTable.table should be("path_parquetserde")
+            }
+          }
+        }
+      }
+    }
+
+  "OrcSerdeTable" should "Produce CatalogTable params" in
+    withAsyncRestartingSparkContext {
+      withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
+        withLineageTracking { captor =>
+          withDatabase("test",
+            (
+              "path_archive_orcserde", "(x String, ymd int) stored as orc",
+              Seq(("Tata", 20190401), ("Tere", 20190403))
+            ),
+            (
+              "path_orcserde", "(x String) stored as orc",
+              Seq("Monika", "Buba")
+            )
+          ) {
+            val df = spark
+              .table("test.path_orcserde")
+              .withColumn("ymd", lit(20190401))
+
+            for {
+              (plan, _) <- captor.lineageOf {
+                df.write.mode(SaveMode.Overwrite).insertInto("test.path_archive_orcserde")
+              }
+            } yield {
+              plan.operations.write.outputSource should include("path_archive")
+              plan.operations.write.append should be(false)
+
+              val writeTable = extractTableIdentifier(plan.operations.write.params)
+              val readTable = extractTableIdentifier(plan.operations.reads.get.head.params)
+              writeTable.table should be("path_archive_orcserde")
+              writeTable.database should be(Some("test"))
+              readTable.table should be("path_orcserde")
+              readTable.database should be(Some("test"))
+            }
+          }
+        }
+      }
+    }
+}
+
+object InsertIntoHiveTest {
+  private def extractTableIdentifier(paramsOption: Option[Map[String, Any]]): TableIdentifier =
+    paramsOption.get("table").asInstanceOf[Map[String, _]]("identifier").asInstanceOf[TableIdentifier]
 }
