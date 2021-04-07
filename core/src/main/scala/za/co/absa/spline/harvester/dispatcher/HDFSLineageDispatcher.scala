@@ -31,7 +31,7 @@ import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe
 
 import scala.concurrent.blocking
-import za.co.absa.commons.S3Location.StringS3LocationExt
+import za.co.absa.commons.s3.SimpleS3Location.SimpleS3LocationExt
 
 /**
  * A port of https://github.com/AbsaOSS/spline/tree/release/0.3.9/persistence/hdfs/src/main/scala/za/co/absa/spline/persistence/hdfs
@@ -117,9 +117,9 @@ object HDFSLineageDispatcher {
    * @return FS + relative path
    **/
   def pathStringToFsWithPath(pathString: String): (FileSystem, Path) = {
-    pathString.toS3Location match {
+    pathString.toSimpleS3Location match {
       case Some(s3Location) =>
-        val s3Uri = new URI(s3Location.s3String) // s3://<bucket>
+        val s3Uri = new URI(s3Location.asSimpleS3LocationString) // s3://<bucket>
         val s3Path = new Path(s"/${s3Location.path}") // /<text-file-object-path>
 
         val fs = FileSystem.get(s3Uri, HadoopConfiguration)
