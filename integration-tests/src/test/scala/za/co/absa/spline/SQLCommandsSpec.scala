@@ -19,13 +19,13 @@ package za.co.absa.spline
 
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SaveMode.Overwrite
-import org.scalatest.flatspec.{AnyFlatSpec, AsyncFlatSpec}
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.TempDirectory
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version._
-import za.co.absa.spline.test.fixture.{SparkFixture, SparkFixture2}
-import za.co.absa.spline.test.fixture.spline.{SplineFixture, SplineFixture2}
+import za.co.absa.spline.test.fixture.SparkFixture2
+import za.co.absa.spline.test.fixture.spline.SplineFixture2
 
 class SQLCommandsSpec extends AsyncFlatSpec
   with Matchers

@@ -24,12 +24,12 @@ import org.apache.spark.sql.types.{IntegerType, StructField, StructType}
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.TempDirectory
-import za.co.absa.spline.test.fixture.SparkFixture
+import za.co.absa.spline.test.fixture.SparkFixture2
 import za.co.absa.spline.test.fixture.spline.SplineFixture2
 
 class BasicIntegrationTests extends AsyncFlatSpec
   with Matchers
-  with SparkFixture
+  with SparkFixture2
   with SplineFixture2
   with Logging {
 

@@ -19,16 +19,15 @@ package za.co.absa.spline
 
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.SaveMode.Overwrite
-import org.apache.spark.sql.functions.{concat, min, sum}
-import org.scalatest.flatspec.{AnyFlatSpec, AsyncFlatSpec}
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.{TempDirectory, TempFile}
-import za.co.absa.spline.test.fixture.SparkFixture
-import za.co.absa.spline.test.fixture.spline.{SplineFixture, SplineFixture2}
+import za.co.absa.spline.test.fixture.SparkFixture2
+import za.co.absa.spline.test.fixture.spline.SplineFixture2
 
 class CobolSpec extends AsyncFlatSpec
   with Matchers
-  with SparkFixture
+  with SparkFixture2
   with SplineFixture2 {
 
   import CobolSpec._

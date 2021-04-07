@@ -24,7 +24,7 @@ import za.co.absa.commons.io.TempDirectory
 import za.co.absa.commons.json.DefaultJacksonJsonSerDe
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version._
-import za.co.absa.spline.test.fixture.SparkFixture
+import za.co.absa.spline.test.fixture.SparkFixture2
 import za.co.absa.spline.test.fixture.spline.SplineFixture2
 
 import java.io.File
@@ -32,7 +32,7 @@ import java.io.File
 class HDFSLineageDispatcherSpec
   extends AsyncFlatSpec
     with Matchers
-    with SparkFixture
+    with SparkFixture2
     with SplineFixture2
     with DefaultJacksonJsonSerDe {
 

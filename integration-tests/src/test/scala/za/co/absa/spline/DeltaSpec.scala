@@ -26,7 +26,7 @@ import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.TempDirectory
 import za.co.absa.commons.scalatest.ConditionalTestTags._
 import za.co.absa.commons.version.Version._
-import za.co.absa.spline.test.fixture.{SparkFixture, SparkFixture2}
+import za.co.absa.spline.test.fixture.SparkFixture2
 import za.co.absa.spline.test.fixture.spline.SplineFixture2
 
 class DeltaSpec extends AsyncFlatSpec

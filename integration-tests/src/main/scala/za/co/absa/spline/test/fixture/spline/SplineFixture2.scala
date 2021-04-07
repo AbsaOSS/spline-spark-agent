@@ -16,6 +16,7 @@
 
 package za.co.absa.spline.test.fixture.spline
 
+import org.apache.commons.configuration.BaseConfiguration
 import org.apache.spark.sql.SparkSession
 
 
@@ -28,4 +29,8 @@ trait SplineFixture2 {
   def withRealConfigLineageTracking[T](testBody: LineageCaptor2 => T)(implicit session: SparkSession): T = {
     testBody(new LineageCaptor2(true))
   }
+}
+
+object SplineFixture2 {
+  def EMPTY_CONF = new BaseConfiguration
 }

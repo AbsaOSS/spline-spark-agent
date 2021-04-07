@@ -18,7 +18,7 @@ package za.co.absa.spline.test.fixture
 
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.SparkSession
-import org.scalatest.{Assertion, AsyncTestSuite}
+import org.scalatest.{Assertion, AsyncTestSuite, BeforeAndAfterEach, Suite}
 import org.scalatest.flatspec.AsyncFlatSpec
 import za.co.absa.commons.io.TempDirectory
 
@@ -27,7 +27,8 @@ import java.sql.DriverManager
 import scala.concurrent.Future
 import scala.util.Try
 
-trait SparkFixture2 extends AsyncTestSuite {
+trait SparkFixture2 {
+  this: AsyncTestSuite =>
 
   import za.co.absa.commons.FutureImplicits.FutureWrapper
 
@@ -64,4 +65,22 @@ trait SparkFixture2 extends AsyncTestSuite {
     FileUtils.deleteQuietly(new File("metastore_db"))
     FileUtils.deleteQuietly(new File(warehouseDir))
   }
+}
+
+object SparkFixture2 {
+
+  trait NewPerTest extends SparkFixture2 with BeforeAndAfterEach {
+    this: AsyncTestSuite =>
+
+    override protected def beforeEach() {
+      haltSparkAndCleanup()
+      super.beforeEach()
+    }
+
+    override protected def afterEach() {
+      try super.afterEach()
+      finally haltSparkAndCleanup()
+    }
+  }
+
 }

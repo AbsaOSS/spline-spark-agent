@@ -21,17 +21,17 @@ import org.apache.spark.sql.SaveMode.Overwrite
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row}
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.flatspec.{AnyFlatSpec, AsyncFlatSpec}
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.TempFile
-import za.co.absa.spline.test.fixture.SparkFixture
-import za.co.absa.spline.test.fixture.spline.{SplineFixture, SplineFixture2}
+import za.co.absa.spline.test.fixture.SparkFixture2
+import za.co.absa.spline.test.fixture.spline.SplineFixture2
 
 class KafkaSinkSpec
   extends AsyncFlatSpec
     with Matchers
     with BeforeAndAfterAll
-    with SparkFixture
+    with SparkFixture2
     with SplineFixture2
     with EmbeddedKafka {
 

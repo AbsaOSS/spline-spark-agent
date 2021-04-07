@@ -23,18 +23,18 @@ import de.flapdoodle.embed.mongo.distribution.Version
 import de.flapdoodle.embed.process.runtime.Network
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row}
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.TempDirectory
-import za.co.absa.spline.test.fixture.SparkFixture
+import za.co.absa.spline.test.fixture.SparkFixture2
 import za.co.absa.spline.test.fixture.spline.SplineFixture2
 
 class MongoDBSpec
   extends AsyncFlatSpec
     with BeforeAndAfterAll
     with Matchers
-    with SparkFixture
+    with SparkFixture2
     with SplineFixture2 {
 
   val starter = MongodStarter.getDefaultInstance

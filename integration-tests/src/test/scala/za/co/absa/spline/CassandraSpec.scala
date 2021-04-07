@@ -22,23 +22,23 @@ import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode}
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper
-import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.TempDirectory
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version.VersionStringInterpolator
-import za.co.absa.spline.test.fixture.SparkFixture
-import za.co.absa.spline.test.fixture.spline.SplineFixture
+import za.co.absa.spline.test.fixture.SparkFixture2
+import za.co.absa.spline.test.fixture.spline.SplineFixture2
 
 class CassandraSpec
-  extends AnyFlatSpec
+  extends AsyncFlatSpec
     with Matchers
-    with SparkFixture
-    with SplineFixture {
+    with SparkFixture2
+    with SplineFixture2 {
 
   it should "support Cassandra as a write source" taggedAs ignoreIf(ver"$SPARK_VERSION" >= ver"3.0.0") in {
-    withNewSparkSession(spark => {
-      withLineageTracking(spark)(lineageCaptor => {
+    withNewSparkSession { implicit spark =>
+      withLineageTracking { lineageCaptor =>
 
         spark.conf.set("spark.cassandra.connection.port", "9142") //non default port for embedded cassandra
 
@@ -58,30 +58,32 @@ class CassandraSpec
           spark.sqlContext.createDataFrame(rdd, schema)
         }
 
-        val (plan1, _) = lineageCaptor.lineageOf(testData
-          .write
-          .mode(SaveMode.Overwrite)
-          .format("org.apache.spark.sql.cassandra")
-          .options(Map("table" -> table, "keyspace" -> keyspace, "confirm.truncate" -> "true"))
-          .save())
-
-        val (plan2, _) = lineageCaptor.lineageOf {
-          val df = spark
-            .read
+        for {
+          (plan1, _) <- lineageCaptor.lineageOf(testData
+            .write
+            .mode(SaveMode.Overwrite)
             .format("org.apache.spark.sql.cassandra")
-            .options(Map("table" -> table, "keyspace" -> keyspace))
-            .load()
+            .options(Map("table" -> table, "keyspace" -> keyspace, "confirm.truncate" -> "true"))
+            .save())
 
-          df.write.save(TempDirectory(pathOnly = true).deleteOnExit().path.toString)
+          (plan2, _) <- lineageCaptor.lineageOf {
+            val df = spark
+              .read
+              .format("org.apache.spark.sql.cassandra")
+              .options(Map("table" -> table, "keyspace" -> keyspace))
+              .load()
+
+            df.write.save(TempDirectory(pathOnly = true).deleteOnExit().path.toString)
+          }
+        } yield {
+          plan1.operations.write.append shouldBe false
+          plan1.operations.write.extra.get("destinationType") shouldBe Some("cassandra")
+          plan1.operations.write.outputSource shouldBe s"cassandra:$keyspace:$table"
+
+          plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
+          plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("cassandra")
         }
-
-        plan1.operations.write.append shouldBe false
-        plan1.operations.write.extra.get("destinationType") shouldBe Some("cassandra")
-        plan1.operations.write.outputSource shouldBe s"cassandra:$keyspace:$table"
-
-        plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
-        plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("cassandra")
-      })
-    })
+      }
+    }
   }
 }

@@ -19,15 +19,15 @@ package za.co.absa.spline
 
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row}
-import org.scalatest.flatspec.{AnyFlatSpec, AsyncFlatSpec}
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.{TempDirectory, TempFile}
-import za.co.absa.spline.test.fixture.SparkFixture
-import za.co.absa.spline.test.fixture.spline.{SplineFixture, SplineFixture2}
+import za.co.absa.spline.test.fixture.SparkFixture2
+import za.co.absa.spline.test.fixture.spline.SplineFixture2
 
 class XmlSpec extends AsyncFlatSpec
   with Matchers
-  with SparkFixture
+  with SparkFixture2
   with SplineFixture2 {
 
   private val filePath = TempFile("file1", ".xml", false).deleteOnExit().path.toAbsolutePath.toString

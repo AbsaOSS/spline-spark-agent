@@ -17,19 +17,20 @@
 
 package za.co.absa.spline
 
-import java.util.Properties
 import org.apache.spark.sql.SaveMode.Overwrite
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row}
-import org.scalatest.flatspec.{AnyFlatSpec, AsyncFlatSpec}
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.spline.test.fixture.spline.{SplineFixture, SplineFixture2}
-import za.co.absa.spline.test.fixture.{JDBCFixture, SparkFixture}
+import za.co.absa.spline.test.fixture.spline.SplineFixture2
+import za.co.absa.spline.test.fixture.{JDBCFixture, SparkFixture2}
+
+import java.util.Properties
 
 
 class JDBCSpec extends AsyncFlatSpec
   with Matchers
-  with SparkFixture
+  with SparkFixture2
   with SplineFixture2
   with JDBCFixture {
 

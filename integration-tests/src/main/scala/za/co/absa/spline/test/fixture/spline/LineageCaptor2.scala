@@ -22,7 +22,7 @@ import za.co.absa.spline.harvester.conf.{CodeBasedSplineConfigurer, DefaultSplin
 import za.co.absa.spline.harvester.dispatcher.{CompositeLineageDispatcher, LineageDispatcher}
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 import za.co.absa.spline.test.fixture.spline.LineageCaptor.Setter
-import za.co.absa.spline.test.fixture.spline.SplineFixture.EMPTY_CONF
+import za.co.absa.spline.test.fixture.spline.SplineFixture2.EMPTY_CONF
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 

@@ -21,17 +21,17 @@ import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SaveMode.Overwrite
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row}
-import org.scalatest.flatspec.{AnyFlatSpec, AsyncFlatSpec}
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.{TempDirectory, TempFile}
-import za.co.absa.spline.test.fixture.SparkFixture
-import za.co.absa.spline.test.fixture.spline.{SplineFixture, SplineFixture2}
 import za.co.absa.commons.scalatest.ConditionalTestTags._
 import za.co.absa.commons.version.Version._
+import za.co.absa.spline.test.fixture.SparkFixture2
+import za.co.absa.spline.test.fixture.spline.SplineFixture2
 
 class FileFormatSpec extends AsyncFlatSpec
   with Matchers
-  with SparkFixture
+  with SparkFixture2
   with SplineFixture2 {
 
   private val avroPath = TempDirectory(prefix = "avro", pathOnly = true).deleteOnExit().path.toFile.getAbsolutePath
