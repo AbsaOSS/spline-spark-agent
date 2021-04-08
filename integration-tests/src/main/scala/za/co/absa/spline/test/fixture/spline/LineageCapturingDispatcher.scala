@@ -20,7 +20,7 @@ import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 
 import java.util.UUID
 
-class LineageCapturingDispatcher(lineageCaptor: LineageCaptor.Setter) extends LineageDispatcher {
+class LineageCapturingDispatcher(lineageCaptor: LineageCaptor2.Setter) extends LineageDispatcher {
 
   override def send(plan: ExecutionPlan): Unit = {
     lineageCaptor.capture(plan)

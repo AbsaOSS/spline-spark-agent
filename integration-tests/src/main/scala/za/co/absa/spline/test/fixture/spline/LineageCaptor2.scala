@@ -21,7 +21,6 @@ import za.co.absa.spline.harvester.SparkLineageInitializer._
 import za.co.absa.spline.harvester.conf.{CodeBasedSplineConfigurer, DefaultSplineConfigurer, StandardSplineConfigurationStack}
 import za.co.absa.spline.harvester.dispatcher.{CompositeLineageDispatcher, LineageDispatcher}
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
-import za.co.absa.spline.test.fixture.spline.LineageCaptor.Setter
 import za.co.absa.spline.test.fixture.spline.SplineFixture2.EMPTY_CONF
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
@@ -29,6 +28,8 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 
 class LineageCaptor2(useRealConfig: Boolean = false)
   (implicit session: SparkSession) {
+
+  import LineageCaptor2._
 
   @volatile private var promisedPlan = Promise[ExecutionPlan]
   @volatile private var promisedEvent = Promise[ExecutionEvent]
@@ -52,19 +53,9 @@ class LineageCaptor2(useRealConfig: Boolean = false)
         override def lineageDispatcher: LineageDispatcher = captorLineageDispatcher
       }
 
-//    splineConfigurerOption
-//    .map(addCaptorDispatcher)
-//    .getOrElse(CodeBasedSplineConfigurer(session, captorLineageDispatcher))
-//
-//  private def addCaptorDispatcher(configurer: CodeBasedSplineConfigurer) = {
-//    val dispatchers = Seq(configurer.lineageDispatcher, captorLineageDispatcher)
-//    val composite = new CompositeLineageDispatcher(dispatchers, false)
-//    configurer.copy(lineageDispatcher = composite)
-//  }
-
   session.enableLineageTracking(configurer)
 
-  def lineageOf(action: => Unit)(implicit ec: ExecutionContext): Future[(ExecutionPlan, Seq[ExecutionEvent])] = {
+  def lineageOf(action: => Unit)(implicit ec: ExecutionContext): Future[CapturedLineage] = {
     action
     for {
       plan <- promisedPlan.future
@@ -74,5 +65,19 @@ class LineageCaptor2(useRealConfig: Boolean = false)
       promisedEvent = Promise[ExecutionEvent]
       plan -> Seq(event)
     }
+  }
+}
+
+object LineageCaptor2 {
+
+  type CapturedLineage = (ExecutionPlan, Seq[ExecutionEvent])
+
+  trait Setter {
+    def capture(plan: ExecutionPlan): Unit
+    def capture(event: ExecutionEvent): Unit
+  }
+
+  trait Getter {
+    def lineageOf(action: => Unit): CapturedLineage
   }
 }

@@ -79,7 +79,6 @@ class SparkLineageInitializerSpec
   it should "propagate to child sessions" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
     sys.props.put(SparkQueryExecutionListenersKey, classOf[SplineQueryExecutionListener].getName)
     withSparkSession { session =>
-
       val subSession = session.newSession()
 
       val future = onSuccessListenerFuture(subSession)
@@ -88,7 +87,6 @@ class SparkLineageInitializerSpec
 
       future.map { _ =>
         MockLineageDispatcher.verifyTheOnlyLineageCaptured()
-        MockLineageDispatcher.instanceCount should be(1)
       }
     }
   }
