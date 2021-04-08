@@ -22,13 +22,13 @@ import org.apache.spark.sql.SaveMode.Overwrite
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.{TempDirectory, TempFile}
-import za.co.absa.spline.test.fixture.SparkFixture2
-import za.co.absa.spline.test.fixture.spline.SplineFixture2
+import za.co.absa.spline.test.fixture.SparkFixture
+import za.co.absa.spline.test.fixture.spline.SplineFixture
 
 class CobolSpec extends AsyncFlatSpec
   with Matchers
-  with SparkFixture2
-  with SplineFixture2 {
+  with SparkFixture
+  with SplineFixture {
 
   import CobolSpec._
 

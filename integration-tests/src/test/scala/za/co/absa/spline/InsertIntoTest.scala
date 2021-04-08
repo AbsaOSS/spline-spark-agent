@@ -21,14 +21,14 @@ import org.apache.spark.sql.functions._
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.spline.InsertIntoTest._
-import za.co.absa.spline.test.fixture.spline.SplineFixture2
-import za.co.absa.spline.test.fixture.{SparkDatabaseFixture2, SparkFixture2}
+import za.co.absa.spline.test.fixture.spline.SplineFixture
+import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 
 class InsertIntoTest extends AsyncFlatSpec
   with Matchers
-  with SparkFixture2
-  with SplineFixture2
-  with SparkDatabaseFixture2 {
+  with SparkFixture
+  with SplineFixture
+  with SparkDatabaseFixture {
 
   "InsertInto" should "not fail when inserting to partitioned table created as Spark tables" in
     withNewSparkSession { implicit spark =>

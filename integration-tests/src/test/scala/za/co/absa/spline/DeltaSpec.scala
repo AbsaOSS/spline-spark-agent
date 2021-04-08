@@ -26,13 +26,13 @@ import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.TempDirectory
 import za.co.absa.commons.scalatest.ConditionalTestTags._
 import za.co.absa.commons.version.Version._
-import za.co.absa.spline.test.fixture.SparkFixture2
-import za.co.absa.spline.test.fixture.spline.SplineFixture2
+import za.co.absa.spline.test.fixture.SparkFixture
+import za.co.absa.spline.test.fixture.spline.SplineFixture
 
 class DeltaSpec extends AsyncFlatSpec
   with Matchers
-  with SparkFixture2
-  with SplineFixture2 {
+  with SparkFixture
+  with SplineFixture {
 
   private val deltaPath = TempDirectory(prefix = "delta", pathOnly = true).deleteOnExit().path.toFile.getAbsolutePath
 

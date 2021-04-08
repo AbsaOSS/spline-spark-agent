@@ -23,16 +23,16 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.{AsyncFlatSpec, OneInstancePerTest}
 import za.co.absa.commons.io.TempDirectory
 import za.co.absa.spline.InsertIntoHiveTest._
-import za.co.absa.spline.test.fixture.spline.SplineFixture2
-import za.co.absa.spline.test.fixture.{SparkDatabaseFixture2, SparkFixture2}
+import za.co.absa.spline.test.fixture.spline.SplineFixture
+import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 
 class InsertIntoHiveTest
   extends AsyncFlatSpec
     with OneInstancePerTest
     with Matchers
-    with SparkFixture2
-    with SparkDatabaseFixture2
-    with SplineFixture2 {
+    with SparkFixture
+    with SparkDatabaseFixture
+    with SplineFixture {
 
   "InsertInto" should "produce lineage when inserting into Hive table" in
     withAsyncRestartingSparkContext {

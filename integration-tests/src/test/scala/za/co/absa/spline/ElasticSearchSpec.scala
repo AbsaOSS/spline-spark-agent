@@ -25,8 +25,8 @@ import pl.allegro.tech.embeddedelasticsearch.{EmbeddedElastic, IndexSettings, Po
 import za.co.absa.commons.io.TempDirectory
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version._
-import za.co.absa.spline.test.fixture.SparkFixture2
-import za.co.absa.spline.test.fixture.spline.SplineFixture2
+import za.co.absa.spline.test.fixture.SparkFixture
+import za.co.absa.spline.test.fixture.spline.SplineFixture
 
 import java.util.concurrent.TimeUnit
 
@@ -34,8 +34,8 @@ import java.util.concurrent.TimeUnit
 class ElasticSearchSpec
   extends AsyncFlatSpec
     with Matchers
-    with SparkFixture2
-    with SplineFixture2 {
+    with SparkFixture
+    with SplineFixture {
 
   val index = "test"
   val docType = "test"

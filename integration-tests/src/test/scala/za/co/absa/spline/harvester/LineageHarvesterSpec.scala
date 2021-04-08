@@ -31,8 +31,8 @@ import za.co.absa.spline.harvester.dispatcher.NoOpLineageDispatcher
 import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
 import za.co.absa.spline.model.dt
 import za.co.absa.spline.producer.model.v1_1.{Attribute, _}
-import za.co.absa.spline.test.fixture.spline.SplineFixture2
-import za.co.absa.spline.test.fixture.{SparkDatabaseFixture2, SparkFixture2}
+import za.co.absa.spline.test.fixture.spline.SplineFixture
+import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 
 import java.util.UUID
 import java.util.UUID.randomUUID
@@ -40,9 +40,9 @@ import scala.language.reflectiveCalls
 
 class LineageHarvesterSpec extends AsyncFlatSpec
   with Matchers
-  with SparkFixture2
-  with SplineFixture2
-  with SparkDatabaseFixture2 {
+  with SparkFixture
+  with SplineFixture
+  with SparkDatabaseFixture {
 
 
   import za.co.absa.spline.harvester.LineageHarvesterSpec._

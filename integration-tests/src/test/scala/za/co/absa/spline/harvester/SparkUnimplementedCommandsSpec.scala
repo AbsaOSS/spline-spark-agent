@@ -23,8 +23,8 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{Ignore, Succeeded}
 import za.co.absa.commons.io.TempDirectory
-import za.co.absa.spline.test.fixture.spline.SplineFixture2
-import za.co.absa.spline.test.fixture.{JDBCFixture, SparkDatabaseFixture2, SparkFixture2}
+import za.co.absa.spline.test.fixture.spline.SplineFixture
+import za.co.absa.spline.test.fixture.{JDBCFixture, SparkDatabaseFixture, SparkFixture}
 
 import java.util.Properties
 import scala.collection.JavaConverters._
@@ -40,9 +40,9 @@ import scala.collection.JavaConverters._
 @Ignore
 class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
   with Matchers
-  with SparkFixture2
-  with SplineFixture2
-  with SparkDatabaseFixture2
+  with SparkFixture
+  with SplineFixture
+  with SparkDatabaseFixture
   with JDBCFixture {
 
   val databaseName = "testDb"

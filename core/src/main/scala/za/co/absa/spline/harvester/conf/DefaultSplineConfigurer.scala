@@ -126,22 +126,3 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
       .getOrElse(postProcessingFilters)
   )
 }
-
-case class CodeBasedSplineConfigurer(
-  sparkSession: SparkSession,
-  lineageDispatcher: LineageDispatcher,
-  splineMode: SplineMode = SplineMode.BEST_EFFORT,
-  ignoredWriteDetectionStrategy: IgnoredWriteDetectionStrategy = new DefaultIgnoredWriteDetectionStrategy(true),
-  postProcessingFilters: Seq[LineageFilter] = Seq.empty
-) extends SplineConfigurer {
-
-  override def queryExecutionEventHandler: QueryExecutionEventHandler =
-    new QueryExecutionEventHandler(harvesterFactory, lineageDispatcher)
-
-  private def harvesterFactory = new LineageHarvesterFactory(
-    sparkSession,
-    splineMode,
-    ignoredWriteDetectionStrategy,
-    postProcessingFilters
-  )
-}

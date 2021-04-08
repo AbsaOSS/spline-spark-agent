@@ -27,14 +27,14 @@ import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.TempDirectory
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version.VersionStringInterpolator
-import za.co.absa.spline.test.fixture.SparkFixture2
-import za.co.absa.spline.test.fixture.spline.SplineFixture2
+import za.co.absa.spline.test.fixture.SparkFixture
+import za.co.absa.spline.test.fixture.spline.SplineFixture
 
 class CassandraSpec
   extends AsyncFlatSpec
     with Matchers
-    with SparkFixture2
-    with SplineFixture2 {
+    with SparkFixture
+    with SplineFixture {
 
   it should "support Cassandra as a write source" taggedAs ignoreIf(ver"$SPARK_VERSION" >= ver"3.0.0") in {
     withNewSparkSession { implicit spark =>

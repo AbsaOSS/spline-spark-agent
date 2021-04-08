@@ -22,16 +22,16 @@ import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructT
 import org.apache.spark.sql.{DataFrame, Row}
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.spline.test.fixture.spline.SplineFixture2
-import za.co.absa.spline.test.fixture.{JDBCFixture, SparkFixture2}
+import za.co.absa.spline.test.fixture.spline.SplineFixture
+import za.co.absa.spline.test.fixture.{JDBCFixture, SparkFixture}
 
 import java.util.Properties
 
 
 class JDBCSpec extends AsyncFlatSpec
   with Matchers
-  with SparkFixture2
-  with SplineFixture2
+  with SparkFixture
+  with SplineFixture
   with JDBCFixture {
 
   val tableName = "testTable"

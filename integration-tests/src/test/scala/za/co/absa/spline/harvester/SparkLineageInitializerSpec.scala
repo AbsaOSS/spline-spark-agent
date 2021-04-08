@@ -41,7 +41,7 @@ import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.exception.SplineInitializationException
 import za.co.absa.spline.harvester.listener.SplineQueryExecutionListener
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
-import za.co.absa.spline.test.fixture.{SparkFixture2, SystemFixture}
+import za.co.absa.spline.test.fixture.{SparkFixture, SystemFixture}
 
 import scala.concurrent.{Future, Promise}
 
@@ -50,7 +50,7 @@ class SparkLineageInitializerSpec
     with BeforeAndAfter
     with Matchers
     with MockitoSugar
-    with SparkFixture2.NewPerTest
+    with SparkFixture.NewPerTest
     with SystemFixture.IsolatedSystemPropertiesPerTest {
 
   before {

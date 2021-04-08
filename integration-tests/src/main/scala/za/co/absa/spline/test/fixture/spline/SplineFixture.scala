@@ -20,17 +20,17 @@ import org.apache.commons.configuration.BaseConfiguration
 import org.apache.spark.sql.SparkSession
 
 
-trait SplineFixture2 {
+trait SplineFixture {
 
-  def withLineageTracking[T](testBody: LineageCaptor2 => T)(implicit session: SparkSession): T = {
-    testBody(new LineageCaptor2(false))
+  def withLineageTracking[T](testBody: LineageCaptor => T)(implicit session: SparkSession): T = {
+    testBody(new LineageCaptor(false))
   }
 
-  def withRealConfigLineageTracking[T](testBody: LineageCaptor2 => T)(implicit session: SparkSession): T = {
-    testBody(new LineageCaptor2(true))
+  def withRealConfigLineageTracking[T](testBody: LineageCaptor => T)(implicit session: SparkSession): T = {
+    testBody(new LineageCaptor(true))
   }
 }
 
-object SplineFixture2 {
-  def EMPTY_CONF = new BaseConfiguration
+object SplineFixture {
+  def EmptyConf = new BaseConfiguration
 }

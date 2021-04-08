@@ -45,21 +45,22 @@ class KafkaPlugin
       // org.apache.spark.sql.kafka010.ConsumerStrategy - private classes cannot be used directly
       val consumerStrategy = extractFieldValue[AnyRef](kr, "strategy")
 
-      def tryAssignStrategy(): Try[Seq[String]] =
+      def tryAssignStrategy: Try[Seq[String]] =
         Try(extractFieldValue[Array[TopicPartition]](consumerStrategy, "partitions"))
           .map(partitions => partitions.map(_.topic()))
 
-      def trySubscribeStrategy(): Try[Seq[String]] =
+      def trySubscribeStrategy: Try[Seq[String]] =
         Try(extractFieldValue[Seq[String]](consumerStrategy, "topics"))
 
-      def trySubscribePatternStrategy(): Try[Seq[String]] =
+      def trySubscribePatternStrategy: Try[Seq[String]] =
         Try(extractFieldValue[String](consumerStrategy, "topicPattern"))
           .map(pattern => kafkaTopics(options("kafka.bootstrap.servers")).filter(_.matches(pattern)))
 
       val topics: Seq[String] =
         tryAssignStrategy
-          .getOrElse(trySubscribeStrategy
-            .getOrElse(trySubscribePatternStrategy.get))
+          .orElse(trySubscribeStrategy)
+          .orElse(trySubscribePatternStrategy)
+          .get
 
       val sourceId = SourceIdentifier(Some("kafka"), topics.map(asURI): _*)
       (sourceId, options ++ Map(

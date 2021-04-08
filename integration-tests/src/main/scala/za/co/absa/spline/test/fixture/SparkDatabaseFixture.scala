@@ -21,7 +21,7 @@ import org.scalatest.{Assertion, AsyncTestSuite}
 
 import scala.concurrent.Future
 
-trait SparkDatabaseFixture2 {
+trait SparkDatabaseFixture {
   this: AsyncTestSuite =>
 
   private type DatabaseName = String

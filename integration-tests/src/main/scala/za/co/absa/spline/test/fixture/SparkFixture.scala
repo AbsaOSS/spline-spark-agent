@@ -18,8 +18,7 @@ package za.co.absa.spline.test.fixture
 
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.SparkSession
-import org.scalatest.{Assertion, AsyncTestSuite, BeforeAndAfterEach, Suite}
-import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.{Assertion, AsyncTestSuite, BeforeAndAfterEach}
 import za.co.absa.commons.io.TempDirectory
 
 import java.io.File
@@ -27,7 +26,7 @@ import java.sql.DriverManager
 import scala.concurrent.Future
 import scala.util.Try
 
-trait SparkFixture2 {
+trait SparkFixture {
   this: AsyncTestSuite =>
 
   import za.co.absa.commons.FutureImplicits.FutureWrapper
@@ -58,7 +57,7 @@ trait SparkFixture2 {
     testBody.finallyDo(haltSparkAndCleanup())
   }
 
-  private[SparkFixture2] def haltSparkAndCleanup(): Unit = {
+  private[SparkFixture] def haltSparkAndCleanup(): Unit = {
     SparkSession.getDefaultSession.foreach(_.close())
     // clean up Derby resources to allow for re-creation of a Hive context later in the same JVM instance
     Try(DriverManager.getConnection("jdbc:derby:;shutdown=true"))
@@ -67,9 +66,9 @@ trait SparkFixture2 {
   }
 }
 
-object SparkFixture2 {
+object SparkFixture {
 
-  trait NewPerTest extends SparkFixture2 with BeforeAndAfterEach {
+  trait NewPerTest extends SparkFixture with BeforeAndAfterEach {
     this: AsyncTestSuite =>
 
     override protected def beforeEach() {
