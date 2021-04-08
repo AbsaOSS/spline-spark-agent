@@ -52,7 +52,7 @@ trait SparkFixture {
     testBody(builderCustomizer(sessionBuilder).getOrCreate.newSession)
   }
 
-  def withAsyncRestartingSparkContext(testBody: => Future[Assertion]): Future[Assertion] = {
+  def withRestartingSparkContext(testBody: => Future[Assertion]): Future[Assertion] = {
     haltSparkAndCleanup()
     testBody.finallyDo(haltSparkAndCleanup())
   }

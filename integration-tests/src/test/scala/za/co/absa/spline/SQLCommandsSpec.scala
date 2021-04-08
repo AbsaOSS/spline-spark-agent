@@ -35,7 +35,7 @@ class SQLCommandsSpec extends AsyncFlatSpec
   behavior of "spark.sql()"
 
   it should "capture lineage of 'CREATE TABLE AS` - Hive" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in
-    withAsyncRestartingSparkContext {
+    withRestartingSparkContext {
       withCustomSparkSession(_.enableHiveSupport) { implicit spark =>
         withLineageTracking { captor =>
           import spark.implicits._
@@ -66,7 +66,7 @@ class SQLCommandsSpec extends AsyncFlatSpec
     }
 
   it should "capture lineage of 'INSERT OVERWRITE AS` - Hive" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in
-    withAsyncRestartingSparkContext {
+    withRestartingSparkContext {
       withCustomSparkSession(_.enableHiveSupport) { implicit spark =>
         withLineageTracking { captor =>
           import spark.implicits._
@@ -97,7 +97,7 @@ class SQLCommandsSpec extends AsyncFlatSpec
     }
 
   it should "capture lineage of 'INSERT OVERWRITE AS` - non-Hive" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in
-    withAsyncRestartingSparkContext {
+    withRestartingSparkContext {
       withCustomSparkSession(_.enableHiveSupport) { implicit spark =>
         withLineageTracking { captor =>
           import spark.implicits._

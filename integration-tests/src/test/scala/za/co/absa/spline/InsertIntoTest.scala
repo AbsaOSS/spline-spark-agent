@@ -16,12 +16,11 @@
 package za.co.absa.spline
 
 import org.apache.spark.sql.SaveMode
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.functions._
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.spline.InsertIntoTest._
 import za.co.absa.spline.test.fixture.spline.SplineFixture
+import za.co.absa.spline.test.fixture.spline.SplineFixture.extractTableIdentifier
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 
 class InsertIntoTest extends AsyncFlatSpec
@@ -183,9 +182,4 @@ class InsertIntoTest extends AsyncFlatSpec
       }
     }
 
-}
-
-object InsertIntoTest {
-  private def extractTableIdentifier(paramsOption: Option[Map[String, Any]]): TableIdentifier =
-    paramsOption.get("table").asInstanceOf[Map[String, _]]("identifier").asInstanceOf[TableIdentifier]
 }

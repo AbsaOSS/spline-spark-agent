@@ -17,13 +17,13 @@ package za.co.absa.spline
 
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.SaveMode._
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.functions._
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.{AsyncFlatSpec, OneInstancePerTest}
+import org.scalatest.OneInstancePerTest
+import org.scalatest.flatspec.AsyncFlatSpec
 import za.co.absa.commons.io.TempDirectory
-import za.co.absa.spline.InsertIntoHiveTest._
 import za.co.absa.spline.test.fixture.spline.SplineFixture
+import za.co.absa.spline.test.fixture.spline.SplineFixture.extractTableIdentifier
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 
 class InsertIntoHiveTest
@@ -35,7 +35,7 @@ class InsertIntoHiveTest
     with SplineFixture {
 
   "InsertInto" should "produce lineage when inserting into Hive table" in
-    withAsyncRestartingSparkContext {
+    withRestartingSparkContext {
       withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
         withLineageTracking { captor =>
           val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
@@ -69,7 +69,7 @@ class InsertIntoHiveTest
     }
 
   "CsvSerdeTable" should "Produce CatalogTable params" in
-    withAsyncRestartingSparkContext {
+    withRestartingSparkContext {
       withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
         withLineageTracking { captor =>
           withDatabase("test",
@@ -108,7 +108,7 @@ class InsertIntoHiveTest
     }
 
   "ParquetSerdeTable" should "Produce CatalogTable params" in
-    withAsyncRestartingSparkContext {
+    withRestartingSparkContext {
       withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
         withLineageTracking { captor =>
           withDatabase("test",
@@ -145,7 +145,7 @@ class InsertIntoHiveTest
     }
 
   "OrcSerdeTable" should "Produce CatalogTable params" in
-    withAsyncRestartingSparkContext {
+    withRestartingSparkContext {
       withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
         withLineageTracking { captor =>
           withDatabase("test",
@@ -181,9 +181,4 @@ class InsertIntoHiveTest
         }
       }
     }
-}
-
-object InsertIntoHiveTest {
-  private def extractTableIdentifier(paramsOption: Option[Map[String, Any]]): TableIdentifier =
-    paramsOption.get("table").asInstanceOf[Map[String, _]]("identifier").asInstanceOf[TableIdentifier]
 }

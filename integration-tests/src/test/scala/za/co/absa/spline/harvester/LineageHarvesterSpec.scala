@@ -20,8 +20,9 @@ import org.apache.commons.configuration.Configuration
 import org.apache.commons.io.FileUtils
 import org.apache.spark.SPARK_VERSION
 import org.scalatest.Inside._
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.{Assertion, AsyncFlatSpec, Succeeded}
+import org.scalatest.{Assertion, Succeeded}
 import za.co.absa.commons.io.{TempDirectory, TempFile}
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
@@ -43,7 +44,6 @@ class LineageHarvesterSpec extends AsyncFlatSpec
   with SparkFixture
   with SplineFixture
   with SparkDatabaseFixture {
-
 
   import za.co.absa.spline.harvester.LineageHarvesterSpec._
 
@@ -257,7 +257,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
     }
 
   it should "support `CREATE TABLE ... AS SELECT` in Hive" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in
-    withAsyncRestartingSparkContext {
+    withRestartingSparkContext {
       withCustomSparkSession(_
         .enableHiveSupport()
         .config("hive.exec.dynamic.partition.mode", "nonstrict")

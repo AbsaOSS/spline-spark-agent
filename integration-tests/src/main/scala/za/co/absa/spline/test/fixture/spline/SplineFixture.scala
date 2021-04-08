@@ -18,6 +18,7 @@ package za.co.absa.spline.test.fixture.spline
 
 import org.apache.commons.configuration.BaseConfiguration
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.catalyst.TableIdentifier
 
 
 trait SplineFixture {
@@ -33,4 +34,7 @@ trait SplineFixture {
 
 object SplineFixture {
   def EmptyConf = new BaseConfiguration
+
+  def extractTableIdentifier(paramsOption: Option[Map[String, Any]]): TableIdentifier =
+    paramsOption.get("table").asInstanceOf[Map[String, _]]("identifier").asInstanceOf[TableIdentifier]
 }
