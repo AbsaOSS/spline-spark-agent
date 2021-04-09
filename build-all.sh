@@ -54,7 +54,7 @@ for v in "${SCALA_VERSIONS[@]}"; do
 done
 
 print_title "Restoring POM-files"
-$MVN_EXEC scala-cross-build:restore-version "$(printf -- "-Pscala-%s " "${SCALA_VERSIONS[@]}")"
+$MVN_EXEC scala-cross-build:change-version -Pscala-"${SCALA_VERSIONS[0]}"
 
 # remove backup files
 for dir in $MODULE_DIRS; do
