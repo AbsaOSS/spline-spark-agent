@@ -24,8 +24,9 @@ import org.apache.spark.sql.util.QueryExecutionListener
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.Mockito._
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.{Assertion, AsyncFlatSpec, BeforeAndAfter, Succeeded}
+import org.scalatest.{Assertion, BeforeAndAfter, Succeeded}
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.mockito.MockitoSugar.mock
 import za.co.absa.commons.io.TempFile
