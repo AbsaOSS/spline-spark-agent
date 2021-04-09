@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.dispatcher
+package za.co.absa.spline.test.harvester.dispatcher
 
 import org.apache.commons.configuration.Configuration
-import za.co.absa.spline.producer.model.v1_1.ExecutionEvent
-import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
+import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
+import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 
 class NoOpLineageDispatcher extends LineageDispatcher {
   def this(conf: Configuration) = this()

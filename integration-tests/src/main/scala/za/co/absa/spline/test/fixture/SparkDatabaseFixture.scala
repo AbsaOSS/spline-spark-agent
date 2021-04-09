@@ -29,8 +29,6 @@ trait SparkDatabaseFixture {
   private type TableDef = String
   private type TableData = Seq[Any]
 
-  import za.co.absa.commons.FutureImplicits.FutureWrapper
-
   def withDatabase
       (databaseName: DatabaseName, tableDefs: (TableName, TableDef, TableData)*)
       (testBody: => Future[Assertion])
@@ -41,7 +39,7 @@ trait SparkDatabaseFixture {
     prepareDatabase(innerSpark, databaseName, tableDefs)
     spark.sql(s"USE $databaseName")
 
-    testBody.finallyDo(dropDatabase(innerSpark, databaseName))
+    testBody.andThen { case _ => dropDatabase(innerSpark, databaseName) }
   }
 
   private def prepareDatabase(

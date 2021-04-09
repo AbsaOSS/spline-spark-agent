@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 ABSA Group Limited
+ * Copyright 2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,6 @@ import scala.util.Try
 trait SparkFixture {
   this: AsyncTestSuite =>
 
-  import za.co.absa.commons.FutureImplicits.FutureWrapper
-
   val warehouseDir: String = TempDirectory("SparkFixture", "UnitTest", pathOnly = true).deleteOnExit().path.toString.stripSuffix("/")
 
   protected val sessionBuilder: SparkSession.Builder = {
@@ -54,7 +52,7 @@ trait SparkFixture {
 
   def withRestartingSparkContext(testBody: => Future[Assertion]): Future[Assertion] = {
     haltSparkAndCleanup()
-    testBody.finallyDo(haltSparkAndCleanup())
+    testBody.andThen { case _ => haltSparkAndCleanup() }
   }
 
   private[SparkFixture] def haltSparkAndCleanup(): Unit = {
