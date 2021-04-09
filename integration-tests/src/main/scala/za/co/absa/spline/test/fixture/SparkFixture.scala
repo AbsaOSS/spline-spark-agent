@@ -16,25 +16,27 @@
 
 package za.co.absa.spline.test.fixture
 
-import java.io.File
-import java.sql.DriverManager
-
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.SparkSession
-import org.scalatest.{BeforeAndAfterEach, Suite}
+import org.scalatest.{Assertion, AsyncTestSuite, BeforeAndAfterEach}
 import za.co.absa.commons.io.TempDirectory
 
+import java.io.File
+import java.sql.DriverManager
+import scala.concurrent.Future
 import scala.util.Try
 
 trait SparkFixture {
+  this: AsyncTestSuite =>
 
   val warehouseDir: String = TempDirectory("SparkFixture", "UnitTest", pathOnly = true).deleteOnExit().path.toString.stripSuffix("/")
 
-  private val sessionBuilder: SparkSession.Builder =
+  protected val sessionBuilder: SparkSession.Builder = {
     SparkSession.builder
       .master("local")
-      .config("spark.ui.enabled", "false")
       .config("spark.sql.warehouse.dir", warehouseDir)
+      .config("spark.ui.enabled", "false")
+  }
 
   def withSparkSession[T](testBody: SparkSession => T): T = {
     testBody(sessionBuilder.getOrCreate)
@@ -48,10 +50,9 @@ trait SparkFixture {
     testBody(builderCustomizer(sessionBuilder).getOrCreate.newSession)
   }
 
-  def withRestartingSparkContext[T](testBody: => T): T = {
+  def withRestartingSparkContext(testBody: => Future[Assertion]): Future[Assertion] = {
     haltSparkAndCleanup()
-    try testBody
-    finally haltSparkAndCleanup()
+    testBody.andThen { case _ => haltSparkAndCleanup() }
   }
 
   private[SparkFixture] def haltSparkAndCleanup(): Unit = {
@@ -66,7 +67,7 @@ trait SparkFixture {
 object SparkFixture {
 
   trait NewPerTest extends SparkFixture with BeforeAndAfterEach {
-    this: Suite =>
+    this: AsyncTestSuite =>
 
     override protected def beforeEach() {
       haltSparkAndCleanup()

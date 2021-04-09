@@ -20,9 +20,11 @@ import org.apache.commons.configuration.{CompositeConfiguration, Configuration, 
 import org.apache.spark.sql.SparkSession
 import za.co.absa.commons.config.ConfigurationImplicits
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
+import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.extra.{UserExtraAppendingLineageFilter, UserExtraMetadataProvider}
-import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
+import za.co.absa.spline.harvester.iwd.DefaultIgnoredWriteDetectionStrategy.Behaviour
+import za.co.absa.spline.harvester.iwd.{DefaultIgnoredWriteDetectionStrategy, IgnoredWriteDetectionStrategy}
 import za.co.absa.spline.harvester.postprocessing.LineageFilter
 import za.co.absa.spline.harvester.{LineageHarvesterFactory, QueryExecutionEventHandler}
 

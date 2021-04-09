@@ -55,6 +55,6 @@ class QueryExecutionEventHandler(
    * @param exception An exception describing the reason of the error
    */
   def onFailure(funcName: String, qe: QueryExecution, exception: Exception): Unit = {
-    //TODO: send exec plan and an event with the error. See: https://github.com/AbsaOSS/spline/issues/310
+    //Not implemented yet: send exec plan and an event with the error. See: https://github.com/AbsaOSS/spline/issues/310
   }
 }

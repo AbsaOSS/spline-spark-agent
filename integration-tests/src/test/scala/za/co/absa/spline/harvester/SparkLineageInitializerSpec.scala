@@ -19,12 +19,13 @@ package za.co.absa.spline.harvester
 import org.apache.commons.configuration.{Configuration, SystemConfiguration}
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.execution.QueryExecution
+import org.apache.spark.sql.util.QueryExecutionListener
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.Mockito._
-import org.scalatest.BeforeAndAfter
-import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.{Assertion, AsyncFlatSpec, BeforeAndAfter, Succeeded}
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.mockito.MockitoSugar.mock
 import za.co.absa.commons.io.TempFile
@@ -32,7 +33,7 @@ import za.co.absa.commons.json.DefaultJacksonJsonSerDe
 import za.co.absa.commons.scalatest.ConditionalTestTags._
 import za.co.absa.commons.version.Version._
 import za.co.absa.spline.harvester.SparkLineageInitializer._
-import za.co.absa.spline.harvester.SparkLineageInitializerSpec._
+import za.co.absa.spline.harvester.SparkLineageInitializerSpec.{MockLineageDispatcher, _}
 import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer
 import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer.ConfProperty._
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode._
@@ -42,8 +43,10 @@ import za.co.absa.spline.harvester.listener.SplineQueryExecutionListener
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 import za.co.absa.spline.test.fixture.{SparkFixture, SystemFixture}
 
+import scala.concurrent.{Future, Promise}
+
 class SparkLineageInitializerSpec
-  extends AnyFunSpec
+  extends AsyncFlatSpec
     with BeforeAndAfter
     with Matchers
     with MockitoSugar
@@ -56,113 +59,152 @@ class SparkLineageInitializerSpec
     MockLineageDispatcher.reset()
   }
 
-  describe("codeless initialization") {
+  behavior of "codeless initialization"
 
-    it("should ignore subsequent programmatic init", ignoreIf(ver"$SPARK_VERSION" < ver"2.3")) {
-      sys.props.put(SparkQueryExecutionListenersKey, classOf[SplineQueryExecutionListener].getName)
-      withSparkSession(session => {
-        session.enableLineageTracking()
-        runDummySparkJob(session)
+  it should "ignore subsequent programmatic init" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
+    sys.props.put(SparkQueryExecutionListenersKey, classOf[SplineQueryExecutionListener].getName)
+    withSparkSession { session =>
+      session.enableLineageTracking()
+      val future = onSuccessListenerFuture(session)
+
+      runDummySparkJob(session)
+
+      future.map { _ =>
         MockLineageDispatcher.verifyTheOnlyLineageCaptured()
         MockLineageDispatcher.instanceCount should be(1)
-      })
-    }
-
-    it("should propagate to child sessions", ignoreIf(ver"$SPARK_VERSION" < ver"2.3")) {
-      sys.props.put(SparkQueryExecutionListenersKey, classOf[SplineQueryExecutionListener].getName)
-      withSparkSession(session => {
-        runDummySparkJob(session)
-        MockLineageDispatcher.verifyTheOnlyLineageCaptured()
-        MockLineageDispatcher.instanceCount should be(1)
-
-        MockLineageDispatcher.reset()
-
-        runDummySparkJob(session.newSession())
-        MockLineageDispatcher.verifyTheOnlyLineageCaptured()
-        MockLineageDispatcher.instanceCount should be(1)
-      })
+      }
     }
   }
 
-  describe("enableLineageTracking()") {
-    it("should warn on double initialization", ignoreIf(ver"$SPARK_VERSION" < ver"2.3")) {
-      withSparkSession(session => {
-        session.enableLineageTracking() // 1st is fine
-        MockLineageDispatcher.instanceCount should be(1)
-        session.enableLineageTracking() // 2nd should warn
-        MockLineageDispatcher.instanceCount should be(1)
-      })
+  it should "propagate to child sessions" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
+    sys.props.put(SparkQueryExecutionListenersKey, classOf[SplineQueryExecutionListener].getName)
+    withSparkSession { session =>
+      val subSession = session.newSession()
+
+      val future = onSuccessListenerFuture(subSession)
+
+      runDummySparkJob(subSession)
+
+      future.map { _ =>
+        MockLineageDispatcher.verifyTheOnlyLineageCaptured()
+      }
     }
+  }
 
-    it("should allow user to start again after error") {
-      sys.props += Mode -> BEST_EFFORT.toString
+  behavior of "enableLineageTracking()"
 
-      withSparkSession(sparkSession => {
-        sparkSession.enableLineageTracking(createFailingConfigurer())
-        runDummySparkJob(sparkSession)
+  it should "warn on double initialization" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
+    withSparkSession { session =>
+      session.enableLineageTracking() // 1st is fine
+      MockLineageDispatcher.instanceCount should be(1)
+      session.enableLineageTracking() // 2nd should warn
+      MockLineageDispatcher.instanceCount should be(1)
+    }
+  }
+
+  it should "allow user to start again after error" in {
+    sys.props += Mode -> BEST_EFFORT.toString
+
+    withSparkSession { sparkSession =>
+      sparkSession.enableLineageTracking(createFailingConfigurer())
+      runDummySparkJob(sparkSession)
+
+      // second attempt
+      sparkSession.enableLineageTracking()
+      val future = onSuccessListenerFuture(sparkSession)
+
+      runDummySparkJob(sparkSession)
+
+      future.map { _ =>
+        MockLineageDispatcher.verifyTheOnlyLineageCaptured()
+      }
+    }
+  }
+
+  it should "return the spark session back to the caller" in {
+    withSparkSession(session =>
+      session.enableLineageTracking() shouldBe session
+    )
+  }
+
+  behavior of "modes"
+
+  it should "disable Spline and proceed, when is in BEST_EFFORT (default) mode after configurer fail" in {
+    sys.props += Mode -> BEST_EFFORT.toString
+
+    withSparkSession { sparkSession =>
+      sparkSession.enableLineageTracking(createFailingConfigurer())
+      val future = onSuccessListenerFuture(sparkSession)
+
+      runDummySparkJob(sparkSession)
+
+      future.map { _ =>
         MockLineageDispatcher.verifyNoLineageCaptured()
-
-        // second attempt
-        sparkSession.enableLineageTracking()
-        runDummySparkJob(sparkSession)
-        MockLineageDispatcher.verifyTheOnlyLineageCaptured()
-      })
-    }
-
-    it("should return the spark session back to the caller") {
-      withSparkSession(session =>
-        session.enableLineageTracking() shouldBe session
-      )
-    }
-
-    describe("modes") {
-      it("should disable Spline and proceed, when is in BEST_EFFORT (default) mode") {
-        sys.props += Mode -> BEST_EFFORT.toString
-
-        withSparkSession(sparkSession => {
-          sparkSession.enableLineageTracking(createFailingConfigurer())
-          runDummySparkJob(sparkSession)
-          MockLineageDispatcher.verifyNoLineageCaptured()
-        })
-
-        withNewSparkSession(sparkSession => {
-          MockLineageDispatcher.onConstructionThrow(new SplineInitializationException("boom"))
-          sparkSession.enableLineageTracking()
-          runDummySparkJob(sparkSession)
-          MockLineageDispatcher.verifyNoLineageCaptured()
-        })
-      }
-
-      it("should abort application, when is in REQUIRED mode") {
-        sys.props += Mode -> REQUIRED.toString
-
-        intercept[Exception] {
-          withSparkSession(_.enableLineageTracking(createFailingConfigurer()))
-        }
-
-        intercept[SplineInitializationException] {
-          MockLineageDispatcher.onConstructionThrow(new SplineInitializationException("boom"))
-          withNewSparkSession(_.enableLineageTracking())
-        }
-      }
-
-      it("should have no effect, when is in DISABLED mode") {
-        sys.props += Mode -> DISABLED.toString
-
-        withSparkSession(sparkSession => {
-          sparkSession.enableLineageTracking(createFailingConfigurer())
-          runDummySparkJob(sparkSession)
-          MockLineageDispatcher.verifyNoLineageCaptured()
-        })
-
-        withNewSparkSession(sparkSession => {
-          sparkSession.enableLineageTracking()
-          runDummySparkJob(sparkSession)
-          MockLineageDispatcher.verifyNoLineageCaptured()
-        })
       }
     }
   }
+
+  it should "disable Spline and proceed, when is in BEST_EFFORT (default) mode after exception" in {
+    sys.props += Mode -> BEST_EFFORT.toString
+
+    withNewSparkSession { sparkSession =>
+      MockLineageDispatcher.onConstructionThrow(new SplineInitializationException("boom"))
+      sparkSession.enableLineageTracking()
+      val future = onSuccessListenerFuture(sparkSession)
+
+      runDummySparkJob(sparkSession)
+
+      future.map { _ =>
+        MockLineageDispatcher.verifyNoLineageCaptured()
+      }
+    }
+  }
+
+  it should "abort application, when is in REQUIRED mode" in {
+    sys.props += Mode -> REQUIRED.toString
+
+    intercept[Exception] {
+      withSparkSession(_.enableLineageTracking(createFailingConfigurer()))
+    }
+
+    intercept[SplineInitializationException] {
+      MockLineageDispatcher.onConstructionThrow(new SplineInitializationException("boom"))
+      withNewSparkSession(_.enableLineageTracking())
+    }
+
+    Succeeded
+  }
+
+  it should "have no effect, when is in DISABLED mode after configurer fail" in {
+    sys.props += Mode -> DISABLED.toString
+
+    withSparkSession { sparkSession =>
+      sparkSession.enableLineageTracking(createFailingConfigurer())
+      val future = onSuccessListenerFuture(sparkSession)
+
+      runDummySparkJob(sparkSession)
+
+      future.map { _ =>
+        MockLineageDispatcher.verifyNoLineageCaptured()
+      }
+    }
+  }
+
+  it should "have no effect, when is in DISABLED mode" in {
+    sys.props += Mode -> DISABLED.toString
+
+    withNewSparkSession { sparkSession =>
+      sparkSession.enableLineageTracking()
+      val future = onSuccessListenerFuture(sparkSession)
+
+      runDummySparkJob(sparkSession)
+
+      future.map { _ =>
+        MockLineageDispatcher.verifyNoLineageCaptured()
+      }
+    }
+  }
+
 }
 
 object SparkLineageInitializerSpec {
@@ -198,14 +240,16 @@ object SparkLineageInitializerSpec {
       this.throwableOnConstruction = Some(th)
     }
 
-    def verifyTheOnlyLineageCaptured(): Unit = {
+    def verifyTheOnlyLineageCaptured(): Assertion = {
       verify(theMock, times(1)).send(any[ExecutionPlan]())
       verify(theMock, times(1)).send(any[ExecutionEvent]())
+      Succeeded
     }
 
-    def verifyNoLineageCaptured(): Unit = {
+    def verifyNoLineageCaptured(): Assertion = {
       verify(theMock, never()).send(any[ExecutionPlan]())
       verify(theMock, never()).send(any[ExecutionEvent]())
+      Succeeded
     }
   }
 
@@ -218,5 +262,17 @@ object SparkLineageInitializerSpec {
     new DefaultSplineConfigurer(mock[SparkSession], new SystemConfiguration) {
       override def lineageDispatcher: LineageDispatcher = sys.error("Testing exception - please ignore.")
     }
+
+  private def onSuccessListenerFuture(spark: SparkSession): Future[Unit] = {
+    val promise = Promise[Unit]
+
+    spark.listenerManager.register(new QueryExecutionListener {
+      override def onSuccess(funcName: String, qe: QueryExecution, durationNs: Long): Unit = promise.success()
+
+      override def onFailure(funcName: String, qe: QueryExecution, exception: Exception): Unit = () // NoOp
+    })
+
+    promise.future
+  }
 
 }

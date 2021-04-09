@@ -102,3 +102,6 @@ metastore_db/
 
 #MacOS
 .DS_Store
+
+#JEnv
+.java-version

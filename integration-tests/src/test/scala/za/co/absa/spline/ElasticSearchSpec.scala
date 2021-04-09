@@ -17,11 +17,9 @@
 package za.co.absa.spline
 
 
-import java.util.concurrent.TimeUnit
-
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode}
-import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import pl.allegro.tech.embeddedelasticsearch.{EmbeddedElastic, IndexSettings, PopularProperties}
 import za.co.absa.commons.io.TempDirectory
@@ -30,9 +28,11 @@ import za.co.absa.commons.version.Version._
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 
+import java.util.concurrent.TimeUnit
+
 
 class ElasticSearchSpec
-  extends AnyFlatSpec
+  extends AsyncFlatSpec
     with Matchers
     with SparkFixture
     with SplineFixture {
@@ -55,42 +55,46 @@ class ElasticSearchSpec
       .build()
     embeddedElastic.start()
 
-    withNewSparkSession(spark => {
-      withLineageTracking(spark)(lineageCaptor => {
+    withNewSparkSession(implicit spark => {
+      withLineageTracking { captor =>
 
         val testData: DataFrame = {
           val schema = StructType(StructField("id", IntegerType, nullable = false) :: StructField("name", StringType, nullable = false) :: Nil)
           val rdd = spark.sparkContext.parallelize(Row(1014, "Warsaw") :: Row(1002, "Corte") :: Nil)
           spark.sqlContext.createDataFrame(rdd, schema)
         }
-        val (plan1, _) = lineageCaptor.lineageOf(testData
-          .write
-          .mode(SaveMode.Append)
-          .options(esOptions)
-          .format("es")
-          .save(s"$index/$docType")
-        )
 
-        val (plan2, _) = lineageCaptor.lineageOf {
-          val df = spark
-            .read
-            .options(esOptions)
-            .format("es")
-            .load(s"$index/$docType")
+        for {
+          (plan1, _) <- captor.lineageOf {
+            testData
+              .write
+              .mode(SaveMode.Append)
+              .options(esOptions)
+              .format("es")
+              .save(s"$index/$docType")
+          }
 
-          df.write.save(TempDirectory(pathOnly = true).deleteOnExit().path.toString)
+          (plan2, _) <- captor.lineageOf {
+            val df = spark
+              .read
+              .options(esOptions)
+              .format("es")
+              .load(s"$index/$docType")
+
+            df.write.save(TempDirectory(pathOnly = true).deleteOnExit().path.toString)
+          }
+        } yield {
+          embeddedElastic.stop()
+
+          plan1.operations.write.append shouldBe true
+          plan1.operations.write.extra.get("destinationType") shouldBe Some("elasticsearch")
+          plan1.operations.write.outputSource shouldBe s"elasticsearch://$esNodes/$index/$docType"
+
+          plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
+          plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("elasticsearch")
+          plan2.operations.write.append shouldBe false
         }
-
-        plan1.operations.write.append shouldBe true
-        plan1.operations.write.extra.get("destinationType") shouldBe Some("elasticsearch")
-        plan1.operations.write.outputSource shouldBe s"elasticsearch://$esNodes/$index/$docType"
-
-        plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
-        plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("elasticsearch")
-        plan2.operations.write.append shouldBe false
-
-        embeddedElastic.stop()
-      })
+      }
     })
   }
 }

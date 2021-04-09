@@ -19,15 +19,16 @@ package za.co.absa.spline
 
 import org.apache.spark.sql.functions
 import org.apache.spark.sql.functions.{col, explode}
-import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.{Assertion, Succeeded}
 import za.co.absa.commons.io.TempFile
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.producer.model.v1_1._
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 
-class ExpressionSpec extends AnyFlatSpec
+class ExpressionSpec extends AsyncFlatSpec
   with Matchers
   with SparkFixture
   with SplineFixture {
@@ -37,16 +38,16 @@ class ExpressionSpec extends AnyFlatSpec
   private val filePath = TempFile("spline-expressions", ".parquet", pathOnly = false).deleteOnExit().path.toAbsolutePath.toString
 
   it should "convert sum of two columns" in
-    withNewSparkSession(spark =>
-      withLineageTracking(spark) {
-        lineageCaptor => {
-          import spark.implicits._
+    withNewSparkSession { implicit spark =>
+      withLineageTracking { captor =>
+        import spark.implicits._
 
-          val df = Seq((1, 2), (3, 4)).toDF()
-            .select(col("_1") + col("_2") as "sum")
+        val df = Seq((1, 2), (3, 4)).toDF()
+          .select(col("_1") + col("_2") as "sum")
 
-          val (plan, _) = lineageCaptor.lineageOf(df.write.mode("overwrite").save(filePath))
-
+        for {
+          (plan, _) <- captor.lineageOf(df.write.mode("overwrite").save(filePath))
+        } yield {
           assertStructuralEquivalence(plan)(
             Seq(
               attribute("_1", Seq.empty),
@@ -59,21 +60,22 @@ class ExpressionSpec extends AnyFlatSpec
               attribute("sum", Seq("f-alias-sum")))
           )
         }
-      })
+      }
+    }
 
   it should "convert ((a + b) * (a - b)) + 42" in
-    withNewSparkSession(spark =>
-      withLineageTracking(spark) {
-        lineageCaptor => {
-          import spark.implicits._
+    withNewSparkSession { implicit spark =>
+      withLineageTracking { captor =>
+        import spark.implicits._
 
-          val df = Seq((1, 2), (3, 4)).toDF()
-            .select(col("_1") + col("_2") as "sum", col("_1") - col("_2") as "dif")
-            .select(col("sum") * col("dif") as "mul")
-            .select(col("mul") + 42 as "res")
+        val df = Seq((1, 2), (3, 4)).toDF()
+          .select(col("_1") + col("_2") as "sum", col("_1") - col("_2") as "dif")
+          .select(col("sum") * col("dif") as "mul")
+          .select(col("mul") + 42 as "res")
 
-          val (plan, _) = lineageCaptor.lineageOf(df.write.mode("overwrite").save(filePath))
-
+        for {
+          (plan, _) <- captor.lineageOf(df.write.mode("overwrite").save(filePath))
+        } yield {
           assertStructuralEquivalence(plan)(
             Seq(
               attribute("_1", Seq.empty),
@@ -96,19 +98,20 @@ class ExpressionSpec extends AnyFlatSpec
               attribute("res", Seq("f-alias-res")))
           )
         }
-      })
+      }
+    }
 
   it should "convert aggregation" in
-    withNewSparkSession(spark =>
-      withLineageTracking(spark) {
-        lineageCaptor => {
-          import spark.implicits._
+    withNewSparkSession { implicit spark =>
+      withLineageTracking { captor =>
+        import spark.implicits._
 
-          val df = Seq(("a", 1), ("b", 2), ("a", 3), ("b", 4)).toDF()
-            .groupBy($"_1").agg(functions.max("_2") as "max2")
+        val df = Seq(("a", 1), ("b", 2), ("a", 3), ("b", 4)).toDF()
+          .groupBy($"_1").agg(functions.max("_2") as "max2")
 
-          val (plan, _) = lineageCaptor.lineageOf(df.write.mode("overwrite").save(filePath))
-
+        for {
+          (plan, _) <- captor.lineageOf(df.write.mode("overwrite").save(filePath))
+        } yield {
           assertStructuralEquivalence(plan)(
             Seq(
               attribute("_2", Seq.empty)),
@@ -122,21 +125,21 @@ class ExpressionSpec extends AnyFlatSpec
               attribute("max2", Seq("f-alias-max2")))
           )
         }
-      })
+      }
+    }
 
   it should "convert union" in
-    withNewSparkSession(spark =>
-      withLineageTracking(spark) {
-        lineageCaptor => {
-          import spark.implicits._
+    withNewSparkSession { implicit spark =>
+      withLineageTracking { captor =>
+        import spark.implicits._
 
-          val df1 = Seq((1, 2)).toDF()
-          val df2 = Seq((3, 4)).toDF()
+        val df1 = Seq((1, 2)).toDF()
+        val df2 = Seq((3, 4)).toDF()
 
-          val unionizedDf = df1.union(df2)
-
-          val (plan, _) = lineageCaptor.lineageOf(unionizedDf.write.mode("overwrite").save(filePath))
-
+        val unionizedDf = df1.union(df2)
+        for {
+          (plan, _) <- captor.lineageOf(unionizedDf.write.mode("overwrite").save(filePath))
+        } yield {
           assertStructuralEquivalence(plan)(
             Seq(
               attribute("_1", Seq.empty),
@@ -152,19 +155,21 @@ class ExpressionSpec extends AnyFlatSpec
               attribute("union-24", Seq("f-union-24")))
           )
         }
-      })
+      }
+    }
 
   it should "convert explode (generator)" in
-    withNewSparkSession(spark =>
-      withLineageTracking(spark) {
-        lineageCaptor => {
-          import spark.implicits._
+    withNewSparkSession { implicit spark =>
+      withLineageTracking { captor =>
+        import spark.implicits._
 
-          val df1 = Seq(Seq(1, 2, 3, 4)).toDF()
+        val df1 = Seq(Seq(1, 2, 3, 4)).toDF()
 
-          val dfRes = df1.select(explode(col("value")) as "res")
+        val dfRes = df1.select(explode(col("value")) as "res")
 
-          val (plan, _) = lineageCaptor.lineageOf(dfRes.write.mode("overwrite").save(filePath))
+        for {
+          (plan, _) <- captor.lineageOf(dfRes.write.mode("overwrite").save(filePath))
+        } yield {
 
           assertStructuralEquivalence(plan)(
             Seq(
@@ -176,7 +181,8 @@ class ExpressionSpec extends AnyFlatSpec
               attribute("res", Seq("f-explode")))
           )
         }
-      })
+      }
+    }
 }
 
 object ExpressionSpec extends Matchers {
@@ -205,7 +211,7 @@ object ExpressionSpec extends Matchers {
     expectedFunctions: Seq[FunctionalExpression],
     expectedLiterals: Seq[Literal],
     expectedOutput: Seq[Attribute]
-  ): Unit = {
+  ): Assertion = {
     val actualAttributes: Seq[Attribute] = actualPlan.attributes.get
     val actualFunctions: Seq[FunctionalExpression] = actualPlan.expressions.flatMap(_.functions).getOrElse(Seq.empty)
     val actualLiterals: Seq[Literal] = actualPlan.expressions.flatMap(_.constants).getOrElse(Seq.empty)
@@ -241,7 +247,7 @@ object ExpressionSpec extends Matchers {
       }
     }
 
-    actualOutput.zip(expectedOutput).foldLeft(Set.empty[(Expr, Expr)]){
+    actualOutput.zip(expectedOutput).foldLeft(Set.empty[(Expr, Expr)]) {
       (processedPairs, pair) => assertDAGsIsomorphism(processedPairs, Seq(pair))
     }
 
@@ -270,6 +276,8 @@ object ExpressionSpec extends Matchers {
       case (None, None) => Seq.empty
       case (Some(al), Some(el)) => al.map(actualIdMap(_)).zip(el.map(expectedIdMap(_)))
     }
+
+    Succeeded
   }
 
   private class IdMap(attributes: Seq[Attribute], functions: Seq[FunctionalExpression], literals: Seq[Literal]) {
@@ -283,4 +291,5 @@ object ExpressionSpec extends Matchers {
       case AttrOrExprRef(None, Some(exprId)) => expMap(exprId)
     }
   }
+
 }

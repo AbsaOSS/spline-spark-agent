@@ -17,28 +17,23 @@ package za.co.absa.spline.test.fixture.spline
 
 import org.apache.commons.configuration.BaseConfiguration
 import org.apache.spark.sql.SparkSession
-import za.co.absa.spline.test.fixture.spline.SplineFixture.EMPTY_CONF
-import za.co.absa.spline.harvester.SparkLineageInitializer._
-import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer
-import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
+import org.apache.spark.sql.catalyst.TableIdentifier
 
-object SplineFixture {
-  def EMPTY_CONF = new BaseConfiguration
-}
 
 trait SplineFixture {
 
-  def withLineageTracking[T](session: SparkSession)(testBody: LineageCaptor.Getter => T): T = {
-    val lineageCaptor = new LineageCaptor
+  def withLineageTracking[T](testBody: LineageCaptor => T)(implicit session: SparkSession): T = {
+    testBody(new LineageCaptor(false))
+  }
 
-    val testSplineConfigurer = new DefaultSplineConfigurer(session, EMPTY_CONF) {
-      override def lineageDispatcher: LineageDispatcher =
-        new LineageCapturingDispatcher(lineageCaptor.setter)
-    }
-
-    session.enableLineageTracking(testSplineConfigurer)
-
-    testBody(lineageCaptor.getter)
+  def withRealConfigLineageTracking[T](testBody: LineageCaptor => T)(implicit session: SparkSession): T = {
+    testBody(new LineageCaptor(true))
   }
 }
 
+object SplineFixture {
+  def EmptyConf = new BaseConfiguration
+
+  def extractTableIdentifier(paramsOption: Option[Map[String, Any]]): TableIdentifier =
+    paramsOption.get("table").asInstanceOf[Map[String, _]]("identifier").asInstanceOf[TableIdentifier]
+}
