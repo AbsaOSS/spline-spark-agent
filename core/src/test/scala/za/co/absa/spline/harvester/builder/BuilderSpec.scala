@@ -36,7 +36,7 @@ class BuilderSpec extends AnyFlatSpec with Matchers with MockitoSugar {
     val logicalPlanStub = mock[LogicalPlan]
 
     when(logicalPlanStub.output) thenReturn Seq.empty
-    when(postProcessorMock.process(any[ReadOperation]())) then returnsFirstArg()
+    when(postProcessorMock.process(any[ReadOperation]())) thenAnswer returnsFirstArg()
 
     val command = ReadCommand(
       SourceIdentifier(Some("CSV"), "whaateverpath"),

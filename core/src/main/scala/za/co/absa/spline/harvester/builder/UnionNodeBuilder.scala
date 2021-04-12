@@ -50,7 +50,7 @@ class UnionNodeBuilder
       id =  UUID.randomUUID().toString,
       dataType = componentCreatorFactory.dataTypeConverter
         .convert(outputSparkAttribute.dataType, outputSparkAttribute.nullable).id.asOption,
-      childIds = inputSplineAttributes.map(att => AttrOrExprRef(Some(att.id), None)).asOption,
+      childRefs = inputSplineAttributes.map(att => AttrOrExprRef(Some(att.id), None)).asOption,
       extra = Map("synthetic" -> "true").asOption,
       name = "union",
       params = Map("name" -> "union").asOption
@@ -60,7 +60,7 @@ class UnionNodeBuilder
     Attribute(
       id = UUID.randomUUID().toString,
       dataType = function.dataType,
-      childIds = List(AttrOrExprRef(None, Some(function.id))).asOption,
+      childRefs = List(AttrOrExprRef(None, Some(function.id))).asOption,
       extra = Map("synthetic" -> "true").asOption,
       name = s"union of ${inputSplineAttributes.map(_.name).mkString(", ")}"
     )

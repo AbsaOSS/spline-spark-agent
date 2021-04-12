@@ -38,7 +38,7 @@ class AttributeConverter(
       Attribute(
         id = attr.exprId.id.toString,
         dataType = Some(dataTypeConverter.convert(attr.dataType, attr.nullable).id),
-        childIds = resolveAttributeChild(attr)
+        childRefs = resolveAttributeChild(attr)
           .map(expr => Seq(exprToRefConverter.convert(expr))),
         extra = None,
         name = attr.name

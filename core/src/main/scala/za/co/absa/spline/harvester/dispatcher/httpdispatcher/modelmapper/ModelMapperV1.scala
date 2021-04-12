@@ -21,6 +21,22 @@ import za.co.absa.spline.producer.model.{v1_0, v1_1}
 
 object ModelMapperV1 extends ModelMapper {
 
+  object FieldsV1 {
+
+    object ExecutionEventExtra {
+      val DurationNs = "durationNs"
+    }
+
+    object ExecutionPlanExtra {
+      val AppName = "appName"
+    }
+
+    object OperationExtras {
+      val Name = "name"
+    }
+
+  }
+
   /**
    * Convert ExecutionPlan v1.1 to ExecutionPlan v1.0
    */
@@ -30,7 +46,7 @@ object ModelMapperV1 extends ModelMapper {
       toV1Operations(plan.operations),
       toV1SystemInfo(plan.systemInfo),
       plan.agentInfo.map(toV1AgentInfo),
-      plan.extraInfo
+      Some(plan.extraInfo.getOrElse(Map.empty) + (FieldsV1.ExecutionPlanExtra.AppName -> plan.name))
     )
   }
 
@@ -49,17 +65,17 @@ object ModelMapperV1 extends ModelMapper {
       toV1OperationId(operation.id),
       operation.childIds.map(toV1OperationId),
       operation.params,
-      operation.extra
+      Some(operation.extra.getOrElse(Map.empty) + (FieldsV1.OperationExtras.Name -> operation.name))
     )
 
   private def toV1ReadOperation(operation: v1_1.ReadOperation) =
     v1_0.ReadOperation(
-      operation.childIds.map(toV1OperationId),
+      Nil,
       operation.inputSources,
       toV1OperationId(operation.id),
       None,
       operation.params,
-      operation.extra
+      Some(operation.extra.getOrElse(Map.empty) + (FieldsV1.OperationExtras.Name -> operation.name))
     )
 
   private def toV1DataOperation(operation: v1_1.DataOperation) =
@@ -68,7 +84,7 @@ object ModelMapperV1 extends ModelMapper {
       operation.childIds.map(ops => ops.map(toV1OperationId)),
       None,
       operation.params,
-      operation.extra
+      Some(operation.extra.getOrElse(Map.empty) + (FieldsV1.OperationExtras.Name -> operation.name))
     )
 
   private def toV1OperationId(idString: String) =
@@ -88,6 +104,6 @@ object ModelMapperV1 extends ModelMapper {
       event.planId,
       event.timestamp,
       event.error,
-      event.extra
+      Some(event.extra.getOrElse(Map.empty) + (FieldsV1.ExecutionEventExtra.DurationNs -> event.durationNs))
     )
 }

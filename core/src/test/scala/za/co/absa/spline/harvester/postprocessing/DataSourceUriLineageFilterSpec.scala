@@ -24,11 +24,10 @@ import za.co.absa.spline.producer.model.v1_1.WriteOperation
 
 class DataSourceUriLineageFilterSpec extends AnyFlatSpec with Matchers with MockitoSugar {
 
-  val harvestingContextMock = mock[HarvestingContext]
+  private val harvestingContextMock = mock[HarvestingContext]
 
   it should "apply one filter" in {
     val wop = WriteOperation(
-      Nil,
       "" +
         "jdbc:sqlserver://database.windows.net:1433" +
         ";user=sample" +
@@ -37,7 +36,7 @@ class DataSourceUriLineageFilterSpec extends AnyFlatSpec with Matchers with Mock
         ";trustServerCertificate=false" +
         ";hostNameInCertificate=*.database.windows.net" +
         ";loginTimeout=30:",
-      append = false, "", Nil, None, None)
+      append = false, "", None, Nil, None, None)
 
     val filter = new DataSourceUriLineageFilter()
     val filteredOp = filter.processWriteOperation(wop, harvestingContextMock)

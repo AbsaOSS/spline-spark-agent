@@ -108,12 +108,13 @@ class LineageHarvester(
         )
 
         val p = ExecutionPlan(
-          id = Some(planId),
+          id = planId.asOption,
+          name = ctx.session.sparkContext.appName.asOption, // `appName` for now, but could be different (user defined) in the future
           operations = Operations(writeOp, opReads.asOption, opOthers.asOption),
           attributes = attributes.asOption,
-          expressions = Some(expressions),
+          expressions = expressions.asOption,
           systemInfo = NameAndVersion(AppMetaInfo.Spark, spark.SPARK_VERSION),
-          agentInfo = Some(NameAndVersion(AppMetaInfo.Spline, SplineBuildInfo.Version)),
+          agentInfo = NameAndVersion(AppMetaInfo.Spline, SplineBuildInfo.Version).asOption,
           extraInfo = planExtra.asOption
         )
         postProcessor.process(p)
@@ -124,16 +125,21 @@ class LineageHarvester(
         None
       }
       else {
+        val errorOrDuration = result.toDisjunction.toEither
+        val maybeError = errorOrDuration.left.toOption
+        val maybeDuration = errorOrDuration.right.toOption
+
         val eventExtra = Map[String, Any](
           ExecutionEventExtra.AppId -> ctx.session.sparkContext.applicationId,
           ExecutionEventExtra.ReadMetrics -> readMetrics,
           ExecutionEventExtra.WriteMetrics -> writeMetrics
-        ).optionally[Duration]((m, d) => m + (ExecutionEventExtra.DurationNs -> d.toNanos), result.toOption)
+        )
 
         val ev = ExecutionEvent(
           planId = planId,
           timestamp = System.currentTimeMillis,
-          error = result.left.toOption,
+          durationNs = maybeDuration.map(_.toNanos),
+          error = maybeError,
           extra = eventExtra.asOption)
 
         val event = postProcessor.process(ev)
