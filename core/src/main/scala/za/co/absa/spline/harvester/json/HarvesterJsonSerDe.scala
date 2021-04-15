@@ -36,7 +36,6 @@ object HarvesterJsonSerDe {
       new AbstractJsonSerDe[JValue]
         with JsonMethods
         with ShortTypeHintForSpline03ModelSupport
-        with NoEmptyValuesSupport
         with JavaTypesSupport
     """)(Map.empty)
 }
