@@ -114,7 +114,7 @@ class LineageHarvester(
           attributes = attributes.asOption,
           expressions = expressions.asOption,
           systemInfo = NameAndVersion(AppMetaInfo.Spark, spark.SPARK_VERSION),
-          agentInfo = NameAndVersion(AppMetaInfo.Spline, SplineBuildInfo.Version).asOption,
+          agentInfo = NameAndVersion(AppMetaInfo.Spline, s"${SplineBuildInfo.Version}+${SplineBuildInfo.Revision}").asOption,
           extraInfo = planExtra.asOption
         )
         postProcessor.process(p)
