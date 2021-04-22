@@ -44,7 +44,7 @@ class ExpressionConverter(
         id = randomUUIDString,
         dataType = convertDataType(a),
         childRefs = convertChildren(a).asOption,
-        extra = createExtra(sparkExpr, "expr.Alias").asOption,
+        extra = createExtra(sparkExpr, ExprV1.Types.Alias).asOption,
         name = a.name,
         params = getExpressionParameters(a).asOption
       )
@@ -54,7 +54,7 @@ class ExpressionConverter(
         id = randomUUIDString,
         dataType = convertDataType(bo),
         childRefs = convertChildren(bo).asOption,
-        extra = (createExtra(bo, "expr.Binary") + ("symbol" -> bo.symbol)).asOption,
+        extra = (createExtra(bo, ExprV1.Types.Binary) + (ExprExtra.Symbol -> bo.symbol)).asOption,
         name = bo.prettyName,
         params = getExpressionParameters(bo).asOption
       )
@@ -64,7 +64,7 @@ class ExpressionConverter(
         id = randomUUIDString,
         dataType = convertDataType(u),
         childRefs = convertChildren(u).asOption,
-        extra = createExtra(u, "expr.UDF").asOption,
+        extra = createExtra(u, ExprV1.Types.UDF).asOption,
         name = u.udfName getOrElse u.function.getClass.getName,
         params = getExpressionParameters(u).asOption
       )
@@ -74,7 +74,7 @@ class ExpressionConverter(
         id = randomUUIDString,
         dataType = convertDataType(e),
         childRefs = None,
-        extra = createExtra(e, "expr.GenericLeaf").asOption,
+        extra = createExtra(e, ExprV1.Types.GenericLeaf).asOption,
         name = e.prettyName,
         params = getExpressionParameters(e).asOption
       )
@@ -85,7 +85,7 @@ class ExpressionConverter(
         id = randomUUIDString,
         dataType = None,
         childRefs = convertChildren(sparkExpr).asOption,
-        extra = createExtra(sparkExpr, "expr.UntypedExpression").asOption,
+        extra = createExtra(sparkExpr, ExprV1.Types.UntypedExpression).asOption,
         name = sparkExpr.prettyName,
         params = getExpressionParameters(sparkExpr).asOption
       )
@@ -95,7 +95,7 @@ class ExpressionConverter(
         id = randomUUIDString,
         dataType = convertDataType(e),
         childRefs = convertChildren(e).asOption,
-        extra = createExtra(e, "expr.Generic").asOption,
+        extra = createExtra(e, ExprV1.Types.Generic).asOption,
         name = e.prettyName,
         params = getExpressionParameters(e).asOption
       )
@@ -118,7 +118,26 @@ class ExpressionConverter(
 
 object ExpressionConverter {
 
-  private val basicProperties = Set("children", "dataType", "nullable")
+  object ExprExtra {
+    val SimpleClassName = "simpleClassName"
+    val Symbol = "symbol"
+  }
+
+  object ExprV1 {
+    val TypeHint = "_typeHint"
+
+    object Types {
+      val Alias = "expr.Alias"
+      val Binary = "expr.Binary"
+      val UDF = "expr.UDF"
+      val GenericLeaf = "expr.GenericLeaf"
+      val Generic = "expr.Generic"
+      val UntypedExpression = "expr.UntypedExpression"
+    }
+
+  }
+
+  private val BasicSparkExprProps = Set("children", "dataType", "nullable")
 
   private def getExpressionSimpleClassName(expr: sparkExprssions.Expression) = {
     val fullName = expr.getClass.getName
@@ -127,8 +146,8 @@ object ExpressionConverter {
   }
 
   def createExtra(expr: sparkExprssions.Expression, typeHint: String) = Map(
-    "simpleClassName" -> getExpressionSimpleClassName(expr),
-    "_typeHint" -> typeHint
+    ExprExtra.SimpleClassName -> getExpressionSimpleClassName(expr),
+    ExprV1.TypeHint -> typeHint
   )
 
   private def getExpressionParameters(e: sparkExprssions.Expression): Map[String, Any] = {
@@ -142,7 +161,7 @@ object ExpressionConverter {
     val renderedParams =
       for {
         (p, v) <- ReflectionUtils.extractProperties(e)
-        if !basicProperties(p)
+        if !BasicSparkExprProps(p)
         if !isChildExpression(v)
         w <- ValueDecomposer.decompose(v, Unit)
       } yield p -> w
