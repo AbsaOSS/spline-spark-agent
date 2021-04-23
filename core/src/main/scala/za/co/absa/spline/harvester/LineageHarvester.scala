@@ -113,8 +113,8 @@ class LineageHarvester(
           operations = Operations(writeOp, opReads.asOption, opOthers.asOption),
           attributes = attributes.asOption,
           expressions = expressions.asOption,
-          systemInfo = NameAndVersion(AppMetaInfo.Spark, spark.SPARK_VERSION),
-          agentInfo = NameAndVersion(AppMetaInfo.Spline, s"${SplineBuildInfo.Version}+${SplineBuildInfo.Revision}").asOption,
+          systemInfo = SparkVersionInfo,
+          agentInfo = SplineVersionInfo.asOption,
           extraInfo = planExtra.asOption
         )
         postProcessor.process(p)
@@ -200,6 +200,23 @@ class LineageHarvester(
 }
 
 object LineageHarvester {
+
+  import za.co.absa.commons.version.Version
+
+  private val SparkVersionInfo = NameAndVersion(
+    name = AppMetaInfo.Spark,
+    version = spark.SPARK_VERSION
+  )
+
+  private val SplineVersionInfo = NameAndVersion(
+    name = AppMetaInfo.Spline,
+    version = {
+      val splineSemver = Version.asSemVer(SplineBuildInfo.Version)
+      if (splineSemver.preRelease.isEmpty) SplineBuildInfo.Version
+      else s"${SplineBuildInfo.Version}+${SplineBuildInfo.Revision}"
+    }
+  )
+
   type Metrics = Map[String, Long]
   private type HarvestResult = Option[(ExecutionPlan, ExecutionEvent)]
 
