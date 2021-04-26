@@ -22,7 +22,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.producer.model.v1_1.WriteOperation
 
-class DataSourceUriLineageFilterSpec extends AnyFlatSpec with Matchers with MockitoSugar {
+class DataSourcePasswordReplacingFilterSpec extends AnyFlatSpec with Matchers with MockitoSugar {
 
   private val ctxMock = mock[HarvestingContext]
 
@@ -39,7 +39,7 @@ class DataSourceUriLineageFilterSpec extends AnyFlatSpec with Matchers with Mock
         ";loginTimeout=30:",
       append = false, "", None, Nil, None, None)
 
-    val filter = new DataSourceUriLineageFilter()
+    val filter = new DataSourcePasswordReplacingFilter()
     val filteredOp = filter.processWriteOperation(wop, ctxMock)
 
     filteredOp.outputSource shouldEqual "" +
@@ -57,7 +57,7 @@ class DataSourceUriLineageFilterSpec extends AnyFlatSpec with Matchers with Mock
     val wop1 = WriteOperation("mongodb://bob:super_secret@mongodb.host.example.org:27017?authSource=admin", append = false, "", None, Nil, None, None)
     val wop2 = WriteOperation("mongodb://bob:@mongodb.host.example.org:27017?authSource=admin", append = false, "", None, Nil, None, None)
 
-    val filter = new DataSourceUriLineageFilter()
+    val filter = new DataSourcePasswordReplacingFilter()
 
     filter.processWriteOperation(wop1, ctxMock).outputSource shouldEqual "mongodb://bob:*****@mongodb.host.example.org:27017?authSource=admin"
     filter.processWriteOperation(wop2, ctxMock).outputSource shouldEqual "mongodb://bob:*****@mongodb.host.example.org:27017?authSource=admin"

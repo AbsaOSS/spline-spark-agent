@@ -23,9 +23,9 @@ import za.co.absa.spline.producer.model.v1_1.{ReadOperation, WriteOperation}
 
 import scala.util.matching.Regex
 
-class DataSourceUriLineageFilter(
-  replacement: String = DataSourceUriLineageFilter.DefaultReplacement,
-  regexes: Seq[Regex] = DataSourceUriLineageFilter.DefaultRegexes
+class DataSourcePasswordReplacingFilter(
+  replacement: String = DataSourcePasswordReplacingFilter.DefaultReplacement,
+  regexes: Seq[Regex] = DataSourcePasswordReplacingFilter.DefaultRegexes
 ) extends AbstractLineageFilter {
 
   //noinspection ScalaUnusedSymbol
@@ -43,7 +43,7 @@ class DataSourceUriLineageFilter(
     replacer.replace(uri, regexes)
 }
 
-object DataSourceUriLineageFilter {
+object DataSourcePasswordReplacingFilter {
 
   final val DefaultReplacement = "*****"
 
