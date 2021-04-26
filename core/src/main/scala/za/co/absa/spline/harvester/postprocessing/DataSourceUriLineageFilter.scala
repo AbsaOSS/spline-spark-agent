@@ -24,10 +24,11 @@ import za.co.absa.spline.producer.model.v1_1.{ReadOperation, WriteOperation}
 import scala.util.matching.Regex
 
 class DataSourceUriLineageFilter(
-  replacement: String = "*****",
-  regex: Regex = """password=([^;\s]+)""".r //NOSONAR
+  replacement: String = DataSourceUriLineageFilter.DefaultReplacement,
+  regexes: Seq[Regex] = DataSourceUriLineageFilter.DefaultRegexes
 ) extends AbstractLineageFilter {
 
+  //noinspection ScalaUnusedSymbol
   def this(conf: Configuration) = this()
 
   override def processReadOperation(op: ReadOperation, ctx: HarvestingContext): ReadOperation =
@@ -39,5 +40,17 @@ class DataSourceUriLineageFilter(
   private val replacer = new CaptureGroupReplacer(replacement)
 
   private def filter(uri: String): String =
-    replacer.replace(uri, Seq(regex))
+    replacer.replace(uri, regexes)
+}
+
+object DataSourceUriLineageFilter {
+
+  final val DefaultReplacement = "*****"
+
+  final val DefaultRegexes = Seq(
+    // URL query parameters
+    """[?&;]password=([^&;]*)(?=[&;])?""".r,
+    // URL userinfo
+    """//[^:]*:([^@]*)@(?:\w+\.)*\w+""".r //NOSONAR
+  )
 }

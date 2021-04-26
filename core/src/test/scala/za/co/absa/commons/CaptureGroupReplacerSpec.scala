@@ -21,8 +21,7 @@ import org.scalatest.matchers.should.Matchers
 
 class CaptureGroupReplacerSpec extends AnyFlatSpec with Matchers {
 
-  val Replacement = "*****"
-  val replacer = new CaptureGroupReplacer(Replacement)
+  val replacer = new CaptureGroupReplacer("<replaced>")
 
   it should "not modify the input when there is no match" in {
     val input = "some string"
@@ -30,32 +29,37 @@ class CaptureGroupReplacerSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "replace the capturing groups" in {
-    replacer.replace("foo@bar.cz", Seq("""[^@]+@(\w+).\w+""".r)) shouldBe s"foo@${Replacement}.cz"
+    replacer
+      .replace("foo@bar.cz", Seq("""[^@]+@(\w+).\w+""".r))
+      .shouldBe("foo@<replaced>.cz")
 
-    replacer.replace(
-      "ftp://username:pumba@hostname/", //NOSONAR
-      Seq("""ftp:\/\/[^:]+:([^@]+)@""".r)
-    ) shouldBe s"ftp://username:${Replacement}@hostname/"
+    replacer
+      .replace("ftp://username:pumba@hostname/", Seq("""ftp://[^:]+:([^@]+)@""".r))
+      .shouldBe("ftp://username:<replaced>@hostname/")
   }
 
-  it should "replace only the first occurrence" in {
-    val input = "some 42 string 66!"
-    replacer.replace(input, Seq("""(\d+)""".r)) shouldBe s"some ${Replacement} string 66!"
+  it should "replace empty groups" in {
+    replacer
+      .replace("foo:@bar.cz", Seq(""":(\d*)@""".r))
+      .shouldBe("foo:<replaced>@bar.cz")
+  }
+
+  it should "replace all occurrences" in {
+    replacer
+      .replace("some 42 string 66!", Seq("""[^s](\d+)""".r))
+      .shouldBe("some <replaced> string <replaced>!")
   }
 
   it should "replace multiple capturing groups" in {
-    val regexes = Seq("""@([^:]+):[\d]+:([^\s\/]+)""".r)
-    val str = "something@pumba:34:timon/"
-
-    replacer.replace(str, regexes) shouldBe s"something@${Replacement}:34:${Replacement}/"
+    replacer
+      .replace("something@pumba:34:timon/", Seq("""@([^:]+):[\d]+:([^\s/]+)""".r))
+      .shouldBe("something@<replaced>:34:<replaced>/")
   }
 
   it should "replace groups from multiple regexes" in {
-
-    val regexes = Seq("""pumba=([^&\s]+)""".r, """timon=([^&\s]+)""".r)
-    val str = "something&foo=42&pumba=lala&bar=66&timon=33"
-
-    replacer.replace(str, regexes) shouldBe s"something&foo=42&pumba=${Replacement}&bar=66&timon=${Replacement}"
+    replacer
+      .replace("something&foo=42&pumba=lala&bar=66&timon=33", Seq("""pumba=([^&\s]+)""".r, """timon=([^&\s]+)""".r))
+      .shouldBe("something&foo=42&pumba=<replaced>&bar=66&timon=<replaced>")
   }
 }
 

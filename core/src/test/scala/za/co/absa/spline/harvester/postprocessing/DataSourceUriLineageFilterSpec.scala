@@ -24,14 +24,15 @@ import za.co.absa.spline.producer.model.v1_1.WriteOperation
 
 class DataSourceUriLineageFilterSpec extends AnyFlatSpec with Matchers with MockitoSugar {
 
-  private val harvestingContextMock = mock[HarvestingContext]
+  private val ctxMock = mock[HarvestingContext]
 
-  it should "apply one filter" in {
+  it should "mask secret in URL query parameter as `password=*****`" in {
     val wop = WriteOperation(
       "" +
         "jdbc:sqlserver://database.windows.net:1433" +
         ";user=sample" +
-        ";password=123456" + //NOSONAR
+        ";password=12345" + //NOSONAR
+        ";password=" + //NOSONAR -- empty password is also a password
         ";encrypt=true" +
         ";trustServerCertificate=false" +
         ";hostNameInCertificate=*.database.windows.net" +
@@ -39,16 +40,27 @@ class DataSourceUriLineageFilterSpec extends AnyFlatSpec with Matchers with Mock
       append = false, "", None, Nil, None, None)
 
     val filter = new DataSourceUriLineageFilter()
-    val filteredOp = filter.processWriteOperation(wop, harvestingContextMock)
+    val filteredOp = filter.processWriteOperation(wop, ctxMock)
 
     filteredOp.outputSource shouldEqual "" +
       "jdbc:sqlserver://database.windows.net:1433" +
       ";user=sample" +
       ";password=*****" + //NOSONAR <-- PASSWORD SHOULD BE SANITIZED
+      ";password=*****" + //NOSONAR <-- PASSWORD SHOULD BE SANITIZED
       ";encrypt=true" +
       ";trustServerCertificate=false" +
       ";hostNameInCertificate=*.database.windows.net" +
       ";loginTimeout=30:"
+  }
+
+  it should "mask secret in URL userinfo as `user:*****@host`" in {
+    val wop1 = WriteOperation("mongodb://bob:super_secret@mongodb.host.example.org:27017?authSource=admin", append = false, "", None, Nil, None, None)
+    val wop2 = WriteOperation("mongodb://bob:@mongodb.host.example.org:27017?authSource=admin", append = false, "", None, Nil, None, None)
+
+    val filter = new DataSourceUriLineageFilter()
+
+    filter.processWriteOperation(wop1, ctxMock).outputSource shouldEqual "mongodb://bob:*****@mongodb.host.example.org:27017?authSource=admin"
+    filter.processWriteOperation(wop2, ctxMock).outputSource shouldEqual "mongodb://bob:*****@mongodb.host.example.org:27017?authSource=admin"
   }
 
 }
