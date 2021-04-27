@@ -16,6 +16,7 @@
 
 package za.co.absa.spline.harvester.postprocessing
 
+import org.apache.commons.configuration.PropertiesConfiguration
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
@@ -23,6 +24,10 @@ import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.producer.model.v1_1.WriteOperation
 
 class DataSourcePasswordReplacingFilterSpec extends AnyFlatSpec with Matchers with MockitoSugar {
+
+  private val defaultProperties =
+    new PropertiesConfiguration(getClass.getResource("/spline.default.properties"))
+      .subset("spline.postProcessingFilter.dsUriPasswordReplace")
 
   private val ctxMock = mock[HarvestingContext]
 
@@ -39,7 +44,7 @@ class DataSourcePasswordReplacingFilterSpec extends AnyFlatSpec with Matchers wi
         ";loginTimeout=30:",
       append = false, "", None, Nil, None, None)
 
-    val filter = new DataSourcePasswordReplacingFilter()
+    val filter = new DataSourcePasswordReplacingFilter(defaultProperties)
     val filteredOp = filter.processWriteOperation(wop, ctxMock)
 
     filteredOp.outputSource shouldEqual "" +
@@ -57,7 +62,7 @@ class DataSourcePasswordReplacingFilterSpec extends AnyFlatSpec with Matchers wi
     val wop1 = WriteOperation("mongodb://bob:super_secret@mongodb.host.example.org:27017?authSource=admin", append = false, "", None, Nil, None, None) //NOSONAR
     val wop2 = WriteOperation("mongodb://bob:@mongodb.host.example.org:27017?authSource=admin", append = false, "", None, Nil, None, None)
 
-    val filter = new DataSourcePasswordReplacingFilter()
+    val filter = new DataSourcePasswordReplacingFilter(defaultProperties)
 
     filter.processWriteOperation(wop1, ctxMock).outputSource shouldEqual "mongodb://bob:*****@mongodb.host.example.org:27017?authSource=admin" //NOSONAR
     filter.processWriteOperation(wop2, ctxMock).outputSource shouldEqual "mongodb://bob:*****@mongodb.host.example.org:27017?authSource=admin" //NOSONAR

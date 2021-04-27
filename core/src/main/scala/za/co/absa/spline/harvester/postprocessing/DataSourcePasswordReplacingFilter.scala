@@ -18,18 +18,20 @@ package za.co.absa.spline.harvester.postprocessing
 
 import org.apache.commons.configuration.Configuration
 import za.co.absa.commons.CaptureGroupReplacer
+import za.co.absa.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
 import za.co.absa.spline.harvester.HarvestingContext
+import za.co.absa.spline.harvester.postprocessing.DataSourcePasswordReplacingFilter.{RegexesKey, ReplacementKey}
 import za.co.absa.spline.producer.model.v1_1.{ReadOperation, WriteOperation}
 
 import scala.util.matching.Regex
 
-class DataSourcePasswordReplacingFilter(
-  replacement: String = DataSourcePasswordReplacingFilter.DefaultReplacement,
-  regexes: Seq[Regex] = DataSourcePasswordReplacingFilter.DefaultRegexes
-) extends AbstractPostProcessingFilter {
+class DataSourcePasswordReplacingFilter(replacement: String, regexes: Seq[Regex])
+  extends AbstractPostProcessingFilter {
 
-  //noinspection ScalaUnusedSymbol
-  def this(conf: Configuration) = this()
+  def this(conf: Configuration) = this(
+    conf.getRequiredString(ReplacementKey),
+    conf.getRequiredStringArray(RegexesKey).map(_.r)
+  )
 
   override def processReadOperation(op: ReadOperation, ctx: HarvestingContext): ReadOperation =
     op.copy(inputSources = op.inputSources.map(filter))
@@ -44,13 +46,6 @@ class DataSourcePasswordReplacingFilter(
 }
 
 object DataSourcePasswordReplacingFilter {
-
-  final val DefaultReplacement = "*****"
-
-  final val DefaultRegexes = Seq(
-    // URL query parameters
-    """[?&;]password=([^&;]*)(?=[&;])?""".r, //NOSONAR
-    // URL userinfo
-    """//[^:]*:([^@]*)@(?:\w+\.)*\w+""".r //NOSONAR
-  )
+  final val ReplacementKey = "replacement"
+  final val RegexesKey = "regexes"
 }
