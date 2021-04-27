@@ -29,7 +29,7 @@ import scala.collection.JavaConverters.{asScalaIteratorConverter, mapAsJavaMapCo
 class Spline05ConfigurationAdapterTest extends AnyFlatSpec with Matchers with SparkTestBase {
   behavior of "Spline05ConfigurationAdapter"
 
-  it should "be empty if no deprecated keys are present in the underling config" in {
+  it should "be empty if no deprecated keys are present in the underlying config" in {
     val config = createConfigAdapter(Map(
       ConfProperty.IgnoreWriteDetectionStrategyClass -> "foo.bar.Baz.class"
     ))
@@ -37,15 +37,15 @@ class Spline05ConfigurationAdapterTest extends AnyFlatSpec with Matchers with Sp
     config.isEmpty shouldEqual true
   }
 
-  it should "not be empty if deprecated keys are present in the underling config" in {
+  it should "not be empty if deprecated keys are present in the underlying config" in {
     val config = createConfigAdapter(Map(
-      "spline.postprocessing_filter.classNames" -> "foo.bar.Baz.class"
+      "spline.iwd_strategy.className" -> "foo.bar.Baz.class"
     ))
 
     config.isEmpty shouldEqual false
   }
 
-  it should "remap the key and return the value from the underling config only if present" in {
+  it should "remap the key and return the value from the underlying config only if present" in {
     testConfig.containsKey(ConfProperty.IgnoreWriteDetectionStrategyClass) shouldEqual true
     testConfig.getProperty(ConfProperty.IgnoreWriteDetectionStrategyClass) shouldEqual "foo.bar.Baz.class"
 
@@ -53,12 +53,11 @@ class Spline05ConfigurationAdapterTest extends AnyFlatSpec with Matchers with Sp
     testConfig.getProperty(ConfProperty.UserExtraMetadataProviderClass) shouldEqual null
   }
 
-  it should "return only the keys that have deprecated counterparts in the underling config" in {
+  it should "return only the keys that have deprecated counterparts in the underlying config" in {
     val keys = testConfig.getKeys.asScala.toSeq
 
-    keys.size shouldEqual 2
+    keys.size shouldEqual 1
     keys.contains(ConfProperty.IgnoreWriteDetectionStrategyClass) shouldEqual true
-    keys.contains(ConfProperty.PostProcessingFilterClasses) shouldEqual true
   }
 
   it should "contain dispatcher name only if the dispatcher classname is defined as well" in {
@@ -87,7 +86,6 @@ object Spline05ConfigurationAdapterTest {
 
   private val testConfig = createConfigAdapter(Map(
     "spline.iwd_strategy.className" -> "foo.bar.Baz.class",
-    "spline.postprocessing_filter.classNames" -> "a.b.C.class",
     ConfProperty.Mode -> "BEST_EFFORT"
   ))
 }

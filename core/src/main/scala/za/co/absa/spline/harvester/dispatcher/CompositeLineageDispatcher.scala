@@ -17,8 +17,8 @@
 package za.co.absa.spline.harvester.dispatcher
 
 import org.apache.spark.internal.Logging
+import za.co.absa.commons.HierarchicalObjectFactory
 import za.co.absa.commons.config.ConfigurationImplicits._
-import za.co.absa.spline.harvester.conf.HierarchicalObjectFactory
 import za.co.absa.spline.harvester.dispatcher.CompositeLineageDispatcher._
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 
@@ -29,7 +29,7 @@ class CompositeLineageDispatcher(delegatees: Seq[LineageDispatcher], failOnError
     with Logging {
 
   def this(objectFactory: HierarchicalObjectFactory) = this(
-    getDispatchers(objectFactory),
+    objectFactory.createComponentsByKey(DispatchersKey),
     objectFactory.configuration.getRequiredBoolean(FailOnErrorsKey)
   )
 
@@ -59,14 +59,4 @@ object CompositeLineageDispatcher {
 
   private val DispatchersKey = "dispatchers"
   private val FailOnErrorsKey = "failOnErrors"
-
-  private[dispatcher] def getDispatchers(objectFactory: HierarchicalObjectFactory): Seq[LineageDispatcher] = {
-    val dispatcherNames: Array[String] = objectFactory.configuration.getRequiredStringArray(DispatchersKey)
-    for (dispatcherName <- dispatcherNames) yield {
-      objectFactory
-        .parent
-        .child(dispatcherName)
-        .instantiate[LineageDispatcher]()
-    }
-  }
 }

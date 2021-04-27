@@ -25,7 +25,7 @@ import za.co.absa.spline.harvester.builder.write.PluggableWriteCommandExtractor
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.plugin.registry.AutoDiscoveryPluginRegistry
-import za.co.absa.spline.harvester.postprocessing.{LineageFilter, PostProcessor}
+import za.co.absa.spline.harvester.postprocessing.{PostProcessingFilter, PostProcessor}
 import za.co.absa.spline.harvester.qualifier.HDFSPathQualifier
 
 import scala.language.postfixOps
@@ -34,7 +34,7 @@ class LineageHarvesterFactory(
   session: SparkSession,
   splineMode: SplineMode,
   iwdStrategy: IgnoredWriteDetectionStrategy,
-  filters: Seq[LineageFilter]) {
+  filters: Seq[PostProcessingFilter]) {
 
   private val pathQualifier = new HDFSPathQualifier(session.sparkContext.hadoopConfiguration)
   private val pluginRegistry = new AutoDiscoveryPluginRegistry(pathQualifier, session)
