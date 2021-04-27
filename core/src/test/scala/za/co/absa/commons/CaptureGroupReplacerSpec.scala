@@ -34,7 +34,7 @@ class CaptureGroupReplacerSpec extends AnyFlatSpec with Matchers {
       .shouldBe("foo@<replaced>.cz")
 
     replacer
-      .replace("ftp://username:pumba@hostname/", Seq("""ftp://[^:]+:([^@]+)@""".r))
+      .replace("ftp://username:pumba@hostname/", Seq("""ftp://[^:]+:([^@]+)@""".r)) //NOSONAR
       .shouldBe("ftp://username:<replaced>@hostname/")
   }
 

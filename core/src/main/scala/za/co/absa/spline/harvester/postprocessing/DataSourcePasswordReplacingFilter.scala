@@ -49,7 +49,7 @@ object DataSourcePasswordReplacingFilter {
 
   final val DefaultRegexes = Seq(
     // URL query parameters
-    """[?&;]password=([^&;]*)(?=[&;])?""".r,
+    """[?&;]password=([^&;]*)(?=[&;])?""".r, //NOSONAR
     // URL userinfo
     """//[^:]*:([^@]*)@(?:\w+\.)*\w+""".r //NOSONAR
   )

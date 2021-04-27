@@ -26,7 +26,7 @@ class DataSourcePasswordReplacingFilterSpec extends AnyFlatSpec with Matchers wi
 
   private val ctxMock = mock[HarvestingContext]
 
-  it should "mask secret in URL query parameter as `password=*****`" in {
+  it should "mask secret in URL query parameter as `password=*****`" in { //NOSONAR
     val wop = WriteOperation(
       "" +
         "jdbc:sqlserver://database.windows.net:1433" +
@@ -54,13 +54,13 @@ class DataSourcePasswordReplacingFilterSpec extends AnyFlatSpec with Matchers wi
   }
 
   it should "mask secret in URL userinfo as `user:*****@host`" in {
-    val wop1 = WriteOperation("mongodb://bob:super_secret@mongodb.host.example.org:27017?authSource=admin", append = false, "", None, Nil, None, None)
+    val wop1 = WriteOperation("mongodb://bob:super_secret@mongodb.host.example.org:27017?authSource=admin", append = false, "", None, Nil, None, None) //NOSONAR
     val wop2 = WriteOperation("mongodb://bob:@mongodb.host.example.org:27017?authSource=admin", append = false, "", None, Nil, None, None)
 
     val filter = new DataSourcePasswordReplacingFilter()
 
-    filter.processWriteOperation(wop1, ctxMock).outputSource shouldEqual "mongodb://bob:*****@mongodb.host.example.org:27017?authSource=admin"
-    filter.processWriteOperation(wop2, ctxMock).outputSource shouldEqual "mongodb://bob:*****@mongodb.host.example.org:27017?authSource=admin"
+    filter.processWriteOperation(wop1, ctxMock).outputSource shouldEqual "mongodb://bob:*****@mongodb.host.example.org:27017?authSource=admin" //NOSONAR
+    filter.processWriteOperation(wop2, ctxMock).outputSource shouldEqual "mongodb://bob:*****@mongodb.host.example.org:27017?authSource=admin" //NOSONAR
   }
 
 }
