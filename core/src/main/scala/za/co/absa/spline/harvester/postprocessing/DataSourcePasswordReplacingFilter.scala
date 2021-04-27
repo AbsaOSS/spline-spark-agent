@@ -18,17 +18,20 @@ package za.co.absa.spline.harvester.postprocessing
 
 import org.apache.commons.configuration.Configuration
 import za.co.absa.commons.CaptureGroupReplacer
+import za.co.absa.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
 import za.co.absa.spline.harvester.HarvestingContext
+import za.co.absa.spline.harvester.postprocessing.DataSourcePasswordReplacingFilter.{RegexesKey, ReplacementKey}
 import za.co.absa.spline.producer.model.v1_1.{ReadOperation, WriteOperation}
 
 import scala.util.matching.Regex
 
-class DataSourceUriLineageFilter(
-  replacement: String = "*****",
-  regex: Regex = """password=([^;\s]+)""".r //NOSONAR
-) extends AbstractLineageFilter {
+class DataSourcePasswordReplacingFilter(replacement: String, regexes: Seq[Regex])
+  extends AbstractPostProcessingFilter {
 
-  def this(conf: Configuration) = this()
+  def this(conf: Configuration) = this(
+    conf.getRequiredString(ReplacementKey),
+    conf.getRequiredStringArray(RegexesKey).map(_.r)
+  )
 
   override def processReadOperation(op: ReadOperation, ctx: HarvestingContext): ReadOperation =
     op.copy(inputSources = op.inputSources.map(filter))
@@ -39,5 +42,10 @@ class DataSourceUriLineageFilter(
   private val replacer = new CaptureGroupReplacer(replacement)
 
   private def filter(uri: String): String =
-    replacer.replace(uri, Seq(regex))
+    replacer.replace(uri, regexes)
+}
+
+object DataSourcePasswordReplacingFilter {
+  final val ReplacementKey = "replacement"
+  final val RegexesKey = "regexes"
 }

@@ -17,14 +17,14 @@
 package za.co.absa.spline.harvester.extra
 
 import za.co.absa.spline.harvester.HarvestingContext
-import za.co.absa.spline.harvester.postprocessing.LineageFilter
+import za.co.absa.spline.harvester.postprocessing.PostProcessingFilter
 import za.co.absa.spline.producer.model.v1_1._
 import za.co.absa.spline.harvester.ExtraMetadataImplicits._
 
 /**
  * provides backward compatibility for older less powerful UserExtraMetadataProvider API
  */
-class UserExtraAppendingLineageFilter(userExtraMetadataProvider: UserExtraMetadataProvider) extends LineageFilter {
+class UserExtraAppendingPostProcessingFilter(userExtraMetadataProvider: UserExtraMetadataProvider) extends PostProcessingFilter {
 
   override def processExecutionEvent(event: ExecutionEvent, ctx: HarvestingContext): ExecutionEvent =
     event.withAddedExtra(userExtraMetadataProvider.forExecEvent(event, ctx))

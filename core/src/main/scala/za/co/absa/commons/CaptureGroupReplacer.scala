@@ -16,36 +16,36 @@
 
 package za.co.absa.commons
 
-import scala.annotation.tailrec
 import scala.util.matching.Regex
 
 class CaptureGroupReplacer(replacement: String) {
 
-  @tailrec
-  final def replace(str: String, regexes: Seq[Regex]): String = regexes match {
-    case Nil => str
-    case regex :: nextRegexes =>
-      val nextStr = regex
-        .findFirstMatchIn(str)
-        .map(regMatch => replaceMatchedGroups(regMatch, str))
-        .getOrElse(str)
-      replace(nextStr, nextRegexes)
+  final def replace(str: String, regexes: Seq[Regex]): String = {
+    regexes.foldLeft(str) {
+      case (prevStr, regex) =>
+        val matches = regex.findAllMatchIn(prevStr).toSeq
+        if (matches.isEmpty) prevStr
+        else replaceMatchedGroups(matches, prevStr)
+    }
   }
 
-  private def replaceMatchedGroups(regMatch: Regex.Match, str: String): String = {
-    val groupsStartsAndEnds = Seq.range(1, regMatch.groupCount + 1) // 0 is the full match - skipping that
-      .map(i => (regMatch.start(i) , regMatch.`end`(i)))
+  private def replaceMatchedGroups(regMatches: Seq[Regex.Match], str: String): String = {
+    val groupsStartsAndEnds =
+      for {
+        regMatch <- regMatches.toArray
+        i <- 1 to regMatch.groupCount
+      } yield
+        (regMatch.start(i), regMatch.`end`(i))
 
     val start = (0, 0)
     val end = (str.length, str.length)
 
     val intervals = (start +: groupsStartsAndEnds :+ end)
-      .sliding(2,1)
-      .map{ case (_, firstEnd) :: (secondStart, _) :: Nil => (firstEnd, secondStart)}
-      .toSeq
+      .sliding(2, 1)
+      .map { case Array((_, firstEnd), (secondStart, _)) => (firstEnd, secondStart) }
 
     intervals
-      .map{ case (from, to) => str.substring(from, to)}
+      .map { case (from, to) => str.substring(from, to) }
       .mkString(replacement)
   }
 }

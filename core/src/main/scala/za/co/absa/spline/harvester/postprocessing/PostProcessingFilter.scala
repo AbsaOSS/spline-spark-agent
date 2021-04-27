@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.postprocessing
 import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.producer.model.v1_1._
 
-trait LineageFilter {
+trait PostProcessingFilter {
   def processExecutionEvent(event: ExecutionEvent, ctx: HarvestingContext): ExecutionEvent
   def processExecutionPlan(plan: ExecutionPlan, ctx: HarvestingContext): ExecutionPlan
   def processReadOperation(op: ReadOperation, ctx: HarvestingContext): ReadOperation

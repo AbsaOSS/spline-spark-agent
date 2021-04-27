@@ -16,17 +16,11 @@
 
 package za.co.absa.spline.harvester.dispatcher
 
-import org.apache.commons.configuration.{Configuration, MapConfiguration}
 import org.mockito.Mockito._
-import org.scalatest.Inside.inside
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import za.co.absa.spline.harvester.conf.HierarchicalObjectFactory
-import za.co.absa.spline.harvester.dispatcher.CompositeLineageDispatcherSpec.{BarDispatcher, FooDispatcher}
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
-
-import java.util
 
 class CompositeLineageDispatcherSpec
   extends AnyFlatSpec
@@ -96,34 +90,4 @@ class CompositeLineageDispatcherSpec
 
     succeed
   }
-
-  "getDispatchers()" should "create sub-dispatchers" in {
-    val rootObjFactory = new HierarchicalObjectFactory(new MapConfiguration(new util.HashMap[String, AnyRef] {
-      put("test.dispatchers", "foo, bar")
-      put("foo.className", classOf[FooDispatcher].getName)
-      put("bar.className", classOf[BarDispatcher].getName)
-    }))
-
-    val subDispatchers = CompositeLineageDispatcher.getDispatchers(rootObjFactory.child("test"))
-
-    subDispatchers should have length 2
-    inside(subDispatchers) {
-      case Seq(FooDispatcher(fooConf), BarDispatcher(barObjFactory)) =>
-        fooConf.getString("className") should equal(classOf[FooDispatcher].getName)
-        barObjFactory.configuration.getString("className") should equal(classOf[BarDispatcher].getName)
-    }
-  }
-}
-
-object CompositeLineageDispatcherSpec {
-
-  trait DummyLineageDispatcher extends LineageDispatcher {
-    override def send(plan: ExecutionPlan): Unit = ()
-    override def send(event: ExecutionEvent): Unit = ()
-  }
-
-  case class FooDispatcher(conf: Configuration) extends DummyLineageDispatcher
-
-  case class BarDispatcher(objectFactory: HierarchicalObjectFactory) extends DummyLineageDispatcher
-
 }
