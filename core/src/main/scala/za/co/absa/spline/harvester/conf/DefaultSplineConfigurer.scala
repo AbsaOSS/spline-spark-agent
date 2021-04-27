@@ -18,15 +18,16 @@ package za.co.absa.spline.harvester.conf
 
 import org.apache.commons.configuration.{CompositeConfiguration, Configuration, PropertiesConfiguration}
 import org.apache.spark.sql.SparkSession
+import za.co.absa.commons.HierarchicalObjectFactory
 import za.co.absa.commons.config.ConfigurationImplicits
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
-import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.extra.{UserExtraAppendingLineageFilter, UserExtraMetadataProvider}
-import za.co.absa.spline.harvester.iwd.DefaultIgnoredWriteDetectionStrategy.Behaviour
-import za.co.absa.spline.harvester.iwd.{DefaultIgnoredWriteDetectionStrategy, IgnoredWriteDetectionStrategy}
+import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.postprocessing.LineageFilter
 import za.co.absa.spline.harvester.{LineageHarvesterFactory, QueryExecutionEventHandler}
+
+import scala.reflect.ClassTag
 
 object DefaultSplineConfigurer {
   private val defaultPropertiesFileName = "spline.default.properties"
@@ -46,14 +47,14 @@ object DefaultSplineConfigurer {
     val RootLineageDispatcher = "spline.lineageDispatcher"
 
     /**
+     * User defined filter: allowing modification and enrichment of generated lineage
+     */
+    val RootPostProcessingFilter = "spline.postProcessingFilter"
+
+    /**
      * Strategy used to detect ignored writes
      */
     val IgnoreWriteDetectionStrategyClass = "spline.IWDStrategy.className"
-
-    /**
-     * User defined filters: allowing modification and enrichment of generated lineage
-     */
-    val PostProcessingFilterClasses = "spline.postprocessingFilter.classNames"
 
     /**
      * Deprecated - use Post Processing Filter instead
@@ -95,34 +96,32 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
   override def queryExecutionEventHandler: QueryExecutionEventHandler =
     new QueryExecutionEventHandler(harvesterFactory, lineageDispatcher)
 
-  protected def lineageDispatcher: LineageDispatcher = {
-    val dispatcherName = configuration.getRequiredString(RootLineageDispatcher)
-    objectFactory
-      .child(RootLineageDispatcher)
-      .child(dispatcherName)
-      .instantiate[LineageDispatcher]()
-  }
+  protected def lineageDispatcher: LineageDispatcher = createCompositeByKey(RootLineageDispatcher)
+
+  protected def postProcessingFilter: LineageFilter = createCompositeByKey(RootPostProcessingFilter)
 
   protected def ignoredWriteDetectionStrategy: IgnoredWriteDetectionStrategy =
     objectFactory.instantiate[IgnoredWriteDetectionStrategy](configuration.getRequiredString(IgnoreWriteDetectionStrategyClass))
-
-  protected def postProcessingFilters: Seq[LineageFilter] =
-    configuration
-      .getStringArray(PostProcessingFilterClasses)
-      .filter(_.nonEmpty)
-      .map(objectFactory.instantiate[LineageFilter])
 
   protected def maybeUserExtraMetadataProvider: Option[UserExtraMetadataProvider] =
     configuration
       .getOptionalString(UserExtraMetadataProviderClass)
       .map(objectFactory.instantiate[UserExtraMetadataProvider])
 
+  private def createCompositeByKey[A: ClassTag](key: String): A = {
+    val objName = configuration.getRequiredString(key)
+    objectFactory
+      .child(key)
+      .child(objName)
+      .instantiate[A]()
+  }
+
   private def harvesterFactory = new LineageHarvesterFactory(
     sparkSession,
     splineMode,
     ignoredWriteDetectionStrategy,
     maybeUserExtraMetadataProvider
-      .map(postProcessingFilters :+ new UserExtraAppendingLineageFilter(_))
-      .getOrElse(postProcessingFilters)
+      .map(uemp => Seq(postProcessingFilter, new UserExtraAppendingLineageFilter(uemp)))
+      .getOrElse(Seq(postProcessingFilter))
   )
 }

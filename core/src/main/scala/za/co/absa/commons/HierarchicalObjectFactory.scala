@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.conf
+package za.co.absa.commons
 
 import org.apache.commons.configuration.Configuration
 import org.apache.spark.internal.Logging
+import za.co.absa.commons.HierarchicalObjectFactory.ClassName
 import za.co.absa.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
-import za.co.absa.spline.harvester.conf.HierarchicalObjectFactory.ClassName
 
 import java.lang.reflect.InvocationTargetException
 import scala.reflect.ClassTag
@@ -27,7 +27,7 @@ import scala.util.Try
 
 final class HierarchicalObjectFactory(
   val configuration: Configuration,
-  val parent: HierarchicalObjectFactory = null
+  val parentFactory: HierarchicalObjectFactory = null
 ) extends Logging {
 
   def child(namespace: String): HierarchicalObjectFactory = {
@@ -36,13 +36,27 @@ final class HierarchicalObjectFactory(
 
   def instantiate[A: ClassTag](className: String = configuration.getRequiredString(ClassName)): A = {
     logDebug(s"Instantiating $className")
+    val clazz = Class.forName(className.trim)
     try {
-      val clazz = Class.forName(className.trim)
       Try(clazz.getConstructor(classOf[HierarchicalObjectFactory]).newInstance(this))
-        .getOrElse(clazz.getConstructor(classOf[Configuration]).newInstance(configuration))
+        .recover { case _: NoSuchMethodException =>
+          clazz.getConstructor(classOf[Configuration]).newInstance(configuration)
+        }
+        .get
         .asInstanceOf[A]
     } catch {
       case e: InvocationTargetException => throw e.getTargetException
+    }
+  }
+
+  def createComponentsByKey[A: ClassTag](confKey: String): Seq[A] = {
+    val componentNames = configuration
+      .getStringArray(confKey)
+      .filter(_.nonEmpty)
+    logDebug(s"Instantiating components: ${componentNames.mkString(", ")}")
+    for (compName <- componentNames) yield {
+      val compFactory = parentFactory.child(compName)
+      compFactory.instantiate[A]()
     }
   }
 }
