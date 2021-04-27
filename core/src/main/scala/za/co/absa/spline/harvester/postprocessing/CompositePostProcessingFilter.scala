@@ -3,11 +3,11 @@ package za.co.absa.spline.harvester.postprocessing
 import org.apache.spark.internal.Logging
 import za.co.absa.commons.HierarchicalObjectFactory
 import za.co.absa.spline.harvester.HarvestingContext
-import za.co.absa.spline.harvester.postprocessing.CompositeLineageFilter.FiltersKey
+import za.co.absa.spline.harvester.postprocessing.CompositePostProcessingFilter.FiltersKey
 import za.co.absa.spline.producer.model.v1_1._
 
-class CompositeLineageFilter(delegatees: Seq[LineageFilter])
-  extends LineageFilter
+class CompositePostProcessingFilter(delegatees: Seq[PostProcessingFilter])
+  extends PostProcessingFilter
     with Logging {
 
   def this(objectFactory: HierarchicalObjectFactory) = this(
@@ -34,13 +34,13 @@ class CompositeLineageFilter(delegatees: Seq[LineageFilter])
     _.processDataOperation(_, ctx)
   }
 
-  private def chainCall[A](arg: A)(call: (LineageFilter, A) => A): A = {
+  private def chainCall[A](arg: A)(call: (PostProcessingFilter, A) => A): A = {
     delegatees.foldLeft(arg) {
       case (z, d) => call(d, z)
     }
   }
 }
 
-object CompositeLineageFilter {
+object CompositePostProcessingFilter {
   private val FiltersKey = "filters"
 }

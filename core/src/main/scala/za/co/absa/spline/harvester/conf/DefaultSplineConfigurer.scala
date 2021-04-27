@@ -22,9 +22,9 @@ import za.co.absa.commons.HierarchicalObjectFactory
 import za.co.absa.commons.config.ConfigurationImplicits
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
-import za.co.absa.spline.harvester.extra.{UserExtraAppendingLineageFilter, UserExtraMetadataProvider}
+import za.co.absa.spline.harvester.extra.{UserExtraAppendingPostProcessingFilter, UserExtraMetadataProvider}
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
-import za.co.absa.spline.harvester.postprocessing.LineageFilter
+import za.co.absa.spline.harvester.postprocessing.PostProcessingFilter
 import za.co.absa.spline.harvester.{LineageHarvesterFactory, QueryExecutionEventHandler}
 
 import scala.reflect.ClassTag
@@ -98,7 +98,7 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
 
   protected def lineageDispatcher: LineageDispatcher = createCompositeByKey(RootLineageDispatcher)
 
-  protected def postProcessingFilter: LineageFilter = createCompositeByKey(RootPostProcessingFilter)
+  protected def postProcessingFilter: PostProcessingFilter = createCompositeByKey(RootPostProcessingFilter)
 
   protected def ignoredWriteDetectionStrategy: IgnoredWriteDetectionStrategy =
     objectFactory.instantiate[IgnoredWriteDetectionStrategy](configuration.getRequiredString(IgnoreWriteDetectionStrategyClass))
@@ -121,7 +121,7 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
     splineMode,
     ignoredWriteDetectionStrategy,
     maybeUserExtraMetadataProvider
-      .map(uemp => Seq(postProcessingFilter, new UserExtraAppendingLineageFilter(uemp)))
+      .map(uemp => Seq(postProcessingFilter, new UserExtraAppendingPostProcessingFilter(uemp)))
       .getOrElse(Seq(postProcessingFilter))
   )
 }

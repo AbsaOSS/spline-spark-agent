@@ -8,7 +8,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.producer.model.v1_1._
 
-class CompositeLineageFilterSpec
+class CompositePostProcessingFilterSpec
   extends AnyFlatSpec
     with Matchers
     with MockitoSugar {
@@ -36,21 +36,21 @@ class CompositeLineageFilterSpec
     val dummyDataOp2 = mock[DataOperation]
     val dummyDataOp3 = mock[DataOperation]
 
-    val mockFilter1 = mock[LineageFilter]
+    val mockFilter1 = mock[PostProcessingFilter]
     when(mockFilter1.processExecutionPlan(dummyPlan1, dummyCtx)) thenReturn dummyPlan2
     when(mockFilter1.processExecutionEvent(dummyEvent1, dummyCtx)) thenReturn dummyEvent2
     when(mockFilter1.processReadOperation(dummyReadOp1, dummyCtx)) thenReturn dummyReadOp2
     when(mockFilter1.processWriteOperation(dummyWriteOp1, dummyCtx)) thenReturn dummyWriteOp2
     when(mockFilter1.processDataOperation(dummyDataOp1, dummyCtx)) thenReturn dummyDataOp2
 
-    val mockFilter2 = mock[LineageFilter]
+    val mockFilter2 = mock[PostProcessingFilter]
     when(mockFilter2.processExecutionPlan(dummyPlan2, dummyCtx)) thenReturn dummyPlan3
     when(mockFilter2.processExecutionEvent(dummyEvent2, dummyCtx)) thenReturn dummyEvent3
     when(mockFilter2.processReadOperation(dummyReadOp2, dummyCtx)) thenReturn dummyReadOp3
     when(mockFilter2.processWriteOperation(dummyWriteOp2, dummyCtx)) thenReturn dummyWriteOp3
     when(mockFilter2.processDataOperation(dummyDataOp2, dummyCtx)) thenReturn dummyDataOp3
 
-    val compositeDispatcher = new CompositeLineageFilter(Seq(mockFilter1, mockFilter2))
+    val compositeDispatcher = new CompositePostProcessingFilter(Seq(mockFilter1, mockFilter2))
 
     compositeDispatcher.processExecutionPlan(dummyPlan1, dummyCtx) should be theSameInstanceAs dummyPlan3
     compositeDispatcher.processExecutionEvent(dummyEvent1, dummyCtx) should be theSameInstanceAs dummyEvent3

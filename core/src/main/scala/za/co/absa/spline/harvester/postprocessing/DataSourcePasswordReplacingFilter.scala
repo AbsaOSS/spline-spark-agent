@@ -26,7 +26,7 @@ import scala.util.matching.Regex
 class DataSourcePasswordReplacingFilter(
   replacement: String = DataSourcePasswordReplacingFilter.DefaultReplacement,
   regexes: Seq[Regex] = DataSourcePasswordReplacingFilter.DefaultRegexes
-) extends AbstractLineageFilter {
+) extends AbstractPostProcessingFilter {
 
   //noinspection ScalaUnusedSymbol
   def this(conf: Configuration) = this()
