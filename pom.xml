@@ -70,11 +70,28 @@
         <scm.connection>scm:git:git://github.com/AbsaOSS/spline-spark-agent.git</scm.connection>
         <scm.developerConnection>scm:git:ssh://github.com/AbsaOSS/spline-spark-agent.git</scm.developerConnection>
 
-        <dockerfile.repositoryUrl><!-- defined externally --></dockerfile.repositoryUrl>
-
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
         <slf4j.version>1.7.25</slf4j.version>
+
+        <!-- Docker -->
+
+        <dockerfile.imageName>spline-spark-agent</dockerfile.imageName>
+
+        <dockerfile.versionTagPrefix><!-- defined externally --></dockerfile.versionTagPrefix>
+        <dockerfile.versionTagSuffix><!-- defined externally --></dockerfile.versionTagSuffix>
+        <dockerfile.versionTagName>${dockerfile.versionTagPrefix}${project.version}${dockerfile.versionTagSuffix}</dockerfile.versionTagName>
+
+        <dockerfile.latestTagPrefix><!-- defined externally --></dockerfile.latestTagPrefix>
+        <dockerfile.latestTagSuffix><!-- defined externally --></dockerfile.latestTagSuffix>
+        <dockerfile.latestTagName>${dockerfile.latestTagPrefix}latest${dockerfile.latestTagSuffix}</dockerfile.latestTagName>
+
+        <dockerfile.imageName><!-- defined in submodules --></dockerfile.imageName>
+        <!-- Either ${dockerfile.repositoryUrl} or ${dockerfile.repositoryUrl} is required to be explicitly provided in the `mvn` command -->
+        <dockerfile.repositoryUrl><!-- defined externally --></dockerfile.repositoryUrl>
+        <dockerfile.repository>${dockerfile.repositoryUrl}/${dockerfile.imageName}</dockerfile.repository>
+        <!-- [Optional] The prefix for the base images in Dockerfile (mainly used in custom CI/CD pipelines to pull images from alternative locations) -->
+        <dockerfile.baseImagePrefix><!-- defined externally --></dockerfile.baseImagePrefix>
 
         <!-- json4s -->
 
@@ -195,6 +212,13 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
             </plugin>
         </plugins>
 
@@ -598,6 +622,13 @@
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-deploy-plugin</artifactId>
+                        <configuration>
+                            <skip>false</skip>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
                         <executions>
                             <execution>
@@ -668,7 +699,7 @@
                                     <goal>push</goal>
                                 </goals>
                                 <configuration>
-                                    <tag>${project.version}</tag>
+                                    <tag>${dockerfile.versionTagName}</tag>
                                 </configuration>
                             </execution>
                             <execution>
@@ -678,12 +709,15 @@
                                     <goal>push</goal>
                                 </goals>
                                 <configuration>
-                                    <tag>latest</tag>
+                                    <tag>${dockerfile.latestTagName}</tag>
                                 </configuration>
                             </execution>
                         </executions>
                         <configuration>
-                            <repository>${dockerfile.repositoryUrl}/spline-spark-agent</repository>
+                            <repository>${dockerfile.repository}</repository>
+                            <buildArgs combine.children="append">
+                                <DOCKER_BASE_IMAGE_PREFIX>${dockerfile.baseImagePrefix}</DOCKER_BASE_IMAGE_PREFIX>
+                            </buildArgs>
                             <useMavenSettingsForAuth>true</useMavenSettingsForAuth>
                         </configuration>
                     </plugin>
