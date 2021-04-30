@@ -14,13 +14,27 @@
 # limitations under the License.
 #
 
-FROM maven:3.6.3-openjdk-8
+ARG DOCKER_BASE_IMAGE_PREFIX=
+
+FROM "$DOCKER_BASE_IMAGE_PREFIX"maven:3.6.3-openjdk-8
+
+LABEL \
+    vendor="ABSA" \
+    copyright="2021 ABSA Group Limited" \
+    license="Apache License, version 2.0" \
+    name="Spline Agent for Apache Spark - Example suite"
+
 COPY . /opt/spline-spark-agent
 
-ENV SPLINE_PRODUCER_URL=http://spline.spline:8080/producer
+ENV SPLINE_PRODUCER_URL=http://host.docker.internal:8080/producer
+ENV SPLINE_MODE=REQUIRED
+
+ENV HTTP_PROXY_HOST=
+ENV HTTP_PROXY_PORT=
+ENV HTTP_NON_PROXY_HOSTS=
 
 RUN cd /opt/spline-spark-agent && \
-    mvn install -DskipTests && \
+    mvn install -D skipTests && \
     cd ./examples && \
     # it's for dry-run maven caching
     mvn test -P examples -D spline.mode=DISABLED
@@ -29,4 +43,9 @@ ENV WORKDIR=/opt/spline-spark-agent/examples
 
 WORKDIR $WORKDIR
 
-CMD mvn test -P examples -D spline.producer.url=$SPLINE_PRODUCER_URL 
+CMD mvn test -P examples \
+    -D spline.producer.url=$SPLINE_PRODUCER_URL \
+    -D spline.mode=$SPLINE_MODE \
+    -D http.proxyHost=$HTTP_PROXY_HOST \
+    -D http.proxyPort=$HTTP_PROXY_PORT \
+    -D http.nonProxyHosts=$HTTP_NON_PROXY_HOSTS \
