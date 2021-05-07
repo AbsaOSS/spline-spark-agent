@@ -20,32 +20,54 @@ import org.apache.commons.configuration.Configuration
 import za.co.absa.commons.CaptureGroupReplacer
 import za.co.absa.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
 import za.co.absa.spline.harvester.HarvestingContext
-import za.co.absa.spline.harvester.postprocessing.DataSourcePasswordReplacingFilter.{RegexesKey, ReplacementKey}
+import za.co.absa.spline.harvester.postprocessing.DataSourcePasswordReplacingFilter._
 import za.co.absa.spline.producer.model.v1_1.{ReadOperation, WriteOperation}
 
 import scala.util.matching.Regex
 
-class DataSourcePasswordReplacingFilter(replacement: String, regexes: Seq[Regex])
-  extends AbstractPostProcessingFilter {
+class DataSourcePasswordReplacingFilter(
+  replacement: String,
+  sensitiveNameRegexes: Seq[Regex],
+  sensitiveValueRegexes: Seq[Regex]
+) extends AbstractPostProcessingFilter {
 
   def this(conf: Configuration) = this(
     conf.getRequiredString(ReplacementKey),
-    conf.getRequiredStringArray(RegexesKey).map(_.r)
+    conf.getRequiredStringArray(SensitiveNameRegexesKey).map(_.r),
+    conf.getRequiredStringArray(SensitiveValueRegexesKey).map(_.r)
   )
 
   override def processReadOperation(op: ReadOperation, ctx: HarvestingContext): ReadOperation =
-    op.copy(inputSources = op.inputSources.map(filter))
+    op.copy(
+      inputSources = op.inputSources.map(filter),
+      params = op.params.map(_.mapValues(filter))
+    )
 
   override def processWriteOperation(op: WriteOperation, ctx: HarvestingContext): WriteOperation =
-    op.copy(outputSource = filter(op.outputSource))
+    op.copy(
+      outputSource = filter(op.outputSource),
+      params = op.params.map(_.mapValues(filter))
+    )
 
-  private val replacer = new CaptureGroupReplacer(replacement)
+  private val valueReplacer = new CaptureGroupReplacer(replacement)
 
   private def filter(uri: String): String =
-    replacer.replace(uri, regexes)
+    valueReplacer.replace(uri, sensitiveValueRegexes)
+
+  private def filter(a: Any): Any = a match {
+    case str: String => filter(str)
+    case xs: Seq[Any] => xs.map(filter)
+    case opt: Some[Any] => opt.map(filter)
+    case map: Map[String, Any] => map.map {
+      case (k, _) if sensitiveNameRegexes.exists(_.pattern.matcher(k).matches) => k -> replacement
+      case (k, v) => k -> filter(v)
+    }
+    case x => x
+  }
 }
 
 object DataSourcePasswordReplacingFilter {
   final val ReplacementKey = "replacement"
-  final val RegexesKey = "regexes"
+  final val SensitiveValueRegexesKey = "valueRegexes"
+  final val SensitiveNameRegexesKey = "nameRegexes"
 }

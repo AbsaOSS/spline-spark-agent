@@ -27,22 +27,38 @@ class DataSourcePasswordReplacingFilterSpec extends AnyFlatSpec with Matchers wi
 
   private val defaultProperties =
     new PropertiesConfiguration(getClass.getResource("/spline.default.properties"))
-      .subset("spline.postProcessingFilter.dsUriPasswordReplace")
+      .subset("spline.postProcessingFilter.dsPasswordReplace")
 
   private val ctxMock = mock[HarvestingContext]
 
   it should "mask secret in URL query parameter as `password=*****`" in { //NOSONAR
     val wop = WriteOperation(
-      "" +
+      outputSource = "" +
         "jdbc:sqlserver://database.windows.net:1433" +
         ";user=sample" +
         ";password=12345" + //NOSONAR
-        ";password=" + //NOSONAR -- empty password is also a password
+        ";PASSWORD=" + //NOSONAR -- empty password is also a password
         ";encrypt=true" +
         ";trustServerCertificate=false" +
         ";hostNameInCertificate=*.database.windows.net" +
         ";loginTimeout=30:",
-      append = false, "", None, Nil, None, None)
+      params = Some(Map(
+        "a" -> 42,
+        "b" -> Seq(null),
+        "c" -> None,
+        "url" -> "jdbc:postgresql://bob:secret@someHost:somePort/someDB",
+        "m" -> Map(
+          "url" -> "jdbc:postgresql://bob:secret@someHost:somePort/someDB",
+          "dbtable" -> "someTable",
+          "user" -> "someUser",
+          "PASSWORD" -> "somePassword" // NOSONAR
+        )
+      )),
+      append = false,
+      id = "",
+      name = None,
+      childIds = Nil,
+      extra = None)
 
     val filter = new DataSourcePasswordReplacingFilter(defaultProperties)
     val filteredOp = filter.processWriteOperation(wop, ctxMock)
@@ -51,11 +67,24 @@ class DataSourcePasswordReplacingFilterSpec extends AnyFlatSpec with Matchers wi
       "jdbc:sqlserver://database.windows.net:1433" +
       ";user=sample" +
       ";password=*****" + //NOSONAR <-- PASSWORD SHOULD BE SANITIZED
-      ";password=*****" + //NOSONAR <-- PASSWORD SHOULD BE SANITIZED
+      ";PASSWORD=*****" + //NOSONAR <-- PASSWORD SHOULD BE SANITIZED
       ";encrypt=true" +
       ";trustServerCertificate=false" +
       ";hostNameInCertificate=*.database.windows.net" +
       ";loginTimeout=30:"
+
+    filteredOp.params shouldEqual Some(Map(
+      "a" -> 42,
+      "b" -> Seq(null),
+      "c" -> None,
+      "url" -> "jdbc:postgresql://bob:*****@someHost:somePort/someDB",
+      "m" -> Map(
+        "url" -> "jdbc:postgresql://bob:*****@someHost:somePort/someDB",
+        "dbtable" -> "someTable",
+        "user" -> "someUser",
+        "PASSWORD" -> "*****" // NOSONAR
+      )
+    ))
   }
 
   it should "mask secret in URL userinfo as `user:*****@host`" in {
