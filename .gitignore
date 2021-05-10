@@ -99,6 +99,7 @@ project/boot/
 
 spark-warehouse/
 metastore_db/
+/data/output/
 
 #MacOS
 .DS_Store
