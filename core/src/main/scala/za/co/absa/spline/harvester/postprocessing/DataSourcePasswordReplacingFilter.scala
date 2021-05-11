@@ -40,13 +40,13 @@ class DataSourcePasswordReplacingFilter(
   override def processReadOperation(op: ReadOperation, ctx: HarvestingContext): ReadOperation =
     op.copy(
       inputSources = op.inputSources.map(filter),
-      params = op.params.map(_.mapValues(filter))
+      params = op.params.map(filter)
     )
 
   override def processWriteOperation(op: WriteOperation, ctx: HarvestingContext): WriteOperation =
     op.copy(
       outputSource = filter(op.outputSource),
-      params = op.params.map(_.mapValues(filter))
+      params = op.params.map(filter)
     )
 
   private val valueReplacer = new CaptureGroupReplacer(replacement)
@@ -54,14 +54,16 @@ class DataSourcePasswordReplacingFilter(
   private def filter(uri: String): String =
     valueReplacer.replace(uri, sensitiveValueRegexes)
 
+  private def filter(map: Map[String, _]): Map[String, _] = map.map {
+    case (k, _) if sensitiveNameRegexes.exists(_.pattern.matcher(k).matches) => k -> replacement
+    case (k, v) => k -> filter(v)
+  }
+
   private def filter(a: Any): Any = a match {
     case str: String => filter(str)
-    case xs: Seq[Any] => xs.map(filter)
+    case seq: Seq[Any] => seq.map(filter)
     case opt: Some[Any] => opt.map(filter)
-    case map: Map[String, Any] => map.map {
-      case (k, _) if sensitiveNameRegexes.exists(_.pattern.matcher(k).matches) => k -> replacement
-      case (k, v) => k -> filter(v)
-    }
+    case map: Map[String, Any] => filter(map)
     case x => x
   }
 }
