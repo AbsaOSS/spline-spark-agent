@@ -58,8 +58,7 @@ class UnionNodeBuilder
     )
 
   private def constructUnionAttribute(attributes: Seq[Attribute], function: FunctionalExpression) = {
-    val attr1 +: attrs = attributes
-    assume(attrs.forall(_.name == attr1.name))
+    val attr1 = attributes.head
     Attribute(
       id = UUID.randomUUID().toString,
       dataType = function.dataType,
