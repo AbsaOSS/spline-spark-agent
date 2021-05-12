@@ -24,6 +24,12 @@
     <description>Spline Agent for Apache Spark</description>
     <version>0.7.0-SNAPSHOT</version>
 
+    <parent>
+        <groupId>za.co.absa.spline</groupId>
+        <artifactId>package-pom</artifactId>
+        <version>0.6.1</version>
+    </parent>
+
     <packaging>pom</packaging>
 
     <inceptionYear>2017</inceptionYear>
@@ -66,10 +72,6 @@
     </developers>
 
     <properties>
-        <scm.url>http://github.com/AbsaOSS/spline-spark-agent/tree/master</scm.url>
-        <scm.connection>scm:git:git://github.com/AbsaOSS/spline-spark-agent.git</scm.connection>
-        <scm.developerConnection>scm:git:ssh://github.com/AbsaOSS/spline-spark-agent.git</scm.developerConnection>
-
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
         <slf4j.version>1.7.25</slf4j.version>
@@ -77,27 +79,6 @@
         <!-- Docker -->
 
         <dockerfile.imageName>spline-spark-agent</dockerfile.imageName>
-
-        <dockerfile.versionTagPrefix><!-- defined externally --></dockerfile.versionTagPrefix>
-        <dockerfile.versionTagSuffix><!-- defined externally --></dockerfile.versionTagSuffix>
-        <dockerfile.versionTagName>${dockerfile.versionTagPrefix}${project.version}${dockerfile.versionTagSuffix}</dockerfile.versionTagName>
-
-        <dockerfile.latestTagPrefix><!-- defined externally --></dockerfile.latestTagPrefix>
-        <dockerfile.latestTagSuffix><!-- defined externally --></dockerfile.latestTagSuffix>
-        <dockerfile.latestTagName>${dockerfile.latestTagPrefix}latest${dockerfile.latestTagSuffix}</dockerfile.latestTagName>
-
-        <dockerfile.imageName><!-- defined in submodules --></dockerfile.imageName>
-        <!--
-            One of `dockerfile.repositoryUrl`, `dockerfile.repositoryPrefix` or `dockerfile.repository`
-            properties is required to be explicitly provided in the `mvn` command,
-            so that the resulted `dockerfile.repository` property has a correct value.
-        -->
-        <dockerfile.repositoryUrl><!-- defined externally --></dockerfile.repositoryUrl>
-        <dockerfile.repositoryPrefix>${dockerfile.repositoryUrl}/</dockerfile.repositoryPrefix>
-        <dockerfile.repositorySuffix><!-- defined externally --></dockerfile.repositorySuffix>
-        <dockerfile.repository>${dockerfile.repositoryPrefix}${dockerfile.imageName}${dockerfile.repositorySuffix}</dockerfile.repository>
-        <!-- [Optional] The prefix for the base images in Dockerfile (mainly used in custom CI/CD pipelines to pull images from alternative locations) -->
-        <dockerfile.baseImagePrefix><!-- defined externally --></dockerfile.baseImagePrefix>
 
         <!-- json4s -->
 
@@ -134,23 +115,17 @@
         <tag>HEAD</tag>
     </scm>
 
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
-
     <modules>
         <module>core</module>
+        <module>examples</module>
+        <module>integration-tests</module>
     </modules>
 
     <build>
         <plugins>
+
+            <!-- Scala cross-build -->
+
             <plugin>
                 <groupId>com.github.wajda</groupId>
                 <artifactId>scala-cross-build-maven-plugin</artifactId>
@@ -160,6 +135,9 @@
                     <defaultScalaVersion>${default.scala.version}</defaultScalaVersion>
                 </configuration>
             </plugin>
+
+            <!-- Scala compile -->
+
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
@@ -191,9 +169,17 @@
                             <goal>testCompile</goal>
                         </goals>
                     </execution>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>doc-jar</goal>
+                        </goals>
+                    </execution>
                 </executions>
             </plugin>
+
             <!-- disable surefire -->
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -201,7 +187,9 @@
                     <skipTests>true</skipTests>
                 </configuration>
             </plugin>
+
             <!-- enable scalatest -->
+
             <plugin>
                 <groupId>com.github.cerveada</groupId>
                 <artifactId>scalatest-maven-plugin</artifactId>
@@ -219,11 +207,28 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- customize license check -->
+
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
+                <groupId>org.apache.rat</groupId>
+                <artifactId>apache-rat-plugin</artifactId>
                 <configuration>
-                    <skip>true</skip>
+                    <excludes combine.children="append">
+                        <exclude>**/*.mock</exclude>
+                        <exclude>**/*.iml</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <!-- Enable docker build -->
+
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-plugin</artifactId>
+                <inherited>false</inherited>
+                <configuration>
+                    <skip>false</skip>
                 </configuration>
             </plugin>
         </plugins>
@@ -234,11 +239,6 @@
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
                     <version>4.2.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.1</version>
                 </plugin>
                 <plugin>
                     <groupId>com.github.cerveada</groupId>
@@ -256,9 +256,9 @@
                     <version>3.2.0</version>
                 </plugin>
                 <plugin>
-                    <groupId>org.apache.rat</groupId>
-                    <artifactId>apache-rat-plugin</artifactId>
-                    <version>0.13</version>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.2.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -275,21 +275,6 @@
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-source-plugin</artifactId>
-                    <version>3.2.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-gpg-plugin</artifactId>
-                    <version>1.6</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.sonatype.plugins</groupId>
-                    <artifactId>nexus-staging-maven-plugin</artifactId>
-                    <version>1.6.8</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-antrun-plugin</artifactId>
                     <version>1.8</version>
                 </plugin>
@@ -297,11 +282,6 @@
                     <groupId>org.spurint.maven.plugins</groupId>
                     <artifactId>mima-maven-plugin</artifactId>
                     <version>0.8.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>com.spotify</groupId>
-                    <artifactId>dockerfile-maven-plugin</artifactId>
-                    <version>1.4.13</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -608,166 +588,6 @@
             </properties>
         </profile>
 
-        <!-- Deployment profiles -->
-
-        <profile>
-            <id>non-deploy</id>
-            <activation>
-                <property>
-                    <name>!deploy</name>
-                </property>
-            </activation>
-            <modules>
-                <module>examples</module>
-                <module>integration-tests</module>
-            </modules>
-        </profile>
-        <profile>
-            <id>deploy</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-deploy-plugin</artifactId>
-                        <configuration>
-                            <skip>false</skip>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>net.alchim31.maven</groupId>
-                        <artifactId>scala-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>attach-javadocs</id>
-                                <goals>
-                                    <goal>doc-jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <!-- Prevent `gpg` from using pinentry programs -->
-                            <gpgArguments>
-                                <arg>--pinentry-mode</arg>
-                                <arg>loopback</arg>
-                            </gpgArguments>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <serverId>ossrh</serverId>
-                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                            <autoDropAfterRelease>true</autoDropAfterRelease>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>docker</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.spotify</groupId>
-                        <artifactId>dockerfile-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>tag-version</id>
-                                <goals>
-                                    <goal>build</goal>
-                                    <goal>push</goal>
-                                </goals>
-                                <configuration>
-                                    <tag>${dockerfile.versionTagName}</tag>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>tag-latest</id>
-                                <goals>
-                                    <goal>tag</goal>
-                                    <goal>push</goal>
-                                </goals>
-                                <configuration>
-                                    <tag>${dockerfile.latestTagName}</tag>
-                                </configuration>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <repository>${dockerfile.repository}</repository>
-                            <buildArgs combine.children="append">
-                                <DOCKER_BASE_IMAGE_PREFIX>${dockerfile.baseImagePrefix}</DOCKER_BASE_IMAGE_PREFIX>
-                            </buildArgs>
-                            <useMavenSettingsForAuth>true</useMavenSettingsForAuth>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <!-- Release profile -->
-
-        <profile>
-            <id>release</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-release-plugin</artifactId>
-                        <version>2.5.3</version>
-                        <configuration>
-                            <tagNameFormat>release/@{project.version}</tagNameFormat>
-                            <providerImplementations>
-                                <git>jgit</git>
-                            </providerImplementations>
-                        </configuration>
-                        <dependencies>
-                            <dependency>
-                                <groupId>org.apache.maven.scm</groupId>
-                                <artifactId>maven-scm-api</artifactId>
-                                <version>1.11.2</version>
-                            </dependency>
-                            <dependency>
-                                <groupId>org.apache.maven.scm</groupId>
-                                <artifactId>maven-scm-provider-jgit</artifactId>
-                                <version>1.11.2</version>
-                            </dependency>
-                            <dependency>
-                                <groupId>org.eclipse.jgit</groupId>
-                                <artifactId>org.eclipse.jgit</artifactId>
-                                <version>5.5.1.201910021850-r</version>
-                            </dependency>
-                        </dependencies>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
         <!-- Binary compatibility checking profile -->
 
         <profile>
@@ -785,37 +605,6 @@
                                 </goals>
                             </execution>
                         </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <!-- Licence check profile -->
-
-        <profile>
-            <id>license-check</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.rat</groupId>
-                        <artifactId>apache-rat-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>check</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <excludes>
-                                <exclude>**/*.json</exclude>
-                                <exclude>**/*.log</exclude>
-                                <exclude>**/*.mock</exclude>
-                                <exclude>dependency-reduced-pom.xml</exclude>
-                                <exclude>.sonarcloud.properties</exclude>
-                            </excludes>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>
