@@ -51,8 +51,8 @@ class DataSourcePasswordReplacingFilter(
 
   private val valueReplacer = new CaptureGroupReplacer(replacement)
 
-  private def filter(uri: String): String =
-    valueReplacer.replace(uri, sensitiveValueRegexes)
+  private def filter(str: String): String =
+    valueReplacer.replace(str, sensitiveValueRegexes)
 
   private def filter(map: Map[String, _]): Map[String, _] = map.map {
     case (k, _) if sensitiveNameRegexes.exists(_.pattern.matcher(k).matches) => k -> replacement
