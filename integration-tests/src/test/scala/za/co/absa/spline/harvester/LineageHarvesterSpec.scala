@@ -167,9 +167,9 @@ class LineageHarvesterSpec extends AsyncFlatSpec
             Attribute(randomUUID.toString, Some(integerType.id), None, None, "i"),
             Attribute(randomUUID.toString, Some(doubleType.id), None, None, "d"),
             Attribute(randomUUID.toString, Some(stringType.id), None, None, "s"),
-            Attribute(randomUUID.toString, Some(integerType.id), None, None, "union of i, i"),
-            Attribute(randomUUID.toString, Some(doubleType.id), None, None, "union of d, d"),
-            Attribute(randomUUID.toString, Some(stringType.id), None, None, "union of s, s")
+            Attribute(randomUUID.toString, Some(integerType.id), None, None, "i"),
+            Attribute(randomUUID.toString, Some(doubleType.id), None, None, "d"),
+            Attribute(randomUUID.toString, Some(stringType.id), None, None, "s")
           )
 
         val inputAttIds = expectedAttributes.slice(0, 3).map(_.id)
