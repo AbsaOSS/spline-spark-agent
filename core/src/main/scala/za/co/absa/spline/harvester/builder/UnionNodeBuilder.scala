@@ -16,10 +16,11 @@
 
 package za.co.absa.spline.harvester.builder
 
-import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import org.apache.spark.sql.catalyst.plans.logical.Union
+import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.harvester.ComponentCreatorFactory
+import za.co.absa.spline.harvester.builder.UnionNodeBuilder._
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.v1_1.{AttrOrExprRef, Attribute, FunctionalExpression}
 
@@ -35,34 +36,48 @@ class UnionNodeBuilder
   override lazy val functionalExpressions: Seq[FunctionalExpression] =
     unionInputs
       .zip(operation.output)
-      .map{ case (input, output) => constructUnionFunction(input, output)}
+      .map { case (input, output) => constructUnionFunction(input, output) }
 
   override lazy val outputAttributes: Seq[Attribute] =
     unionInputs
       .zip(functionalExpressions)
-      .map{ case (input, function) => constructUnionAttribute(input, function)}
+      .map { case (input, function) => constructUnionAttribute(input, function) }
 
   private def constructUnionFunction(
     inputSplineAttributes: Seq[Attribute],
     outputSparkAttribute: sparkExprssions.Attribute
   ) =
     FunctionalExpression(
-      id =  UUID.randomUUID().toString,
+      id = UUID.randomUUID().toString,
       dataType = componentCreatorFactory.dataTypeConverter
         .convert(outputSparkAttribute.dataType, outputSparkAttribute.nullable).id.asOption,
       childRefs = inputSplineAttributes.map(att => AttrOrExprRef(Some(att.id), None)).asOption,
-      extra = Map("synthetic" -> "true").asOption,
-      name = "union",
-      params = Map("name" -> "union").asOption
+      extra = Map(ExtraFields.Synthetic -> true).asOption,
+      name = Names.Union,
+      params = None
     )
 
-  private def constructUnionAttribute(inputSplineAttributes: Seq[Attribute], function: FunctionalExpression) =
+  private def constructUnionAttribute(attributes: Seq[Attribute], function: FunctionalExpression) = {
+    val attr1 = attributes.head
     Attribute(
       id = UUID.randomUUID().toString,
       dataType = function.dataType,
       childRefs = List(AttrOrExprRef(None, Some(function.id))).asOption,
-      extra = Map("synthetic" -> "true").asOption,
-      name = s"union of ${inputSplineAttributes.map(_.name).mkString(", ")}"
+      extra = Map(ExtraFields.Synthetic -> true).asOption,
+      name = attr1.name
     )
+  }
+
+}
+
+object UnionNodeBuilder {
+
+  object Names {
+    val Union = "union"
+  }
+
+  object ExtraFields {
+    val Synthetic = "synthetic"
+  }
 
 }

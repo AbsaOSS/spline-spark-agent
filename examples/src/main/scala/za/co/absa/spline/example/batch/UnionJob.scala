@@ -28,7 +28,10 @@ object UnionJob extends SparkApp("Union Job") {
   val df1 = Seq((1, 2, 3)).toDF()
   val df2 = Seq((4, 5, 6)).toDF()
 
-  val unionizedDf = df1.union(df2)
+  val df3 = df1.union(df2).filter('_1 > 0)
+  val df4 = df1.union(df2).filter('_2 < 0)
 
-  unionizedDf.write.mode(SaveMode.Overwrite).parquet("data/output/batch/union_job_results")
+  val df5 = df3.union(df4).union(df2)
+
+  df5.write.mode(SaveMode.Overwrite).parquet("data/output/batch/union_job_results")
 }
