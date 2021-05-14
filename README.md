@@ -1,7 +1,14 @@
 Spark Agent / Harvester
 ===
 
-This module is responsible for listening to spark command events and converting them to spline lineage.
+The Spline agent for Apache Spark is a complementary module to the [Spline project](https://absaoss.github.io/spline/)
+that captures runtime lineage information from the Apache Spark jobs.
+
+The agent is a Scala library that is embedded into the Spark driver, listening to Spark events, and capturing logical execution plans.
+The collected metadata is then handed over to the lineage dispatcher, from where it can be either send to the Spline server 
+(e.g. via REST API or Kafka), or used in another way depending on selected dispatcher type (see [Lineage Dispatchers](#dispatchers)).
+
+The agent can be used with or without a Spline server, depending on your use case. See [References](#references).
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/za.co.absa.spline.agent.spark/agent-core_2.12/badge.svg)](https://search.maven.org/search?q=g:za.co.absa.spline.agent.spark)
 [![TeamCity build](https://teamcity.jetbrains.com/app/rest/builds/aggregated/strob:%28locator:%28buildType:%28id:OpenSourceProjects_AbsaOSS_SplineAgentSpark_AutoBuildSpark24scala212%29,branch:develop%29%29/statusIcon.svg)](https://teamcity.jetbrains.com/viewType.html?buildTypeId=OpenSourceProjects_AbsaOSS_SplineAgentSpark_AutoBuildSpark24scala212&branch=develop&tab=buildTypeStatusDiv)
@@ -27,6 +34,7 @@ This module is responsible for listening to spark command events and converting 
    * [Developer documentation](#dev-doc)
       * [Plugin API](#plugins)
       * [Building for different Scala and Spark versions](#building)
+   * [References and Examples](#references)
 
 <!-- Added by: wajda, at: Fri 14 May 18:05:53 CEST 2021 -->
 
@@ -443,6 +451,15 @@ mvn scala-cross-build:change-version -Pscala-2.12
 mvn clean install -Pscala-2.12,spark-2.4
 ```
 
+<a id="references"></a>
+## References and examples
+
+Although the primary goal of Spline agent is to be used in combination with the [Spline server](https://github.com/AbsaOSS/spline),
+it is flexible enough to be used in isolation or integration with other data lineage tracking solutions including custom ones.
+
+Below is a couple of examples of such integration:
+- [Databricks Lineage In Azure Purview](https://intellishore.dk/data-lineage-from-databricks-to-azure-purview/)
+- [Spark Compute Lineage to Datahub](https://firststr.com/2021/04/26/spark-compute-lineage-to-datahub)
 ---
 
     Copyright 2019 ABSA Group Limited
