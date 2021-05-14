@@ -28,22 +28,22 @@ import scala.collection.JavaConverters.asJavaIterableConverter
 
 class Spline05ConfigurationAdapter(configuration: Configuration) extends ReadOnlyConfiguration {
 
-  private val defaultValues =
-    if (configuration.containsKey(DeprecatedDispatcherClassName))
-      Map(RootLineageDispatcher -> DefaultDispatcherNameValue)
-    else
-      Map.empty[String, AnyRef]
+  private val defaultValues = for {
+    (deprecatedKey, substitutionMap) <- Substitutions
+    if configuration.containsKey(deprecatedKey)
+    entry <- substitutionMap
+  } yield entry
 
-  private def scalaKeys = keyMap.keys.filter(containsKey) ++ defaultValues.keys
+  private def scalaKeys = KeyMap.keys.filter(containsKey) ++ defaultValues.keys
 
   override def isEmpty: Boolean = scalaKeys.isEmpty
 
-  override def containsKey(key: String): Boolean = keyMap
+  override def containsKey(key: String): Boolean = KeyMap
     .get(key)
     .map(spline05key => configuration.containsKey(spline05key))
     .getOrElse(defaultValues.contains(key))
 
-  override def getProperty(key: String): AnyRef = keyMap
+  override def getProperty(key: String): AnyRef = KeyMap
     .get(key)
     .map(spline05key => configuration.getProperty(spline05key))
     .orElse(defaultValues.get(key))
@@ -54,22 +54,29 @@ class Spline05ConfigurationAdapter(configuration: Configuration) extends ReadOnl
 }
 
 object Spline05ConfigurationAdapter {
-  private val DefaultDispatcherNameValue = "http"
-
-  private val DefaultDispatcherPrefix =
-    s"$RootLineageDispatcher.$DefaultDispatcherNameValue"
-
   private val DeprecatedDispatcherClassName = "spline.lineage_dispatcher.className"
+  private val SubstitutingDispatcherNameValue = "http"
+  private val SubstitutingDispatcherPrefix = s"$RootLineageDispatcher.$SubstitutingDispatcherNameValue"
 
-  private val keyMap = Map(
-    IgnoreWriteDetectionStrategyClass -> "spline.iwd_strategy.className",
-    OnMissingMetricsKey -> "spline.iwd_strategy.default.on_missing_metrics",
-    UserExtraMetadataProviderClass -> "spline.user_extra_meta_provider.className",
+  private val DeprecatedIWDStrategyClassName = "spline.iwd_strategy.className"
+  private val SubstitutingIWDStrategyNameValue = "default"
+  private val SubstitutingIWDStrategyPrefix = s"$IgnoreWriteDetectionStrategy.$SubstitutingIWDStrategyNameValue"
 
-    s"$DefaultDispatcherPrefix.$ClassName" -> DeprecatedDispatcherClassName,
-    s"$DefaultDispatcherPrefix.$ProducerUrlProperty" -> "spline.producer.url",
-    s"$DefaultDispatcherPrefix.$ConnectionTimeoutMsKey" -> "spline.timeout.connection",
-    s"$DefaultDispatcherPrefix.$ReadTimeoutMsKey" -> "spline.timeout.read"
+  private val KeyMap = Map(
+    s"$SubstitutingIWDStrategyPrefix.$ClassName" -> DeprecatedIWDStrategyClassName,
+    s"$SubstitutingIWDStrategyPrefix.$OnMissingMetricsKey" -> "spline.iwd_strategy.default.on_missing_metrics",
+
+    s"$SubstitutingDispatcherPrefix.$ClassName" -> DeprecatedDispatcherClassName,
+    s"$SubstitutingDispatcherPrefix.$ProducerUrlProperty" -> "spline.producer.url",
+    s"$SubstitutingDispatcherPrefix.$ConnectionTimeoutMsKey" -> "spline.timeout.connection",
+    s"$SubstitutingDispatcherPrefix.$ReadTimeoutMsKey" -> "spline.timeout.read",
+
+    s"$UserExtraMetadataProviderClass" -> "spline.user_extra_meta_provider.className"
+  )
+
+  private val Substitutions = Map(
+    DeprecatedDispatcherClassName -> Map(RootLineageDispatcher -> SubstitutingDispatcherNameValue),
+    DeprecatedIWDStrategyClassName -> Map(IgnoreWriteDetectionStrategy -> SubstitutingIWDStrategyNameValue)
   )
 
 }

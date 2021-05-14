@@ -54,10 +54,10 @@ object DefaultSplineConfigurer {
     /**
      * Strategy used to detect ignored writes
      */
-    val IgnoreWriteDetectionStrategyClass = "spline.IWDStrategy.className"
+    val IgnoreWriteDetectionStrategy = "spline.IWDStrategy"
 
     /**
-     * Deprecated - use Post Processing Filter instead
+     * @deprecated use Post Processing Filter instead
      */
     val UserExtraMetadataProviderClass = "spline.userExtraMetaProvider.className"
   }
@@ -96,19 +96,18 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
   override def queryExecutionEventHandler: QueryExecutionEventHandler =
     new QueryExecutionEventHandler(harvesterFactory, lineageDispatcher)
 
-  protected def lineageDispatcher: LineageDispatcher = createCompositeByKey(RootLineageDispatcher)
+  protected def lineageDispatcher: LineageDispatcher = createComponentByKey(RootLineageDispatcher)
 
-  protected def postProcessingFilter: PostProcessingFilter = createCompositeByKey(RootPostProcessingFilter)
+  protected def postProcessingFilter: PostProcessingFilter = createComponentByKey(RootPostProcessingFilter)
 
-  protected def ignoredWriteDetectionStrategy: IgnoredWriteDetectionStrategy =
-    objectFactory.instantiate[IgnoredWriteDetectionStrategy](configuration.getRequiredString(IgnoreWriteDetectionStrategyClass))
+  protected def ignoredWriteDetectionStrategy: IgnoredWriteDetectionStrategy = createComponentByKey(IgnoreWriteDetectionStrategy)
 
   protected def maybeUserExtraMetadataProvider: Option[UserExtraMetadataProvider] =
     configuration
       .getOptionalString(UserExtraMetadataProviderClass)
       .map(objectFactory.instantiate[UserExtraMetadataProvider])
 
-  private def createCompositeByKey[A: ClassTag](key: String): A = {
+  private def createComponentByKey[A: ClassTag](key: String): A = {
     val objName = configuration.getRequiredString(key)
     objectFactory
       .child(key)
