@@ -1,7 +1,14 @@
 Spark Agent / Harvester
 ===
 
-This module is responsible for listening to spark command events and converting them to spline lineage.
+The Spline agent for Apache Spark is a complementary module to the [Spline project](https://absaoss.github.io/spline/)
+that captures runtime lineage information from the Apache Spark jobs.
+
+The agent is a Scala library that is embedded into the Spark driver, listening to Spark events, and capturing logical execution plans.
+The collected metadata is then handed over to the lineage dispatcher, from where it can be either send to the Spline server 
+(e.g. via REST API or Kafka), or used in another way depending on selected dispatcher type (see [Lineage Dispatchers](#dispatchers)).
+
+The agent can be used with or without a Spline server, depending on your use case. See [References](#references).
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/za.co.absa.spline.agent.spark/agent-core_2.12/badge.svg)](https://search.maven.org/search?q=g:za.co.absa.spline.agent.spark)
 [![TeamCity build](https://teamcity.jetbrains.com/app/rest/builds/aggregated/strob:%28locator:%28buildType:%28id:OpenSourceProjects_AbsaOSS_SplineAgentSpark_AutoBuildSpark24scala212%29,branch:develop%29%29/statusIcon.svg)](https://teamcity.jetbrains.com/viewType.html?buildTypeId=OpenSourceProjects_AbsaOSS_SplineAgentSpark_AutoBuildSpark24scala212&branch=develop&tab=buildTypeStatusDiv)
@@ -10,6 +17,30 @@ This module is responsible for listening to spark command events and converting 
 [![SonarCloud Reliability](https://sonarcloud.io/api/project_badges/measure?project=AbsaOSS_spline-spark-agent&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=AbsaOSS_spline-spark-agent)
 [![SonarCloud Security](https://sonarcloud.io/api/project_badges/measure?project=AbsaOSS_spline-spark-agent&metric=security_rating)](https://sonarcloud.io/dashboard?id=AbsaOSS_spline-spark-agent)
 
+## Table of Contents
+
+<!--ts-->
+   * [Spark / Scala version compatibility matrix](#compat-matrix)
+   * [Usage](#usage)
+      * [Selecting artifact](#selecting-artifact)
+      * [Initialization](#initialization)
+         * [Codeless](#initialization-codeless)
+         * [Programmatic](#initialization-programmatic)
+   * [Configuration](#configuration)
+      * [Properties](#properties)
+      * [Lineage Dispatchers](#dispatchers)
+      * [Post Processing Filters](#filters)
+   * [Spark features coverage](#spark-coverage)
+   * [Developer documentation](#dev-doc)
+      * [Plugin API](#plugins)
+      * [Building for different Scala and Spark versions](#building)
+   * [References and Examples](#references)
+
+<!-- Added by: wajda, at: Fri 14 May 18:05:53 CEST 2021 -->
+
+<!--te-->
+
+<a id="compat-matrix"></a>
 ## Spark / Scala version compatibility matrix
 
 |            | Scala 2.11                   | Scala 2.12 |
@@ -19,16 +50,209 @@ This module is responsible for listening to spark command events and converting 
 |**Spark 2.4** | Yes                        | Yes        |
 |**Spark 3.0** | &mdash;                    | Yes        |
 
-## Artifacts
-- `agent-core_Y` is a classic maven library that you can use with any compatible Spark version.
-- `spark-X-spline-agent-bundle_Y` is a fat jar. That means it contains all dependencies inside.
+<a id="usage"></a>
+## Usage
 
-X represents Spark version and Y represents Scala version.
+<a id="selecting-artifact"></a>
+### Selecting artifact
 
+There are two main agent artifacts:
 
-## Spark commands support
-The latest agent supports the following 
-data formats and providers out of the box:
+- `agent-core`
+  is a Java library that you can use with any compatible Spark version. Use this one if you want to include Spline agent into your 
+  custom Spark application, and you want to manage all transitive dependencies yourself.
+  
+- `spark-spline-agent-bundle`
+  is a fat jar that is designed to be embedded into the Spark driver, either by manually copying it to the Spark's `/jars` directory,
+  or by using `--jars` or `--packages` argument for the `spark-submit`, `spark-shell` or `pyspark` commands.
+  This artifact is self-sufficient and is **aimed to be used by most users**.
+
+Because the bundle is pre-built with all necessary dependencies, it is important to select a proper version of it that matches the minor Spark 
+and Scala versions of your target Spark installation.
+```
+spark-A.B-spline-agent-bundle_X.Y.jar
+```
+here `A.B` is the first two Spark version numbers and `X.Y` is the first two Scala version numbers.
+For example, if you have Spark 2.4.4 pre-built with Scala 2.12.10 then select the following agent bundle:
+```
+spark-2.4-spline-agent-bundle_2.12.jar
+```
+<a id="initialization"></a>
+### Initialization
+
+Spline agent is basically a Spark query listener that needs to be registered in a Spark session before is can be used.
+Depending on if you are using it as a library in your custom Spark application, or as a standalone bundle you can choose 
+one of the following initialization approaches. 
+
+<a id="initialization-codeless"></a>
+#### Codeless Initialization
+This way is the most convenient one, can be used in majority use-cases.
+Simply include the Spline listener into the `spark.sql.queryExecutionListeners` config property 
+(see [Static SQL Configuration](https://spark.apache.org/docs/latest/configuration.html#static-sql-configuration))
+
+Example:   
+
+```bash
+pyspark \
+  --packages za.co.absa.spline.agent.spark:spark-2.4-spline-agent-bundle_2.12:<VERSION> \
+  --conf "spark.sql.queryExecutionListeners=za.co.absa.spline.harvester.listener.SplineQueryExecutionListener" \
+  --conf "spark.spline.lineageDispatcher.http.producer.url=http://localhost:9090/producer"
+```
+
+The same approach works for `spark-submit` and `spark-shell` commands.
+
+**Note**: all Spline properties set via Spark conf should be prefixed with `spark.` prefix in order to be visible to the Spline agent.  
+See [Configuration](#configuration) section for details.
+
+<a id="initialization-programmatic"></a>
+#### Programmatic Initialization
+
+**Note**: starting from Spline 0.6 most agent components can be configured or even replaced in a declarative manner
+either using [Configuration](#configuration) or [Plugin API](#plugins). So normally there should be no need to use a programmatic initialization method.
+**We recommend to use [Codeless Initialization](#initialization-codeless) instead**.
+
+But if for some reason, Codeless Initialization doesn't fit your needs, or you want to do more customization on Spark agent,
+you can use programmatic initialization method.
+
+```Scala
+// given a Spark session ...
+val sparkSession: SparkSession = ???
+
+// ... enable data lineage tracking with Spline
+import za.co.absa.spline.harvester.SparkLineageInitializer._
+sparkSession.enableLineageTracking()
+
+// ... then run some Dataset computations as usual.
+// The lineage will be captured and sent to the configured Spline Producer endpoint.
+```
+
+or in Java syntax:
+```java
+import za.co.absa.spline.harvester.SparkLineageInitializer;
+// ...
+SparkLineageInitializer.enableLineageTracking(session);
+```
+
+The method `SparkLineageInitializer.enableLineageTracking()` is overloaded, and accepts `SplineConfigurer` optional parameter.
+`SplineConfigurer` is a factory that creates a Spark execution listener. By default, `DefaultSplineConfigurer` is used.
+If you want to override some of Spline agent behavior you can extend `DefaultSplineConfigurer` 
+or create your own implementation of `SplineConfigurer` trait, and pass it into the `SparkLineageInitializer.enableLineageTracking()` method.
+
+<a id="configuration"></a>
+## Configuration
+
+The agent looks for configuration properties in the following sources (in order of precedence):
+- Hadoop configuration (`core-site.xml`)
+- Spark configuration
+- JVM system properties
+- `spline.properties` file on classpath
+
+The file [spline.default.properties](core/src/main/resources/spline.default.properties) contains default values 
+for all Spline properties along with additional documentation.
+It's a good idea to look in the file to see what properties are available.
+
+<a id="properties"></a>
+### Properties
+
+#### `spline.mode`
+- `DISABLED` Lineage tracking is completely disabled and Spline is unhooked from Spark.
+- `REQUIRED` If Spline fails to initialize itself (e.g., wrong configuration, no db connection) the Spark application aborts with an error. 
+  (**Note**: it only concerns Spline initialization routine. 
+  If the error happens during lineage capturing, or in the Spline dispatcher, then the target Spark job have already been finished by that time, 
+  and the resulted data have been persisted, regardless of the `spline.mode` settings. The Spline agent doesn't do any automated rollbacks).
+- `BEST_EFFORT` (default) Spline will try to initialize itself, but if it fails it switches to DISABLED mode 
+  allowing the Spark application to proceed normally without Lineage tracking.
+
+#### `spline.lineageDispatcher`
+The logical name of the root lineage dispatcher. See [Lineage Dispatchers](#dispatchers) chapter.
+
+#### `spline.postProcessingFilter`
+The logical name of the root post-processing filter. See [Post Processing Filters](#filters) chapter.
+
+<a id="dispatchers"></a>
+### Lineage Dispatchers
+
+The `LineageDispatcher` trait is responsible for sending out the captured lineage information. 
+By default, the `HttpLineageDispatcher` is used, that sends the lineage data to the Spline REST endpoint (see Spline Producer API).
+
+Available dispatchers:
+- `HttpLineageDispatcher` - sends the lineage via http
+- `KafkaLineageDispatcher` - sends the lineage via kafka
+- `ConsoleLineageDispatcher` - write the lineage to console
+- `LoggingLineageDispatcher` - logs the lineahge using logger
+- `CompositeLineageDispatcher` - allows combining multiple dispatchers
+
+Each dispatcher can have different configuration parameters. 
+To make the configs clearly separated each dispatcher has its own namespace in which all it's parameters are defined. 
+I will explain it on an kafka examples.
+
+Defining dispatcher
+```properties
+spline.lineageDispatcher=kafka
+```
+Once you defined the dispatcher all other parameters will have a namespace `spline.lineageDispatcher.{{dipatcher-name}}.` as a prefix. 
+In this case it is `spline.lineageDispatcher.kafka.`.
+
+To find out which parameters you can use look into `spline.default.properties`. For kafka I would have to define at least these two properties:
+```properties
+spline.lineageDispatcher.kafka.topic=foo
+spline.lineageDispatcher.kafka.producer.bootstrap.servers=localhost:9092
+```
+
+#### Creating your own dispatcher
+
+There is also a possibility to create your own dispatcher. It must implement `LineageDispatcher` trait and have a constructor 
+with a single parameter of type `org.apache.commons.configuration.Configuration`. 
+To use it you must define name and class and also all other parameters you need. For example:
+
+```properties
+spline.lineageDispatcher=my-dispatcher
+spline.lineageDispatcher.my-dispatcher.className=org.example.spline.MyDispatcherImpl
+spline.lineageDispatcher.my-dispatcher.prop1=value1
+spline.lineageDispatcher.my-dispatcher.prop2=value2
+```
+
+<a id="filters"></a>
+### Post Processing Filters
+
+Filters can be used to enrich the lineage with your own custom data or to remove unwanted data like passwords. 
+All filters are applied after the Spark plan is converted to Spline DTOs, but before the dispatcher is called.
+
+The procedure how filters are registered and configured is similar to the `LineageDispatcher` registration and configuration procedure.
+A custom filter class must implement `za.co.absa.spline.harvester.postprocessing.PostProcessingFilter` trait and declare a constructor 
+with a single parameter of type `org.apache.commons.configuration.Configuration`.
+Then register and configure it like this:
+```properties
+spline.postProcessingFilter.className=my-filter
+spline.postProcessingFilter.my-filter.className=my.awesome.CustomFilter
+spline.postProcessingFilter.my-filter.prop1=value1
+spline.postProcessingFilter.my-filter.prop2=value2
+```
+
+Use pre-registered `CompositePostProcessingFilter` to chain up multiple filters:
+```properties
+spline.postProcessingFilter=composite
+spline.postProcessingFilter.composite.filters=myFilter1,myFilter2
+```
+
+(see `spline.default.properties` for details and examples)
+
+<a id="spark-coverage"></a>
+## Spark features coverage
+
+_Dataset_ operations are fully supported
+
+_RDD_ transformations aren't supported due to Spark internal architecture specifics, but they might be supported semi-automatically
+in the future Spline versions (see #33)
+
+_SQL_ dialect is mostly supported.
+
+_DDL_ operations are not supported, excepts for `CREATE TABLE ... AS SELECT ...` which is supported.
+
+**Note**: the lineage is only captured on persistent (write) actions.
+In-memory only actions like `collect()` or `printSchema()` are ignored.
+
+The following data formats and providers are supported out of the box:
 - Avro
 - Cassandra
 - COBOL
@@ -56,6 +280,8 @@ and finally there are such that bear no lineage information and hence are ignore
 All commands inherit from `org.apache.spark.sql.catalyst.plans.logical.Command`.
 
 You can see how to produce unimplemented commands in `za.co.absa.spline.harvester.SparkUnimplementedCommandsSpec`.
+
+<a id="spark-coverage-done"></a>
 ### Implemented
 
 - `CreateDataSourceTableAsSelectCommand`  (org.apache.spark.sql.execution.command)
@@ -68,6 +294,7 @@ You can see how to produce unimplemented commands in `za.co.absa.spline.harveste
 - `InsertIntoHiveTable`  (org.apache.spark.sql.hive.execution)
 - `SaveIntoDataSourceCommand`  (org.apache.spark.sql.execution.datasources)
 
+<a id="spark-coverage-todo"></a>
 ### To be implemented
 
 - `AlterTableAddColumnsCommand`  (org.apache.spark.sql.execution.command)
@@ -84,7 +311,8 @@ You can see how to produce unimplemented commands in `za.co.absa.spline.harveste
 When one of these commands occurs spline will let you know. 
 - When it's running in `REQUIRED` mode it will throw an `UnsupportedSparkCommandException`.
 - When it's running in `BEST_EFFORT` mode it will just log a warning.
- 
+
+<a id="spark-coverage-ignored"></a>
 ### Ignored
 
 - `AddFileCommand`  (org.apache.spark.sql.execution.command)
@@ -130,10 +358,7 @@ When one of these commands occurs spline will let you know.
 - `StreamingExplainCommand`  (org.apache.spark.sql.execution.command)
 - `UncacheTableCommand`  (org.apache.spark.sql.execution.command)
 
-
-\*) `SaveIntoDataSourceCommand` is produced at the same time, and it's already implemented.
-
-
+<a id="dev-doc"></a>
 ## Developer documentation
 
 <a id="plugins"></a>
@@ -151,8 +376,10 @@ There are three general processing traits:
 
 
 There are also two additional trait that handle common cases of reading and writing:
-- `BaseRelationProcessing` - similar to `ReadNodeProcessing`, but instead of capturing all logical plan nodes it only reacts on `LogicalRelation` (see `LogicalRelationPlugin`)      
-- `RelationProviderProcessing` - similar to `WriteNodeProcessing`, but it only captures `SaveIntoDataSourceCommand` (see `SaveIntoDataSourceCommandPlugin`) 
+- `BaseRelationProcessing` - similar to `ReadNodeProcessing`, but instead of capturing all logical plan nodes it only reacts on `LogicalRelation` 
+  (see `LogicalRelationPlugin`)      
+- `RelationProviderProcessing` - similar to `WriteNodeProcessing`, but it only captures `SaveIntoDataSourceCommand` 
+  (see `SaveIntoDataSourceCommandPlugin`) 
 
 The best way to illustrate how plugins work is to look at the real working example,
 e.g. [`za.co.absa.spline.harvester.plugin.embedded.JDBCPlugin`](core/src/main/scala/za/co/absa/spline/harvester/plugin/embedded/JDBCPlugin.scala)
@@ -194,7 +421,7 @@ class FooBarPlugin
 }
 ```
 
-**Please note**: to avoid unwanted possible shadowing the other plugins (including the future ones),
+**Note**: to avoid unwanted possible shadowing the other plugins (including the future ones),
 make sure that the pattern-matching criteria are as much selective as possible for your plugin needs. 
 
 A plugin class is expected to only have a single constructor.
@@ -206,7 +433,9 @@ The constructor can have no arguments, or one or more of the following types (th
 Compile you plugin and drop it into the Spline/Spark classpath.
 Spline will pick it up automatically. 
 
+<a id="building"></a>
 ### Building for different Scala and Spark versions
+
 There are several maven profiles that makes it easy to build the project with different versions of Spark and Scala.
 - Scala profiles: `scala-2.11`, `scala-2.12`
 - Spark profiles: `spark-2.2`, `spark-2.3`, `spark-2.4`, `spark-3.0`
@@ -214,17 +443,23 @@ There are several maven profiles that makes it easy to build the project with di
 However, maven is not able to change an artifact name using profile. To do that we use `scala-cross-build-maven-plugin`.
 
 Example of usage:
-```
+```shell
 # Change Scala version in pom.xml.
 mvn scala-cross-build:change-version -Pscala-2.12
 
 # now you can build for Scala 2.12
-mvn clean package -Pscala-2.12,spark-2.4
-
-# Change back to the default Scala version.
-mvn scala-cross-build:restore-version
+mvn clean install -Pscala-2.12,spark-2.4
 ```
 
+<a id="references"></a>
+## References and examples
+
+Although the primary goal of Spline agent is to be used in combination with the [Spline server](https://github.com/AbsaOSS/spline),
+it is flexible enough to be used in isolation or integration with other data lineage tracking solutions including custom ones.
+
+Below is a couple of examples of such integration:
+- [Databricks Lineage In Azure Purview](https://intellishore.dk/data-lineage-from-databricks-to-azure-purview/)
+- [Spark Compute Lineage to Datahub](https://firststr.com/2021/04/26/spark-compute-lineage-to-datahub)
 ---
 
     Copyright 2019 ABSA Group Limited

@@ -31,7 +31,7 @@ class Spline05ConfigurationAdapterTest extends AnyFlatSpec with Matchers with Sp
 
   it should "be empty if no deprecated keys are present in the underlying config" in {
     val config = createConfigAdapter(Map(
-      ConfProperty.IgnoreWriteDetectionStrategyClass -> "foo.bar.Baz.class"
+      ConfProperty.IgnoreWriteDetectionStrategy -> "foo"
     ))
 
     config.isEmpty shouldEqual true
@@ -46,8 +46,8 @@ class Spline05ConfigurationAdapterTest extends AnyFlatSpec with Matchers with Sp
   }
 
   it should "remap the key and return the value from the underlying config only if present" in {
-    testConfig.containsKey(ConfProperty.IgnoreWriteDetectionStrategyClass) shouldEqual true
-    testConfig.getProperty(ConfProperty.IgnoreWriteDetectionStrategyClass) shouldEqual "foo.bar.Baz.class"
+    testConfig.containsKey(ConfProperty.IgnoreWriteDetectionStrategy) shouldEqual true
+    testConfig.getProperty(ConfProperty.IgnoreWriteDetectionStrategy) shouldEqual "default"
 
     testConfig.containsKey(ConfProperty.UserExtraMetadataProviderClass) shouldEqual false
     testConfig.getProperty(ConfProperty.UserExtraMetadataProviderClass) shouldEqual null
@@ -56,8 +56,9 @@ class Spline05ConfigurationAdapterTest extends AnyFlatSpec with Matchers with Sp
   it should "return only the keys that have deprecated counterparts in the underlying config" in {
     val keys = testConfig.getKeys.asScala.toSeq
 
-    keys.size shouldEqual 1
-    keys.contains(ConfProperty.IgnoreWriteDetectionStrategyClass) shouldEqual true
+    keys.size shouldEqual 2
+    keys.contains(ConfProperty.IgnoreWriteDetectionStrategy) shouldEqual true
+    keys.contains(s"${ConfProperty.IgnoreWriteDetectionStrategy}.default.className") shouldEqual true
   }
 
   it should "contain dispatcher name only if the dispatcher classname is defined as well" in {
