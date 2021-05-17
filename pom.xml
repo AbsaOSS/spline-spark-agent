@@ -531,6 +531,21 @@
     </dependencyManagement>
 
     <profiles>
+        <profile>
+            <id>all-modules</id>
+            <activation>
+                <property>
+                    <name>release</name>
+                </property>
+            </activation>
+            <modules>
+                <module>bundle-2.2</module>
+                <module>bundle-2.3</module>
+                <module>bundle-2.4</module>
+                <module>bundle-3.0</module>
+            </modules>
+        </profile>
+
         <!-- Cross-building profiles -->
 
         <profile>
