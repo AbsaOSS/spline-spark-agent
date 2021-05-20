@@ -27,6 +27,13 @@ object HttpLineageDispatcherConfig {
   val ConnectionTimeoutMsKey = "timeout.connection"
   val ReadTimeoutMsKey = "timeout.read"
 
+  val AwsAccessKeyProperty = "awsAccessKey"
+  val AwsSecretKeyProperty = "awsSecretKey"
+  val AwsTokenProperty = "awsToken"
+
+  val proxyHostProperty = "proxyHost"
+  val proxyPortProperty = "proxyPort"
+
   val DefaultConnectionTimeout: Duration = 1.second
   val DefaultReadTimeout: Duration = 20.second
 
@@ -35,6 +42,15 @@ object HttpLineageDispatcherConfig {
 
 class HttpLineageDispatcherConfig(config: Configuration) {
   val producerUrl: String = config.getRequiredString(ProducerUrlProperty)
+
+  val awsCredentials: Map[String,String] = Map(
+    "AwsAccessKey" -> config.getRequiredString(AwsAccessKeyProperty),
+    "AwsSecretKey" -> config.getRequiredString(AwsSecretKeyProperty),
+    "AwsToken" -> config.getRequiredString(AwsTokenProperty)
+  )
+
+  val proxyHost: String = config.getOptionalString(proxyHostProperty).getOrElse("")
+  val proxyPort: Int = config.getOptionalInt(proxyPortProperty).getOrElse("-1".toInt)
 
   val connTimeout: Duration = config
     .getOptionalLong(ConnectionTimeoutMsKey)
