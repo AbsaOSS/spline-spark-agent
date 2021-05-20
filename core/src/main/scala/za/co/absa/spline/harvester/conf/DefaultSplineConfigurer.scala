@@ -60,6 +60,19 @@ object DefaultSplineConfigurer {
      * @deprecated use Post Processing Filter instead
      */
     val UserExtraMetadataProviderClass = "spline.userExtraMetaProvider.className"
+
+    /**
+     * AWS Credentials
+     */
+    val AwsAccessKey = "spline.lineageDispatcher.http.awsAccessKey"
+    val AwsSecretKey = "spline.lineageDispatcher.http.awsSecretKey"
+    val AwsToken = "spline.lineageDispatcher.http.awsToken"
+
+    /**
+     * Proxy config
+     */
+    val proxyHost = "spline.lineageDispatcher.http.proxyHost"
+    val proxyPort = "spline.lineageDispatcher.http.proxyPort"
   }
 
   def apply(sparkSession: SparkSession): DefaultSplineConfigurer = {
