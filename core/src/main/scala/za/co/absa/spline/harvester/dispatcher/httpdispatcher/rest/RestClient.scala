@@ -36,10 +36,7 @@ object RestClient extends Logging {
     baseHttp: BaseHttp,
     baseURL: String,
     connectionTimeout: Duration,
-    readTimeout: Duration,
-    awsCredentials: Map[String,String],
-    proxyHost: String,
-    proxyPort: Int): RestClient = {
+    readTimeout: Duration): RestClient = {
 
     logDebug(s"baseURL = $baseURL")
     logDebug(s"connectionTimeout = $connectionTimeout")
@@ -50,11 +47,7 @@ object RestClient extends Logging {
       override def endpoint(resource: String): RestEndpoint = new RestEndpoint(
         baseHttp(s"$baseURL/$resource")
           .timeout(connectionTimeout.toMillis.toInt, readTimeout.toMillis.toInt)
-          .compress(true),
-        awsCredentials,
-        proxyHost,
-        proxyPort
-      )
+          .compress(true))
     }
   }
 }

@@ -35,11 +35,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-core</artifactId>
-            <version>1.11.51</version>
-        </dependency>
-        <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-compiler</artifactId>
             <version>${scala.version}</version>
@@ -148,6 +143,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <scmConnectionUrl>scm:git:</scmConnectionUrl>
                     <revisionOnScmFailure>unknown</revisionOnScmFailure>
                     <timestampFormat>{0,date,${maven.build.timestamp.format}}</timestampFormat>
                     <shortRevisionLength>7</shortRevisionLength>
@@ -212,33 +208,6 @@
                 <groupId>com.github.cerveada</groupId>
                 <artifactId>scalatest-maven-plugin</artifactId>
             </plugin>
-            <plugin>
-                <groupId>com.spotify</groupId>
-                <artifactId>dockerfile-maven-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
-
-    <profiles>
-        <profile>
-            <id>license-check</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.rat</groupId>
-                        <artifactId>apache-rat-plugin</artifactId>
-                        <configuration>
-                            <excludes combine.children="append">
-                                <exclude>src/test/resources/data/**</exclude>
-                                <exclude>data/**</exclude>
-                            </excludes>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>
