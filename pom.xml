@@ -620,6 +620,13 @@
                                 </goals>
                             </execution>
                         </executions>
+                        <configuration>
+                            <!--
+                                disable MIMA because of too many false positives caused by cross-compilation
+                                that leads to MIMA comparing snapshots compiled against different Scala or Spark versions.
+                            -->
+                            <skip>true</skip>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
