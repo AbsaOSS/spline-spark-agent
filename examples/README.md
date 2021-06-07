@@ -66,7 +66,7 @@ Change your docker settings for at least have `cpu=2` and `memory=4096M`
 1. Build docker image
     ```shell script
     # build a docker image from the project root folder
-    docker build -f Dockerfile . -t spline-spark-agent-examples:v0.1.0
+    docker build -f Dockerfile . -t spline-spark-agent-examples:v0.1.1
     ```
 
 2. Run docker image
