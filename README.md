@@ -223,7 +223,7 @@ A custom filter class must implement `za.co.absa.spline.harvester.postprocessing
 with a single parameter of type `org.apache.commons.configuration.Configuration`.
 Then register and configure it like this:
 ```properties
-spline.postProcessingFilter.className=my-filter
+spline.postProcessingFilter=my-filter
 spline.postProcessingFilter.my-filter.className=my.awesome.CustomFilter
 spline.postProcessingFilter.my-filter.prop1=value1
 spline.postProcessingFilter.my-filter.prop2=value2
