@@ -19,6 +19,7 @@ package za.co.absa.spline.harvester.json
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDeSpec.Foo
+import za.co.absa.spline.model.dt
 
 class HarvesterJsonSerDeSpec
   extends AnyFlatSpec
@@ -56,6 +57,13 @@ class HarvesterJsonSerDeSpec
         "seq" -> null,
         "map" -> null
       ))
+  }
+
+  it should "support type hints for Spline 0.3 model entities" in {
+    val theType = dt.Simple("test", nullable = true)
+    Seq(theType).toJson should include(""""_typeHint"""")
+    Seq(theType).toJson should include(""""dt.Simple"""")
+    Seq(theType).toJson.fromJson[Seq[dt.DataType]] should equal(Seq(theType))
   }
 }
 
