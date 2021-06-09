@@ -17,6 +17,7 @@
 package za.co.absa.spline.harvester.conf
 
 import org.apache.commons.configuration.{CompositeConfiguration, Configuration, PropertiesConfiguration}
+import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import za.co.absa.commons.HierarchicalObjectFactory
 import za.co.absa.commons.config.ConfigurationImplicits
@@ -67,7 +68,9 @@ object DefaultSplineConfigurer {
   }
 }
 
-class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Configuration) extends SplineConfigurer {
+class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Configuration)
+  extends SplineConfigurer
+    with Logging {
 
   import ConfigurationImplicits._
   import DefaultSplineConfigurer.ConfProperty._
@@ -93,8 +96,13 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
     }
   }
 
-  override def queryExecutionEventHandler: QueryExecutionEventHandler =
+  override def queryExecutionEventHandler: QueryExecutionEventHandler = {
+    logInfo(s"Lineage Dispatcher: ${configuration.getString(RootLineageDispatcher)}")
+    logInfo(s"Post-Processing Filter: ${configuration.getString(RootPostProcessingFilter)}")
+    logInfo(s"Ignore-Write Detection Strategy: ${configuration.getString(IgnoreWriteDetectionStrategy)}")
+
     new QueryExecutionEventHandler(harvesterFactory, lineageDispatcher)
+  }
 
   protected def lineageDispatcher: LineageDispatcher = createComponentByKey(RootLineageDispatcher)
 
