@@ -441,9 +441,7 @@ There are several maven profiles that makes it easy to build the project with di
 - Scala profiles: `scala-2.11`, `scala-2.12`
 - Spark profiles: `spark-2.2`, `spark-2.3`, `spark-2.4`, `spark-3.0`, `spark-3.1`
 
-However, maven is not able to change an artifact name using profile. To do that we use `scala-cross-build-maven-plugin`.
-
-Example of usage:
+For example, to build an agent for Spark 2.4 and Scala 2.12: 
 ```shell
 # Change Scala version in pom.xml.
 mvn scala-cross-build:change-version -Pscala-2.12

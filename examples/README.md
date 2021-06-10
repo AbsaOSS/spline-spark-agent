@@ -15,7 +15,7 @@
 1. Execute `pyspark` with a _Spline Spark Agent Bundle_ corresponding to the _Spark_ and _Scala_ versions in use:
     ```shell script
       pyspark \
-        --packages za.co.absa.spline.agent.spark:spark-2.4-spline-agent-bundle_2.11:0.5.0 \
+        --packages za.co.absa.spline.agent.spark:spark-3.1-spline-agent-bundle_2.12:0.6.1 \
         --conf spark.sql.queryExecutionListeners=za.co.absa.spline.harvester.listener.SplineQueryExecutionListener \
         --conf spark.spline.producer.url=http://localhost:8080/producer
     ```
@@ -33,22 +33,35 @@ Same as `pyspark` example above, but use `spark-shell` command instead.
 
 #### Scala / Java
 
-To run all available examples:
+To run all available examples
 ```shell script
 mvn test -P examples
 ```
 
-To run a selected example job (e.g. `Example1Job`):
+To run examples with the specific Spark 2.x version (i.e. `2.2`, `2.3`, `2.4`)
+```shell script
+mvn test -P examples -P spark-2.4
+```
+
+To run examples with the specific Spark 3.x version (i.e. `3.0`, `3.1` or newer)
+```shell script
+# switch the project to Scala 2.12 mode
+mvn scala-cross-build:change-version -Pscala-2.12
+# then run Maven with the `-Pspark-xxx` argument as above 
+mvn test -P examples -P spark-3.1
+```
+
+To run a selected example job (e.g. `Example1Job`)
 ```shell script
 mvn test -P examples -D exampleClass=za.co.absa.spline.example.batch.Example1Job
 ``` 
 
-To change the Spline Producer URL (default is http://localhost:8080/producer):
+To change the Spline Producer URL (default is http://localhost:8080/producer)
 ```shell script
 mvn test -P examples -D spline.producer.url=http://localhost:8888/producer
 ```
 
-To change the Spline Mode (default is BEST_EFFORT):
+To change the Spline Mode (default is BEST_EFFORT)
 ```shell script
 mvn test -P examples -D spline.mode=REQUIRED
 ```
