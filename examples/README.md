@@ -15,7 +15,7 @@
 1. Execute `pyspark` with a _Spline Spark Agent Bundle_ corresponding to the _Spark_ and _Scala_ versions in use:
     ```shell script
       pyspark \
-        --packages za.co.absa.spline.agent.spark:spark-2.4-spline-agent-bundle_2.11:0.5.0 \
+        --packages za.co.absa.spline.agent.spark:spark-3.1-spline-agent-bundle_2.12:0.6.1 \
         --conf spark.sql.queryExecutionListeners=za.co.absa.spline.harvester.listener.SplineQueryExecutionListener \
         --conf spark.spline.producer.url=http://localhost:8080/producer
     ```

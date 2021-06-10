@@ -20,7 +20,7 @@
 # Build Spline Agent artifacts for all supported Scala versions and install them to local maven repository.
 #
 
-SCALA_VERSIONS=(2.11 2.12)
+SCALA_VERSIONS=(2.12 2.11)
 
 BASE_DIR=$(dirname "$0")
 MODULE_DIRS=$(find "$BASE_DIR" -type f -name "pom.xml" -printf '%h\n')
@@ -44,7 +44,7 @@ cross_build() {
   $MVN_EXEC scala-cross-build:change-version -Pscala-"$bin_ver"
 
   print_title "Building with Scala $bin_ver"
-  $MVN_EXEC install -Pscala-"$bin_ver" || exit 1
+  $MVN_EXEC install -Pscala-"$bin_ver" -DskipTests || exit 1
 }
 
 # -------------------------------------------------------------------------------
