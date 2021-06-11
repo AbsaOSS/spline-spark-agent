@@ -598,6 +598,18 @@
             <dependencyManagement>
                 <dependencies>
                     <dependency>
+                        <groupId>org.apache.spark</groupId>
+                        <artifactId>spark-avro_${scala.binary.version}</artifactId>
+                        <!-- effectively ignore this dependency -->
+                        <version>2.4.4</version>
+                        <exclusions>
+                            <exclusion>
+                                <groupId>*</groupId>
+                                <artifactId>*</artifactId>
+                            </exclusion>
+                        </exclusions>
+                    </dependency>
+                    <dependency>
                         <groupId>javax.activation</groupId>
                         <artifactId>activation</artifactId>
                         <version>1.1.1</version>
@@ -1633,6 +1645,18 @@
             </dependencies>
             <dependencyManagement>
                 <dependencies>
+                    <dependency>
+                        <groupId>org.apache.spark</groupId>
+                        <artifactId>spark-avro_${scala.binary.version}</artifactId>
+                        <!-- effectively ignore this dependency -->
+                        <version>2.4.4</version>
+                        <exclusions>
+                            <exclusion>
+                                <groupId>*</groupId>
+                                <artifactId>*</artifactId>
+                            </exclusion>
+                        </exclusions>
+                    </dependency>
                     <dependency>
                         <groupId>javax.activation</groupId>
                         <artifactId>activation</artifactId>
@@ -2759,14 +2783,6 @@
                 <json4s.version>${json4s-35.version}</json4s.version>
                 <delta.version>${delta-03.version}</delta.version>
             </properties>
-            <dependencies>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-avro_${scala.binary.version}</artifactId>
-                    <version>${spark.version}</version>
-                    <scope>test</scope>
-                </dependency>
-            </dependencies>
             <dependencyManagement>
                 <dependencies>
                     <dependency>
@@ -3885,14 +3901,6 @@
                 <json4s.version>${json4s-36.version}</json4s.version>
                 <delta.version>${delta-08.version}</delta.version>
             </properties>
-            <dependencies>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-avro_${scala.binary.version}</artifactId>
-                    <version>${spark.version}</version>
-                    <scope>test</scope>
-                </dependency>
-            </dependencies>
             <dependencyManagement>
                 <dependencies>
                     <dependency>
@@ -5106,14 +5114,6 @@
                 <json4s.version>${json4s-37.version}</json4s.version>
                 <delta.version>${delta-08.version}</delta.version>
             </properties>
-            <dependencies>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-avro_${scala.binary.version}</artifactId>
-                    <version>${spark.version}</version>
-                    <scope>test</scope>
-                </dependency>
-            </dependencies>
             <dependencyManagement>
                 <dependencies>
                     <dependency>
