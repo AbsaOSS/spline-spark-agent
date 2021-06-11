@@ -58,7 +58,6 @@
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
-            <version>2.3.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -77,7 +76,7 @@
             <groupId>io.delta</groupId>
             <artifactId>delta-core_${scala.binary.version}</artifactId>
             <scope>test</scope>
-            <version>0.3.0</version>
+            <version>${delta.version}</version>
         </dependency>
         <dependency>
             <groupId>com.databricks</groupId>
@@ -92,7 +91,6 @@
         <dependency>
             <groupId>io.github.embeddedkafka</groupId>
             <artifactId>embedded-kafka_${scala.binary.version}</artifactId>
-            <version>2.3.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -113,11 +111,6 @@
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-avro_${scala.binary.version}</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.databricks</groupId>
-            <artifactId>spark-avro_2.11</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -144,29 +137,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <profiles>
-        <profile>
-            <id>spark-3.0</id>
-            <dependencies>
-                <dependency>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-databind</artifactId>
-                    <version>2.10.5.1</version>
-                </dependency>
-                <dependency>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-core</artifactId>
-                    <version>2.10.5</version>
-                </dependency>
-                <dependency>
-                    <groupId>io.delta</groupId>
-                    <artifactId>delta-core_${scala.binary.version}</artifactId>
-                    <version>0.8.0</version>
-                </dependency>
-            </dependencies>
-        </profile>
-    </profiles>
 
     <build>
         <plugins>

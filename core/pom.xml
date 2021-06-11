@@ -42,7 +42,7 @@
         <dependency>
             <groupId>za.co.absa.commons</groupId>
             <artifactId>commons_${scala.binary.version}</artifactId>
-            <version>0.0.28</version>
+            <version>0.0.29</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
