@@ -2580,7 +2580,7 @@
                     <dependency>
                         <groupId>org.yaml</groupId>
                         <artifactId>snakeyaml</artifactId>
-                        <version>1.15</version>
+                        <version>1.26</version>
                     </dependency>
                     <dependency>
                         <groupId>org.iq80.snappy</groupId>
@@ -3703,7 +3703,7 @@
                     <dependency>
                         <groupId>org.yaml</groupId>
                         <artifactId>snakeyaml</artifactId>
-                        <version>1.15</version>
+                        <version>1.26</version>
                     </dependency>
                     <dependency>
                         <groupId>org.iq80.snappy</groupId>
@@ -4896,7 +4896,7 @@
                     <dependency>
                         <groupId>org.yaml</groupId>
                         <artifactId>snakeyaml</artifactId>
-                        <version>1.24</version>
+                        <version>1.26</version>
                     </dependency>
                     <dependency>
                         <groupId>org.xerial.snappy</groupId>
@@ -6279,7 +6279,7 @@
                     <dependency>
                         <groupId>org.yaml</groupId>
                         <artifactId>snakeyaml</artifactId>
-                        <version>1.24</version>
+                        <version>1.26</version>
                     </dependency>
                     <dependency>
                         <groupId>org.xerial.snappy</groupId>
