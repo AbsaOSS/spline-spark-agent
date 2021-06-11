@@ -378,6 +378,11 @@
                 <version>${spark.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-avro_${scala.binary.version}</artifactId>
+                <version>${spark.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.databricks</groupId>
                 <artifactId>spark-xml_${scala.binary.version}</artifactId>
                 <version>0.5.0</version>
