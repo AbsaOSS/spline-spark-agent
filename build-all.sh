@@ -20,7 +20,7 @@
 # Build Spline Agent artifacts for all supported Scala versions and install them to local maven repository.
 #
 
-SCALA_VERSIONS=(2.12 2.11)
+SCALA_VERSIONS=(2.11 2.12)
 
 BASE_DIR=$(dirname "$0")
 MODULE_DIRS=$(find "$BASE_DIR" -type f -name "pom.xml" -printf '%h\n')

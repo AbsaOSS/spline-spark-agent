@@ -19,7 +19,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>za.co.absa.spline.agent.spark</groupId>
-    <artifactId>spline-spark-agent_2.12</artifactId>
+    <artifactId>spline-spark-agent_2.11</artifactId>
     <name>Spline Spark Agent</name>
     <description>Spline Agent for Apache Spark</description>
     <version>0.6.1-SNAPSHOT</version>
@@ -82,7 +82,7 @@
 
         <!-- json4s -->
 
-        <json4s.version>${json4s-37.version}</json4s.version>
+        <json4s.version>${json4s-35.version}</json4s.version>
         <json4s-32.version>3.2.11</json4s-32.version>
         <json4s-35.version>3.5.3</json4s-35.version>
         <json4s-36.version>3.6.10</json4s-36.version>
@@ -90,7 +90,7 @@
 
         <!-- Spark -->
 
-        <spark.version>${spark-31.version}</spark.version>
+        <spark.version>${spark-24.version}</spark.version>
         <spark-22.version>2.2.2</spark-22.version>
         <spark-23.version>2.3.2</spark-23.version>
         <spark-24.version>2.4.2</spark-24.version>
@@ -99,7 +99,7 @@
 
         <!-- Delta -->
 
-        <delta.version>${delta-08.version}</delta.version>
+        <delta.version>${delta-03.version}</delta.version>
         <delta-03.version>0.3.0</delta-03.version>
         <delta-08.version>0.8.0</delta-08.version>
 
@@ -112,8 +112,8 @@
         <scala_2.12.version>2.12.14</scala_2.12.version>
 
         <!-- Controlled by `scala-cross-build` plugin -->
-        <scala.version>2.12.14</scala.version>
-        <scala.binary.version>2.12</scala.binary.version>
+        <scala.version>2.11.12</scala.version>
+        <scala.binary.version>2.11</scala.binary.version>
     </properties>
 
     <scm>
@@ -5101,11 +5101,6 @@
 
         <profile>
             <id>spark-3.1</id>
-            <activation>
-                <property>
-                    <name>release</name>
-                </property>
-            </activation>
             <properties>
                 <spark.version>${spark-31.version}</spark.version>
                 <json4s.version>${json4s-37.version}</json4s.version>
