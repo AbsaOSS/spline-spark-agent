@@ -198,11 +198,6 @@
                 <scope>provided</scope>
             </dependency>
             <dependency>
-                <groupId>commons-configuration</groupId>
-                <artifactId>commons-configuration</artifactId>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-crypto</artifactId>
                 <scope>provided</scope>
