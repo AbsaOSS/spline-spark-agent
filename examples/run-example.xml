@@ -27,7 +27,7 @@
 
         <condition property="spline.mode"
                    value="${spline.mode}"
-                   else="BEST_EFFORT">
+                   else="REQUIRED">
             <isset property="spline.mode"/>
         </condition>
 

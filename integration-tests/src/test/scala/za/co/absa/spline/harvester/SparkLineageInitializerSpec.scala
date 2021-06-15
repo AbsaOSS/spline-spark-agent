@@ -130,7 +130,7 @@ class SparkLineageInitializerSpec
 
   behavior of "modes"
 
-  it should "disable Spline and proceed, when is in BEST_EFFORT (default) mode after configurer fail" in {
+  it should "disable Spline and proceed, when is in BEST_EFFORT mode after configurer fail" in {
     sys.props += Mode -> BEST_EFFORT.toString
 
     withSparkSession { sparkSession =>
@@ -145,7 +145,7 @@ class SparkLineageInitializerSpec
     }
   }
 
-  it should "disable Spline and proceed, when is in BEST_EFFORT (default) mode after exception" in {
+  it should "disable Spline and proceed, when is in BEST_EFFORT mode after exception" in {
     sys.props += Mode -> BEST_EFFORT.toString
 
     withNewSparkSession { sparkSession =>
