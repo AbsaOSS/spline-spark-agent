@@ -98,7 +98,8 @@ object HttpLineageDispatcher extends Logging {
       config.readTimeout,
       config.awsCredentials,
       config.proxyHost,
-      config.proxyPort
+      config.proxyPort,
+      config.awsRegion
     )
   }
 

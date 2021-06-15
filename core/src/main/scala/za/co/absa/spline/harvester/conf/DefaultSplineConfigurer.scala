@@ -67,6 +67,7 @@ object DefaultSplineConfigurer {
     val AwsAccessKey = "spline.lineageDispatcher.http.awsAccessKey"
     val AwsSecretKey = "spline.lineageDispatcher.http.awsSecretKey"
     val AwsToken = "spline.lineageDispatcher.http.awsToken"
+    val AwsRegion = "spline.lineageDispatcher.http.awsRegion"
 
     /**
      * Proxy config

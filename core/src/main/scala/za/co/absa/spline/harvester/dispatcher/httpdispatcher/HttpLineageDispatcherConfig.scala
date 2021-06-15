@@ -30,6 +30,7 @@ object HttpLineageDispatcherConfig {
   val AwsAccessKeyProperty = "awsAccessKey"
   val AwsSecretKeyProperty = "awsSecretKey"
   val AwsTokenProperty = "awsToken"
+  val AwsRegionProperty = "awsRegion"
 
   val proxyHostProperty = "proxyHost"
   val proxyPortProperty = "proxyPort"
@@ -48,6 +49,8 @@ class HttpLineageDispatcherConfig(config: Configuration) {
     "AwsSecretKey" -> config.getRequiredString(AwsSecretKeyProperty),
     "AwsToken" -> config.getRequiredString(AwsTokenProperty)
   )
+
+  val awsRegion: String = config.getRequiredString(AwsRegionProperty)
 
   val proxyHost: String = config.getOptionalString(proxyHostProperty).getOrElse("")
   val proxyPort: Int = config.getOptionalInt(proxyPortProperty).getOrElse("-1".toInt)

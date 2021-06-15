@@ -30,17 +30,18 @@ import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPOutputStream
 import javax.ws.rs.HttpMethod
 
-class RestEndpoint(val request: HttpRequest, val awsCredentials: Map[String,String], val proxyHost: String, val proxyPort: Int) {
+class RestEndpoint(val request: HttpRequest, val awsCredentials: Map[String,String], val proxyHost: String, val proxyPort: Int, val awsRegion: String) {
   val awsCredentialProvider = new AWSStaticCredentialsProvider(new BasicSessionCredentials(awsCredentials("AwsAccessKey"), awsCredentials("AwsSecretKey"), awsCredentials("AwsToken")))
   val service = "execute-api"
-  val region = "eu-west-1"
+  val apiRegion = "eu-west-1"
   def clock(): LocalDateTime = LocalDateTime.now(ZoneId.of("UTC"))
-  val signer = AwsSigner(awsCredentialProvider, region, service, clock)
+  val signer = AwsSigner(awsCredentialProvider, apiRegion, service, clock)
 
   def head(): HttpResponse[String] = {
 
     var jsonRequest = request
       .method(HttpMethod.HEAD)
+      .header("awsRegion", awsRegion)
 
     val emptyPayload: Option[Array[Byte]] = None
     val splitUrl = request.url.split("/")
@@ -66,6 +67,7 @@ class RestEndpoint(val request: HttpRequest, val awsCredentials: Map[String,Stri
     var jsonRequest = request
       .method(HttpMethod.POST)
       .header(HttpHeaders.CONTENT_TYPE, contentType)
+      .header("awsRegion", awsRegion)
 
     val splitUrl = request.url.split("/")
     val host = splitUrl(2)

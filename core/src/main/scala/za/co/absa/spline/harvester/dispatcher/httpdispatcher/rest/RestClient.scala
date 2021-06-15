@@ -39,7 +39,8 @@ object RestClient extends Logging {
     readTimeout: Duration,
     awsCredentials: Map[String,String],
     proxyHost: String,
-    proxyPort: Int): RestClient = {
+    proxyPort: Int,
+    awsRegion: String): RestClient = {
 
     logDebug(s"baseURL = $baseURL")
     logDebug(s"connectionTimeout = $connectionTimeout")
@@ -53,7 +54,8 @@ object RestClient extends Logging {
           .compress(true),
         awsCredentials,
         proxyHost,
-        proxyPort
+        proxyPort,
+        awsRegion
       )
     }
   }
