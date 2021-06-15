@@ -61,9 +61,9 @@ To change the Spline Producer URL (default is http://localhost:8080/producer)
 mvn test -P examples -D spline.producer.url=http://localhost:8888/producer
 ```
 
-To change the Spline Mode (default is BEST_EFFORT)
+To change the Spline Mode
 ```shell script
-mvn test -P examples -D spline.mode=REQUIRED
+mvn test -P examples -D spline.mode=BEST_EFFORT
 ```
 
 
