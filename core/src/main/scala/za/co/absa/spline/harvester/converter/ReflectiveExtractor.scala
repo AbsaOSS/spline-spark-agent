@@ -20,6 +20,7 @@ import org.apache.spark.internal.Logging
 import za.co.absa.commons.reflect.ReflectionUtils
 
 import java.lang.reflect.{Field, Method}
+import scala.util.control.NonFatal
 
 object ReflectiveExtractor extends Logging{
 
@@ -28,7 +29,7 @@ object ReflectiveExtractor extends Logging{
     catch {
       // a workaround for Scala bug #12190
       // catching everything because the bug causes various errors and exceptions
-      case e =>
+      case NonFatal(e) =>
         logWarning("Exception thrown during attempt to extract object properties via Scala reflection." +
           "Will try to extract properties via Java reflection as a workaround", e)
 
