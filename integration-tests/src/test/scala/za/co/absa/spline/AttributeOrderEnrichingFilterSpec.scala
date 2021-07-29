@@ -15,11 +15,13 @@
  */
 package za.co.absa.spline
 
+import org.apache.spark.SPARK_VERSION
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
+import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
+import za.co.absa.commons.version.Version.VersionStringInterpolator
 import za.co.absa.spline.AttributeOrderEnrichingFilterSpec._
-import za.co.absa.spline.harvester.postprocessing.AttributeOrderEnrichingFilter
-import za.co.absa.spline.producer.model.v1_1.{DataOperation, ExecutionPlan}
+import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 import za.co.absa.spline.test.harvester.dispatcher.NoOpLineageDispatcher
@@ -30,12 +32,11 @@ class AttributeOrderEnrichingFilterSpec extends AsyncFlatSpec
   with SplineFixture
   with SparkDatabaseFixture {
 
-  "AttributeOrderEnrichingFilter" should "produce lineage with correct attribute order" in
+  "AttributeOrderEnrichingFilter" should "produce lineage with correct attribute order" taggedAs
+    ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
     withCustomSparkSession(_
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
-      .config("spark.spline.postProcessingFilter", "my-filter")
-      .config("spark.spline.postProcessingFilter.my-filter.className", classOf[AttributeOrderEnrichingFilter].getName)
       .config("spark.spline.lineageDispatcher", "noOp")
       .config("spark.spline.lineageDispatcher.noOp.className", classOf[NoOpLineageDispatcher].getName)
     ) { implicit spark =>
@@ -52,8 +53,6 @@ class AttributeOrderEnrichingFilterSpec extends AsyncFlatSpec
                 .write.format("delta")
                 .mode("append")
                 .saveAsTable("t1")
-
-              spark.sql("select * from t1").show()
             }
           } yield {
             val write = plan.operations.write
