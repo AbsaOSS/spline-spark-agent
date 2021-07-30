@@ -20,13 +20,13 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version.VersionStringInterpolator
-import za.co.absa.spline.AttributeOrderEnrichingFilterSpec._
+import za.co.absa.spline.AttributeReorderingFilterSpec._
 import za.co.absa.spline.producer.model.v1_1._
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 import za.co.absa.spline.test.harvester.dispatcher.NoOpLineageDispatcher
 
-class AttributeOrderEnrichingFilterSpec extends AsyncFlatSpec
+class AttributeReorderingFilterSpec extends AsyncFlatSpec
   with Matchers
   with SparkFixture
   with SplineFixture
@@ -73,7 +73,7 @@ class AttributeOrderEnrichingFilterSpec extends AsyncFlatSpec
 
 }
 
-object AttributeOrderEnrichingFilterSpec {
+object AttributeReorderingFilterSpec {
   def getOtherOpById(plan: ExecutionPlan, opId :String): DataOperation =
     plan.operations.other.flatMap(_.find(_.id == opId)).get
 

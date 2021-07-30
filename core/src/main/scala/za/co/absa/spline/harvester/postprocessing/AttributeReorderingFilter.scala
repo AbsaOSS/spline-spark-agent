@@ -28,7 +28,7 @@ import za.co.absa.spline.producer.model.v1_1.{DataOperation, ExecutionPlan, Writ
 
 import java.util.UUID
 
-class AttributeOrderEnrichingFilter(conf: Configuration) extends AbstractPostProcessingFilter {
+class AttributeReorderingFilter(conf: Configuration) extends AbstractPostProcessingFilter {
 
   override def processExecutionPlan(plan: ExecutionPlan, ctx: HarvestingContext): ExecutionPlan = {
     val isByName = plan
@@ -80,16 +80,15 @@ class AttributeOrderEnrichingFilter(conf: Configuration) extends AbstractPostPro
   }
 
   private def getWriteChildOutput(plan: ExecutionPlan, writeOp: WriteOperation): Seq[String] = {
-    val writeChildId = writeOp.childIds.head
+    import za.co.absa.commons.ProducerApiAdapters._
 
-    plan.operations.other
-      .flatMap(_.find(_.id == writeChildId)).flatMap(_.output)
-      .orElse(plan.operations.reads.flatMap(_.find(_.id == writeChildId).flatMap(_.output)))
-      .get
+    val Seq(writeChildId) = writeOp.childIds
+
+    plan.operations.all.find(_.id == writeChildId).get.output
   }
 }
 
-object AttributeOrderEnrichingFilter {
+object AttributeReorderingFilter {
 
   object `_: V2WriteCommand` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.catalyst.plans.logical.V2WriteCommand")
