@@ -21,7 +21,7 @@ import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version.VersionStringInterpolator
 import za.co.absa.spline.AttributeOrderEnrichingFilterSpec._
-import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
+import za.co.absa.spline.producer.model.v1_1._
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 import za.co.absa.spline.test.harvester.dispatcher.NoOpLineageDispatcher
@@ -34,36 +34,38 @@ class AttributeOrderEnrichingFilterSpec extends AsyncFlatSpec
 
   "AttributeOrderEnrichingFilter" should "produce lineage with correct attribute order" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withCustomSparkSession(_
-      .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-      .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
-      .config("spark.spline.lineageDispatcher", "noOp")
-      .config("spark.spline.lineageDispatcher.noOp.className", classOf[NoOpLineageDispatcher].getName)
-    ) { implicit spark =>
-      withRealConfigLineageTracking { lineageCaptor =>
-        withDatabase("testDB") {
+    withRestartingSparkContext {
+      withCustomSparkSession(_
+        .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+        .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+        .config("spark.spline.lineageDispatcher", "noOp")
+        .config("spark.spline.lineageDispatcher.noOp.className", classOf[NoOpLineageDispatcher].getName)
+      ) { implicit spark =>
+        withRealConfigLineageTracking { lineageCaptor =>
+          withDatabase("testDB") {
 
-          import spark.implicits._
+            import spark.implicits._
 
-          for {
-            (plan, _) <- lineageCaptor.lineageOf {
-              spark.sql(s"CREATE TABLE t1 (i int, j int) USING delta")
+            for {
+              (plan, _) <- lineageCaptor.lineageOf {
+                spark.sql(s"CREATE TABLE t1 (i int, j int) USING delta")
 
-              Seq((3, 4)).toDF("j", "i")
-                .write.format("delta")
-                .mode("append")
-                .saveAsTable("t1")
+                Seq((3, 4)).toDF("j", "i")
+                  .write.format("delta")
+                  .mode("append")
+                  .saveAsTable("t1")
+              }
+            } yield {
+              val write = plan.operations.write
+              val writeChild = getOtherOpById(plan, write.childIds.head)
+
+              getAttributeById(plan, writeChild.output.get(0)).name should be("i")
+              getAttributeById(plan, writeChild.output.get(1)).name should be("j")
+
+              val writeChild2 = getOtherOpById(plan, writeChild.childIds.get.head)
+              val writeChild3 = getOtherOpById(plan, writeChild2.childIds.get.head)
+              writeChild3.name.get should be("LocalRelation")
             }
-          } yield {
-            val write = plan.operations.write
-            val writeChild = getOtherOpById(plan, write.childIds.head)
-
-            getAttributeById(plan, writeChild.output.get(0)).name should be("i")
-            getAttributeById(plan, writeChild.output.get(1)).name should be("j")
-
-            val writeChild2 = getOtherOpById(plan, writeChild.childIds.get.head)
-            val writeChild3 = getOtherOpById(plan, writeChild2.childIds.get.head)
-            writeChild3.name.get should be("LocalRelation")
           }
         }
       }
@@ -72,9 +74,9 @@ class AttributeOrderEnrichingFilterSpec extends AsyncFlatSpec
 }
 
 object AttributeOrderEnrichingFilterSpec {
-  def getOtherOpById(plan: ExecutionPlan, opId :String) =
+  def getOtherOpById(plan: ExecutionPlan, opId :String): DataOperation =
     plan.operations.other.flatMap(_.find(_.id == opId)).get
 
-  def getAttributeById(plan: ExecutionPlan, attId :String) =
+  def getAttributeById(plan: ExecutionPlan, attId :String): Attribute =
     plan.attributes.flatMap(_.find(_.id == attId)).get
 }
