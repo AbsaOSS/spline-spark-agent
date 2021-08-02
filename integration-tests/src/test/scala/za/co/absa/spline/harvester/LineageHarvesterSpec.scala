@@ -30,7 +30,7 @@ import za.co.absa.commons.version.Version._
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder.OutputAttIds
 import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
 import za.co.absa.spline.model.dt
-import za.co.absa.spline.producer.model.v1_1.{Attribute, _}
+import za.co.absa.spline.producer.model.v1_1._
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 import za.co.absa.spline.test.harvester.dispatcher.NoOpLineageDispatcher
@@ -422,45 +422,12 @@ object LineageHarvesterSpec extends Matchers {
 
   }
 
-  implicit class OperationsAdapter(op: Operations) {
-    def all: Seq[OperationsAdapter.OperationLike] =
-      Seq(
-        Seq(op.write),
-        op.reads getOrElse Nil,
-        op.other getOrElse Nil
-      ).flatten.map(_.asInstanceOf[OperationsAdapter.OperationLike])
-  }
-
-  object OperationsAdapter {
-    type OperationLike = {
-      def id: String
-      def childIds: Any
-      def params: Option[Map[String, Any]]
-      def extra: Option[Map[String, Any]]
-    }
-
-    implicit class OperationLikeAdapter(op: OperationLike) {
-      def childIdList: Seq[_] = op.childIds match {
-        case ids: Seq[_] => ids
-        case Some(ids: Seq[_]) => ids
-        case _ => Nil
-      }
-
-      def output: Seq[String] = op match {
-        case rop: ReadOperation => rop.output.getOrElse(Nil)
-        case dop: DataOperation => dop.output.getOrElse(Nil)
-        case _ => Nil
-      }
-    }
-
-  }
-
   def assertDataLineage(
     expectedOperations: Seq[AnyRef],
     expectedAttributes: Seq[Attribute],
     actualPlan: ExecutionPlan): Assertion = {
 
-    import za.co.absa.spline.harvester.LineageHarvesterSpec.OperationsAdapter._
+    import za.co.absa.commons.ProducerApiAdapters._
 
     actualPlan.operations shouldNot be(null)
 
