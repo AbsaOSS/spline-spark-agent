@@ -24,7 +24,7 @@ class OneRowRelationFilter(conf: Configuration) extends AbstractPostProcessingFi
 
   override def processExecutionPlan(plan: ExecutionPlan, ctx: HarvestingContext): ExecutionPlan = {
     val oneRowRelations = plan.operations.other
-      .map(_.filter(_.name.get == "OneRowRelation"))
+      .map(_.filter(_.name.get.startsWith("OneRowRelation")))
       .getOrElse(Seq.empty)
 
     if (oneRowRelations.isEmpty)
