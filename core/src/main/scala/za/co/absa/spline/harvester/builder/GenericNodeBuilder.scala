@@ -35,7 +35,7 @@ class GenericNodeBuilder
 
   override def build(): DataOperation = {
     val dop = DataOperation(
-      id = id,
+      id = operationId,
       name = operation.nodeName.asOption,
       childIds = childIds.asOption,
       output = outputAttributes.map(_.id).asOption,

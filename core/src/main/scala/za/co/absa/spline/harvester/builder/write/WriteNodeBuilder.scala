@@ -38,7 +38,7 @@ class WriteNodeBuilder
     val wop = WriteOperation(
       outputSource = uri,
       append = command.mode == SaveMode.Append,
-      id = id,
+      id = operationId,
       name = command.name.asOption,
       childIds = childIds,
       params = Map(command.params.toSeq: _*).asOption,
