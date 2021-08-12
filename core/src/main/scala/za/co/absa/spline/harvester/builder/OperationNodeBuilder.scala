@@ -28,7 +28,7 @@ trait OperationNodeBuilder {
 
   protected type R
 
-  val id: OperationId = componentCreatorFactory.nextId.toString
+  val operationId: OperationId = componentCreatorFactory.nextOperationId.toString
 
   private var childBuilders: Seq[OperationNodeBuilder] = Nil
 
@@ -42,7 +42,7 @@ trait OperationNodeBuilder {
 
   protected lazy val attributeConverter =
     new AttributeConverter(
-      componentCreatorFactory.dataTypeConverter,
+      componentCreatorFactory,
       resolveAttributeChild,
       childBuilders.map(_.outputExprToAttMap).reduceOption(_ ++ _).getOrElse(Map.empty),
       exprToRefConverter
@@ -73,7 +73,7 @@ trait OperationNodeBuilder {
   private def outputExprToAttMap: Map[sparkExprssions.ExprId, Attribute] =
     operation.output.map(_.exprId).zip(outputAttributes).toMap
 
-  def childIds: Seq[OperationId] = childBuilders.map(_.id)
+  def childIds: Seq[OperationId] = childBuilders.map(_.operationId)
 
   lazy val functionalExpressions: Seq[FunctionalExpression] = expressionConverter.values
 

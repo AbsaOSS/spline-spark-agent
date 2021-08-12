@@ -18,10 +18,11 @@ package za.co.absa.spline.harvester.converter
 
 import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.Converter
+import za.co.absa.spline.harvester.ComponentCreatorFactory
 import za.co.absa.spline.producer.model.v1_1.Attribute
 
 class AttributeConverter(
-  dataTypeConverter: DataTypeConverter,
+  componentCreatorFactory: ComponentCreatorFactory,
   resolveAttributeChild: sparkExprssions.Attribute => Option[sparkExprssions.Expression],
   outputExprToAttMap: Map[sparkExprssions.ExprId, Attribute],
   exprToRefConverter: => ExprToRefConverter
@@ -30,13 +31,15 @@ class AttributeConverter(
   override type From = sparkExprssions.Attribute
   override type To = Attribute
 
+  private val dataTypeConverter = componentCreatorFactory.dataTypeConverter
+
   def convert(expr: From): To = expr match {
     case attr: sparkExprssions.Attribute if outputExprToAttMap.contains(attr.exprId) =>
       outputExprToAttMap(attr.exprId)
 
     case attr: sparkExprssions.Attribute =>
       Attribute(
-        id = attr.exprId.id.toString,
+        id = componentCreatorFactory.nextAttributeId.toString,
         dataType = Some(dataTypeConverter.convert(attr.dataType, attr.nullable).id),
         childRefs = resolveAttributeChild(attr)
           .map(expr => Seq(exprToRefConverter.convert(expr))),
@@ -45,7 +48,3 @@ class AttributeConverter(
       )
   }
 }
-
-
-
-
