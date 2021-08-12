@@ -29,9 +29,9 @@ class JoinNodeBuilder
 
   override def build(): DataOperation = {
 
-    val duplicates = operation.output.groupBy(_.exprId).collect { case (x, List(_,_,_*)) => x }
+    val duplicates = operation.output.groupBy(_.exprId).collect { case (exprId, attrs) if attrs.length > 1 => exprId }
     if (duplicates.nonEmpty) {
-      logError(s"Duplicated attributes found in Join operation output, ExprIds of duplicates: $duplicates")
+      logWarning(s"Duplicated attributes found in Join operation output, ExprIds of duplicates: $duplicates")
     }
 
     super.build()
