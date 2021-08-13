@@ -35,6 +35,9 @@ class WindowNodeBuilder
       .map(_.asInstanceOf[Alias])
   }
 
+  /**
+   * This method solves Spark and Databricks differences (See issue #262)
+   */
   private def extractNamedExpressions(operation: Window): Seq[NamedExpression] = {
     def extractField(name: String) =
       ReflectionUtils.extractFieldValue[Seq[NamedExpression]](operation, name)
