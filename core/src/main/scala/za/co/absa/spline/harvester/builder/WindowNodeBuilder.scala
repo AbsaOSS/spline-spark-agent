@@ -16,10 +16,13 @@
 
 package za.co.absa.spline.harvester.builder
 
-import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, Expression}
+import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, Expression, NamedExpression}
 import org.apache.spark.sql.catalyst.plans.logical.Window
+import za.co.absa.commons.reflect.ReflectionUtils
 import za.co.absa.spline.harvester.ComponentCreatorFactory
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
+
+import scala.util.Try
 
 class WindowNodeBuilder
   (override val operation: Window)
@@ -27,8 +30,20 @@ class WindowNodeBuilder
   extends GenericNodeBuilder(operation)(componentCreatorFactory, postProcessor) {
 
   override def resolveAttributeChild(attribute: Attribute): Option[Expression] = {
-    operation.windowExpressions
+    extractNamedExpressions(operation)
       .find(_.exprId == attribute.exprId)
       .map(_.asInstanceOf[Alias])
   }
+
+  /**
+   * This method solves Spark and Databricks differences (See issue #262)
+   */
+  private def extractNamedExpressions(operation: Window): Seq[NamedExpression] = {
+    def extractField(name: String) =
+      ReflectionUtils.extractFieldValue[Seq[NamedExpression]](operation, name)
+
+    Try(extractField("windowExpressions"))
+      .getOrElse(extractField("projectList"))
+  }
+
 }
