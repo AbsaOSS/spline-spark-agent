@@ -25,7 +25,10 @@ class ComponentCreatorFactory {
   val dataConverter = new DataConverter
   val dataTypeConverter = new DataTypeConverter with CachingConverter
 
-  private[this] val lastId = new AtomicInteger(0)
+  private[this] val lastOperationId = new AtomicInteger(0)
+  private[this] val lastAttributeId = new AtomicInteger(0)
 
-  def nextId: Int = lastId.getAndIncrement()
+  def nextOperationId: Int = lastOperationId.getAndIncrement()
+  def nextAttributeId: Int = lastAttributeId.getAndIncrement()
+
 }

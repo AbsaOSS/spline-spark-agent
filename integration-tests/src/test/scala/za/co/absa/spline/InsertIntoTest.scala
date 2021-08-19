@@ -38,8 +38,7 @@ class InsertIntoTest extends AsyncFlatSpec
           ("path", "(x String) USING json",
             Seq("Monika", "Buba"))
         ) {
-          spark.catalog.listDatabases().show()
-          spark.catalog.listTables("test").show()
+
           val df = spark
             .table("test.path")
             .withColumn("ymd", lit(20190401))

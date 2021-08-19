@@ -25,7 +25,7 @@ import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.extra.{UserExtraAppendingPostProcessingFilter, UserExtraMetadataProvider}
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
-import za.co.absa.spline.harvester.postprocessing.PostProcessingFilter
+import za.co.absa.spline.harvester.postprocessing.{AttributeReorderingFilter, OneRowRelationFilter, PostProcessingFilter}
 import za.co.absa.spline.harvester.{LineageHarvesterFactory, QueryExecutionEventHandler}
 
 import scala.reflect.ClassTag
@@ -108,6 +108,12 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
 
   protected def postProcessingFilter: PostProcessingFilter = createComponentByKey(RootPostProcessingFilter)
 
+  private def internalPostProcessingFilters: Seq[PostProcessingFilter] =
+    Seq(new AttributeReorderingFilter(configuration), new OneRowRelationFilter(configuration))
+
+  private def allPostProcessingFilters: Seq[PostProcessingFilter] =
+    internalPostProcessingFilters :+ postProcessingFilter
+
   protected def ignoredWriteDetectionStrategy: IgnoredWriteDetectionStrategy = createComponentByKey(IgnoreWriteDetectionStrategy)
 
   protected def maybeUserExtraMetadataProvider: Option[UserExtraMetadataProvider] =
@@ -123,12 +129,15 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
       .instantiate[A]()
   }
 
-  private def harvesterFactory = new LineageHarvesterFactory(
-    sparkSession,
-    splineMode,
-    ignoredWriteDetectionStrategy,
-    maybeUserExtraMetadataProvider
-      .map(uemp => Seq(postProcessingFilter, new UserExtraAppendingPostProcessingFilter(uemp)))
-      .getOrElse(Seq(postProcessingFilter))
-  )
+  private def harvesterFactory = {
+    val maybeUserExtraAppendingPostProcessingFilter =
+      maybeUserExtraMetadataProvider.map(uemp => new UserExtraAppendingPostProcessingFilter(uemp))
+
+    new LineageHarvesterFactory(
+      sparkSession,
+      splineMode,
+      ignoredWriteDetectionStrategy,
+      allPostProcessingFilters ++ maybeUserExtraAppendingPostProcessingFilter
+    )
+  }
 }

@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.harvester.builder
 
-import org.apache.spark.sql.catalyst.plans.logical.{Aggregate, Generate, LogicalPlan, Project, Union, Window}
+import org.apache.spark.sql.catalyst.plans.logical.{Aggregate, Generate, LogicalPlan, Project, Union, Window, Join}
 import za.co.absa.spline.harvester.ComponentCreatorFactory
 import za.co.absa.spline.harvester.builder.read.{ReadCommand, ReadNodeBuilder}
 import za.co.absa.spline.harvester.builder.write.{WriteCommand, WriteNodeBuilder}
@@ -38,6 +38,7 @@ class OperationNodeBuilderFactory(
     case a: Aggregate => new AggregateNodeBuilder(a)(componentCreatorFactory, postProcessor)
     case g: Generate => new GenerateNodeBuilder(g)(componentCreatorFactory, postProcessor)
     case w: Window => new WindowNodeBuilder(w)(componentCreatorFactory, postProcessor)
+    case j: Join => new JoinNodeBuilder(j)(componentCreatorFactory, postProcessor)
     case _ => new GenericNodeBuilder(lp)(componentCreatorFactory, postProcessor)
   }
 }

@@ -35,7 +35,7 @@ class ReadNodeBuilder
   override def build(): ReadOperation = {
     val rop = ReadOperation(
       inputSources = command.sourceIdentifier.uris,
-      id = id,
+      id = operationId,
       name = operation.nodeName.asOption,
       output = outputAttributes.map(_.id).asOption,
       params = Map(command.params.toSeq: _*).asOption,

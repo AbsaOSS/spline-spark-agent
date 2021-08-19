@@ -22,8 +22,8 @@ import org.apache.spark.sql.catalyst.plans.JoinType
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.types.DataType
 import za.co.absa.commons.lang.Converter
-import za.co.absa.commons.reflect.ReflectionUtils
 import za.co.absa.spline.harvester.converter.OperationParamsConverter._
+import za.co.absa.spline.harvester.converter.ReflectiveExtractor.extractProperties
 
 class OperationParamsConverter(
   dataConverter: DataConverter,
@@ -51,7 +51,7 @@ class OperationParamsConverter(
     }
 
     for {
-      (p, v) <- ReflectionUtils.extractProperties(operation)
+      (p, v) <- extractProperties(operation)
       if !KnownPropNames(p)
       if !IgnoredPropNames(p)
       if !isChildOperation(v)

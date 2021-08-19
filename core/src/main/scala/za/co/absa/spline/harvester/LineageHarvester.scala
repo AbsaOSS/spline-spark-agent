@@ -89,7 +89,7 @@ class LineageHarvester(
       val writeOp = writeOpBuilder.build()
 
       val (opReads, opOthers) =
-        ((Vector.empty[ReadOperation], Vector.empty[DataOperation]) /: restOps) {
+        restOps.foldLeft((Vector.empty[ReadOperation], Vector.empty[DataOperation])) {
           case ((accRead, accOther), opRead: ReadOperation) => (accRead :+ opRead, accOther)
           case ((accRead, accOther), opOther: DataOperation) => (accRead, accOther :+ opOther)
         }
@@ -181,7 +181,7 @@ class LineageHarvester(
     }
 
     val builders = traverseAndCollect(Nil, Map.empty, Seq((rootOp, null)))
-    builders.sortedTopologicallyBy(_.id, _.childIds, reverse = true)
+    builders.sortedTopologicallyBy(_.operationId, _.childIds, reverse = true)
   }
 
   private def createOperationBuilder(op: LogicalPlan): OperationNodeBuilder =
