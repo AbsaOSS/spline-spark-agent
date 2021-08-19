@@ -16,21 +16,34 @@
 
 package za.co.absa.spline.harvester.logging
 
+import za.co.absa.commons.reflect.ReflectionUtils
+
 import java.lang.reflect.Modifier
-
-import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
-
 import scala.annotation.tailrec
+import scala.util.control.NonFatal
 
 object ObjectStructureDumper {
 
-  def dump(obj: Any): String = {
+  type FieldName = String
+  type FieldType = String
+  type DumpResult = String
+
+  type DumpFn = Any => DumpResult
+  type ExtractFieldValueFn = (AnyRef, FieldName) => AnyRef
+
+  def dump(obj: Any, extractFieldValueFn: ExtractFieldValueFn = ReflectionUtils.extractFieldValue[AnyRef]): DumpResult = {
     val value = obj.asInstanceOf[AnyRef]
 
-    val initialValue = ObjectBox(value, "operation", value.getClass.getName, 0)
+    val initialValue = ObjectBox(value, "", value.getClass.getName, 0)
 
-    val info = objectToStringRec(List(initialValue), Set.empty[InstanceEqualityBox], "")
-    s"Data for instance of ${value.getClass}\n$info"
+    val info = objectToStringRec(extractFieldValueFn)(List(initialValue), Set.empty[InstanceEqualityBox], "")
+    val filler = "*" * 30
+    s"""
+       |$filler OBJECT DUMP BEGIN $filler
+       |${value.getClass}
+       |$info
+       |$filler OBJECT DUMP END   $filler
+       |""".stripMargin
   }
 
   private case class InstanceEqualityBox(obj: AnyRef) {
@@ -48,11 +61,17 @@ object ObjectStructureDumper {
 
   private def wasVisited(visited: VisitedSet, obj: AnyRef): Boolean = visited(InstanceEqualityBox(obj))
 
-  private case class ObjectBox(value: AnyRef, fieldName: String, fieldType: String, depth: Int)
+  private case class ObjectBox(value: AnyRef, fieldName: FieldName, fieldType: FieldType, depth: Int)
 
   @tailrec
-  private final def objectToStringRec(stack: List[ObjectBox], visited: VisitedSet, result: String): String = stack match {
-    case Nil => result
+  private final def objectToStringRec(
+    extractFieldValue: ExtractFieldValueFn
+  )(
+    stack: List[ObjectBox],
+    visited: VisitedSet,
+    prevResult: DumpResult
+  ): DumpResult = stack match {
+    case Nil => prevResult
     case head :: tail => {
       val value = head.value
       val depth = head.depth
@@ -71,7 +90,12 @@ object ObjectStructureDumper {
             .filter(f => !Set("child", "session")(f.getName))
             .filter(f => !Modifier.isStatic(f.getModifiers))
             .map { f =>
-              val subValue = extractFieldValue[AnyRef](value, f.getName)
+              val subValue =
+                try {
+                  extractFieldValue(value, f.getName)
+                } catch {
+                  case NonFatal(e) => s"! error occurred: ${e.getMessage} at ${e.getStackTrace()(0)}"
+                }
               ObjectBox(subValue, f.getName, f.getType.getName, depth + 1)
             }.toList
 
@@ -80,9 +104,16 @@ object ObjectStructureDumper {
       }
 
       val indent = " " * depth * 2
-      val line = s"$indent${head.fieldName}: ${head.fieldType} $fieldsDetails\n"
 
-      objectToStringRec(newStack, newVisited, result + line)
+      val line =
+        if (depth > 0) s"$indent${head.fieldName}: ${head.fieldType} $fieldsDetails"
+        else prevResult
+
+      val newResult =
+        if (prevResult.isEmpty) line
+        else s"$prevResult\n$line"
+
+      objectToStringRec(extractFieldValue)(newStack, newVisited, newResult)
     }
   }
 
