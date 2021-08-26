@@ -77,10 +77,10 @@ class InsertIntoTest extends AsyncFlatSpec
             plan.operations.write.append should be(false)
             val writeTable = extractTableIdentifier(plan.operations.write.params)
             val readTable = extractTableIdentifier(plan.operations.reads.get.head.params)
-            writeTable.table should be("path_archive")
-            writeTable.database should be(Some("test"))
-            readTable.table should be("path")
-            readTable.database should be(Some("test"))
+            writeTable("table") should be("path_archive")
+            writeTable("database") should be(Some("test"))
+            readTable("table") should be("path")
+            readTable("database") should be(Some("test"))
           }
         }
       }
@@ -108,10 +108,10 @@ class InsertIntoTest extends AsyncFlatSpec
             plan.operations.write.append should be(false)
             val writeTable = extractTableIdentifier(plan.operations.write.params)
             val readTable = extractTableIdentifier(plan.operations.reads.get.head.params)
-            writeTable.table should be("path_archive")
-            writeTable.database should be(Some("test"))
-            readTable.table should be("path")
-            readTable.database should be(Some("test"))
+            writeTable("table") should be("path_archive")
+            writeTable("database") should be(Some("test"))
+            readTable("table") should be("path")
+            readTable("database") should be(Some("test"))
           }
         }
       }
@@ -140,10 +140,10 @@ class InsertIntoTest extends AsyncFlatSpec
             plan.operations.write.append should be(false)
             val writeTable = extractTableIdentifier(plan.operations.write.params)
             val readTable = extractTableIdentifier(plan.operations.reads.get.head.params)
-            writeTable.table should be("path_archive")
-            writeTable.database should be(Some("test"))
-            readTable.table should be("path")
-            readTable.database should be(Some("test"))
+            writeTable("table") should be("path_archive")
+            writeTable("database") should be(Some("test"))
+            readTable("table") should be("path")
+            readTable("database") should be(Some("test"))
           }
         }
       }
@@ -172,10 +172,10 @@ class InsertIntoTest extends AsyncFlatSpec
             plan.operations.write.append should be(false)
             val writeTable = extractTableIdentifier(plan.operations.write.params)
             val readTable = extractTableIdentifier(plan.operations.reads.get.head.params)
-            writeTable.table should be("path_archive")
-            writeTable.database should be(Some("test"))
-            readTable.table should be("path")
-            readTable.database should be(Some("test"))
+            writeTable("table") should be("path_archive")
+            writeTable("database") should be(Some("test"))
+            readTable("table") should be("path")
+            readTable("database") should be(Some("test"))
           }
         }
       }

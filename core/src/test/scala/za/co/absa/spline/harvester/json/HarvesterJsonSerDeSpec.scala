@@ -18,7 +18,7 @@ package za.co.absa.spline.harvester.json
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.spline.harvester.json.HarvesterJsonSerDeSpec.Foo
+import za.co.absa.spline.harvester.json.HarvesterJsonSerDeSpec.{Bar, Foo}
 import za.co.absa.spline.model.dt
 
 class HarvesterJsonSerDeSpec
@@ -28,6 +28,19 @@ class HarvesterJsonSerDeSpec
   import HarvesterJsonSerDe.impl._
 
   behavior of "HarvesterJsonSerDe"
+
+  it should "handle Option as element presence" in {
+    Bar(
+      ele = 42,
+      som = Some(42),
+      non = None
+    ).toJson.fromJson[Map[String, Any]] should equal(
+      Map(
+        "ele" -> 42,
+        "som" -> 42
+        // "non" -> should be missing
+      ))
+  }
 
   it should "eliminate Nones, but preserve empty strings and empty collections" in {
     Foo(
@@ -74,6 +87,12 @@ object HarvesterJsonSerDeSpec {
     opt: Option[Any],
     seq: Seq[Int],
     map: Map[String, Any]
+  )
+
+  case class Bar(
+    ele: Int,
+    som: Option[Int],
+    non: Option[Int]
   )
 
 }

@@ -23,6 +23,7 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version.VersionStringInterpolator
+import za.co.absa.spline.producer.model.v1_1.AttrOrExprRef
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 
@@ -82,7 +83,10 @@ class DeltaDSV2Spec extends AsyncFlatSpec
             plan1.id.get shouldEqual event1.planId
             plan1.operations.write.append shouldBe false
             plan1.operations.write.extra.get("destinationType") shouldBe Some("delta")
-            plan1.operations.write.params.get.apply("deleteExpr") should be(Literal(true))
+            val deleteExprId = plan1.operations.write.params.get.apply("deleteExpr")
+              .asInstanceOf[Option[AttrOrExprRef]].get.__exprId.get
+            val literal = plan1.expressions.get.constants.get.find(_.id == deleteExprId).get
+            literal.value shouldEqual true
             plan1.operations.write.outputSource shouldBe s"file:$warehouseDir/testdb.db/foo"
           }
         }

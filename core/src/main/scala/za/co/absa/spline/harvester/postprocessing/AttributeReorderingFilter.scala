@@ -33,7 +33,7 @@ class AttributeReorderingFilter(conf: Configuration) extends AbstractPostProcess
   override def processExecutionPlan(plan: ExecutionPlan, ctx: HarvestingContext): ExecutionPlan = {
     val isByName = plan
       .operations.write.params
-      .flatMap(_.get("isByName").map(_.asInstanceOf[Boolean]))
+      .flatMap(_.get("isByName").map(_.asInstanceOf[Option[Boolean]].get))
       .getOrElse(false)
 
     if (isByName)

@@ -72,7 +72,6 @@ class LineageHarvester(
       }
     }
 
-
     if (maybeCommand.isEmpty) {
       logDebug(s"${ctx.logicalPlan.getClass} was not recognized as a write-command. Skipping.")
       logTrace(ObjectStructureDumper.dump(ctx.logicalPlan))
@@ -101,7 +100,10 @@ class LineageHarvester(
           ExecutionPlanExtra.DataTypes -> componentCreatorFactory.dataTypeConverter.values
         )
 
-        val attributes = builders.map(_.outputAttributes).reduce(_ ++ _).distinct
+        val attributes = (builders.map(_.outputAttributes) :+ writeOpBuilder.additionalAttributes)
+          .reduce(_ ++ _)
+          .distinct
+
         val expressions = Expressions(
           constants = builders.map(_.literals).reduce(_ ++ _).asOption,
           functions = builders.map(_.functionalExpressions).reduce(_ ++ _).asOption

@@ -57,11 +57,12 @@ class DataSourceV2Plugin(
       val query = extractFieldValue[LogicalPlan](writeCommand, "query")
 
       val tableName = extractFieldValue[AnyRef](namedRelation, "name")
+      val output = extractFieldValue[AnyRef](namedRelation, "output")
       val writeOptions = extractFieldValue[Map[String, String]](writeCommand, "writeOptions")
       val isByName = extractFieldValue[Boolean](writeCommand, "isByName")
 
       val props = Map(
-        "table" -> Map("identifier" -> tableName),
+        "table" -> Map("identifier" -> tableName, "output" -> output),
         "writeOptions" -> writeOptions,
         "isByName" -> isByName)
 
@@ -113,7 +114,7 @@ class DataSourceV2Plugin(
 
     case `_: OverwriteByExpression`(obe) =>
       val deleteExpr = extractFieldValue[AnyRef](obe, "deleteExpr")
-      (sourceId, SaveMode.Overwrite, query, props + ("deleteExpr" -> deleteExpr.toString))
+      (sourceId, SaveMode.Overwrite, query, props + ("deleteExpr" -> deleteExpr))
 
     case `_: OverwritePartitionsDynamic`(_) =>
       (sourceId, SaveMode.Overwrite, query, props)
