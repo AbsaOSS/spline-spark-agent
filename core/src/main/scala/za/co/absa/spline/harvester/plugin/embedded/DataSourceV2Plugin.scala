@@ -102,7 +102,7 @@ class DataSourceV2Plugin(
   /**
     * @param v2WriteCommand org.apache.spark.sql.catalyst.plans.logical.V2WriteCommand
     */
-  def processV2WriteCommand(
+  private def processV2WriteCommand(
     v2WriteCommand: AnyRef,
     sourceId: SourceIdentifier,
     query: LogicalPlan,
@@ -113,7 +113,7 @@ class DataSourceV2Plugin(
 
     case `_: OverwriteByExpression`(obe) =>
       val deleteExpr = extractFieldValue[AnyRef](obe, "deleteExpr")
-      (sourceId, SaveMode.Overwrite, query, props + ("deleteExpr" -> deleteExpr))
+      (sourceId, SaveMode.Overwrite, query, props + ("deleteExpr" -> deleteExpr.toString))
 
     case `_: OverwritePartitionsDynamic`(_) =>
       (sourceId, SaveMode.Overwrite, query, props)
@@ -137,17 +137,22 @@ class DataSourceV2Plugin(
       val name = extractFieldValue[AnyRef](metadata, "name")
       SourceIdentifier(Some("cassandra"), s"cassandra:$keyspace:$name")
 
-    case `_: DeltaTableV2`(dt) =>
-      val tableProps = extractFieldValue[java.util.Map[String, String]](dt, "properties")
-      val uri = tableProps.get("location")
-      val provider = tableProps.get("provider")
-      SourceIdentifier(Some(provider), uri)
+    case `_: DeltaTableV2`(dt) => extractSourceIdFromDeltaTableV2(dt)
+    case `_: DatabricksDeltaTableV2`(dt) => extractSourceIdFromDeltaTableV2(dt)
 
     case `_: FileTable`(ft) =>
       val format = extractFieldValue[String](ft, "formatName").toLowerCase
       val paths = extractFieldValue[Seq[String]](ft, "paths")
       SourceIdentifier(Some(format), paths: _*)
   }
+
+  private def extractSourceIdFromDeltaTableV2(table: AnyRef): SourceIdentifier = {
+    val tableProps = extractFieldValue[java.util.Map[String, String]](table, "properties")
+    val uri = tableProps.get("location")
+    val provider = tableProps.get("provider")
+    SourceIdentifier(Some(provider), uri)
+  }
+
 }
 
 object DataSourceV2Plugin {
@@ -180,6 +185,9 @@ object DataSourceV2Plugin {
 
   object `_: DeltaTableV2` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.delta.catalog.DeltaTableV2")
+
+  object `_: DatabricksDeltaTableV2` extends SafeTypeMatchingExtractor[AnyRef](
+    "com.databricks.sql.transaction.tahoe.catalog.DeltaTableV2")
 
   object `_: CassandraTable` extends SafeTypeMatchingExtractor[AnyRef](
     "com.datastax.spark.connector.datasource.CassandraTable")
