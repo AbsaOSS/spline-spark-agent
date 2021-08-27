@@ -71,33 +71,13 @@ class DataSourceV2Plugin(
       processV2WriteCommand(writeCommand, sourceId, query, props)
     }
 
-    case `_: V2CreateTablePlan`(ctp) => {
-      val catalog = extractFieldValue[AnyRef](ctp, "catalog")
-      val identifier = extractFieldValue[AnyRef](ctp, "tableName")
-      val loadTableMethods = catalog.getClass.getMethods.filter(_.getName == "loadTable")
-      val table = loadTableMethods.flatMap(m => Try(m.invoke(catalog, identifier)).toOption).head
-      val sourceId = extractSourceIdFromTable(table)
+    case `_: CreateTableAsSelect`(ctc) =>
+      val prop = "ignoreIfExists" -> extractFieldValue[Boolean](ctc, "ignoreIfExists")
+      processV2CreateTableCommand(ctc,prop)
 
-      val query = extractFieldValue[LogicalPlan](ctp, "query")
-
-      val partitioning = extractFieldValue[AnyRef](ctp, "partitioning")
-      val properties = extractFieldValue[Map[String, String]](ctp, "properties")
-      val writeOptions = extractFieldValue[Map[String, String]](ctp, "writeOptions")
-      val props = Map(
-        "table" -> Map("identifier" -> identifier.toString),
-        "partitioning" -> partitioning,
-        "properties" -> properties,
-        "writeOptions" -> writeOptions)
-
-      val commandSpecificProp = ctp match {
-        case `_: CreateTableAsSelect`(_) =>
-          "ignoreIfExists" -> extractFieldValue[Boolean](ctp, "ignoreIfExists")
-        case `_: ReplaceTableAsSelect`(_) =>
-          "orCreate" -> extractFieldValue[Boolean](ctp, "orCreate")
-      }
-
-      (sourceId, SaveMode.Overwrite, query, props + commandSpecificProp)
-    }
+    case `_: ReplaceTableAsSelect`(ctc) =>
+      val prop = "orCreate" -> extractFieldValue[Boolean](ctc, "orCreate")
+      processV2CreateTableCommand(ctc, prop)
   }
 
   /**
@@ -118,6 +98,30 @@ class DataSourceV2Plugin(
 
     case `_: OverwritePartitionsDynamic`(_) =>
       (sourceId, SaveMode.Overwrite, query, props)
+  }
+
+  private def processV2CreateTableCommand(
+    ctc: AnyRef,
+    commandSpecificProp: (String, _)
+  ) : (SourceIdentifier, SaveMode, LogicalPlan, Params) = {
+    val catalog = extractFieldValue[AnyRef](ctc, "catalog")
+    val identifier = extractFieldValue[AnyRef](ctc, "tableName")
+    val loadTableMethods = catalog.getClass.getMethods.filter(_.getName == "loadTable")
+    val table = loadTableMethods.flatMap(m => Try(m.invoke(catalog, identifier)).toOption).head
+    val sourceId = extractSourceIdFromTable(table)
+
+    val query = extractFieldValue[LogicalPlan](ctc, "query")
+
+    val partitioning = extractFieldValue[AnyRef](ctc, "partitioning")
+    val properties = extractFieldValue[Map[String, String]](ctc, "properties")
+    val writeOptions = extractFieldValue[Map[String, String]](ctc, "writeOptions")
+    val props = Map(
+      "table" -> Map("identifier" -> identifier.toString),
+      "partitioning" -> partitioning,
+      "properties" -> properties,
+      "writeOptions" -> writeOptions)
+
+    (sourceId, SaveMode.Overwrite, query, props + commandSpecificProp)
   }
 
   /**
@@ -168,9 +172,6 @@ object DataSourceV2Plugin {
 
   object `_: OverwritePartitionsDynamic` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.catalyst.plans.logical.OverwritePartitionsDynamic")
-
-  object `_: V2CreateTablePlan` extends SafeTypeMatchingExtractor[AnyRef](
-    "org.apache.spark.sql.catalyst.plans.logical.V2CreateTablePlan")
 
   object `_: CreateTableAsSelect` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.catalyst.plans.logical.CreateTableAsSelect")
