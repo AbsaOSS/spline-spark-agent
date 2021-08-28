@@ -94,6 +94,17 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>com.google.cloud.spark</groupId>
+            <artifactId>spark-bigquery_2.12</artifactId>
+            <version>0.22.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud.spark</groupId>
+            <artifactId>spark-bigquery-with-dependencies_2.11</artifactId>
+            <version>0.17.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>com.datastax.spark</groupId>
             <artifactId>spark-cassandra-connector_${scala.binary.version}</artifactId>
             <scope>test</scope>
