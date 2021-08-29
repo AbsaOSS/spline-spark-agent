@@ -400,8 +400,8 @@
             </dependency>
             <dependency>
                 <groupId>com.google.cloud.spark</groupId>
-                <artifactId>spark-bigquery-with-dependencies_2.11</artifactId>
-                <version>0.17.1</version>
+                <artifactId>spark-bigquery-with-dependencies_2.12</artifactId>
+                <version>0.22.0</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
