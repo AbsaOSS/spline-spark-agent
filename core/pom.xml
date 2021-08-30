@@ -101,6 +101,18 @@
             <version>1.12.5</version>
         </dependency>
         <dependency>
+            <groupId>com.google.cloud.spark</groupId>
+            <artifactId>spark-bigquery_${scala.binary.version}</artifactId>
+            <version>0.22.0</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud.spark</groupId>
+            <artifactId>spark-bigquery-with-dependencies_${scala.binary.version}</artifactId>
+            <version>0.22.0</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
             <groupId>com.datastax.spark</groupId>
             <artifactId>spark-cassandra-connector_${scala.binary.version}</artifactId>
             <optional>true</optional>
