@@ -44,7 +44,7 @@ class WriteNodeBuilder
       id = operationId,
       name = command.name.asOption,
       childIds = childIds,
-      params = ioParamsConverter.convert(command.params).asOption, // TODO why was not used the original map in the previous code?
+      params = ioParamsConverter.convert(command.params).asOption,
       extra = Map(
         OperationExtras.DestinationType -> command.sourceIdentifier.format
       ).asOption

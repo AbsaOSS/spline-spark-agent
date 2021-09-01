@@ -84,7 +84,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
             plan1.operations.write.append shouldBe false
             plan1.operations.write.extra.get("destinationType") shouldBe Some("delta")
             val deleteExprId = plan1.operations.write.params.get.apply("deleteExpr")
-              .asInstanceOf[Option[AttrOrExprRef]].get.__exprId.get
+              .asInstanceOf[AttrOrExprRef].__exprId.get
             val literal = plan1.expressions.get.constants.get.find(_.id == deleteExprId).get
             literal.value shouldEqual true
             plan1.operations.write.outputSource shouldBe s"file:$warehouseDir/testdb.db/foo"

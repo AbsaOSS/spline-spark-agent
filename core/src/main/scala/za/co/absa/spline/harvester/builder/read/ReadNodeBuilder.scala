@@ -41,7 +41,7 @@ class ReadNodeBuilder
       id = operationId,
       name = operation.nodeName.asOption,
       output = outputAttributes.map(_.id).asOption,
-      params = ioParamsConverter.convert(command.params).asOption, // TODO why was not used the original map in the previous code?
+      params = ioParamsConverter.convert(command.params).asOption,
       extra = Map(
         OperationExtras.SourceType -> command.sourceIdentifier.format
       ).asOption)

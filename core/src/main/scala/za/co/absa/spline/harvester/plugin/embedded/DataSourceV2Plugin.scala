@@ -59,12 +59,12 @@ class DataSourceV2Plugin(
       val tableName = extractFieldValue[AnyRef](namedRelation, "name")
       val output = extractFieldValue[AnyRef](namedRelation, "output")
       val writeOptions = extractFieldValue[Map[String, String]](writeCommand, "writeOptions")
-      val isByName = extractFieldValue[Boolean](writeCommand, "isByName")
+      val isByName = extractFieldValue[Boolean](writeCommand, IsByName)
 
       val props = Map(
         "table" -> Map("identifier" -> tableName, "output" -> output),
         "writeOptions" -> writeOptions,
-        "isByName" -> isByName)
+        IsByName -> isByName)
 
       val sourceId = extractSourceIdFromRelation(namedRelation)
 
@@ -161,6 +161,8 @@ class DataSourceV2Plugin(
 }
 
 object DataSourceV2Plugin {
+  val IsByName = "isByName"
+
   object `_: V2WriteCommand` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.catalyst.plans.logical.V2WriteCommand")
 

@@ -31,9 +31,8 @@ class IOParamsConverter(
     case (ti: TableIdentifier, _) => Some(Map("table" -> ti.table, "database" -> ti.database))
   })
 
-  override def convert(operation: Map[String, _]): Map[String, _] = {
-    operation.map{ case (k, v) =>
-      k -> valueDecomposer.decompose(v, "dummyType")
-    }
-  }
+  override def convert(operation: Map[String, _]): Map[String, _] =
+    valueDecomposer.decompose(operation, "notUsed")
+      .getOrElse(Map.empty)
+      .asInstanceOf[Map[String, _]]
 }

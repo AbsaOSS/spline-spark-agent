@@ -35,7 +35,7 @@ object SplineFixture {
   def EmptyConf = new BaseConfiguration
 
   def extractTableIdentifier(paramsOption: Option[Map[String, Any]]): Map[String, Any] =
-    paramsOption
-      .get("table").asInstanceOf[Some[Map[String, _]]]
-      .get("identifier").asInstanceOf[Map[String, _]]
+    paramsOption.get
+      .apply("table").asInstanceOf[Map[String, _]]
+      .apply("identifier").asInstanceOf[Map[String, _]]
 }
