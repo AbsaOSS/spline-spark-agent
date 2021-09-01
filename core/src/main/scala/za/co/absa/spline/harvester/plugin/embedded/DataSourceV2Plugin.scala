@@ -57,52 +57,33 @@ class DataSourceV2Plugin(
       val query = extractFieldValue[LogicalPlan](writeCommand, "query")
 
       val tableName = extractFieldValue[AnyRef](namedRelation, "name")
+      val output = extractFieldValue[AnyRef](namedRelation, "output")
       val writeOptions = extractFieldValue[Map[String, String]](writeCommand, "writeOptions")
-      val isByName = extractFieldValue[Boolean](writeCommand, "isByName")
+      val isByName = extractFieldValue[Boolean](writeCommand, IsByName)
 
       val props = Map(
-        "table" -> Map("identifier" -> tableName),
+        "table" -> Map("identifier" -> tableName, "output" -> output),
         "writeOptions" -> writeOptions,
-        "isByName" -> isByName)
+        IsByName -> isByName)
 
       val sourceId = extractSourceIdFromRelation(namedRelation)
 
       processV2WriteCommand(writeCommand, sourceId, query, props)
     }
 
-    case `_: V2CreateTablePlan`(ctp) => {
-      val catalog = extractFieldValue[AnyRef](ctp, "catalog")
-      val identifier = extractFieldValue[AnyRef](ctp, "tableName")
-      val loadTableMethods = catalog.getClass.getMethods.filter(_.getName == "loadTable")
-      val table = loadTableMethods.flatMap(m => Try(m.invoke(catalog, identifier)).toOption).head
-      val sourceId = extractSourceIdFromTable(table)
+    case `_: CreateTableAsSelect`(ctc) =>
+      val prop = "ignoreIfExists" -> extractFieldValue[Boolean](ctc, "ignoreIfExists")
+      processV2CreateTableCommand(ctc,prop)
 
-      val query = extractFieldValue[LogicalPlan](ctp, "query")
-
-      val partitioning = extractFieldValue[AnyRef](ctp, "partitioning")
-      val properties = extractFieldValue[Map[String, String]](ctp, "properties")
-      val writeOptions = extractFieldValue[Map[String, String]](ctp, "writeOptions")
-      val props = Map(
-        "table" -> Map("identifier" -> identifier.toString),
-        "partitioning" -> partitioning,
-        "properties" -> properties,
-        "writeOptions" -> writeOptions)
-
-      val commandSpecificProp = ctp match {
-        case `_: CreateTableAsSelect`(_) =>
-          "ignoreIfExists" -> extractFieldValue[Boolean](ctp, "ignoreIfExists")
-        case `_: ReplaceTableAsSelect`(_) =>
-          "orCreate" -> extractFieldValue[Boolean](ctp, "orCreate")
-      }
-
-      (sourceId, SaveMode.Overwrite, query, props + commandSpecificProp)
-    }
+    case `_: ReplaceTableAsSelect`(ctc) =>
+      val prop = "orCreate" -> extractFieldValue[Boolean](ctc, "orCreate")
+      processV2CreateTableCommand(ctc, prop)
   }
 
   /**
     * @param v2WriteCommand org.apache.spark.sql.catalyst.plans.logical.V2WriteCommand
     */
-  def processV2WriteCommand(
+  private def processV2WriteCommand(
     v2WriteCommand: AnyRef,
     sourceId: SourceIdentifier,
     query: LogicalPlan,
@@ -117,6 +98,30 @@ class DataSourceV2Plugin(
 
     case `_: OverwritePartitionsDynamic`(_) =>
       (sourceId, SaveMode.Overwrite, query, props)
+  }
+
+  private def processV2CreateTableCommand(
+    ctc: AnyRef,
+    commandSpecificProp: (String, _)
+  ) : (SourceIdentifier, SaveMode, LogicalPlan, Params) = {
+    val catalog = extractFieldValue[AnyRef](ctc, "catalog")
+    val identifier = extractFieldValue[AnyRef](ctc, "tableName")
+    val loadTableMethods = catalog.getClass.getMethods.filter(_.getName == "loadTable")
+    val table = loadTableMethods.flatMap(m => Try(m.invoke(catalog, identifier)).toOption).head
+    val sourceId = extractSourceIdFromTable(table)
+
+    val query = extractFieldValue[LogicalPlan](ctc, "query")
+
+    val partitioning = extractFieldValue[AnyRef](ctc, "partitioning")
+    val properties = extractFieldValue[Map[String, String]](ctc, "properties")
+    val writeOptions = extractFieldValue[Map[String, String]](ctc, "writeOptions")
+    val props = Map(
+      "table" -> Map("identifier" -> identifier.toString),
+      "partitioning" -> partitioning,
+      "properties" -> properties,
+      "writeOptions" -> writeOptions)
+
+    (sourceId, SaveMode.Overwrite, query, props + commandSpecificProp)
   }
 
   /**
@@ -137,20 +142,27 @@ class DataSourceV2Plugin(
       val name = extractFieldValue[AnyRef](metadata, "name")
       SourceIdentifier(Some("cassandra"), s"cassandra:$keyspace:$name")
 
-    case `_: DeltaTableV2`(dt) =>
-      val tableProps = extractFieldValue[java.util.Map[String, String]](dt, "properties")
-      val uri = tableProps.get("location")
-      val provider = tableProps.get("provider")
-      SourceIdentifier(Some(provider), uri)
+    case `_: DeltaTableV2`(dt) => extractSourceIdFromDeltaTableV2(dt)
+    case `_: DatabricksDeltaTableV2`(dt) => extractSourceIdFromDeltaTableV2(dt)
 
     case `_: FileTable`(ft) =>
       val format = extractFieldValue[String](ft, "formatName").toLowerCase
       val paths = extractFieldValue[Seq[String]](ft, "paths")
       SourceIdentifier(Some(format), paths: _*)
   }
+
+  private def extractSourceIdFromDeltaTableV2(table: AnyRef): SourceIdentifier = {
+    val tableProps = extractFieldValue[java.util.Map[String, String]](table, "properties")
+    val uri = tableProps.get("location")
+    val provider = tableProps.get("provider")
+    SourceIdentifier(Some(provider), uri)
+  }
+
 }
 
 object DataSourceV2Plugin {
+  val IsByName = "isByName"
+
   object `_: V2WriteCommand` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.catalyst.plans.logical.V2WriteCommand")
 
@@ -162,9 +174,6 @@ object DataSourceV2Plugin {
 
   object `_: OverwritePartitionsDynamic` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.catalyst.plans.logical.OverwritePartitionsDynamic")
-
-  object `_: V2CreateTablePlan` extends SafeTypeMatchingExtractor[AnyRef](
-    "org.apache.spark.sql.catalyst.plans.logical.V2CreateTablePlan")
 
   object `_: CreateTableAsSelect` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.catalyst.plans.logical.CreateTableAsSelect")
@@ -180,6 +189,9 @@ object DataSourceV2Plugin {
 
   object `_: DeltaTableV2` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.delta.catalog.DeltaTableV2")
+
+  object `_: DatabricksDeltaTableV2` extends SafeTypeMatchingExtractor[AnyRef](
+    "com.databricks.sql.transaction.tahoe.catalog.DeltaTableV2")
 
   object `_: CassandraTable` extends SafeTypeMatchingExtractor[AnyRef](
     "com.datastax.spark.connector.datasource.CassandraTable")
