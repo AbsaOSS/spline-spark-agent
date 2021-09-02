@@ -16,7 +16,7 @@
 
 ARG DOCKER_BASE_IMAGE_PREFIX=
 
-FROM "$DOCKER_BASE_IMAGE_PREFIX"maven:3.6.3-openjdk-8
+FROM "$DOCKER_BASE_IMAGE_PREFIX"maven:3.6.0-jdk-8-slim
 
 LABEL \
     vendor="ABSA" \
