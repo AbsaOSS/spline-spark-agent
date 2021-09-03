@@ -102,6 +102,7 @@
         <delta.version>${delta-03.version}</delta.version>
         <delta-03.version>0.3.0</delta-03.version>
         <delta-08.version>0.8.0</delta-08.version>
+        <delta-10.version>1.0.0</delta-10.version>
 
         <!-- Cross build properties -->
 
@@ -120,7 +121,7 @@
         <url>${scm.url}</url>
         <connection>${scm.connection}</connection>
         <developerConnection>${scm.developerConnection}</developerConnection>
-        <tag>HEAD</tag>
+        <tag>release/0.6.3</tag>
     </scm>
 
     <modules>
@@ -5117,7 +5118,7 @@
             <properties>
                 <spark.version>${spark-31.version}</spark.version>
                 <json4s.version>${json4s-37.version}</json4s.version>
-                <delta.version>${delta-08.version}</delta.version>
+                <delta.version>${delta-10.version}</delta.version>
             </properties>
             <dependencyManagement>
                 <dependencies>

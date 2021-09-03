@@ -23,7 +23,7 @@ import za.co.absa.commons.reflect.ReflectionUtils._
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.harvester.builder.UnionNodeBuilder.ExtraFields
-import za.co.absa.spline.harvester.plugin.embedded.DataSourceV2Plugin.`_: V2WriteCommand`
+import za.co.absa.spline.harvester.plugin.embedded.DataSourceV2Plugin.{IsByName, `_: V2WriteCommand`}
 import za.co.absa.spline.producer.model.v1_1.{DataOperation, ExecutionPlan, WriteOperation}
 
 import java.util.UUID
@@ -33,7 +33,7 @@ class AttributeReorderingFilter(conf: Configuration) extends AbstractPostProcess
   override def processExecutionPlan(plan: ExecutionPlan, ctx: HarvestingContext): ExecutionPlan = {
     val isByName = plan
       .operations.write.params
-      .flatMap(_.get("isByName").map(_.asInstanceOf[Boolean]))
+      .flatMap(_.get(IsByName)).map(_.asInstanceOf[Boolean])
       .getOrElse(false)
 
     if (isByName)

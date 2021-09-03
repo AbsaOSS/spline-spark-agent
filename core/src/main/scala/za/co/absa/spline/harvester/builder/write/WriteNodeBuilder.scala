@@ -22,8 +22,9 @@ import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.harvester.ComponentCreatorFactory
 import za.co.absa.spline.harvester.ModelConstants.OperationExtras
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder
+import za.co.absa.spline.harvester.converter.IOParamsConverter
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
-import za.co.absa.spline.producer.model.v1_1.WriteOperation
+import za.co.absa.spline.producer.model.v1_1.{Attribute, WriteOperation}
 
 class WriteNodeBuilder
 (command: WriteCommand)
@@ -33,6 +34,8 @@ class WriteNodeBuilder
   override protected type R = WriteOperation
   override val operation: LogicalPlan = command.query
 
+  protected lazy val ioParamsConverter = new IOParamsConverter(exprToRefConverter)
+
   override def build(): WriteOperation = {
     val Seq(uri) = command.sourceIdentifier.uris
     val wop = WriteOperation(
@@ -41,7 +44,7 @@ class WriteNodeBuilder
       id = operationId,
       name = command.name.asOption,
       childIds = childIds,
-      params = Map(command.params.toSeq: _*).asOption,
+      params = ioParamsConverter.convert(command.params).asOption,
       extra = Map(
         OperationExtras.DestinationType -> command.sourceIdentifier.format
       ).asOption
@@ -49,4 +52,6 @@ class WriteNodeBuilder
 
     postProcessor.process(wop)
   }
+
+  def additionalAttributes: Seq[Attribute] = attributeConverter.values
 }
