@@ -35,11 +35,11 @@ trait ObjectStructureLogging {
 
   private def logObjectStructure(
     obj: AnyRef,
-    logMethod: String => Unit,
-    logMethodThrowable: (String, Throwable) => Unit
+    logFunction: String => Unit,
+    logFunctionThrowable: (String, Throwable) => Unit
   ): Unit =
     Try(ObjectStructureDumper.dump(obj)) match {
-      case Success(s) => logMethod(s)
-      case Failure(e) if NonFatal(e) => logMethodThrowable(s"Attempt to dump structure of ${obj.getClass} failed", e)
+      case Success(s) => logFunction(s)
+      case Failure(e) => logFunctionThrowable(s"Attempt to dump structure of ${obj.getClass} failed", e)
     }
 }
