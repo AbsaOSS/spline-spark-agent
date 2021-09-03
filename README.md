@@ -51,6 +51,9 @@ The agent can be used with or without a Spline server, depending on your use cas
 |**Spark 3.0** | &mdash;                    | Yes        |
 |**Spark 3.1** | &mdash;                    | Yes        |
 
+\
+**NOTE**: Only Java 1.8 is supported at the moment!
+
 <a id="usage"></a>
 ## Usage
 
@@ -449,6 +452,8 @@ mvn scala-cross-build:change-version -Pscala-2.12
 # now you can build for Scala 2.12
 mvn clean install -Pscala-2.12,spark-2.4
 ```
+\
+**NOTE**: Only Java 1.8 is supported at the moment!
 
 <a id="references"></a>
 ## References and examples
