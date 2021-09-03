@@ -19,6 +19,9 @@ package za.co.absa.spline.issue
 import za.co.absa.commons.io.TempDirectory
 import za.co.absa.spline.SparkApp
 
+/**
+ * This Job requires Spark 3 or higher
+ */
 object DeltaDSV2Job extends SparkApp(
   name = "DeltaDSV2Job",
   conf = Seq(
