@@ -27,9 +27,12 @@ import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo, WriteNodeInfo}
+import za.co.absa.spline.harvester.plugin.embedded.BigQueryPlugin.SparkBigQueryConfig.ImmutableMap
 import za.co.absa.spline.harvester.plugin.embedded.BigQueryPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, Plugin, RelationProviderProcessing}
 
+import java.lang.reflect.Method
+import java.lang.reflect.Modifier.isStatic
 import java.util.Optional
 import javax.annotation.Priority
 import scala.collection.JavaConverters._
@@ -132,33 +135,32 @@ object BigQueryPlugin {
         .asInstanceOf[TableId]
   }
 
-  object ImmutableMap {
-    type ImmutableMap = AnyRef
-    private val clazz = findPossiblyShadedClass("com.google", "com.google.common.collect.ImmutableMap")
-    val copyOf: AnyRef => ImmutableMap =
-      clazz
-        .getMethod("copyOf", classOf[java.util.Map[_, _]])
-        .invoke(clazz, _)
-        .asInstanceOf[ImmutableMap]
-  }
-
   object SparkBigQueryConfig {
     type SparkBigQueryConfig = {
       def getParentProjectId: String
     }
     private val clazz = findPossiblyShadedClass("com.google.cloud", "com.google.cloud.spark.bigquery.SparkBigQueryConfig")
-    private val immutableMapClass = findPossiblyShadedClass("com.google", "com.google.common.collect.ImmutableMap")
+    private val methodFrom: Method = clazz
+      .getMethods
+      .find(
+        m => m.getName == "from"
+          && isStatic(m.getModifiers)
+          && m.getParameterTypes.length == 7
+          && m.getReturnType.getSimpleName == "SparkBigQueryConfig"
+      ).getOrElse(sys.error(s"Cannot find method `public static SparkBigQueryConfig from(... {7 args} ...)` in the class `$clazz`"))
+
+    object ImmutableMap {
+      type ImmutableMap = AnyRef
+      private val imClass = SparkBigQueryConfig.methodFrom.getParameterTypes()(1) // 2nd parameter is `ImmutableMap`
+      val copyOf: AnyRef => ImmutableMap =
+        imClass
+          .getMethod("copyOf", classOf[java.util.Map[_, _]])
+          .invoke(imClass, _)
+          .asInstanceOf[ImmutableMap]
+    }
+
     val from: (ImmutableMap.ImmutableMap, ImmutableMap.ImmutableMap, Configuration, Integer, SQLConf, String, Optional[StructType]) => SparkBigQueryConfig =
-      clazz
-        .getMethod("from",
-          classOf[java.util.Map[String, String]],
-          immutableMapClass,
-          classOf[Configuration],
-          classOf[Int],
-          classOf[SQLConf],
-          classOf[String],
-          classOf[Optional[StructType]]
-        )
+      methodFrom
         .invoke(clazz, _, _, _, _, _, _, _)
         .asInstanceOf[SparkBigQueryConfig]
   }
