@@ -16,24 +16,21 @@
 
 package za.co.absa.spline.harvester.plugin.embedded
 
+import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.plans.logical._
-import org.apache.spark.sql.{SaveMode, SparkSession}
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Params, Precedence, ReadNodeInfo, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.embedded.DataSourceV2Plugin._
 import za.co.absa.spline.harvester.plugin.{Plugin, ReadNodeProcessing, WriteNodeProcessing}
-import za.co.absa.spline.harvester.qualifier.PathQualifier
 
 import javax.annotation.Priority
 import scala.language.reflectiveCalls
-import scala.util.{Success, Try}
+import scala.util.Try
 
 @Priority(Precedence.Normal)
-class DataSourceV2Plugin(
-  pathQualifier: PathQualifier,
-  session: SparkSession)
+class DataSourceV2Plugin
   extends Plugin
     with ReadNodeProcessing
     with WriteNodeProcessing {
@@ -52,7 +49,7 @@ class DataSourceV2Plugin(
   }
 
   override val writeNodeProcessor: PartialFunction[LogicalPlan, WriteNodeInfo] = {
-    case `_: V2WriteCommand`(writeCommand) => {
+    case `_: V2WriteCommand`(writeCommand) =>
       val namedRelation = extractFieldValue[AnyRef](writeCommand, "table")
       val query = extractFieldValue[LogicalPlan](writeCommand, "query")
 
@@ -69,7 +66,6 @@ class DataSourceV2Plugin(
       val sourceId = extractSourceIdFromRelation(namedRelation)
 
       processV2WriteCommand(writeCommand, sourceId, query, props)
-    }
 
     case `_: CreateTableAsSelect`(ctc) =>
       val prop = "ignoreIfExists" -> extractFieldValue[Boolean](ctc, "ignoreIfExists")
