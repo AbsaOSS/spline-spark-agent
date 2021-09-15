@@ -37,7 +37,7 @@ import scala.language.reflectiveCalls
 
 
 @Priority(Precedence.Normal)
-class BigQueryPlugin
+class BigQueryPlugin(spark: SparkSession)
   extends Plugin
     with BaseRelationProcessing
     with RelationProviderProcessing {
@@ -62,7 +62,6 @@ class BigQueryPlugin
       def cmdOptionKeysStr = cmd.options.keys.mkString(", ")
 
       def bigQueryConfig = {
-        val Some(spark) = SparkSession.getActiveSession
         SparkBigQueryConfig.from(
           ImmutableMap.copyOf(cmd.options.asJava),
           ImmutableMap.copyOf(spark.conf.getAll.asJava),
