@@ -29,6 +29,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>za.co.absa.spline.agent.spark</groupId>
+            <artifactId>agent-core_${scala.binary.version}</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
@@ -39,37 +44,29 @@
             <artifactId>spark-sql_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-mllib_${scala.binary.version}</artifactId>
-            <version>${spark.version}</version>
-        </dependency>
+
+        <!-- runtime dependencies -->
+
         <dependency>
             <groupId>com.databricks</groupId>
             <artifactId>spark-xml_${scala.binary.version}</artifactId>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>com.crealytics</groupId>
             <artifactId>spark-excel_${scala.binary.version}</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>za.co.absa.spline.agent.spark</groupId>
-            <artifactId>agent-core_${scala.binary.version}</artifactId>
-            <version>${project.version}</version>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>com.google.cloud.spark</groupId>
             <artifactId>spark-bigquery-with-dependencies_${scala.binary.version}</artifactId>
             <version>0.22.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.cloud.bigdataoss</groupId>
-            <artifactId>gcs-connector</artifactId>
-            <version>hadoop2-2.0.1</version>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
 
@@ -107,7 +104,7 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <property name="compile_classpath" refid="maven.compile.classpath" />
+                                        <property name="classpath" refid="maven.runtime.classpath" />
                                         <ant antfile="${basedir}/run-example.xml">
                                             <target name="main" />
                                         </ant>
@@ -131,6 +128,25 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+
+        <profile>
+            <id>google</id>
+            <!-- the profile is required to run `BigQueryExample` -->
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-mllib_${scala.binary.version}</artifactId>
+                    <version>${spark.version}</version>
+                    <scope>runtime</scope>
+                </dependency>
+                <dependency>
+                    <groupId>com.google.cloud.bigdataoss</groupId>
+                    <artifactId>gcs-connector</artifactId>
+                    <version>hadoop2-2.0.1</version>
+                    <scope>runtime</scope>
+                </dependency>
+            </dependencies>
         </profile>
     </profiles>
 
