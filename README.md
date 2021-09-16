@@ -5,8 +5,8 @@ The Spline agent for Apache Spark is a complementary module to the [Spline proje
 that captures runtime lineage information from the Apache Spark jobs.
 
 The agent is a Scala library that is embedded into the Spark driver, listening to Spark events, and capturing logical execution plans.
-The collected metadata is then handed over to the lineage dispatcher, from where it can be either send to the Spline server 
-(e.g. via REST API or Kafka), or used in another way depending on selected dispatcher type (see [Lineage Dispatchers](#dispatchers)).
+The collected metadata is then handed over to the lineage dispatcher, from where it can either be sent to the Spline server 
+(e.g. via REST API or Kafka), or used in another way, depending on selected dispatcher type (see [Lineage Dispatchers](#dispatchers)).
 
 The agent can be used with or without a Spline server, depending on your use case. See [References](#references).
 
@@ -50,9 +50,6 @@ The agent can be used with or without a Spline server, depending on your use cas
 |**Spark 2.4** | Yes                        | Yes        |
 |**Spark 3.0** | &mdash;                    | Yes        |
 |**Spark 3.1** | &mdash;                    | Yes        |
-
-\
-**NOTE**: Only Java 1.8 is supported at the moment!
 
 <a id="usage"></a>
 ## Usage
@@ -463,8 +460,6 @@ mvn scala-cross-build:change-version -Pscala-2.12
 # now you can build for Scala 2.12
 mvn clean install -Pscala-2.12,spark-2.4
 ```
-\
-**NOTE**: Only Java 1.8 is supported at the moment!
 
 <a id="references"></a>
 ## References and examples
