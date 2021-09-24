@@ -26,11 +26,13 @@ import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.extra.{UserExtraAppendingPostProcessingFilter, UserExtraMetadataProvider}
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
+import za.co.absa.spline.harvester.postprocessing.extra.DeclarativeExtraInjectingFilter
 import za.co.absa.spline.harvester.postprocessing.{AttributeReorderingFilter, OneRowRelationFilter, PostProcessingFilter}
 import za.co.absa.spline.harvester.{LineageHarvesterFactory, QueryExecutionEventHandler}
 import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
 
 import scala.reflect.ClassTag
+import scala.util.{Failure, Success, Try}
 
 object DefaultSplineConfigurer {
   private val defaultPropertiesFileName = "spline.default.properties"
@@ -121,8 +123,18 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
 
   protected def postProcessingFilter: PostProcessingFilter = createComponentByKey(RootPostProcessingFilter)
 
-  private def internalPostProcessingFilters: Seq[PostProcessingFilter] =
-    Seq(new AttributeReorderingFilter(configuration), new OneRowRelationFilter(configuration))
+  private def internalPostProcessingFilters: Seq[PostProcessingFilter] = {
+    Seq(new AttributeReorderingFilter(), new OneRowRelationFilter()) ++ createDeclarativeExtraInjectingFilterOption()
+  }
+
+  private def createDeclarativeExtraInjectingFilterOption(): Option[PostProcessingFilter] =
+    Try(DeclarativeExtraInjectingFilter(configuration)) match {
+      case Success(maybeFilter) => maybeFilter
+      case Failure(e) if splineMode == SplineMode.REQUIRED => throw e
+      case Failure(e) if splineMode == SplineMode.BEST_EFFORT =>
+        logWarning("DeclarativeExtraInjectingFilter initialization failed.", e)
+        None
+    }
 
   private def allPostProcessingFilters: Seq[PostProcessingFilter] =
     internalPostProcessingFilters :+ postProcessingFilter
