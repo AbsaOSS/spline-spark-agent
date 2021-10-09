@@ -513,11 +513,7 @@
 
             <!-- Others -->
 
-            <dependency>
-                <groupId>org.scalaz</groupId>
-                <artifactId>scalaz-core_${scala.binary.version}</artifactId>
-                <version>7.2.29</version>
-            </dependency>
+
 
             <!-- Test scope dependencies -->
 
