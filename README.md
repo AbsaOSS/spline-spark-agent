@@ -20,7 +20,8 @@ The agent can be used with or without a Spline server, depending on your use cas
 ## Table of Contents
 
 <!--ts-->
-   * [Spark / Scala version compatibility matrix](#compat-matrix)
+   * [Versioning](#versioning)
+      * [Spark / Scala version compatibility matrix](#compat-matrix)
    * [Usage](#usage)
       * [Selecting artifact](#selecting-artifact)
       * [Initialization](#initialization)
@@ -40,8 +41,26 @@ The agent can be used with or without a Spline server, depending on your use cas
 
 <!--te-->
 
+<a id="versioning"></a>
+## Versioning
+
+The Spline Spark Agent follows the [Semantic Versioning](https://semver.org/) principles.
+The _Public API_ is defined as a set of entry-point classes (`SparkLineageInitializer`, `SplineSparkSessionWrapper`), 
+extension APIs (Plugin API, filters, dispatchers), configuration properties and a set of supported Spark versions.
+In other words, the _Spline Spark Agent Public API_ in terms of _SemVer_ covers all entities and abstractions that are designed 
+to be used or extended by client applications.
+
+The version number **does not** directly reflect the relation of the Agent to the Spline Producer API (the Spline server). Both the Spline Server and
+the Agent are designed to be as much mutually compatible as possible, assuming long-term operation and a possibly significant gap in the server and
+the agent release dates. Such requirement is dictated by the nature of the Agent that could be embedded into some Spark jobs and only rarely if ever
+updated without posing a risk to stop working because of eventual Spline server update. Likewise, it should be possible to update the Agent anytime
+(e.g. to fix a bug or support a newer Spark version or a feature that earlier agent version didn't support) without requiring a Spline server upgrade.
+
+Although isn't required (see above), but for minimizing user astonishment when and if a compatibility between too distant versions of the Agent and
+the Server is dropped, the fact will be reflected in the incremented _Major_ version component of the Agent.
+
 <a id="compat-matrix"></a>
-## Spark / Scala version compatibility matrix
+### Spark / Scala version compatibility matrix
 
 |              | Scala 2.11                 | Scala 2.12 |
 |--------------|:--------------------------:|:----------:|
