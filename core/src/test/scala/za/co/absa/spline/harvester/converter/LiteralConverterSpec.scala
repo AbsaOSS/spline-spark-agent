@@ -17,13 +17,16 @@
 package za.co.absa.spline.harvester.converter
 
 import org.apache.spark.sql.catalyst.expressions.Literal
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.OneInstancePerTest
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import za.co.absa.spline.harvester.IdGenerator
 import za.co.absa.spline.model.dt
-import za.co.absa.spline.producer.model.v1_1.{Literal => SplineLiteral}
+
+import java.util.UUID
 
 class LiteralConverterSpec extends AnyFlatSpec with OneInstancePerTest with MockitoSugar with Matchers {
 
@@ -32,7 +35,11 @@ class LiteralConverterSpec extends AnyFlatSpec with OneInstancePerTest with Mock
   behavior of "Converting Spark Literals"
 
   private val dtConverterMock = mock[DataTypeConverter]
-  private val converter = new LiteralConverter(new DataConverter, dtConverterMock)
+  private val idGeneratorMock = mock[IdGenerator[Any, String]]
+
+  private val converter = new LiteralConverter(idGeneratorMock, new DataConverter, dtConverterMock)
+
+  when(idGeneratorMock.nextId(any())).thenReturn("some_id")
 
   it should "support array of struct literals" in {
     val testLiteral = Literal.create(Array(
@@ -40,15 +47,12 @@ class LiteralConverterSpec extends AnyFlatSpec with OneInstancePerTest with Mock
       Tuple2("a2", "b2")
     ))
 
-    val dummyType = dt.Simple("dummy", nullable = false)
+    val dummyType = dt.Simple(UUID.randomUUID(), "dummy", nullable = false)
     when(dtConverterMock convert testLiteral.dataType -> false) thenReturn dummyType
 
-    val expression = converter.convert(testLiteral)
+    val literal = converter.convert(testLiteral)
 
-    expression shouldBe a[SplineLiteral]
-
-    val literal = expression.asInstanceOf[SplineLiteral]
-
+    literal.id shouldEqual "some_id"
     literal.value shouldEqual Seq(Seq("a1", "b1"), Seq("a2", "b2"))
     literal.dataType shouldEqual Some(dummyType.id)
     literal.extra.get should contain("_typeHint" -> "expr.Literal")
@@ -66,12 +70,12 @@ class LiteralConverterSpec extends AnyFlatSpec with OneInstancePerTest with Mock
       ))
     ))
 
-    val dummyType = dt.Simple("dummy", nullable = false)
+    val dummyType = dt.Simple(UUID.randomUUID(), "dummy", nullable = false)
     when(dtConverterMock convert testLiteral.dataType -> false) thenReturn dummyType
 
-    val expression = converter.convert(testLiteral)
-    val literal = expression.asInstanceOf[SplineLiteral]
+    val literal = converter.convert(testLiteral)
 
+    literal.id shouldEqual "some_id"
     literal.dataType shouldEqual Some(dummyType.id)
     literal.value should be {
       Seq(

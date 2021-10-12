@@ -19,10 +19,14 @@ package za.co.absa.spline.harvester
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.SparkPlan
+import za.co.absa.commons.lang.CachingConverter
+import za.co.absa.spline.harvester.IdGenerator.UUIDVersion
+import za.co.absa.spline.harvester.builder.OperationNodeBuilderFactory
 import za.co.absa.spline.harvester.builder.dsformat.PluggableDataSourceFormatResolver
 import za.co.absa.spline.harvester.builder.read.PluggableReadCommandExtractor
 import za.co.absa.spline.harvester.builder.write.PluggableWriteCommandExtractor
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
+import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.plugin.registry.AutoDiscoveryPluginRegistry
 import za.co.absa.spline.harvester.postprocessing.{PostProcessingFilter, PostProcessor}
@@ -33,6 +37,7 @@ import scala.language.postfixOps
 class LineageHarvesterFactory(
   session: SparkSession,
   splineMode: SplineMode,
+  execPlanUUIDVersion: UUIDVersion,
   iwdStrategy: IgnoredWriteDetectionStrategy,
   filters: Seq[PostProcessingFilter]) {
 
@@ -43,7 +48,12 @@ class LineageHarvesterFactory(
   private val readCommandExtractor = new PluggableReadCommandExtractor(pluginRegistry, dataSourceFormatResolver)
 
   def harvester(logicalPlan: LogicalPlan, executedPlan: Option[SparkPlan]): LineageHarvester = {
-    val harvestingContext = HarvestingContext(logicalPlan, executedPlan, session)
+    val idGenerators = new IdGenerators(execPlanUUIDVersion)
+    val harvestingContext = new HarvestingContext(logicalPlan, executedPlan, session, idGenerators)
+    val postProcessor = new PostProcessor(filters, harvestingContext)
+    val dataTypeConverter = new DataTypeConverter(idGenerators.dataTypeIdGenerator) with CachingConverter
+    val dataConverter = new DataConverter
+    val opNodeBuilderFactory = new OperationNodeBuilderFactory(postProcessor, dataTypeConverter, dataConverter, idGenerators)
 
     new LineageHarvester(
       harvestingContext,
@@ -51,7 +61,9 @@ class LineageHarvesterFactory(
       writeCommandExtractor,
       readCommandExtractor,
       iwdStrategy,
-      new PostProcessor(filters, harvestingContext)
+      postProcessor,
+      dataTypeConverter,
+      opNodeBuilderFactory
     )
   }
 

@@ -17,7 +17,6 @@
 package za.co.absa.spline.harvester.conf
 
 import za.co.absa.spline.harvester.QueryExecutionEventHandler
-import za.co.absa.spline.harvester.dispatcher.{HttpLineageDispatcher, LineageDispatcher}
 
 /**
   * The trait describes settings needed for initialization of the library.
