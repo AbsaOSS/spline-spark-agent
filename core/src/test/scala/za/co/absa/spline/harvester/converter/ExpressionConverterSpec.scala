@@ -21,13 +21,17 @@ import org.apache.spark.sql.catalyst.expressions.codegen.{CodegenContext, ExprCo
 import org.apache.spark.sql.catalyst.expressions.{CaseWhen, Expression, Literal}
 import org.apache.spark.sql.types.DataTypes.NullType
 import org.apache.spark.sql.types._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{Inside, OneInstancePerTest}
 import org.scalatestplus.mockito.MockitoSugar
+import za.co.absa.spline.harvester.IdGenerator
 import za.co.absa.spline.model.dt
-import za.co.absa.spline.producer.model.v1_1.{FunctionalExpression, Literal => SplineLiteral}
+import za.co.absa.spline.producer.model.v1_1.FunctionalExpression
+
+import java.util.UUID
 
 class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with MockitoSugar with Matchers with Inside {
 
@@ -39,16 +43,19 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
 
   private val dtConverterMock = mock[DataTypeConverter]
   private val exprToRefConverterMock = mock[ExprToRefConverter]
-  private val converter = new ExpressionConverter(dtConverterMock, exprToRefConverterMock)
+  private val idGeneratorMock = mock[IdGenerator[Any, String]]
+  private val converter = new ExpressionConverter(idGeneratorMock, dtConverterMock, exprToRefConverterMock)
 
   when(dtConverterMock convert NullType -> true) thenReturn nullDataType
   when(dtConverterMock convert StringType -> false) thenReturn stringDataType
+  when(idGeneratorMock.nextId(any())) thenReturn "some_id"
 
   it should "support secondary constructor, but only capture params from the primary one" in {
     val expression = new Foo("this parameter should not be captured")
 
     inside(converter.convert(expression)) {
       case FunctionalExpression(id, Some(dataTypeId), children, extra, name, params) =>
+        id shouldEqual "some_id"
         name shouldEqual "foo"
         dataTypeId shouldEqual nullDataType.id
         children should be(None)
@@ -200,8 +207,8 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
 
 object ExpressionConverterSpec {
 
-  val nullDataType = dt.Simple("Null", nullable = true)
-  val stringDataType = dt.Simple("String", nullable = false)
+  private val nullDataType = dt.Simple(UUID.randomUUID(), "Null", nullable = true)
+  private val stringDataType = dt.Simple(UUID.randomUUID(), "String", nullable = false)
 
   case class Foo(
     returnType: DataType,

@@ -19,14 +19,15 @@ package za.co.absa.spline.harvester.converter
 import org.apache.commons.lang3.StringUtils.substringAfter
 import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.Converter
+import za.co.absa.spline.harvester.IdGenerator
 import za.co.absa.spline.harvester.converter.ReflectiveExtractor.extractProperties
 import za.co.absa.spline.producer.model.v1_1._
 
-import java.util.UUID
 import scala.language.reflectiveCalls
 
 
 class ExpressionConverter(
+  idGen: IdGenerator[Any, String],
   dataTypeConverter: DataTypeConverter,
   exprTpRefConverter: => ExprToRefConverter
 ) extends Converter {
@@ -41,7 +42,7 @@ class ExpressionConverter(
 
     case a: sparkExprssions.Alias =>
       FunctionalExpression(
-        id = randomUUIDString,
+        id = idGen.nextId(),
         dataType = convertDataType(a),
         childRefs = convertChildren(a).asOption,
         extra = createExtra(sparkExpr, ExprV1.Types.Alias).asOption,
@@ -51,7 +52,7 @@ class ExpressionConverter(
 
     case bo: sparkExprssions.BinaryOperator =>
       FunctionalExpression(
-        id = randomUUIDString,
+        id = idGen.nextId(),
         dataType = convertDataType(bo),
         childRefs = convertChildren(bo).asOption,
         extra = (createExtra(bo, ExprV1.Types.Binary) + (ExprExtra.Symbol -> bo.symbol)).asOption,
@@ -61,7 +62,7 @@ class ExpressionConverter(
 
     case u: sparkExprssions.ScalaUDF =>
       FunctionalExpression(
-        id = randomUUIDString,
+        id = idGen.nextId(),
         dataType = convertDataType(u),
         childRefs = convertChildren(u).asOption,
         extra = createExtra(u, ExprV1.Types.UDF).asOption,
@@ -71,7 +72,7 @@ class ExpressionConverter(
 
     case e: sparkExprssions.LeafExpression =>
       FunctionalExpression(
-        id = randomUUIDString,
+        id = idGen.nextId(),
         dataType = convertDataType(e),
         childRefs = None,
         extra = createExtra(e, ExprV1.Types.GenericLeaf).asOption,
@@ -82,7 +83,7 @@ class ExpressionConverter(
     case _: sparkExprssions.WindowSpecDefinition
          | _: sparkExprssions.WindowFrame =>
       FunctionalExpression(
-        id = randomUUIDString,
+        id = idGen.nextId(),
         dataType = None,
         childRefs = convertChildren(sparkExpr).asOption,
         extra = createExtra(sparkExpr, ExprV1.Types.UntypedExpression).asOption,
@@ -92,17 +93,13 @@ class ExpressionConverter(
 
     case e: sparkExprssions.Expression =>
       FunctionalExpression(
-        id = randomUUIDString,
+        id = idGen.nextId(),
         dataType = convertDataType(e),
         childRefs = convertChildren(e).asOption,
         extra = createExtra(e, ExprV1.Types.Generic).asOption,
         name = e.prettyName,
         params = getExpressionParameters(e).asOption
       )
-  }
-
-  private def randomUUIDString = {
-    UUID.randomUUID().toString
   }
 
   private def convertDataType(expr: sparkExprssions.Expression) = {
@@ -137,7 +134,7 @@ object ExpressionConverter {
 
   }
 
-  private val BasicSparkExprProps = Set("children", "dataType", "nullable")
+  private val BasicSparkExprProps = Set("children", "dataType", "nullable", "exprId")
 
   private def getExpressionSimpleClassName(expr: sparkExprssions.Expression) = {
     val fullName = expr.getClass.getName

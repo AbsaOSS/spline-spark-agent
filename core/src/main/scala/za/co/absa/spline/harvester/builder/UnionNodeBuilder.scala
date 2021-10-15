@@ -19,17 +19,16 @@ package za.co.absa.spline.harvester.builder
 import org.apache.spark.sql.catalyst.plans.logical.Union
 import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.OptionImplicits._
-import za.co.absa.spline.harvester.ComponentCreatorFactory
+import za.co.absa.spline.harvester.IdGenerators
 import za.co.absa.spline.harvester.builder.UnionNodeBuilder._
+import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.v1_1.{AttrOrExprRef, Attribute, FunctionalExpression}
 
-import java.util.UUID
-
 class UnionNodeBuilder
-  (override val operation: Union)
-  (override val componentCreatorFactory: ComponentCreatorFactory, postProcessor: PostProcessor)
-  extends GenericNodeBuilder(operation)(componentCreatorFactory, postProcessor) {
+(override val operation: Union)
+  (idGenerators: IdGenerators, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
+  extends GenericNodeBuilder(operation)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
 
   private lazy val unionInputs: Seq[Seq[Attribute]] = inputAttributes.transpose
 
@@ -48,8 +47,8 @@ class UnionNodeBuilder
     outputSparkAttribute: sparkExprssions.Attribute
   ) =
     FunctionalExpression(
-      id = UUID.randomUUID().toString,
-      dataType = componentCreatorFactory.dataTypeConverter
+      id = idGenerators.expressionIdGenerator.nextId(),
+      dataType = dataTypeConverter
         .convert(outputSparkAttribute.dataType, outputSparkAttribute.nullable).id.asOption,
       childRefs = inputSplineAttributes.map(att => AttrOrExprRef(Some(att.id), None)).asOption,
       extra = Map(ExtraFields.Synthetic -> true).asOption,
@@ -60,7 +59,7 @@ class UnionNodeBuilder
   private def constructUnionAttribute(attributes: Seq[Attribute], function: FunctionalExpression) = {
     val attr1 = attributes.head
     Attribute(
-      id = UUID.randomUUID().toString,
+      id = idGenerators.attributeIdGenerator.nextId(),
       dataType = function.dataType,
       childRefs = List(AttrOrExprRef(None, Some(function.id))).asOption,
       extra = Map(ExtraFields.Synthetic -> true).asOption,

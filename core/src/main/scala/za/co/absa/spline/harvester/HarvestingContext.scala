@@ -20,8 +20,9 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.SparkPlan
 
-case class HarvestingContext(
-  logicalPlan: LogicalPlan,
-  executedPlanOpt: Option[SparkPlan],
-  session: SparkSession
+class HarvestingContext(
+  val logicalPlan: LogicalPlan,
+  val executedPlanOpt: Option[SparkPlan],
+  val session: SparkSession,
+  val idGenerators: IdGenerators
 )

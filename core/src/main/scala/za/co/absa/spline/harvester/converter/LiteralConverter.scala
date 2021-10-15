@@ -18,12 +18,16 @@ package za.co.absa.spline.harvester.converter
 
 import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.Converter
+import za.co.absa.spline.harvester.IdGenerator
 import za.co.absa.spline.producer.model.v1_1._
 
-import java.util.UUID
 import scala.language.reflectiveCalls
 
-class LiteralConverter(dataConverter: DataConverter, dataTypeConverter: DataTypeConverter) extends Converter {
+class LiteralConverter(
+  idGen: IdGenerator[Any, String],
+  dataConverter: DataConverter,
+  dataTypeConverter: DataTypeConverter
+) extends Converter {
 
   import ExpressionConverter._
   import za.co.absa.commons.lang.OptionImplicits._
@@ -32,15 +36,15 @@ class LiteralConverter(dataConverter: DataConverter, dataTypeConverter: DataType
   override type To = Literal
 
   def convert(lit: From): To =
-      Literal(
-        id = UUID.randomUUID().toString,
-        dataType = dataTypeConverter
-          .convert(lit.dataType, lit.nullable)
-          .asOption
-          .map(_.id),
-        extra = createExtra(lit, "expr.Literal").asOption,
-        value = dataConverter.convert((lit.value, lit.dataType))
-      )
+    Literal(
+      id = idGen.nextId(),
+      dataType = dataTypeConverter
+        .convert(lit.dataType, lit.nullable)
+        .asOption
+        .map(_.id),
+      extra = createExtra(lit, "expr.Literal").asOption,
+      value = dataConverter.convert((lit.value, lit.dataType))
+    )
 }
 
 

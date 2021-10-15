@@ -21,6 +21,8 @@ import org.scalatest.matchers.should.Matchers
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDeSpec.{Bar, Foo}
 import za.co.absa.spline.model.dt
 
+import java.util.UUID
+
 class HarvesterJsonSerDeSpec
   extends AnyFlatSpec
     with Matchers {
@@ -73,7 +75,7 @@ class HarvesterJsonSerDeSpec
   }
 
   it should "support type hints for Spline 0.3 model entities" in {
-    val theType = dt.Simple("test", nullable = true)
+    val theType = dt.Simple(UUID.randomUUID(), "test", nullable = true)
     Seq(theType).toJson should include(""""_typeHint"""")
     Seq(theType).toJson should include(""""dt.Simple"""")
     Seq(theType).toJson.fromJson[Seq[dt.DataType]] should equal(Seq(theType))
