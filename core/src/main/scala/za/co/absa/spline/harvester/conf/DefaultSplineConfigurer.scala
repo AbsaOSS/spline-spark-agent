@@ -21,13 +21,14 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import za.co.absa.commons.HierarchicalObjectFactory
 import za.co.absa.commons.config.ConfigurationImplicits
-import za.co.absa.spline.harvester.IdGenerator.UUIDVersion
+import za.co.absa.spline.harvester.IdGenerator.{UUIDGeneratorFactory, UUIDNamespace}
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.extra.{UserExtraAppendingPostProcessingFilter, UserExtraMetadataProvider}
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.postprocessing.{AttributeReorderingFilter, OneRowRelationFilter, PostProcessingFilter}
-import za.co.absa.spline.harvester.{IdGenerators, LineageHarvesterFactory, QueryExecutionEventHandler}
+import za.co.absa.spline.harvester.{LineageHarvesterFactory, QueryExecutionEventHandler}
+import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
 
 import scala.reflect.ClassTag
 
@@ -103,10 +104,9 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
     }
   }
 
-  private val execPlanUUIDVersion: UUIDVersion = {
+  private val execPlanUUIDGeneratorFactory: UUIDGeneratorFactory[UUIDNamespace, ExecutionPlan] = {
     val uuidVer = configuration.getRequiredInt(ExecPlanUUIDVersion)
-    new IdGenerators(uuidVer) // validation
-    uuidVer
+    UUIDGeneratorFactory.forVersion(uuidVer)
   }
 
   override def queryExecutionEventHandler: QueryExecutionEventHandler = {
@@ -149,7 +149,7 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
     new LineageHarvesterFactory(
       sparkSession,
       splineMode,
-      execPlanUUIDVersion,
+      execPlanUUIDGeneratorFactory,
       ignoredWriteDetectionStrategy,
       allPostProcessingFilters ++ maybeUserExtraAppendingPostProcessingFilter
     )

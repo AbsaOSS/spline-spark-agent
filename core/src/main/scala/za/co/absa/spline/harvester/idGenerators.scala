@@ -30,6 +30,17 @@ sealed trait IdGenerator[-A, +B] {
 
 object IdGenerator {
   type UUIDVersion = Int
+  type UUIDNamespace = UUID
+  type UUIDGeneratorFactory[Seed, -Input <: AnyRef] = Seed => IdGenerator[Input, UUID]
+
+  object UUIDGeneratorFactory {
+    def forVersion[Seed, Input <: AnyRef](uuidVersion: UUIDVersion): UUIDGeneratorFactory[Seed, Input] = uuidVersion match {
+      case 4 => _ => new UUID4IdGenerator
+      case 3 => ns => new UUID3IdGenerator[Input](ns.asInstanceOf[UUIDNamespace])
+      case 5 => ns => new UUID5IdGenerator[Input](ns.asInstanceOf[UUIDNamespace])
+      case v => throw new IllegalArgumentException(s"UUID version $v is not supported")
+    }
+  }
 
   object UUIDNamespace {
     val DataType: UUID = UUID.fromString("1ec15c9d-73c0-42e5-872f-65d3feb849c4")

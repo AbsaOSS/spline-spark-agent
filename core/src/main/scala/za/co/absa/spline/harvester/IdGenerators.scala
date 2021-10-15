@@ -21,14 +21,8 @@ import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
 
 import java.util.UUID
 
-class IdGenerators(execPlanUUIDVersion: UUIDVersion) {
-  val execPlanIdGenerator: IdGenerator[ExecutionPlan, UUID] = execPlanUUIDVersion match {
-    case 4 => new UUID4IdGenerator
-    case 3 => new UUID3IdGenerator[ExecutionPlan](UUIDNamespace.ExecutionPlan)
-    case 5 => new UUID5IdGenerator[ExecutionPlan](UUIDNamespace.ExecutionPlan)
-    case v => throw new IllegalArgumentException(s"UUID version $v is not supported")
-  }
-
+class IdGenerators(execPlanUUIDGeneratorFactory: UUIDGeneratorFactory[UUIDNamespace, ExecutionPlan]) {
+  val execPlanIdGenerator: IdGenerator[ExecutionPlan, UUID] = execPlanUUIDGeneratorFactory(UUIDNamespace.ExecutionPlan)
   val attributeIdGenerator: IdGenerator[Any, String] = new SequentialIdGenerator("attr-{0}")
   val expressionIdGenerator: IdGenerator[Any, String] = new SequentialIdGenerator("expr-{0}")
   val operationIdGenerator: IdGenerator[Any, String] = new SequentialIdGenerator("op-{0}")

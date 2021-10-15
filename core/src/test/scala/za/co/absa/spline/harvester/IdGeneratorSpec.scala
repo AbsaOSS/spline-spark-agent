@@ -21,6 +21,8 @@ import org.mockito.Mockito._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import za.co.absa.spline.harvester.IdGenerator.UUIDGeneratorFactory
+import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
 
 import java.security.MessageDigest
 import java.util.UUID
@@ -33,8 +35,11 @@ class IdGeneratorSpec
   behavior of "IdGenerators.dataTypeIdGenerator"
 
   it should "generate deterministic sequence of unique ID" in {
-    val gen1 = new IdGenerators(4).dataTypeIdGenerator
-    val gen2 = new IdGenerators(4).dataTypeIdGenerator
+
+    val execPlanUUIDGeneratorFactoryMock = mock[UUIDGeneratorFactory[Any, ExecutionPlan]]
+
+    val gen1 = new IdGenerators(execPlanUUIDGeneratorFactoryMock).dataTypeIdGenerator
+    val gen2 = new IdGenerators(execPlanUUIDGeneratorFactoryMock).dataTypeIdGenerator
 
     val seq1 = (1 to 10).map(_ => gen1.nextId())
     val seq2 = (1 to 10).map(_ => gen2.nextId())
