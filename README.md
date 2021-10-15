@@ -56,7 +56,7 @@ the agent release dates. Such requirement is dictated by the nature of the Agent
 updated without posing a risk to stop working because of eventual Spline server update. Likewise, it should be possible to update the Agent anytime
 (e.g. to fix a bug or support a newer Spark version or a feature that earlier agent version didn't support) without requiring a Spline server upgrade.
 
-Although not required by the above statement, for minimizing user astonishment when the compatibility between too distant the _Agent_ and the _Server_
+Although not required by the above statement, for minimizing user astonishment when the compatibility between too distant _Agent_ and _Server_
 versions is dropped, we'll increment the _Major_ version component.
 
 <a id="compat-matrix"></a>
