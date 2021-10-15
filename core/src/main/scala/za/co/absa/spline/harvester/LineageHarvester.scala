@@ -21,7 +21,7 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.execution.{LeafExecNode, SparkPlan}
-import scalaz.Scalaz._
+import za.co.absa.commons.CollectionImplicits._
 import za.co.absa.commons.graph.GraphImplicits._
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.reflect.ReflectionUtils
@@ -34,7 +34,7 @@ import za.co.absa.spline.harvester.builder.write.{WriteCommand, WriteCommandExtr
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
-import za.co.absa.spline.harvester.logging.{ObjectStructureDumper, ObjectStructureLogging}
+import za.co.absa.spline.harvester.logging.ObjectStructureLogging
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.v1_1._
 
@@ -111,9 +111,10 @@ class LineageHarvester(
         None
       }
       else {
-        val errorOrDuration = result.toDisjunction.toEither
-        val maybeError = errorOrDuration.left.toOption
-        val maybeDuration = errorOrDuration.right.toOption
+        val (maybeError, maybeDuration) = result match {
+          case Failure(e) => (Some(e), None)
+          case Success(d) => (None, Some(d))
+        }
 
         val eventExtra = Map[String, Any](
           ExecutionEventExtra.AppId -> ctx.session.sparkContext.applicationId,
