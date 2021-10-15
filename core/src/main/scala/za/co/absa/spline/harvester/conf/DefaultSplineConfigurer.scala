@@ -46,8 +46,6 @@ object DefaultSplineConfigurer {
     /**
      * The UUID version that is used for ExecutionPlan ID.
      * Note: Hash based versions (3 and 5) produce deterministic IDs based on the ExecutionPlan body.
-     *
-     * @see [[SplineMode]]
      */
     val ExecPlanUUIDVersion = "spline.internal.execPlan.uuid.version"
 
