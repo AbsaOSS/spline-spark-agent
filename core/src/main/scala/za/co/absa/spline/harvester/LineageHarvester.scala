@@ -21,7 +21,7 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.execution.{LeafExecNode, SparkPlan}
-import scalaz.Scalaz._
+import za.co.absa.commons.CollectionImplicits._
 import za.co.absa.commons.graph.GraphImplicits._
 import za.co.absa.commons.lang.CachingConverter
 import za.co.absa.commons.lang.OptionImplicits._
@@ -114,9 +114,10 @@ class LineageHarvester(
         val plan = planWithoutId.copy(id = Some(planId))
 
         val event = {
-          val errorOrDuration = result.toDisjunction.toEither
-          val maybeError = errorOrDuration.left.toOption
-          val maybeDuration = errorOrDuration.right.toOption
+          val (maybeError, maybeDuration) = result match {
+          case Failure(e) => (Some(e), None)
+          case Success(d) => (None, Some(d))
+          }
 
           val eventExtra = Map[String, Any](
             ExecutionEventExtra.AppId -> ctx.session.sparkContext.applicationId,

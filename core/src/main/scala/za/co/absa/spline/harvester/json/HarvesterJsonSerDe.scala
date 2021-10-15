@@ -17,25 +17,36 @@
 package za.co.absa.spline.harvester.json
 
 import org.json4s.JValue
+import org.json4s.jackson.JsonMethods
 import za.co.absa.commons.json.AbstractJsonSerDe
+import za.co.absa.commons.json.format.JavaTypesSupport
 import za.co.absa.commons.reflect.ReflectionUtils
 
+import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
+import scala.tools.reflect.ToolBox
 
 object HarvesterJsonSerDe {
+
+  private def classNameOf[A: ClassTag] = {
+    implicitly[ClassTag[A]].runtimeClass.getCanonicalName
+  }
+
+  private val JsonMethods = classNameOf[JsonMethods]
+  private val JavaTypesSupport = classNameOf[JavaTypesSupport]
+  private val ShortTypeHintForSpline03ModelSupport = classNameOf[ShortTypeHintForSpline03ModelSupport]
+  private val JValue = classNameOf[JValue]
+  private val AbstractJsonSerDe = classNameOf[AbstractJsonSerDe[_]]
+
   // This delays the compilation (to bytecode) of that piece of code at runtime.
   // Commons are build against json4s 3.5.5, spark 2.4 usually provides json4s 3.5.3 and these are not binary compatible!
-  val impl: AbstractJsonSerDe[JValue] = ReflectionUtils.compile(
-    q"""
-      import org.json4s._
-      import org.json4s.jackson._
-      import za.co.absa.commons.json._
-      import za.co.absa.commons.json.format._
-      import za.co.absa.spline.harvester.json._
-
-      new AbstractJsonSerDe[JValue]
-        with JsonMethods
-        with ShortTypeHintForSpline03ModelSupport
-        with JavaTypesSupport
-    """)(Map.empty)
+  val impl: AbstractJsonSerDe[JValue] = {
+    ReflectionUtils.compile(runtimeMirror(getClass.getClassLoader).mkToolBox().parse(
+      s"""
+        new $AbstractJsonSerDe[$JValue]
+          with $JsonMethods
+          with $ShortTypeHintForSpline03ModelSupport
+          with $JavaTypesSupport
+      """))(Map.empty)
+  }
 }
