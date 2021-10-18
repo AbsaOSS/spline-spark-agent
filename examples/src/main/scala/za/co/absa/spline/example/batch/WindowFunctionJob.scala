@@ -16,7 +16,6 @@
 
 package za.co.absa.spline.example.batch
 
-import za.co.absa.commons.io.TempFile
 import za.co.absa.spline.SparkApp
 
 /**
@@ -25,8 +24,6 @@ import za.co.absa.spline.SparkApp
  *
  */
 object WindowFunctionJob extends SparkApp("Window Function Job") {
-
-  private val filePath1 = TempFile("file1", ".xlsx", pathOnly = false).deleteOnExit().path.toAbsolutePath.toString
 
   import org.apache.spark.sql._
   import org.apache.spark.sql.expressions._
@@ -77,5 +74,5 @@ object WindowFunctionJob extends SparkApp("Window Function Job") {
     .format("com.crealytics.spark.excel")
     .option("header", "true")
     .mode("overwrite")
-    .save(filePath1)
+    .save("data/output/batch/window_function_job_result")
 }
