@@ -21,12 +21,14 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import za.co.absa.commons.HierarchicalObjectFactory
 import za.co.absa.commons.config.ConfigurationImplicits
+import za.co.absa.spline.harvester.IdGenerator.{UUIDGeneratorFactory, UUIDNamespace}
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.extra.{UserExtraAppendingPostProcessingFilter, UserExtraMetadataProvider}
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.postprocessing.{AttributeReorderingFilter, OneRowRelationFilter, PostProcessingFilter}
 import za.co.absa.spline.harvester.{LineageHarvesterFactory, QueryExecutionEventHandler}
+import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
 
 import scala.reflect.ClassTag
 
@@ -41,6 +43,12 @@ object DefaultSplineConfigurer {
      * @see [[SplineMode]]
      */
     val Mode = "spline.mode"
+
+    /**
+     * The UUID version that is used for ExecutionPlan ID.
+     * Note: Hash based versions (3 and 5) produce deterministic IDs based on the ExecutionPlan body.
+     */
+    val ExecPlanUUIDVersion = "spline.internal.execPlan.uuid.version"
 
     /**
      * Lineage dispatcher name - defining namespace for rest of properties for that dispatcher
@@ -79,21 +87,26 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
 
   import collection.JavaConverters._
 
-  private lazy val configuration = new CompositeConfiguration(Seq(
+  private val configuration = new CompositeConfiguration(Seq(
     userConfiguration,
     new Spline05ConfigurationAdapter(userConfiguration),
     new PropertiesConfiguration(defaultPropertiesFileName)
   ).asJava)
 
-  private lazy val objectFactory = new HierarchicalObjectFactory(configuration)
+  private val objectFactory = new HierarchicalObjectFactory(configuration)
 
-  lazy val splineMode: SplineMode = {
+  val splineMode: SplineMode = {
     val modeName = configuration.getRequiredString(Mode)
     try SplineMode withName modeName
     catch {
       case _: NoSuchElementException => throw new IllegalArgumentException(
         s"Invalid value for property $Mode=$modeName. Should be one of: ${SplineMode.values mkString ", "}")
     }
+  }
+
+  private val execPlanUUIDGeneratorFactory: UUIDGeneratorFactory[UUIDNamespace, ExecutionPlan] = {
+    val uuidVer = configuration.getRequiredInt(ExecPlanUUIDVersion)
+    UUIDGeneratorFactory.forVersion(uuidVer)
   }
 
   override def queryExecutionEventHandler: QueryExecutionEventHandler = {
@@ -136,6 +149,7 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
     new LineageHarvesterFactory(
       sparkSession,
       splineMode,
+      execPlanUUIDGeneratorFactory,
       ignoredWriteDetectionStrategy,
       allPostProcessingFilters ++ maybeUserExtraAppendingPostProcessingFilter
     )

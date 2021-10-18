@@ -21,8 +21,9 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.execution.{LeafExecNode, SparkPlan}
-import scalaz.Scalaz._
+import za.co.absa.commons.CollectionImplicits._
 import za.co.absa.commons.graph.GraphImplicits._
+import za.co.absa.commons.lang.CachingConverter
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.reflect.ReflectionUtils
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
@@ -33,12 +34,12 @@ import za.co.absa.spline.harvester.builder.read.ReadCommandExtractor
 import za.co.absa.spline.harvester.builder.write.{WriteCommand, WriteCommandExtractor}
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
+import za.co.absa.spline.harvester.converter.DataTypeConverter
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
-import za.co.absa.spline.harvester.logging.{ObjectStructureDumper, ObjectStructureLogging}
+import za.co.absa.spline.harvester.logging.ObjectStructureLogging
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.v1_1._
 
-import java.util.UUID
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
 
@@ -48,11 +49,10 @@ class LineageHarvester(
   writeCommandExtractor: WriteCommandExtractor,
   readCommandExtractor: ReadCommandExtractor,
   iwdStrategy: IgnoredWriteDetectionStrategy,
-  postProcessor: PostProcessor
+  postProcessor: PostProcessor,
+  dataTypeConverter: DataTypeConverter with CachingConverter,
+  opNodeBuilderFactory: OperationNodeBuilderFactory
 ) extends Logging with ObjectStructureLogging {
-
-  private val componentCreatorFactory: ComponentCreatorFactory = new ComponentCreatorFactory
-  private val opNodeBuilderFactory = new OperationNodeBuilderFactory(postProcessor, componentCreatorFactory)
 
   def harvest(result: Try[Duration]): HarvestResult = {
     logDebug(s"Harvesting lineage from ${ctx.logicalPlan.getClass}")
@@ -77,58 +77,63 @@ class LineageHarvester(
           case ((accRead, accOther), opOther: DataOperation) => (accRead, accOther :+ opOther)
         }
 
-      val planId = UUID.randomUUID
-      val plan = {
-        val planExtra = Map[String, Any](
-          ExecutionPlanExtra.AppName -> ctx.session.sparkContext.appName,
-          ExecutionPlanExtra.DataTypes -> componentCreatorFactory.dataTypeConverter.values
-        )
-
-        val attributes = (builders.map(_.outputAttributes) :+ writeOpBuilder.additionalAttributes)
-          .reduce(_ ++ _)
-          .distinct
-
-        val expressions = Expressions(
-          constants = builders.map(_.literals).reduce(_ ++ _).asOption,
-          functions = builders.map(_.functionalExpressions).reduce(_ ++ _).asOption
-        )
-
-        val p = ExecutionPlan(
-          id = planId.asOption,
-          name = ctx.session.sparkContext.appName.asOption, // `appName` for now, but could be different (user defined) in the future
-          operations = Operations(writeOp, opReads.asOption, opOthers.asOption),
-          attributes = attributes.asOption,
-          expressions = expressions.asOption,
-          systemInfo = SparkVersionInfo,
-          agentInfo = SplineVersionInfo.asOption,
-          extraInfo = planExtra.asOption
-        )
-        postProcessor.process(p)
-      }
-
       if (writeCommand.mode == SaveMode.Ignore && iwdStrategy.wasWriteIgnored(writeMetrics)) {
         logDebug("Ignored write detected. Skipping lineage.")
         None
       }
       else {
-        val errorOrDuration = result.toDisjunction.toEither
-        val maybeError = errorOrDuration.left.toOption
-        val maybeDuration = errorOrDuration.right.toOption
+        val planWithoutId = {
+          val planExtra = Map[String, Any](
+            ExecutionPlanExtra.AppName -> ctx.session.sparkContext.appName,
+            ExecutionPlanExtra.DataTypes -> dataTypeConverter.values
+          )
 
-        val eventExtra = Map[String, Any](
-          ExecutionEventExtra.AppId -> ctx.session.sparkContext.applicationId,
-          ExecutionEventExtra.ReadMetrics -> readMetrics,
-          ExecutionEventExtra.WriteMetrics -> writeMetrics
-        )
+          val attributes = (builders.map(_.outputAttributes) :+ writeOpBuilder.additionalAttributes)
+            .reduce(_ ++ _)
+            .distinct
 
-        val ev = ExecutionEvent(
-          planId = planId,
-          timestamp = System.currentTimeMillis,
-          durationNs = maybeDuration.map(_.toNanos),
-          error = maybeError,
-          extra = eventExtra.asOption)
+          val expressions = Expressions(
+            constants = builders.map(_.literals).reduce(_ ++ _).asOption,
+            functions = builders.map(_.functionalExpressions).reduce(_ ++ _).asOption
+          )
 
-        val event = postProcessor.process(ev)
+          val p = ExecutionPlan(
+            id = None,
+            name = ctx.session.sparkContext.appName.asOption, // `appName` for now, but could be different (user defined) in the future
+            operations = Operations(writeOp, opReads.asOption, opOthers.asOption),
+            attributes = attributes.asOption,
+            expressions = expressions.asOption,
+            systemInfo = SparkVersionInfo,
+            agentInfo = SplineVersionInfo.asOption,
+            extraInfo = planExtra.asOption
+          )
+          postProcessor.process(p)
+        }
+
+        val planId = ctx.idGenerators.execPlanIdGenerator.nextId(planWithoutId)
+        val plan = planWithoutId.copy(id = Some(planId))
+
+        val event = {
+          val (maybeError, maybeDuration) = result match {
+          case Failure(e) => (Some(e), None)
+          case Success(d) => (None, Some(d))
+          }
+
+          val eventExtra = Map[String, Any](
+            ExecutionEventExtra.AppId -> ctx.session.sparkContext.applicationId,
+            ExecutionEventExtra.ReadMetrics -> readMetrics,
+            ExecutionEventExtra.WriteMetrics -> writeMetrics
+          )
+
+          val ev = ExecutionEvent(
+            planId = planId,
+            timestamp = System.currentTimeMillis,
+            durationNs = maybeDuration.map(_.toNanos),
+            error = maybeError,
+            extra = eventExtra.asOption)
+
+          postProcessor.process(ev)
+        }
 
         logDebug(s"Successfully harvested lineage from ${ctx.logicalPlan.getClass}")
         Some(plan -> event)

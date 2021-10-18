@@ -272,9 +272,24 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
-                    <version>3.2.1</version>
+                    <version>3.2.4</version>
                     <configuration>
                         <createDependencyReducedPom>false</createDependencyReducedPom>
+                        <minimizeJar>true</minimizeJar>
+                        <filters>
+                            <filter>
+                                <artifact>za.co.absa.spline.agent.spark:agent-core_${scala.binary.version}</artifact>
+                                <includes>
+                                    <include>**</include>
+                                </includes>
+                            </filter>
+                            <filter>
+                                <artifact>za.co.absa.commons:commons_${scala.binary.version}</artifact>
+                                <includes>
+                                    <include>**</include>
+                                </includes>
+                            </filter>
+                        </filters>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -514,9 +529,9 @@
             <!-- Others -->
 
             <dependency>
-                <groupId>org.scalaz</groupId>
-                <artifactId>scalaz-core_${scala.binary.version}</artifactId>
-                <version>7.2.29</version>
+                <groupId>com.fasterxml.uuid</groupId>
+                <artifactId>java-uuid-generator</artifactId>
+                <version>4.0.1</version>
             </dependency>
 
             <!-- Test scope dependencies -->

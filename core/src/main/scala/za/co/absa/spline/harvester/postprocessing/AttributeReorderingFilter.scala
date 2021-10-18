@@ -26,15 +26,15 @@ import za.co.absa.spline.harvester.builder.UnionNodeBuilder.ExtraFields
 import za.co.absa.spline.harvester.plugin.embedded.DataSourceV2Plugin.{IsByName, `_: V2WriteCommand`}
 import za.co.absa.spline.producer.model.v1_1.{DataOperation, ExecutionPlan, WriteOperation}
 
-import java.util.UUID
+import scala.language.reflectiveCalls
 
 class AttributeReorderingFilter(conf: Configuration) extends AbstractPostProcessingFilter {
 
   override def processExecutionPlan(plan: ExecutionPlan, ctx: HarvestingContext): ExecutionPlan = {
     val isByName = plan
       .operations.write.params
-      .flatMap(_.get(IsByName)).map(_.asInstanceOf[Boolean])
-      .getOrElse(false)
+      .flatMap(_.get(IsByName))
+      .exists(_.asInstanceOf[Boolean])
 
     if (isByName)
       addSyntheticReorderingSelect(plan, ctx)
@@ -49,11 +49,11 @@ class AttributeReorderingFilter(conf: Configuration) extends AbstractPostProcess
 
     val reorderedOutput = newOrder(ctx)
       .zip(writeChildOutput)
-      .sortBy{ case (order, attribute) => order }
-      .map{ case (order, attribute) => attribute }
+      .sortBy { case (order, attribute) => order }
+      .map { case (order, attribute) => attribute }
 
     val syntheticProjection = DataOperation(
-      id = UUID.randomUUID().toString,
+      id = ctx.idGenerators.operationIdGenerator.nextId(),
       name = Some("Project"),
       childIds = Some(writeOp.childIds),
       output = Some(reorderedOutput),
@@ -70,13 +70,12 @@ class AttributeReorderingFilter(conf: Configuration) extends AbstractPostProcess
   }
 
   private def newOrder(ctx: HarvestingContext): Seq[Int] = ctx.logicalPlan match {
-    case `_: V2WriteCommand`(writeCommand) => {
+    case `_: V2WriteCommand`(writeCommand) =>
       val namedRelation = extractFieldValue[AnyRef](writeCommand, "table")
       val finalOutput = extractFieldValue[Seq[Attribute]](namedRelation, "output")
       val query = extractFieldValue[LogicalPlan](writeCommand, "query")
 
       query.output.map(att => finalOutput.indexWhere(_.name == att.name))
-    }
   }
 
   private def getWriteChildOutput(plan: ExecutionPlan, writeOp: WriteOperation): Seq[String] = {

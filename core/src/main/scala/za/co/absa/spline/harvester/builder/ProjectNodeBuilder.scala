@@ -18,13 +18,14 @@ package za.co.absa.spline.harvester.builder
 
 import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, Expression}
 import org.apache.spark.sql.catalyst.plans.logical.Project
-import za.co.absa.spline.harvester.ComponentCreatorFactory
+import za.co.absa.spline.harvester.IdGenerators
+import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 
 class ProjectNodeBuilder
-  (override val operation: Project)
-  (override val componentCreatorFactory: ComponentCreatorFactory, postProcessor: PostProcessor)
-  extends GenericNodeBuilder(operation)(componentCreatorFactory, postProcessor) {
+  (operation: Project)
+  (idGenerators: IdGenerators, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
+  extends GenericNodeBuilder(operation)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
 
   override def resolveAttributeChild(attribute: Attribute): Option[Expression] = {
     operation.projectList

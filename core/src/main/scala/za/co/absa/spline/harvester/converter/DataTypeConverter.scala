@@ -18,9 +18,12 @@ package za.co.absa.spline.harvester.converter
 
 import org.apache.spark.sql.{types => st}
 import za.co.absa.commons.lang.Converter
+import za.co.absa.spline.harvester.IdGenerator
 import za.co.absa.spline.model.dt._
 
-class DataTypeConverter extends Converter {
+import java.util.UUID
+
+class DataTypeConverter(idGen: IdGenerator[Any, UUID]) extends Converter {
   override type From = (st.DataType, Boolean)
   override type To = DataType
 
@@ -28,14 +31,14 @@ class DataTypeConverter extends Converter {
     val (sparkDataType, nullable) = arg
     sparkDataType match {
       case structType: st.StructType =>
-        Struct(structType.fields.map(field =>
+        Struct(idGen.nextId(), structType.fields.map(field =>
           StructField(field.name, convert(field.dataType -> field.nullable).id)), nullable)
 
       case arrayType: st.ArrayType =>
-        Array(convert(arrayType.elementType -> arrayType.containsNull).id, nullable)
+        Array(idGen.nextId(), convert(arrayType.elementType -> arrayType.containsNull).id, nullable)
 
       case otherType: st.DataType =>
-        Simple(otherType.typeName, nullable)
+        Simple(idGen.nextId(), otherType.typeName, nullable)
     }
   }
 

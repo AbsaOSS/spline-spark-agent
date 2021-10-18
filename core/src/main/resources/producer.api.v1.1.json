@@ -259,7 +259,8 @@
           "format": "int64"
         },
         "durationNs": {
-          "type": "object"
+          "type": "integer",
+          "format": "int64"
         },
         "error": {
           "type": "object"
