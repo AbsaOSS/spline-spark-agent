@@ -17,6 +17,7 @@
 package za.co.absa.spline.harvester.converter
 
 import org.apache.commons.lang3.StringUtils.substringAfter
+import org.apache.spark.sql.catalyst.expressions.ExprId
 import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.Converter
 import za.co.absa.spline.harvester.IdGenerator
@@ -134,7 +135,8 @@ object ExpressionConverter {
 
   }
 
-  private val BasicSparkExprProps = Set("children", "dataType", "nullable", "exprId")
+  private val IgnoredSparkExprPropNames: Set[String] = Set("children", "dataType", "nullable")
+  private val IgnoredSparkExprPropTypes: Set[Class[_]] = Set(classOf[ExprId])
 
   private def getExpressionSimpleClassName(expr: sparkExprssions.Expression) = {
     val fullName = expr.getClass.getName
@@ -148,17 +150,16 @@ object ExpressionConverter {
   )
 
   private def getExpressionParameters(e: sparkExprssions.Expression): Map[String, Any] = {
-    val isChildExpression: Any => Boolean = {
-      val children = e.children.toSet
-      PartialFunction.cond(_) {
-        case ei: sparkExprssions.Expression if children(ei) => true
-      }
+    val isChildExpression = PartialFunction.cond(_: Any) {
+      case ei: sparkExprssions.Expression => e.containsChild(ei)
     }
 
     val renderedParams =
       for {
         (p, v) <- extractProperties(e)
-        if !BasicSparkExprProps(p)
+        if v != null
+        if !IgnoredSparkExprPropNames(p)
+        if !IgnoredSparkExprPropTypes(v.getClass)
         if !isChildExpression(v)
         w <- ValueDecomposer.decompose(v, Unit)
       } yield p -> w
