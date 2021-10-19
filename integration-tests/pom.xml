@@ -76,7 +76,6 @@
             <groupId>io.delta</groupId>
             <artifactId>delta-core_${scala.binary.version}</artifactId>
             <scope>test</scope>
-            <version>${delta.version}</version>
         </dependency>
         <dependency>
             <groupId>com.databricks</groupId>
