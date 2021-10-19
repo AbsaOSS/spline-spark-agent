@@ -23,7 +23,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.commons.scalatest.EnvFixture
-import za.co.absa.spline.harvester.HarvestingContext
+import za.co.absa.spline.harvester.{HarvestingContext, IdGenerators}
 import za.co.absa.spline.harvester.postprocessing.extra.DeclarativeExtraInjectingFilter.InjectRulesKey
 import za.co.absa.spline.producer.model.v1_1._
 
@@ -38,7 +38,8 @@ class DeclarativeExtraInjectingFilterSpec extends AnyFlatSpec with EnvFixture wi
     .config("k", "nice")
     .getOrCreate()
 
-  private val harvestingContext = HarvestingContext(logicalPlan, None, sparkSession)
+  private val idGenerators = mock[IdGenerators]
+  private val harvestingContext = new HarvestingContext(logicalPlan, None, sparkSession, idGenerators)
 
   private val wop = WriteOperation("foo", append = false, "42", None, Seq.empty, None, None)
   private val nav = NameAndVersion("foo", "bar")
