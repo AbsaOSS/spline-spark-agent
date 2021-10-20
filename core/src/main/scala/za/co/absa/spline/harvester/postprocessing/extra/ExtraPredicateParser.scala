@@ -16,12 +16,12 @@
 
 package za.co.absa.spline.harvester.postprocessing.extra
 
-import fastparse._
-import fastparse.SingleLineWhitespace._
 import fastparse.Parsed.{Failure, Success}
-import za.co.absa.spline.harvester.postprocessing.extra.ExtraPredicateModel.BaseNodeNames._
-import za.co.absa.spline.harvester.postprocessing.extra.ExtraPredicateModel.ComparisonSymbol._
-import za.co.absa.spline.harvester.postprocessing.extra.ExtraPredicateModel.{Expr, _}
+import fastparse.SingleLineWhitespace._
+import fastparse._
+import za.co.absa.spline.harvester.postprocessing.extra.model.predicate.BaseNodeNames._
+import za.co.absa.spline.harvester.postprocessing.extra.model.predicate.ComparisonSymbol._
+import za.co.absa.spline.harvester.postprocessing.extra.model.predicate._
 
 
 object ExtraPredicateParser {

@@ -17,30 +17,27 @@
 package za.co.absa.spline.harvester.postprocessing.extra
 
 
-import za.co.absa.spline.harvester.postprocessing.extra.ExtraTemplateModel._
+import za.co.absa.spline.harvester.postprocessing.extra.model.template._
 
-import javax.script.ScriptEngineManager
+import javax.script.{ScriptEngine, ScriptEngineManager}
 
 object ExtraTemplateParser {
 
-  private val jsEngine = new ScriptEngineManager().getEngineByMimeType("text/javascript")
-
   def parse(extra: Map[String, Any]): ExtraTemplate = {
-    new ExtraTemplate(extra.transform((k, v) => parseRec(v)))
+    val jsEngine = new ScriptEngineManager().getEngineByMimeType("text/javascript")
+    new ExtraTemplate(extra.transform((k, v) => parseRec(v, jsEngine)))
   }
 
-  private def parseRec(v: Any): Any = v match {
-    case m: Map[String,_] if m.contains(EvaluableNames.JVMProp) =>
-      JVMProp(m(EvaluableNames.JVMProp).asInstanceOf[String])
-
-    case m: Map[String,_] if m.contains(EvaluableNames.EnvVar) =>
-      EnvVar(m(EvaluableNames.EnvVar).asInstanceOf[String])
-
-    case m: Map[String,_] if m.contains(EvaluableNames.JsEval) =>
-      JsEval(jsEngine, m(EvaluableNames.JsEval).asInstanceOf[String])
-
-    case m: Map[String,_] => m.transform((k, v) => parseRec(v))
-    case s: Seq[_] => s.map(parseRec)
+  private def parseRec(v: Any, jsEngine: ScriptEngine): Any = v match {
+    case m: Map[String, _] => m.toSeq match {
+      case Seq((EvaluableNames.JVMProp, v: String)) => JVMProp(v)
+      case Seq((EvaluableNames.EnvVar, v: String)) => EnvVar(v)
+      case Seq((EvaluableNames.JsEval, v: String)) => JsEval(jsEngine, v)
+      case s: Seq[(String, _)] =>
+        assert(!s.exists(_._1.startsWith("$")))
+        s.map { case (k, v) => k -> parseRec(v, jsEngine) }.toMap
+    }
+    case s: Seq[_] => s.map(parseRec(_, jsEngine))
     case v => v
   }
 }

@@ -17,6 +17,7 @@
 package za.co.absa.spline.harvester.postprocessing.extra
 
 import org.apache.commons.configuration.Configuration
+import org.apache.commons.io.IOUtils
 import org.apache.spark.internal.Logging
 import za.co.absa.commons.config.ConfigurationImplicits.ConfigurationOptionalWrapper
 import za.co.absa.spline.harvester.ExtraMetadataImplicits._
@@ -24,11 +25,11 @@ import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
 import za.co.absa.spline.harvester.postprocessing.PostProcessingFilter
 import za.co.absa.spline.harvester.postprocessing.extra.DeclarativeExtraInjectingFilter.ExtraDef
-import za.co.absa.spline.harvester.postprocessing.extra.ExtraPredicateModel.{BaseNodeNames, Predicate}
-import za.co.absa.spline.harvester.postprocessing.extra.ExtraTemplateModel.ExtraTemplate
+import za.co.absa.spline.harvester.postprocessing.extra.model.predicate.{BaseNodeNames, Predicate}
+import za.co.absa.spline.harvester.postprocessing.extra.model.template.ExtraTemplate
 import za.co.absa.spline.producer.model.v1_1._
 
-import scala.io.Source
+import java.net.URL
 
 class DeclarativeExtraInjectingFilter(
   planExtraDefs: Seq[ExtraDef],
@@ -36,7 +37,7 @@ class DeclarativeExtraInjectingFilter(
   readExtraDefs: Seq[ExtraDef],
   writeExtraDefs: Seq[ExtraDef],
   operationExtraDefs: Seq[ExtraDef]
-) extends PostProcessingFilter with Logging {
+) extends PostProcessingFilter {
 
   override def processExecutionEvent(event: ExecutionEvent, ctx: HarvestingContext): ExecutionEvent = {
     if (eventExtraDefs.isEmpty)
@@ -45,29 +46,33 @@ class DeclarativeExtraInjectingFilter(
       event.withAddedExtra(evaluateExtraDefs(eventExtraDefs, ctx, BaseNodeNames.ExecutionEvent, event))
   }
 
-  override def processExecutionPlan(plan: ExecutionPlan, ctx: HarvestingContext): ExecutionPlan =
+  override def processExecutionPlan(plan: ExecutionPlan, ctx: HarvestingContext): ExecutionPlan = {
     if (planExtraDefs.isEmpty)
       plan
     else
       plan.withAddedExtra(evaluateExtraDefs(planExtraDefs, ctx, BaseNodeNames.ExecutionPlan, plan))
+  }
 
-  override def processReadOperation(read: ReadOperation, ctx: HarvestingContext): ReadOperation =
+  override def processReadOperation(read: ReadOperation, ctx: HarvestingContext): ReadOperation = {
     if (readExtraDefs.isEmpty)
       read
     else
       read.withAddedExtra(evaluateExtraDefs(readExtraDefs, ctx, BaseNodeNames.Read, read))
+  }
 
-  override def processWriteOperation(write: WriteOperation, ctx: HarvestingContext): WriteOperation =
+  override def processWriteOperation(write: WriteOperation, ctx: HarvestingContext): WriteOperation = {
     if (writeExtraDefs.isEmpty)
       write
     else
       write.withAddedExtra(evaluateExtraDefs(writeExtraDefs, ctx, BaseNodeNames.Write, write))
+  }
 
-  override def processDataOperation(operation: DataOperation, ctx: HarvestingContext): DataOperation =
+  override def processDataOperation(operation: DataOperation, ctx: HarvestingContext): DataOperation = {
     if (operationExtraDefs.isEmpty)
       operation
     else
       operation.withAddedExtra(evaluateExtraDefs(operationExtraDefs, ctx, BaseNodeNames.Operation, operation))
+  }
 
   private def evaluateExtraDefs(defs: Seq[ExtraDef], ctx: HarvestingContext, nodeName: String, node: Any) = {
     val bindings = contextBindings(ctx)
@@ -109,27 +114,22 @@ class DeclarativeExtraInjectingFilter(
 object DeclarativeExtraInjectingFilter extends Logging {
 
   val InjectRulesKey = "spline.userExtraMetadata.injectRules"
-  val FileKey = "file"
+  val UrlKey = "url"
 
   case class ExtraDef(nodeName: String, predicate: Predicate, template: ExtraTemplate)
 
   def apply(conf: Configuration): Option[DeclarativeExtraInjectingFilter] = {
     val maybeExtraDefMap = conf
       .getOptionalString(InjectRulesKey)
-      .orElse(conf.getOptionalString(s"$InjectRulesKey.$FileKey").map(loadFromFile))
+      .orElse(conf.getOptionalString(s"$InjectRulesKey.$UrlKey").map(loadFromUrl))
       .map(_.fromJson[Map[String, Map[String, Any]]])
 
     maybeExtraDefMap
       .map(createFilter)
   }
 
-  private def loadFromFile(path: String): String = {
-    val source = Source.fromFile(path)
-    try {
-      source.mkString
-    } finally {
-      source.close()
-    }
+  private def loadFromUrl(urlString: String): String = {
+    IOUtils.toString(new URL(urlString))
   }
 
   private def createFilter(unparsedExtraDefMap: Map[String, Map[String, Any]]): DeclarativeExtraInjectingFilter = {

@@ -18,7 +18,7 @@ package za.co.absa.spline.harvester.postprocessing.extra
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.spline.harvester.postprocessing.extra.ExtraPredicateModel._
+import za.co.absa.spline.harvester.postprocessing.extra.model.predicate._
 
 private class ExtraPredicateParserSpec  extends AnyFlatSpec with Matchers {
 

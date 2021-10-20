@@ -32,7 +32,6 @@ import za.co.absa.spline.harvester.{LineageHarvesterFactory, QueryExecutionEvent
 import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
 
 import scala.reflect.ClassTag
-import scala.util.{Failure, Success, Try}
 
 object DefaultSplineConfigurer {
   private val defaultPropertiesFileName = "spline.default.properties"
@@ -123,18 +122,8 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
 
   protected def postProcessingFilter: PostProcessingFilter = createComponentByKey(RootPostProcessingFilter)
 
-  private def internalPostProcessingFilters: Seq[PostProcessingFilter] = {
-    Seq(new AttributeReorderingFilter(), new OneRowRelationFilter()) ++ createDeclarativeExtraInjectingFilterOption()
-  }
-
-  private def createDeclarativeExtraInjectingFilterOption(): Option[PostProcessingFilter] =
-    Try(DeclarativeExtraInjectingFilter(configuration)) match {
-      case Success(maybeFilter) => maybeFilter
-      case Failure(e) if splineMode == SplineMode.REQUIRED => throw e
-      case Failure(e) if splineMode == SplineMode.BEST_EFFORT =>
-        logWarning("DeclarativeExtraInjectingFilter initialization failed.", e)
-        None
-    }
+  private def internalPostProcessingFilters: Seq[PostProcessingFilter] =
+    Seq(new AttributeReorderingFilter(), new OneRowRelationFilter()) ++ DeclarativeExtraInjectingFilter(configuration)
 
   private def allPostProcessingFilters: Seq[PostProcessingFilter] =
     internalPostProcessingFilters :+ postProcessingFilter
