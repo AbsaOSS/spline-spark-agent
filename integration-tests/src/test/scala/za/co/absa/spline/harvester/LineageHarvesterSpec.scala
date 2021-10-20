@@ -82,7 +82,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           (plan, _) <- captor.lineageOf(spark.emptyDataset[TestRow].write.save(tmpDest))
         } yield {
           inside(plan) {
-            case ExecutionPlan(_, _, Operations(_, None, Some(Seq(op))), _, _, _, _, _) =>
+            case ExecutionPlan(_, _, _, Operations(_, None, Some(Seq(op))), _, _, _, _, _) =>
               op.id should be("op-1")
               op.name should be(Some("LocalRelation"))
               op.childIds should be(None)

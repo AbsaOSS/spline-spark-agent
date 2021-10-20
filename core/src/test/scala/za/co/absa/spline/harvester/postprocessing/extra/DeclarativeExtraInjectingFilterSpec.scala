@@ -44,8 +44,8 @@ class DeclarativeExtraInjectingFilterSpec extends AnyFlatSpec with EnvFixture wi
   private val wop = WriteOperation("foo", append = false, "42", None, Seq.empty, None, None)
   private val nav = NameAndVersion("foo", "bar")
   private val defaultExtra = Some(Map("ttt" -> 777))
-  private val ep = ExecutionPlan(None, Some("pn"), Operations(wop, None, None), None, None, nav, None, defaultExtra)
-  private val ee = ExecutionEvent(UUID.randomUUID(), 66L, None, None, Some(
+  private val ep = ExecutionPlan(None, Some("pn"), None, Operations(wop, None, None), None, None, nav, None, defaultExtra)
+  private val ee = ExecutionEvent(UUID.randomUUID(), 66L, None, None, None, Some(
     Map("foo" -> "a", "bar" -> false, "baz" -> Seq(1, 2, 3))))
 
   behavior of "DeclarativeExtraInjectingFilter"
