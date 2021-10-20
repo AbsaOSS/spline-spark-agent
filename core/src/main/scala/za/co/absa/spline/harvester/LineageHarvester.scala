@@ -96,6 +96,7 @@ class LineageHarvester(
 
           val p = ExecutionPlan(
             id = None,
+            discriminator = None,
             name = ctx.session.sparkContext.appName.asOption, // `appName` for now, but could be different (user defined) in the future
             operations = Operations(writeOp, opReads.asOption, opOthers.asOption),
             attributes = attributes.asOption,
@@ -124,6 +125,7 @@ class LineageHarvester(
 
           val ev = ExecutionEvent(
             planId = planId,
+            discriminator = None,
             timestamp = System.currentTimeMillis,
             durationNs = maybeDuration.map(_.toNanos),
             error = maybeError,
