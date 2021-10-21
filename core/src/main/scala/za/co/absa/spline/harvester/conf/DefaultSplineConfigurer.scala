@@ -26,6 +26,7 @@ import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.extra.{UserExtraAppendingPostProcessingFilter, UserExtraMetadataProvider}
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
+import za.co.absa.spline.harvester.postprocessing.extra.DeclarativeExtraInjectingFilter
 import za.co.absa.spline.harvester.postprocessing.{AttributeReorderingFilter, OneRowRelationFilter, PostProcessingFilter}
 import za.co.absa.spline.harvester.{LineageHarvesterFactory, QueryExecutionEventHandler}
 import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
@@ -122,7 +123,7 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
   protected def postProcessingFilter: PostProcessingFilter = createComponentByKey(RootPostProcessingFilter)
 
   private def internalPostProcessingFilters: Seq[PostProcessingFilter] =
-    Seq(new AttributeReorderingFilter(configuration), new OneRowRelationFilter(configuration))
+    Seq(new AttributeReorderingFilter(), new OneRowRelationFilter()) ++ DeclarativeExtraInjectingFilter(configuration)
 
   private def allPostProcessingFilters: Seq[PostProcessingFilter] =
     internalPostProcessingFilters :+ postProcessingFilter

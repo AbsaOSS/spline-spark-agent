@@ -16,7 +16,6 @@
 
 package za.co.absa.spline.harvester.postprocessing
 
-import org.apache.commons.configuration.Configuration
 import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.commons.reflect.ReflectionUtils._
@@ -28,7 +27,7 @@ import za.co.absa.spline.producer.model.v1_1.{DataOperation, ExecutionPlan, Writ
 
 import scala.language.reflectiveCalls
 
-class AttributeReorderingFilter(conf: Configuration) extends AbstractPostProcessingFilter {
+class AttributeReorderingFilter extends AbstractPostProcessingFilter {
 
   override def processExecutionPlan(plan: ExecutionPlan, ctx: HarvestingContext): ExecutionPlan = {
     val isByName = plan
