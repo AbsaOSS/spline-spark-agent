@@ -533,6 +533,11 @@
                 <artifactId>java-uuid-generator</artifactId>
                 <version>4.0.1</version>
             </dependency>
+            <dependency>
+                <groupId>com.lihaoyi</groupId>
+                <artifactId>fastparse_${scala.binary.version}</artifactId>
+                <version>2.3.3</version>
+            </dependency>
 
             <!-- Test scope dependencies -->
 
