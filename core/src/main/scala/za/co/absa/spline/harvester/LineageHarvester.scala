@@ -32,7 +32,6 @@ import za.co.absa.spline.harvester.ModelConstants.{AppMetaInfo, ExecutionEventEx
 import za.co.absa.spline.harvester.builder._
 import za.co.absa.spline.harvester.builder.read.ReadCommandExtractor
 import za.co.absa.spline.harvester.builder.write.{WriteCommand, WriteCommandExtractor}
-import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
 import za.co.absa.spline.harvester.converter.DataTypeConverter
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
@@ -146,18 +145,11 @@ class LineageHarvester(
       case Success(Some(write)) => Some(write)
       case Success(None) =>
         logDebug(s"${plan.getClass} was not recognized as a write-command. Skipping.")
-        logTraceObjectStructure(plan)
+        logObjectStructureAsTrace(plan)
         None
-      case Failure(e) => splineMode match {
-        case SplineMode.REQUIRED =>
-          logError(s"Write extraction failed for: ${plan.getClass}")
-          logErrorObjectStructure(plan)
-          throw e
-        case SplineMode.BEST_EFFORT =>
-          logWarning(s"Write extraction failed for: ${plan.getClass}", e)
-          logWarningObjectStructure(plan)
-          None
-      }
+      case Failure(e) =>
+        logObjectStructureAsError(plan)
+        throw new RuntimeException(s"Write extraction failed for: ${plan.getClass}", e)
     }
 
   private def createOperationBuildersRecursively(rootOp: LogicalPlan): Seq[OperationNodeBuilder] = {
