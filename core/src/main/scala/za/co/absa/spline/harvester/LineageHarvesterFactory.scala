@@ -25,7 +25,6 @@ import za.co.absa.spline.harvester.builder.OperationNodeBuilderFactory
 import za.co.absa.spline.harvester.builder.dsformat.PluggableDataSourceFormatResolver
 import za.co.absa.spline.harvester.builder.read.PluggableReadCommandExtractor
 import za.co.absa.spline.harvester.builder.write.PluggableWriteCommandExtractor
-import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.plugin.registry.AutoDiscoveryPluginRegistry
@@ -37,7 +36,6 @@ import scala.language.postfixOps
 
 class LineageHarvesterFactory(
   session: SparkSession,
-  splineMode: SplineMode,
   execPlanUUIDGeneratorFactory: UUIDGeneratorFactory[UUIDNamespace, ExecutionPlan],
   iwdStrategy: IgnoredWriteDetectionStrategy,
   filters: Seq[PostProcessingFilter]) {
@@ -58,7 +56,6 @@ class LineageHarvesterFactory(
 
     new LineageHarvester(
       harvestingContext,
-      splineMode,
       writeCommandExtractor,
       readCommandExtractor,
       iwdStrategy,
