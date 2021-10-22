@@ -32,7 +32,6 @@ import za.co.absa.spline.harvester.ModelConstants.{AppMetaInfo, ExecutionEventEx
 import za.co.absa.spline.harvester.builder._
 import za.co.absa.spline.harvester.builder.read.ReadCommandExtractor
 import za.co.absa.spline.harvester.builder.write.{WriteCommand, WriteCommandExtractor}
-import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
 import za.co.absa.spline.harvester.converter.DataTypeConverter
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.logging.ObjectStructureLogging
@@ -44,7 +43,6 @@ import scala.util.{Failure, Success, Try}
 
 class LineageHarvester(
   ctx: HarvestingContext,
-  splineMode: SplineMode,
   writeCommandExtractor: WriteCommandExtractor,
   readCommandExtractor: ReadCommandExtractor,
   iwdStrategy: IgnoredWriteDetectionStrategy,

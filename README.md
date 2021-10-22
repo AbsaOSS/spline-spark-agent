@@ -339,9 +339,7 @@ You can see how to produce unimplemented commands in `za.co.absa.spline.harveste
 - `LoadDataCommand`  (org.apache.spark.sql.execution.command)
 - `TruncateTableCommand`  (org.apache.spark.sql.execution.command)
 
-When one of these commands occurs spline will let you know. 
-- When it's running in `REQUIRED` mode it will throw an `UnsupportedSparkCommandException`.
-- When it's running in `BEST_EFFORT` mode it will just log a warning.
+When one of these commands occurs spline will let you know by logging a warning.
 
 <a id="spark-coverage-ignored"></a>
 ### Ignored

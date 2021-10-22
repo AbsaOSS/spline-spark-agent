@@ -149,7 +149,6 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
 
     new LineageHarvesterFactory(
       sparkSession,
-      splineMode,
       execPlanUUIDGeneratorFactory,
       ignoredWriteDetectionStrategy,
       allPostProcessingFilters ++ maybeUserExtraAppendingPostProcessingFilter
