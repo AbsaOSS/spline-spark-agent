@@ -465,6 +465,19 @@ Spline will pick it up automatically.
 <a id="building"></a>
 ### Building for different Scala and Spark versions
 
+**Note:** The project requires Java version 1.8 (strictly) and [Apache Maven](https://maven.apache.org/) for building.
+
+Check the build environment:
+```shell
+mvn --version
+```
+Verify that Maven is configured to run on Java 1.8. For example:
+```
+Apache Maven 3.6.3 (Red Hat 3.6.3-8)
+Maven home: /usr/share/maven
+Java version: 1.8.0_302, vendor: Red Hat, Inc., runtime: /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.302.b08-2.fc34.x86_64/jre
+```
+
 There are several maven profiles that makes it easy to build the project with different versions of Spark and Scala.
 - Scala profiles: `scala-2.11`, `scala-2.12`
 - Spark profiles: `spark-2.2`, `spark-2.3`, `spark-2.4`, `spark-3.0`, `spark-3.1`
@@ -477,6 +490,16 @@ mvn scala-cross-build:change-version -Pscala-2.12
 # now you can build for Scala 2.12
 mvn clean install -Pscala-2.12,spark-2.4
 ```
+
+### Build docker image
+The agent docker image is mainly used to run [example jobs](examples/) and pre-fill the database with the sample lineage data.
+
+(Spline docker images are available on the DockerHub repo - https://hub.docker.com/u/absaoss)
+
+```shell
+mvn install -Ddocker -Ddockerfile.repositoryUrl=my
+```
+See [How to build Spline Docker images](https://github.com/AbsaOSS/spline-getting-started/blob/main/building-docker.md) for details.
 
 <a id="references"></a>
 ## References and examples
