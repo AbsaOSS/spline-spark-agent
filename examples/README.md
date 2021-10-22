@@ -74,18 +74,22 @@ mvn test -P examples -D spline.mode=BEST_EFFORT
   - [Shell script](src/main/shell/) - custom, non-Spark example, using REST API
 
 ## Run Spline examples using docker image
-Change your docker settings for at least have `cpu=2` and `memory=4096M`
 
-1. Build docker image
-    ```shell script
-    # build a docker image from the project root folder
-    docker build -f Dockerfile . -t spline-spark-agent-examples:v0.1.1
-    ```
+Recommended docker settings: `cpu=2`, `memory=4096M`
 
-2. Run docker image
-    ```shell script
-    docker run -e "SPLINE_PRODUCER_URL=http://localhost:8080/producer" spline-spark-agent-examples:v0.1.1
-    ```
+ ```shell script
+docker run --rm -e "SPLINE_PRODUCER_URL=http://localhost:8080/producer" absaoss/spline-spark-agent
+ ```
+
+Available environment variables:
+
+| Variable name        | Description                                    |
+|----------------------|------------------------------------------------|
+| SPLINE_PRODUCER_URL  | Spline Producer REST API endpoint URL          |
+| SPLINE_MODE          | (see [Spline mode](../README.md#properties))   |
+| HTTP_PROXY_HOST      | (see [Java Networking and Proxies](https://docs.oracle.com/javase/8/docs/technotes/guides/net/proxies.html)) |
+| HTTP_PROXY_PORT      | (see [Java Networking and Proxies](https://docs.oracle.com/javase/8/docs/technotes/guides/net/proxies.html)) |
+| HTTP_NON_PROXY_HOSTS | (see [Java Networking and Proxies](https://docs.oracle.com/javase/8/docs/technotes/guides/net/proxies.html)) |
 
 ---
 
