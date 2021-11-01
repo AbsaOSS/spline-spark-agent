@@ -16,8 +16,11 @@
 
 package za.co.absa.spline.harvester.dispatcher.httpdispatcher.modelmapper
 
+import za.co.absa.spline.harvester.IdGenerators
 import za.co.absa.spline.harvester.converter.ExpressionConverter.{ExprExtra, ExprV1}
 import za.co.absa.spline.producer.model.{v1_0, v1_1}
+
+import java.text.MessageFormat
 
 
 object ModelMapperV1 extends ModelMapper {
@@ -82,30 +85,35 @@ object ModelMapperV1 extends ModelMapper {
         operation.outputSource,
         None,
         operation.append,
-        operation.id.toInt,
-        operation.childIds.map(_.toInt),
+        toV1OperationId(operation.id),
+        operation.childIds.map(toV1OperationId),
         operation.params.map(toV1OperationParams),
-        Some(operation.extra.getOrElse(Map.empty) + (FieldsV1.OperationExtras.Name -> operation.name))
+        Some(operation.extra.getOrElse(Map.empty) ++ operation.name.map(FieldsV1.OperationExtras.Name -> _))
       )
 
     def toV1ReadOperation(operation: v1_1.ReadOperation) =
       v1_0.ReadOperation(
         Nil,
         operation.inputSources,
-        operation.id.toInt,
+        toV1OperationId(operation.id),
         operation.output,
         operation.params.map(toV1OperationParams),
-        Some(operation.extra.getOrElse(Map.empty) + (FieldsV1.OperationExtras.Name -> operation.name))
+        Some(operation.extra.getOrElse(Map.empty) ++ operation.name.map(FieldsV1.OperationExtras.Name -> _))
       )
 
     def toV1DataOperation(operation: v1_1.DataOperation) =
       v1_0.DataOperation(
-        operation.id.toInt,
-        operation.childIds.map(ids => ids.map(_.toInt)),
+        toV1OperationId(operation.id),
+        operation.childIds.map(ids => ids.map(toV1OperationId)),
         operation.output,
         operation.params.map(toV1OperationParams),
-        Some(operation.extra.getOrElse(Map.empty) + (FieldsV1.OperationExtras.Name -> operation.name))
+        Some(operation.extra.getOrElse(Map.empty) ++ operation.name.map(FieldsV1.OperationExtras.Name -> _))
       )
+
+    def toV1OperationId(opIdV11: String): Int = {
+      val Array(opIdV1Str: String) = new MessageFormat(IdGenerators.OperationIdTemplate).parse(opIdV11)
+      opIdV1Str.toInt
+    }
 
     def toV1SystemInfo(nav: v1_1.NameAndVersion) = v1_0.SystemInfo(nav.name, nav.version)
 
@@ -194,8 +202,8 @@ object ModelMapperV1 extends ModelMapper {
       toV1SystemInfo(plan.systemInfo),
       plan.agentInfo.map(toV1AgentInfo),
       Some(plan.extraInfo.getOrElse(Map.empty)
-        + (FieldsV1.ExecutionPlanExtra.AppName -> plan.name)
-        + (FieldsV1.ExecutionPlanExtra.Attributes -> plan.attributes.map(_.map(toV1Attribute)))
+        ++ plan.name.map(FieldsV1.ExecutionPlanExtra.AppName -> _)
+        ++ plan.attributes.map(FieldsV1.ExecutionPlanExtra.Attributes -> _.map(toV1Attribute))
       )
     )
   }
@@ -208,6 +216,6 @@ object ModelMapperV1 extends ModelMapper {
       event.planId,
       event.timestamp,
       event.error,
-      Some(event.extra.getOrElse(Map.empty) + (FieldsV1.ExecutionEventExtra.DurationNs -> event.durationNs))
+      Some(event.extra.getOrElse(Map.empty) ++ event.durationNs.map(FieldsV1.ExecutionEventExtra.DurationNs -> _))
     )
 }
