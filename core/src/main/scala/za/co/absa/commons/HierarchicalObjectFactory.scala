@@ -42,6 +42,9 @@ final class HierarchicalObjectFactory(
         .recover { case _: NoSuchMethodException =>
           clazz.getConstructor(classOf[Configuration]).newInstance(configuration)
         }
+        .recover { case _: NoSuchMethodException =>
+          clazz.getConstructor().newInstance()
+        }
         .get
         .asInstanceOf[A]
     } catch {

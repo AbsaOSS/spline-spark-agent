@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.harvester
 
-import org.apache.commons.configuration.{Configuration, SystemConfiguration}
+import org.apache.commons.configuration.SystemConfiguration
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.execution.QueryExecution
@@ -34,7 +34,7 @@ import za.co.absa.commons.json.DefaultJacksonJsonSerDe
 import za.co.absa.commons.scalatest.ConditionalTestTags._
 import za.co.absa.commons.version.Version._
 import za.co.absa.spline.harvester.SparkLineageInitializer._
-import za.co.absa.spline.harvester.SparkLineageInitializerSpec.{MockLineageDispatcher, _}
+import za.co.absa.spline.harvester.SparkLineageInitializerSpec._
 import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer
 import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer.ConfProperty._
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode._
@@ -210,7 +210,7 @@ class SparkLineageInitializerSpec
 
 object SparkLineageInitializerSpec {
 
-  class MockLineageDispatcher(conf: Configuration) extends LineageDispatcher {
+  class MockLineageDispatcher extends LineageDispatcher {
 
     MockLineageDispatcher.onConstruction()
 
