@@ -38,7 +38,7 @@ class DataTypeConverter(idGen: IdGenerator[Any, UUID]) extends Converter {
         Array(idGen.nextId(), convert(arrayType.elementType -> arrayType.containsNull).id, nullable)
 
       case otherType: st.DataType =>
-        Simple(idGen.nextId(), otherType.typeName, nullable)
+        Simple(idGen.nextId(), otherType.simpleString, nullable)
     }
   }
 
