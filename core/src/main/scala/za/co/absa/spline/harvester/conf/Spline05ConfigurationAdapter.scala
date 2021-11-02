@@ -69,9 +69,7 @@ object Spline05ConfigurationAdapter {
     s"$SubstitutingDispatcherPrefix.$ClassName" -> DeprecatedDispatcherClassName,
     s"$SubstitutingDispatcherPrefix.$ProducerUrlProperty" -> "spline.producer.url",
     s"$SubstitutingDispatcherPrefix.$ConnectionTimeoutMsKey" -> "spline.timeout.connection",
-    s"$SubstitutingDispatcherPrefix.$ReadTimeoutMsKey" -> "spline.timeout.read",
-
-    s"$UserExtraMetadataProviderClass" -> "spline.user_extra_meta_provider.className"
+    s"$SubstitutingDispatcherPrefix.$ReadTimeoutMsKey" -> "spline.timeout.read"
   )
 
   private val Substitutions = Map(

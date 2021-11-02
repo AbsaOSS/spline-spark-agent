@@ -16,7 +16,6 @@
 
 package za.co.absa.spline.harvester
 
-import org.apache.commons.configuration.Configuration
 import org.apache.commons.io.FileUtils
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SaveMode
@@ -29,7 +28,6 @@ import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version._
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder.OutputAttIds
-import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
 import za.co.absa.spline.model.dt
 import za.co.absa.spline.producer.model.v1_1._
 import za.co.absa.spline.test.fixture.spline.SplineFixture
@@ -82,7 +80,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           (plan, _) <- captor.lineageOf(spark.emptyDataset[TestRow].write.save(tmpDest))
         } yield {
           inside(plan) {
-            case ExecutionPlan(_, _, Operations(_, None, Some(Seq(op))), _, _, _, _, _) =>
+            case ExecutionPlan(_, _, _, Operations(_, None, Some(Seq(op))), _, _, _, _, _) =>
               op.id should be("op-1")
               op.name should be(Some("LocalRelation"))
               op.childIds should be(None)
@@ -332,9 +330,30 @@ class LineageHarvesterSpec extends AsyncFlatSpec
       }
     }
 
-  it should "collect user extra metadata" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in
+  it should "collect user extra metadata" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
+    val injectRules =
+      """
+        |{
+        |    "executionPlan": {
+        |        "test.extra": { "$js": "executionPlan" }
+        |    },
+        |    "executionEvent": {
+        |        "test.extra": { "$js": "executionEvent" }
+        |    },
+        |    "read": {
+        |        "test.extra": { "$js": "read" }
+        |    },
+        |    "write": {
+        |        "test.extra": { "$js": "write" }
+        |    },
+        |    "operation": {
+        |        "test.extra": { "$js": "operation" }
+        |    }
+        |}
+        |""".stripMargin
+
     withCustomSparkSession(_
-      .config("spark.spline.userExtraMetaProvider.className", classOf[TestMetadataProvider].getName)
+      .config("spark.spline.userExtraMetadata.injectRules", injectRules)
       .config("spark.spline.lineageDispatcher", "noOp")
       .config("spark.spline.lineageDispatcher.noOp.className", classOf[NoOpLineageDispatcher].getName)
     ) { implicit spark =>
@@ -364,6 +383,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
         }
       }
     }
+  }
 
   // https://github.com/AbsaOSS/spline-spark-agent/issues/39
   it should "not capture 'data'" in
@@ -489,26 +509,6 @@ object LineageHarvesterSpec extends Matchers {
     }
 
     Succeeded
-  }
-
-  class TestMetadataProvider extends UserExtraMetadataProvider {
-
-    def this(conf: Configuration) = this()
-
-    override def forExecEvent(event: ExecutionEvent, ctx: HarvestingContext): Map[String, Any] =
-      Map("test.extra" -> event)
-
-    override def forExecPlan(plan: ExecutionPlan, ctx: HarvestingContext): Map[String, Any] =
-      Map("test.extra" -> plan)
-
-    override def forOperation(op: ReadOperation, ctx: HarvestingContext): Map[String, Any] =
-      Map("test.extra" -> op)
-
-    override def forOperation(op: WriteOperation, ctx: HarvestingContext): Map[String, Any] =
-      Map("test.extra" -> op)
-
-    override def forOperation(op: DataOperation, ctx: HarvestingContext): Map[String, Any] =
-      Map("test.extra" -> op)
   }
 
 }

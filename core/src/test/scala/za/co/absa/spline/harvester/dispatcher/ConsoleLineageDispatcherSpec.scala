@@ -37,7 +37,7 @@ class ConsoleLineageDispatcherSpec
     assertingStdOut(include("""["event",{"planId":"12345678-90ab-cdef-1234-567890abcdef","timestamp":999}]""")) {
       new ConsoleLineageDispatcher(new BaseConfiguration {
         addProperty("stream", "OUT")
-      }).send(ExecutionEvent(uuid1, 999, None, None, None))
+      }).send(ExecutionEvent(uuid1, 999, None, None, None, None))
     }
   }
 
@@ -45,7 +45,7 @@ class ConsoleLineageDispatcherSpec
     assertingStdErr(include("""["event",{"planId":"12345678-90ab-cdef-1234-567890abcdef","timestamp":999}]""")) {
       new ConsoleLineageDispatcher(new BaseConfiguration {
         addProperty("stream", "ERR")
-      }).send(ExecutionEvent(uuid1, 999, None, None, None))
+      }).send(ExecutionEvent(uuid1, 999, None, None, None, None))
     }
   }
 
