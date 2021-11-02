@@ -48,9 +48,6 @@ class Spline05ConfigurationAdapterTest extends AnyFlatSpec with Matchers with Sp
   it should "remap the key and return the value from the underlying config only if present" in {
     testConfig.containsKey(ConfProperty.IgnoreWriteDetectionStrategy) shouldEqual true
     testConfig.getProperty(ConfProperty.IgnoreWriteDetectionStrategy) shouldEqual "default"
-
-    testConfig.containsKey(ConfProperty.UserExtraMetadataProviderClass) shouldEqual false
-    testConfig.getProperty(ConfProperty.UserExtraMetadataProviderClass) shouldEqual null
   }
 
   it should "return only the keys that have deprecated counterparts in the underlying config" in {

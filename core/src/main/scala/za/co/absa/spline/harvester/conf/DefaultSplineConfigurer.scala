@@ -24,7 +24,6 @@ import za.co.absa.commons.config.ConfigurationImplicits
 import za.co.absa.spline.harvester.IdGenerator.{UUIDGeneratorFactory, UUIDNamespace}
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
-import za.co.absa.spline.harvester.extra.{UserExtraAppendingPostProcessingFilter, UserExtraMetadataProvider}
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.postprocessing.extra.DeclarativeExtraInjectingFilter
 import za.co.absa.spline.harvester.postprocessing.{AttributeReorderingFilter, OneRowRelationFilter, PostProcessingFilter}
@@ -65,11 +64,6 @@ object DefaultSplineConfigurer {
      * Strategy used to detect ignored writes
      */
     val IgnoreWriteDetectionStrategy = "spline.IWDStrategy"
-
-    /**
-     * @deprecated use Post Processing Filter instead
-     */
-    val UserExtraMetadataProviderClass = "spline.userExtraMetaProvider.className"
   }
 
   def apply(sparkSession: SparkSession): DefaultSplineConfigurer = {
@@ -130,11 +124,6 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
 
   protected def ignoredWriteDetectionStrategy: IgnoredWriteDetectionStrategy = createComponentByKey(IgnoreWriteDetectionStrategy)
 
-  protected def maybeUserExtraMetadataProvider: Option[UserExtraMetadataProvider] =
-    configuration
-      .getOptionalString(UserExtraMetadataProviderClass)
-      .map(objectFactory.instantiate[UserExtraMetadataProvider])
-
   private def createComponentByKey[A: ClassTag](key: String): A = {
     val objName = configuration.getRequiredString(key)
     objectFactory
@@ -143,15 +132,11 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
       .instantiate[A]()
   }
 
-  private def harvesterFactory = {
-    val maybeUserExtraAppendingPostProcessingFilter =
-      maybeUserExtraMetadataProvider.map(uemp => new UserExtraAppendingPostProcessingFilter(uemp))
-
+  private def harvesterFactory =
     new LineageHarvesterFactory(
       sparkSession,
       execPlanUUIDGeneratorFactory,
       ignoredWriteDetectionStrategy,
-      allPostProcessingFilters ++ maybeUserExtraAppendingPostProcessingFilter
+      allPostProcessingFilters
     )
-  }
 }
