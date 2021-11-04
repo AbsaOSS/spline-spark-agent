@@ -429,7 +429,7 @@ object LineageHarvesterSpec extends Matchers {
 
   private def tmpDest: String = TempDirectory(pathOnly = true).deleteOnExit().path.toString
 
-  private val integerType = dt.Simple(UUID.randomUUID(), "integer", nullable = false)
+  private val integerType = dt.Simple(UUID.randomUUID(), "int", nullable = false)
   private val doubleType = dt.Simple(UUID.randomUUID(), "double", nullable = false)
   private val doubleNullableType = dt.Simple(UUID.randomUUID(), "double", nullable = true)
   private val stringType = dt.Simple(UUID.randomUUID(), "string", nullable = true)

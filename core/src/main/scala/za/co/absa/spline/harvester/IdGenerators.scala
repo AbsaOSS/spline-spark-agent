@@ -17,18 +17,25 @@
 package za.co.absa.spline.harvester
 
 import za.co.absa.spline.harvester.IdGenerator._
+import za.co.absa.spline.harvester.IdGenerators._
 import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
 
 import java.util.UUID
 
 class IdGenerators(execPlanUUIDGeneratorFactory: UUIDGeneratorFactory[UUIDNamespace, ExecutionPlan]) {
   val execPlanIdGenerator: IdGenerator[ExecutionPlan, UUID] = execPlanUUIDGeneratorFactory(UUIDNamespace.ExecutionPlan)
-  val attributeIdGenerator: IdGenerator[Any, String] = new SequentialIdGenerator("attr-{0}")
-  val expressionIdGenerator: IdGenerator[Any, String] = new SequentialIdGenerator("expr-{0}")
-  val operationIdGenerator: IdGenerator[Any, String] = new SequentialIdGenerator("op-{0}")
+  val attributeIdGenerator: IdGenerator[Any, String] = new SequentialIdGenerator(AttributeIdTemplate)
+  val expressionIdGenerator: IdGenerator[Any, String] = new SequentialIdGenerator(ExpressionIdTemplate)
+  val operationIdGenerator: IdGenerator[Any, String] = new SequentialIdGenerator(OperationIdTemplate)
   val dataTypeIdGenerator: IdGenerator[Any, UUID] =
     new ComposableIdGenerator(
       new SequentialIdGenerator("{0}"),
       new UUID5IdGenerator[String](UUIDNamespace.DataType)
     )
+}
+
+object IdGenerators {
+  val AttributeIdTemplate = "attr-{0}"
+  val ExpressionIdTemplate = "expr-{0}"
+  val OperationIdTemplate = "op-{0}"
 }
