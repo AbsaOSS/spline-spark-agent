@@ -19,29 +19,32 @@ package za.co.absa.spline.harvester.builder.write
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.commons.lang.OptionImplicits._
-import za.co.absa.spline.harvester.ComponentCreatorFactory
+import za.co.absa.spline.harvester.IdGenerators
 import za.co.absa.spline.harvester.ModelConstants.OperationExtras
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder
+import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter, IOParamsConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
-import za.co.absa.spline.producer.model.v1_1.WriteOperation
+import za.co.absa.spline.producer.model.v1_1.{Attribute, WriteOperation}
 
 class WriteNodeBuilder
 (command: WriteCommand)
-  (val componentCreatorFactory: ComponentCreatorFactory, postProcessor: PostProcessor)
+  (val idGenerators: IdGenerators, val dataTypeConverter: DataTypeConverter, val dataConverter: DataConverter, postProcessor: PostProcessor)
   extends OperationNodeBuilder {
 
   override protected type R = WriteOperation
   override val operation: LogicalPlan = command.query
+
+  protected lazy val ioParamsConverter = new IOParamsConverter(exprToRefConverter)
 
   override def build(): WriteOperation = {
     val Seq(uri) = command.sourceIdentifier.uris
     val wop = WriteOperation(
       outputSource = uri,
       append = command.mode == SaveMode.Append,
-      id = id,
+      id = operationId,
       name = command.name.asOption,
       childIds = childIds,
-      params = Map(command.params.toSeq: _*).asOption,
+      params = ioParamsConverter.convert(command.params).asOption,
       extra = Map(
         OperationExtras.DestinationType -> command.sourceIdentifier.format
       ).asOption
@@ -49,4 +52,6 @@ class WriteNodeBuilder
 
     postProcessor.process(wop)
   }
+
+  def additionalAttributes: Seq[Attribute] = attributeConverter.values
 }

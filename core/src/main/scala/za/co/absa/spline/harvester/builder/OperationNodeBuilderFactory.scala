@@ -16,28 +16,32 @@
 
 package za.co.absa.spline.harvester.builder
 
-import org.apache.spark.sql.catalyst.plans.logical.{Aggregate, Generate, LogicalPlan, Project, Union, Window}
-import za.co.absa.spline.harvester.ComponentCreatorFactory
+import org.apache.spark.sql.catalyst.plans.logical.{Aggregate, Generate, Join, LogicalPlan, Project, Union, Window}
+import za.co.absa.spline.harvester.IdGenerators
 import za.co.absa.spline.harvester.builder.read.{ReadCommand, ReadNodeBuilder}
 import za.co.absa.spline.harvester.builder.write.{WriteCommand, WriteNodeBuilder}
+import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 
 class OperationNodeBuilderFactory(
   postProcessor: PostProcessor,
-  componentCreatorFactory: ComponentCreatorFactory
+  dataTypeConverter: DataTypeConverter,
+  dataConverter: DataConverter,
+  idGenerators: IdGenerators
 ) {
   def writeNodeBuilder(wc: WriteCommand): WriteNodeBuilder =
-    new WriteNodeBuilder(wc)(componentCreatorFactory, postProcessor)
+    new WriteNodeBuilder(wc)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
 
   def readNodeBuilder(rc: ReadCommand): ReadNodeBuilder =
-    new ReadNodeBuilder(rc)(componentCreatorFactory, postProcessor)
+    new ReadNodeBuilder(rc)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
 
   def genericNodeBuilder(lp: LogicalPlan): OperationNodeBuilder = lp match {
-    case p: Project => new ProjectNodeBuilder(p)(componentCreatorFactory, postProcessor)
-    case u: Union => new UnionNodeBuilder(u)(componentCreatorFactory, postProcessor)
-    case a: Aggregate => new AggregateNodeBuilder(a)(componentCreatorFactory, postProcessor)
-    case g: Generate => new GenerateNodeBuilder(g)(componentCreatorFactory, postProcessor)
-    case w: Window => new WindowNodeBuilder(w)(componentCreatorFactory, postProcessor)
-    case _ => new GenericNodeBuilder(lp)(componentCreatorFactory, postProcessor)
+    case p: Project => new ProjectNodeBuilder(p)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
+    case u: Union => new UnionNodeBuilder(u)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
+    case a: Aggregate => new AggregateNodeBuilder(a)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
+    case g: Generate => new GenerateNodeBuilder(g)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
+    case w: Window => new WindowNodeBuilder(w)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
+    case j: Join => new JoinNodeBuilder(j)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
+    case _ => new GenericNodeBuilder(lp)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
   }
 }

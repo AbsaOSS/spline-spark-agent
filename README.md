@@ -5,8 +5,8 @@ The Spline agent for Apache Spark is a complementary module to the [Spline proje
 that captures runtime lineage information from the Apache Spark jobs.
 
 The agent is a Scala library that is embedded into the Spark driver, listening to Spark events, and capturing logical execution plans.
-The collected metadata is then handed over to the lineage dispatcher, from where it can be either send to the Spline server 
-(e.g. via REST API or Kafka), or used in another way depending on selected dispatcher type (see [Lineage Dispatchers](#dispatchers)).
+The collected metadata is then handed over to the lineage dispatcher, from where it can either be sent to the Spline server 
+(e.g. via REST API or Kafka), or used in another way, depending on selected dispatcher type (see [Lineage Dispatchers](#dispatchers)).
 
 The agent can be used with or without a Spline server, depending on your use case. See [References](#references).
 
@@ -20,7 +20,8 @@ The agent can be used with or without a Spline server, depending on your use cas
 ## Table of Contents
 
 <!--ts-->
-   * [Spark / Scala version compatibility matrix](#compat-matrix)
+   * [Versioning](#versioning)
+      * [Spark / Scala version compatibility matrix](#compat-matrix)
    * [Usage](#usage)
       * [Selecting artifact](#selecting-artifact)
       * [Initialization](#initialization)
@@ -40,15 +41,34 @@ The agent can be used with or without a Spline server, depending on your use cas
 
 <!--te-->
 
-<a id="compat-matrix"></a>
-## Spark / Scala version compatibility matrix
+<a id="versioning"></a>
+## Versioning
 
-|            | Scala 2.11                   | Scala 2.12 |
-|------------|:----------------------------:|:----------:|
+The Spline Spark Agent follows the [Semantic Versioning](https://semver.org/) principles.
+The _Public API_ is defined as a set of entry-point classes (`SparkLineageInitializer`, `SplineSparkSessionWrapper`), 
+extension APIs (Plugin API, filters, dispatchers), configuration properties and a set of supported Spark versions.
+In other words, the _Spline Spark Agent Public API_ in terms of _SemVer_ covers all entities and abstractions that are designed 
+to be used or extended by client applications.
+
+The version number **does not** directly reflect the relation of the Agent to the Spline Producer API (the Spline server). Both the Spline Server and
+the Agent are designed to be as much mutually compatible as possible, assuming long-term operation and a possibly significant gap in the server and
+the agent release dates. Such requirement is dictated by the nature of the Agent that could be embedded into some Spark jobs and only rarely if ever
+updated without posing a risk to stop working because of eventual Spline server update. Likewise, it should be possible to update the Agent anytime
+(e.g. to fix a bug or support a newer Spark version or a feature that earlier agent version didn't support) without requiring a Spline server upgrade.
+
+Although not required by the above statement, for minimizing user astonishment when the compatibility between too distant _Agent_ and _Server_
+versions is dropped, we'll increment the _Major_ version component.
+
+<a id="compat-matrix"></a>
+### Spark / Scala version compatibility matrix
+
+|              | Scala 2.11                 | Scala 2.12 |
+|--------------|:--------------------------:|:----------:|
 |**Spark 2.2** | (no SQL; no codeless init) | &mdash;    |
 |**Spark 2.3** | (no Delta support)         | &mdash;    |
 |**Spark 2.4** | Yes                        | Yes        |
 |**Spark 3.0** | &mdash;                    | Yes        |
+|**Spark 3.1** | &mdash;                    | Yes        |
 
 <a id="usage"></a>
 ## Usage
@@ -223,7 +243,7 @@ A custom filter class must implement `za.co.absa.spline.harvester.postprocessing
 with a single parameter of type `org.apache.commons.configuration.Configuration`.
 Then register and configure it like this:
 ```properties
-spline.postProcessingFilter.className=my-filter
+spline.postProcessingFilter=my-filter
 spline.postProcessingFilter.my-filter.className=my.awesome.CustomFilter
 spline.postProcessingFilter.my-filter.prop1=value1
 spline.postProcessingFilter.my-filter.prop2=value2
@@ -438,11 +458,9 @@ Spline will pick it up automatically.
 
 There are several maven profiles that makes it easy to build the project with different versions of Spark and Scala.
 - Scala profiles: `scala-2.11`, `scala-2.12`
-- Spark profiles: `spark-2.2`, `spark-2.3`, `spark-2.4`, `spark-3.0`
+- Spark profiles: `spark-2.2`, `spark-2.3`, `spark-2.4`, `spark-3.0`, `spark-3.1`
 
-However, maven is not able to change an artifact name using profile. To do that we use `scala-cross-build-maven-plugin`.
-
-Example of usage:
+For example, to build an agent for Spark 2.4 and Scala 2.12: 
 ```shell
 # Change Scala version in pom.xml.
 mvn scala-cross-build:change-version -Pscala-2.12

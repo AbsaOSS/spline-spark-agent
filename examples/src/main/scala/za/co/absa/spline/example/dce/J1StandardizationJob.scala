@@ -28,7 +28,7 @@ object J1StandardizationJob extends SparkApp("My Standardization") {
   spark.read
     .csv("data/input/dce/raw/Transactions/2020/01/01/v1/Transactions.csv")
     .withColumn("client_id", '_c0 cast "long")
-    .withColumn("date", to_date('_c1, "dd.MM.yyyy"))
+    .withColumn("date", to_date('_c1, "dd.M.yyyy"))
     .withColumn("merchant", '_c2)
     .withColumn("city", '_c3)
     .withColumn("country", '_c4)

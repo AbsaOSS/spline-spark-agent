@@ -46,7 +46,7 @@
 
     <target name="runAll">
         <foreach target="runFile" param="classFile">
-            <param name="compile_classpath" value="${compile_classpath}"/>
+            <param name="classpath" value="${classpath}"/>
             <param name="spline.producer.url" value="${spline.producer.url}"/>
             <param name="spline.mode" value="${spline.mode}"/>
 
@@ -95,7 +95,7 @@
         <java fork="true"
               failonerror="true"
               classname="${className}"
-              classpath="${compile_classpath}">
+              classpath="${classpath}">
             <syspropertyset refid="props"/>
         </java>
     </target>

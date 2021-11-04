@@ -18,9 +18,11 @@ package za.co.absa.spline.harvester.converter
 
 import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.Converter
+import za.co.absa.spline.harvester.IdGenerator
 import za.co.absa.spline.producer.model.v1_1.Attribute
 
 class AttributeConverter(
+  idGen: IdGenerator[Any, String],
   dataTypeConverter: DataTypeConverter,
   resolveAttributeChild: sparkExprssions.Attribute => Option[sparkExprssions.Expression],
   outputExprToAttMap: Map[sparkExprssions.ExprId, Attribute],
@@ -36,7 +38,7 @@ class AttributeConverter(
 
     case attr: sparkExprssions.Attribute =>
       Attribute(
-        id = attr.exprId.id.toString,
+        id = idGen.nextId(),
         dataType = Some(dataTypeConverter.convert(attr.dataType, attr.nullable).id),
         childRefs = resolveAttributeChild(attr)
           .map(expr => Seq(exprToRefConverter.convert(expr))),
@@ -45,7 +47,3 @@ class AttributeConverter(
       )
   }
 }
-
-
-
-

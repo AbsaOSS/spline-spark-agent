@@ -97,10 +97,10 @@ class InsertIntoHiveTest
               plan.operations.write.append should be(false)
               val writeTable = extractTableIdentifier(plan.operations.write.params)
               val readTable = extractTableIdentifier(plan.operations.reads.get.head.params)
-              writeTable.table should be("path_archive_csvserde")
-              writeTable.database should be(Some("test"))
-              readTable.table should be("path_csvserde")
-              readTable.database should be(Some("test"))
+              writeTable("table") should be("path_archive_csvserde")
+              writeTable("database") should be(Some("test"))
+              readTable("table") should be("path_csvserde")
+              readTable("database") should be(Some("test"))
             }
           }
         }
@@ -134,10 +134,10 @@ class InsertIntoHiveTest
               plan.operations.write.append should be(false)
               val writeTable = extractTableIdentifier(plan.operations.write.params)
               val readTable = extractTableIdentifier(plan.operations.reads.get.head.params)
-              writeTable.table should be("path_archive_parquetserde")
-              writeTable.database should be(Some("test"))
-              readTable.database should be(Some("test"))
-              readTable.table should be("path_parquetserde")
+              writeTable("table") should be("path_archive_parquetserde")
+              writeTable("database") should be(Some("test"))
+              readTable("table") should be("path_parquetserde")
+              readTable("database") should be(Some("test"))
             }
           }
         }
@@ -172,10 +172,10 @@ class InsertIntoHiveTest
 
               val writeTable = extractTableIdentifier(plan.operations.write.params)
               val readTable = extractTableIdentifier(plan.operations.reads.get.head.params)
-              writeTable.table should be("path_archive_orcserde")
-              writeTable.database should be(Some("test"))
-              readTable.table should be("path_orcserde")
-              readTable.database should be(Some("test"))
+              writeTable("table") should be("path_archive_orcserde")
+              writeTable("database") should be(Some("test"))
+              readTable("table") should be("path_orcserde")
+              readTable("database") should be(Some("test"))
             }
           }
         }

@@ -18,27 +18,30 @@ package za.co.absa.spline.harvester.builder.read
 
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.commons.lang.OptionImplicits._
-import za.co.absa.spline.harvester.ComponentCreatorFactory
+import za.co.absa.spline.harvester.IdGenerators
 import za.co.absa.spline.harvester.ModelConstants.OperationExtras
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder
+import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter, IOParamsConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.v1_1.ReadOperation
 
 class ReadNodeBuilder
   (val command: ReadCommand)
-  (val componentCreatorFactory: ComponentCreatorFactory, postProcessor: PostProcessor)
+  (val idGenerators: IdGenerators, val dataTypeConverter: DataTypeConverter, val dataConverter: DataConverter, postProcessor: PostProcessor)
   extends OperationNodeBuilder {
 
   override protected type R = ReadOperation
   override val operation: LogicalPlan = command.operation
 
+  protected lazy val ioParamsConverter = new IOParamsConverter(exprToRefConverter)
+
   override def build(): ReadOperation = {
     val rop = ReadOperation(
       inputSources = command.sourceIdentifier.uris,
-      id = id,
+      id = operationId,
       name = operation.nodeName.asOption,
       output = outputAttributes.map(_.id).asOption,
-      params = Map(command.params.toSeq: _*).asOption,
+      params = ioParamsConverter.convert(command.params).asOption,
       extra = Map(
         OperationExtras.SourceType -> command.sourceIdentifier.format
       ).asOption)

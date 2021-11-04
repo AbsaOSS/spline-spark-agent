@@ -17,15 +17,18 @@
 package za.co.absa.spline.harvester.conf
 
 import org.apache.commons.configuration.{CompositeConfiguration, Configuration, PropertiesConfiguration}
+import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import za.co.absa.commons.HierarchicalObjectFactory
 import za.co.absa.commons.config.ConfigurationImplicits
+import za.co.absa.spline.harvester.IdGenerator.{UUIDGeneratorFactory, UUIDNamespace}
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.extra.{UserExtraAppendingPostProcessingFilter, UserExtraMetadataProvider}
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
-import za.co.absa.spline.harvester.postprocessing.PostProcessingFilter
+import za.co.absa.spline.harvester.postprocessing.{AttributeReorderingFilter, OneRowRelationFilter, PostProcessingFilter}
 import za.co.absa.spline.harvester.{LineageHarvesterFactory, QueryExecutionEventHandler}
+import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
 
 import scala.reflect.ClassTag
 
@@ -40,6 +43,12 @@ object DefaultSplineConfigurer {
      * @see [[SplineMode]]
      */
     val Mode = "spline.mode"
+
+    /**
+     * The UUID version that is used for ExecutionPlan ID.
+     * Note: Hash based versions (3 and 5) produce deterministic IDs based on the ExecutionPlan body.
+     */
+    val ExecPlanUUIDVersion = "spline.internal.execPlan.uuid.version"
 
     /**
      * Lineage dispatcher name - defining namespace for rest of properties for that dispatcher
@@ -81,7 +90,9 @@ object DefaultSplineConfigurer {
   }
 }
 
-class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Configuration) extends SplineConfigurer {
+class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Configuration)
+  extends SplineConfigurer
+    with Logging {
 
   import ConfigurationImplicits._
   import DefaultSplineConfigurer.ConfProperty._
@@ -90,15 +101,15 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
 
   import collection.JavaConverters._
 
-  private lazy val configuration = new CompositeConfiguration(Seq(
+  private val configuration = new CompositeConfiguration(Seq(
     userConfiguration,
     new Spline05ConfigurationAdapter(userConfiguration),
     new PropertiesConfiguration(defaultPropertiesFileName)
   ).asJava)
 
-  private lazy val objectFactory = new HierarchicalObjectFactory(configuration)
+  private val objectFactory = new HierarchicalObjectFactory(configuration)
 
-  lazy val splineMode: SplineMode = {
+  val splineMode: SplineMode = {
     val modeName = configuration.getRequiredString(Mode)
     try SplineMode withName modeName
     catch {
@@ -107,12 +118,28 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
     }
   }
 
-  override def queryExecutionEventHandler: QueryExecutionEventHandler =
+  private val execPlanUUIDGeneratorFactory: UUIDGeneratorFactory[UUIDNamespace, ExecutionPlan] = {
+    val uuidVer = configuration.getRequiredInt(ExecPlanUUIDVersion)
+    UUIDGeneratorFactory.forVersion(uuidVer)
+  }
+
+  override def queryExecutionEventHandler: QueryExecutionEventHandler = {
+    logInfo(s"Lineage Dispatcher: ${configuration.getString(RootLineageDispatcher)}")
+    logInfo(s"Post-Processing Filter: ${configuration.getString(RootPostProcessingFilter)}")
+    logInfo(s"Ignore-Write Detection Strategy: ${configuration.getString(IgnoreWriteDetectionStrategy)}")
+
     new QueryExecutionEventHandler(harvesterFactory, lineageDispatcher)
+  }
 
   protected def lineageDispatcher: LineageDispatcher = createComponentByKey(RootLineageDispatcher)
 
   protected def postProcessingFilter: PostProcessingFilter = createComponentByKey(RootPostProcessingFilter)
+
+  private def internalPostProcessingFilters: Seq[PostProcessingFilter] =
+    Seq(new AttributeReorderingFilter(configuration), new OneRowRelationFilter(configuration))
+
+  private def allPostProcessingFilters: Seq[PostProcessingFilter] =
+    internalPostProcessingFilters :+ postProcessingFilter
 
   protected def ignoredWriteDetectionStrategy: IgnoredWriteDetectionStrategy = createComponentByKey(IgnoreWriteDetectionStrategy)
 
@@ -129,12 +156,16 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
       .instantiate[A]()
   }
 
-  private def harvesterFactory = new LineageHarvesterFactory(
-    sparkSession,
-    splineMode,
-    ignoredWriteDetectionStrategy,
-    maybeUserExtraMetadataProvider
-      .map(uemp => Seq(postProcessingFilter, new UserExtraAppendingPostProcessingFilter(uemp)))
-      .getOrElse(Seq(postProcessingFilter))
-  )
+  private def harvesterFactory = {
+    val maybeUserExtraAppendingPostProcessingFilter =
+      maybeUserExtraMetadataProvider.map(uemp => new UserExtraAppendingPostProcessingFilter(uemp))
+
+    new LineageHarvesterFactory(
+      sparkSession,
+      splineMode,
+      execPlanUUIDGeneratorFactory,
+      ignoredWriteDetectionStrategy,
+      allPostProcessingFilters ++ maybeUserExtraAppendingPostProcessingFilter
+    )
+  }
 }

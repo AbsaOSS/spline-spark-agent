@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ABSA Group Limited
+ * Copyright 2021 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,27 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.json
+package za.co.absa.commons
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import za.co.absa.commons.CollectionImplicits._
 
-class ShortTypeHintForSpline03ModelSupportSpec extends AnyFlatSpec with Matchers {
+class CollectionImplicitsSpec
+  extends AnyFlatSpec
+    with Matchers {
 
-  behavior of "ShortTypeHintForSpline03ModelSupport"
+  behavior of "MapOps.|+|"
 
-  it should "create formats" in new ShortTypeHintForSpline03ModelSupport {
-    formats should not be null
+  it should "merge two maps with append" in {
+    val m1 = Map("a" -> 1, "b" -> 1)
+    val m2 = Map("b" -> 1, "c" -> 1)
+    (m1 |+| m2) should equal(Map("a" -> 1, "b" -> 2, "c" -> 1))
   }
 
+  it should "ignore empty maps" in {
+    (Map.empty[String, Int] |+| Map.empty[String, Int]) should be(empty)
+    (Map.empty[String, Int] |+| Map("a" -> 1)) should equal(Map("a" -> 1))
+    (Map("a" -> 1) |+| Map.empty[String, Int]) should equal(Map("a" -> 1))
+  }
 }
