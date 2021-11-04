@@ -35,6 +35,7 @@ class ModelMapperV1Spec
     val planCur = v1_1.ExecutionPlan(
       id = Some(UUID.fromString("00000000-0000-0000-0000-000000000000")),
       name = Some("Foo Plan"),
+      discriminator = None,
       operations = v1_1.Operations(
         write = v1_1.WriteOperation(
           outputSource = "aaa",
@@ -146,6 +147,7 @@ class ModelMapperV1Spec
   it should "convert ExecutionEvent model from the current version to ver 1.0" in {
     val eventCur = v1_1.ExecutionEvent(
       planId = UUID.fromString("00000000-0000-0000-0000-000000000000"),
+      discriminator = None,
       timestamp = 123456789,
       durationNs = Some(555),
       error = None,
