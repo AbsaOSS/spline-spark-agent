@@ -20,9 +20,9 @@ import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 
 object ModelMapperV1_1 extends ModelMapper {
 
-  // v1.1 is the latest api version supported so no conversion is needed
+  // v1.1 is fully compatible with v1.2
 
-  override def toDTO(plan: ExecutionPlan): AnyRef = plan
+  override def toDTO(plan: ExecutionPlan): AnyRef = ModelMapperV1_2.toDTO(plan)
 
-  override def toDTO(event: ExecutionEvent): AnyRef = event
+  override def toDTO(event: ExecutionEvent): AnyRef = ModelMapperV1_2.toDTO(event)
 }

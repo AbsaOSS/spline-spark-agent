@@ -61,8 +61,12 @@ class HttpLineageDispatcher(restClient: RestClient)
   }
 
   override def send(event: ExecutionEvent): Unit = {
-    val eventDTO = modelMapper.toDTO(event)
-    sendJson(Seq(eventDTO).toJson, executionEventsEndpoint)
+    // Even though Producer API ver 1.0 and 1.1 allowed for capturing failed execution events, that feature was not really implemented on the server.
+    // The earliest server version that properly supports failed execution capturing is the one that implements Producer API version 1.2
+    if (event.error.isEmpty || apiVersion >= ProducerApiVersion.V1_2) {
+      val eventDTO = modelMapper.toDTO(event)
+      sendJson(Seq(eventDTO).toJson, executionEventsEndpoint)
+    }
   }
 
   private def sendJson(json: String, endpoint: RestEndpoint): Unit = {

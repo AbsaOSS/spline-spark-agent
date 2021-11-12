@@ -16,6 +16,7 @@
 
 package za.co.absa.spline.harvester
 
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.spark
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SaveMode
@@ -113,8 +114,8 @@ class LineageHarvester(
 
         val event = {
           val (maybeError, maybeDuration) = result match {
-          case Failure(e) => (Some(e), None)
-          case Success(d) => (None, Some(d))
+            case Failure(e) => (Some(ExceptionUtils.getStackTrace(e)), None)
+            case Success(d) => (None, Some(d))
           }
 
           val eventExtra = Map[String, Any](

@@ -22,7 +22,8 @@ import org.apache.spark.sql.SparkSession
 import za.co.absa.commons.HierarchicalObjectFactory
 import za.co.absa.commons.config.ConfigurationImplicits
 import za.co.absa.spline.harvester.IdGenerator.{UUIDGeneratorFactory, UUIDNamespace}
-import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
+import za.co.absa.spline.harvester.conf.SplineConfigurer.SQLFailureCaptureMode.SQLFailureCaptureMode
+import za.co.absa.spline.harvester.conf.SplineConfigurer.{SQLFailureCaptureMode, SplineMode}
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.postprocessing.extra.DeclarativeExtraInjectingFilter
@@ -43,6 +44,13 @@ object DefaultSplineConfigurer {
      * @see [[SplineMode]]
      */
     val Mode = "spline.mode"
+
+    /**
+     * How Spline should handle failed SQL executions.
+     *
+     * @see [[SQLFailureCaptureMode]]
+     */
+    val SQLFailureCaptureMode = "spline.sql.failure.capture"
 
     /**
      * The UUID version that is used for ExecutionPlan ID.
@@ -76,7 +84,6 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
     with Logging {
 
   import ConfigurationImplicits._
-  import DefaultSplineConfigurer.ConfProperty._
   import DefaultSplineConfigurer._
   import SplineMode._
 
@@ -91,30 +98,39 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
   private val objectFactory = new HierarchicalObjectFactory(configuration)
 
   val splineMode: SplineMode = {
-    val modeName = configuration.getRequiredString(Mode)
+    val modeName = configuration.getRequiredString(ConfProperty.Mode)
     try SplineMode withName modeName
     catch {
       case _: NoSuchElementException => throw new IllegalArgumentException(
-        s"Invalid value for property $Mode=$modeName. Should be one of: ${SplineMode.values mkString ", "}")
+        s"Invalid value for property ${ConfProperty.Mode}=$modeName. Should be one of: ${SplineMode.values mkString ", "}")
+    }
+  }
+
+  val sqlFailureCaptureMode: SQLFailureCaptureMode = {
+    val modeName = configuration.getRequiredString(ConfProperty.SQLFailureCaptureMode)
+    try SQLFailureCaptureMode withName modeName
+    catch {
+      case _: NoSuchElementException => throw new IllegalArgumentException(
+        s"Invalid value for property ${ConfProperty.SQLFailureCaptureMode}=$modeName. Should be one of: ${SQLFailureCaptureMode.values mkString ", "}")
     }
   }
 
   private val execPlanUUIDGeneratorFactory: UUIDGeneratorFactory[UUIDNamespace, ExecutionPlan] = {
-    val uuidVer = configuration.getRequiredInt(ExecPlanUUIDVersion)
+    val uuidVer = configuration.getRequiredInt(ConfProperty.ExecPlanUUIDVersion)
     UUIDGeneratorFactory.forVersion(uuidVer)
   }
 
   override def queryExecutionEventHandler: QueryExecutionEventHandler = {
-    logInfo(s"Lineage Dispatcher: ${configuration.getString(RootLineageDispatcher)}")
-    logInfo(s"Post-Processing Filter: ${configuration.getString(RootPostProcessingFilter)}")
-    logInfo(s"Ignore-Write Detection Strategy: ${configuration.getString(IgnoreWriteDetectionStrategy)}")
+    logInfo(s"Lineage Dispatcher: ${configuration.getString(ConfProperty.RootLineageDispatcher)}")
+    logInfo(s"Post-Processing Filter: ${configuration.getString(ConfProperty.RootPostProcessingFilter)}")
+    logInfo(s"Ignore-Write Detection Strategy: ${configuration.getString(ConfProperty.IgnoreWriteDetectionStrategy)}")
 
     new QueryExecutionEventHandler(harvesterFactory, lineageDispatcher)
   }
 
-  protected def lineageDispatcher: LineageDispatcher = createComponentByKey(RootLineageDispatcher)
+  protected def lineageDispatcher: LineageDispatcher = createComponentByKey(ConfProperty.RootLineageDispatcher)
 
-  protected def postProcessingFilter: PostProcessingFilter = createComponentByKey(RootPostProcessingFilter)
+  protected def postProcessingFilter: PostProcessingFilter = createComponentByKey(ConfProperty.RootPostProcessingFilter)
 
   private def internalPostProcessingFilters: Seq[PostProcessingFilter] =
     Seq(new AttributeReorderingFilter(), new OneRowRelationFilter()) ++ DeclarativeExtraInjectingFilter(configuration)
@@ -122,7 +138,7 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
   private def allPostProcessingFilters: Seq[PostProcessingFilter] =
     internalPostProcessingFilters :+ postProcessingFilter
 
-  protected def ignoredWriteDetectionStrategy: IgnoredWriteDetectionStrategy = createComponentByKey(IgnoreWriteDetectionStrategy)
+  protected def ignoredWriteDetectionStrategy: IgnoredWriteDetectionStrategy = createComponentByKey(ConfProperty.IgnoreWriteDetectionStrategy)
 
   private def createComponentByKey[A: ClassTag](key: String): A = {
     val objName = configuration.getRequiredString(key)

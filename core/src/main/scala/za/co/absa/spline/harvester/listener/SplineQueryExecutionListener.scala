@@ -24,7 +24,9 @@ import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer
 import za.co.absa.spline.harvester.listener.SplineQueryExecutionListener.constructEventHandler
 import za.co.absa.spline.harvester.{QueryExecutionEventHandler, QueryExecutionEventHandlerFactory}
 
+import scala.concurrent.duration.DurationLong
 import scala.util.control.NonFatal
+import scala.util.{Failure, Success}
 
 class SplineQueryExecutionListener(maybeEventHandler: Option[QueryExecutionEventHandler])
   extends QueryExecutionListener
@@ -37,11 +39,11 @@ class SplineQueryExecutionListener(maybeEventHandler: Option[QueryExecutionEvent
   def this() = this(constructEventHandler())
 
   override def onSuccess(funcName: String, qe: QueryExecution, durationNs: Long): Unit = withErrorHandling(qe) {
-    maybeEventHandler.foreach(_.onSuccess(funcName, qe, durationNs))
+    maybeEventHandler.foreach(_.handle(qe, Success(durationNs.nanos)))
   }
 
   override def onFailure(funcName: String, qe: QueryExecution, exception: Exception): Unit = withErrorHandling(qe) {
-    maybeEventHandler.foreach(_.onFailure(funcName, qe, exception))
+    maybeEventHandler.foreach(_.handle(qe, Failure(exception)))
   }
 
   private def withErrorHandling(qe: QueryExecution)(body: => Unit): Unit = {
@@ -64,6 +66,6 @@ object SplineQueryExecutionListener extends Logging {
 
     val configurer = DefaultSplineConfigurer(sparkSession)
 
-    new QueryExecutionEventHandlerFactory(sparkSession).createEventHandler(configurer, true)
+    new QueryExecutionEventHandlerFactory(sparkSession).createEventHandler(configurer, isCodelessInit = true)
   }
 }
