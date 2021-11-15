@@ -20,13 +20,12 @@ import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.util.Try
 
 class QueryExecutionEventHandler(
   harvesterFactory: LineageHarvesterFactory,
   lineageDispatcher: LineageDispatcher) {
 
-  def handle(qe: QueryExecution, result: Try[Duration]): Unit = {
+  def handle(qe: QueryExecution, result: Either[Throwable, Duration]): Unit = {
     harvesterFactory
       .harvester(qe.analyzed, Some(qe.executedPlan))
       .harvest(result)

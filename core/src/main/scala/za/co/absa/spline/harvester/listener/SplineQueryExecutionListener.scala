@@ -39,11 +39,11 @@ class SplineQueryExecutionListener(maybeEventHandler: Option[QueryExecutionEvent
   def this() = this(constructEventHandler())
 
   override def onSuccess(funcName: String, qe: QueryExecution, durationNs: Long): Unit = withErrorHandling(qe) {
-    maybeEventHandler.foreach(_.handle(qe, Success(durationNs.nanos)))
+    maybeEventHandler.foreach(_.handle(qe, Right(durationNs.nanos)))
   }
 
   override def onFailure(funcName: String, qe: QueryExecution, exception: Exception): Unit = withErrorHandling(qe) {
-    maybeEventHandler.foreach(_.handle(qe, Failure(exception)))
+    maybeEventHandler.foreach(_.handle(qe, Left(exception)))
   }
 
   private def withErrorHandling(qe: QueryExecution)(body: => Unit): Unit = {

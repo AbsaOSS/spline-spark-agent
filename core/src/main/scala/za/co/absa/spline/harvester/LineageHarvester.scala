@@ -52,7 +52,7 @@ class LineageHarvester(
   opNodeBuilderFactory: OperationNodeBuilderFactory
 ) extends Logging with ObjectStructureLogging {
 
-  def harvest(result: Try[Duration]): HarvestResult = {
+  def harvest(result: Either[Throwable, Duration]): HarvestResult = {
     logDebug(s"Harvesting lineage from ${ctx.logicalPlan.getClass}")
 
     val (readMetrics: Metrics, writeMetrics: Metrics) = ctx.executedPlanOpt.
@@ -113,10 +113,8 @@ class LineageHarvester(
         val plan = planWithoutId.copy(id = Some(planId))
 
         val event = {
-          val (maybeError, maybeDuration) = result match {
-            case Failure(e) => (Some(ExceptionUtils.getStackTrace(e)), None)
-            case Success(d) => (None, Some(d))
-          }
+          val maybeDurationNs = result.right.toOption.map(_.toNanos)
+          val maybeErrorString = result.left.toOption.map(ExceptionUtils.getStackTrace)
 
           val eventExtra = Map[String, Any](
             ExecutionEventExtra.AppId -> ctx.session.sparkContext.applicationId,
@@ -128,8 +126,8 @@ class LineageHarvester(
             planId = planId,
             discriminator = None,
             timestamp = System.currentTimeMillis,
-            durationNs = maybeDuration.map(_.toNanos),
-            error = maybeError,
+            durationNs = maybeDurationNs,
+            error = maybeErrorString,
             extra = eventExtra.asOption)
 
           postProcessor.process(ev)
