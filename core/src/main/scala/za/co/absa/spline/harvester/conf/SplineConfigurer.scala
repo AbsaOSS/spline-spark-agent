@@ -44,7 +44,7 @@ trait SplineConfigurer {
 
   /**
    * Controls if failed SQL execution should be captured depending on the kind of associated error
-   * @return
+   * @return [[SQLFailureCaptureMode]]
    */
   def sqlFailureCaptureMode: SQLFailureCaptureMode
 }
