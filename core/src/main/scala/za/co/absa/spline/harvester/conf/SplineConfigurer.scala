@@ -24,6 +24,7 @@ import za.co.absa.spline.harvester.QueryExecutionEventHandler
 trait SplineConfigurer {
 
   import SplineConfigurer.SplineMode._
+  import SplineConfigurer.SQLFailureCaptureMode._
 
   /**
     * A listener handling events from batch processing
@@ -40,6 +41,12 @@ trait SplineConfigurer {
     * @return [[SplineMode]]
     */
   def splineMode: SplineMode
+
+  /**
+   * Controls if failed SQL execution should be captured depending on the kind of associated error
+   * @return [[SQLFailureCaptureMode]]
+   */
+  def sqlFailureCaptureMode: SQLFailureCaptureMode
 }
 
 object SplineConfigurer {
@@ -48,20 +55,30 @@ object SplineConfigurer {
     type SplineMode = Value
     val
 
-    /**
-      * Spline is disabled completely
-      */
+    // Spline is disabled completely
     DISABLED,
 
-    /**
-      * Abort on Spline initialization errors
-      */
+    // Abort on Spline initialization errors
     REQUIRED,
 
-    /**
-      * If Spline initialization fails then disable Spline and continue without lineage tracking
-      */
+    // If Spline initialization fails then disable Spline and continue without lineage tracking
     BEST_EFFORT
+
+    = Value
+  }
+
+  object SQLFailureCaptureMode extends Enumeration {
+    type SQLFailureCaptureMode = Value
+    val
+
+    // Do NOT capture any failed SQL executions
+    NONE,
+
+    // Only capture failed SQL executions when the error is non-fatal (see [[scala.util.control.NonFatal]])
+    NON_FATAL,
+
+    // Capture all failed SQL executions regardless of the error type
+    ALL
 
     = Value
   }

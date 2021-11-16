@@ -37,6 +37,7 @@ import za.co.absa.spline.test.harvester.dispatcher.NoOpLineageDispatcher
 import java.util.UUID
 import java.util.UUID.randomUUID
 import scala.language.reflectiveCalls
+import scala.util.Try
 
 class LineageHarvesterSpec extends AsyncFlatSpec
   with Matchers
@@ -385,6 +386,47 @@ class LineageHarvesterSpec extends AsyncFlatSpec
     }
   }
 
+  it should "capture execution duration" in {
+    withNewSparkSession { implicit spark =>
+      withLineageTracking { captor =>
+        import spark.implicits._
+        val dest = tmpDest
+        for {
+          (plan, Seq(event)) <- captor.lineageOf {
+            spark.createDataset(Seq(TestRow(1, 2.3, "text"))).write.save(dest)
+          }
+        } yield {
+          plan should not be null
+          event.error should be(empty)
+          event.durationNs should not be empty
+          event.durationNs.get should be > 0L
+        }
+      }
+    }
+  }
+
+  it should "capture execution error" in {
+    withNewSparkSession { implicit spark =>
+      withLineageTracking { captor =>
+        import spark.implicits._
+        val dest = tmpDest
+        val df = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
+        for {
+          _ <- captor.lineageOf(df.write.save(dest))
+          (plan, Seq(event)) <- captor.lineageOf {
+            // simulate error during execution
+            Try(df.write.mode(SaveMode.ErrorIfExists).save(dest))
+          }
+        } yield {
+          plan should not be null
+          event.durationNs should be(empty)
+          event.error should not be empty
+          event.error.get.toString should include(s"path file:$dest already exists")
+        }
+      }
+    }
+  }
+
   // https://github.com/AbsaOSS/spline-spark-agent/issues/39
   it should "not capture 'data'" in
     withNewSparkSession { implicit spark =>
@@ -469,9 +511,9 @@ object LineageHarvesterSpec extends Matchers {
   }
 
   def assertDataLineage(
-    expectedOperations: Seq[AnyRef],
-    expectedAttributes: Seq[Attribute],
-    actualPlan: ExecutionPlan): Assertion = {
+                         expectedOperations: Seq[AnyRef],
+                         expectedAttributes: Seq[Attribute],
+                         actualPlan: ExecutionPlan): Assertion = {
 
     import za.co.absa.commons.ProducerApiAdapters._
 

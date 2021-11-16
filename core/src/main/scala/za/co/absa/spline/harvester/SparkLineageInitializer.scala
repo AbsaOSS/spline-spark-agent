@@ -18,8 +18,10 @@ package za.co.absa.spline.harvester
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
+import za.co.absa.commons.spark.NonFatalQueryExecutionListenerAdapter
+import za.co.absa.spline.harvester.conf.SplineConfigurer.SQLFailureCaptureMode._
 import za.co.absa.spline.harvester.conf.{DefaultSplineConfigurer, SplineConfigurer}
-import za.co.absa.spline.harvester.listener.SplineQueryExecutionListener
+import za.co.absa.spline.harvester.listener.{SplineQueryExecutionListener, SuccessfulQueryExecutionListenerAdapter}
 
 import scala.concurrent.ExecutionContext
 
@@ -51,8 +53,14 @@ object SparkLineageInitializer extends Logging {
   def enableLineageTracking(sparkSession: SparkSession, configurer: SplineConfigurer): SparkSession = {
     new QueryExecutionEventHandlerFactory(sparkSession)
       .createEventHandler(configurer, isCodelessInit = false)
-      .foreach(eventHandler =>
-        sparkSession.listenerManager.register(new SplineQueryExecutionListener(Some(eventHandler))))
+      .foreach(eventHandler => {
+        val listener = configurer.sqlFailureCaptureMode match {
+          case NONE => new SplineQueryExecutionListener(Some(eventHandler)) with SuccessfulQueryExecutionListenerAdapter
+          case NON_FATAL => new SplineQueryExecutionListener(Some(eventHandler)) with NonFatalQueryExecutionListenerAdapter
+          case ALL => new SplineQueryExecutionListener(Some(eventHandler))
+        }
+        sparkSession.listenerManager.register(listener)
+      })
 
     sparkSession
   }
