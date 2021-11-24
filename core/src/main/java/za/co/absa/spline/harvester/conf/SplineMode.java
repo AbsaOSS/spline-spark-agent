@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.listener
+package za.co.absa.spline.harvester.conf;
 
-import org.apache.spark.sql.execution.QueryExecution
-import org.apache.spark.sql.util.QueryExecutionListener
+public enum SplineMode {
 
-trait SuccessfulQueryExecutionListenerAdapter extends QueryExecutionListener {
+    // Spline is disabled completely
+    DISABLED,
 
-  abstract override def onFailure(funcName: String, qe: QueryExecution, exception: Exception): Unit = {
-    // do nothing
-  }
+    // Abort on Spline initialization errors
+    REQUIRED,
 
+    // If Spline initialization fails then disable Spline and continue without lineage tracking
+    BEST_EFFORT,
 }

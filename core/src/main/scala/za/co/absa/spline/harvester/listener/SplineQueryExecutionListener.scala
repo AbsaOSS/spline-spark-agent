@@ -16,56 +16,32 @@
 
 package za.co.absa.spline.harvester.listener
 
-import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.util.QueryExecutionListener
-import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer
-import za.co.absa.spline.harvester.listener.SplineQueryExecutionListener.constructEventHandler
-import za.co.absa.spline.harvester.{QueryExecutionEventHandler, QueryExecutionEventHandlerFactory}
+import za.co.absa.spline.harvester.SparkLineageInitializer
 
-import scala.concurrent.duration.DurationLong
-import scala.util.control.NonFatal
-import scala.util.{Failure, Success}
+/**
+ * Spline Codeless init entry point.
+ * This class is supposed to be instantiated exclusively by Spark via the `spark.sql.queryExecutionListeners` configuration parameter.
+ *
+ * @see [[https://spark.apache.org/docs/latest/configuration.html#static-sql-configuration]]
+ */
+class SplineQueryExecutionListener extends QueryExecutionListener {
 
-class SplineQueryExecutionListener(maybeEventHandler: Option[QueryExecutionEventHandler])
-  extends QueryExecutionListener
-    with Logging {
-
-  /**
-   * Listener delegate is lazily evaluated as Spline initialization requires completely initialized SparkSession
-   * to be able to use sessionState for duplicate tracking prevention.
-   */
-  def this() = this(constructEventHandler())
-
-  override def onSuccess(funcName: String, qe: QueryExecution, durationNs: Long): Unit = withErrorHandling(qe) {
-    maybeEventHandler.foreach(_.handle(qe, Right(durationNs.nanos)))
-  }
-
-  override def onFailure(funcName: String, qe: QueryExecution, exception: Exception): Unit = withErrorHandling(qe) {
-    maybeEventHandler.foreach(_.handle(qe, Left(exception)))
-  }
-
-  private def withErrorHandling(qe: QueryExecution)(body: => Unit): Unit = {
-    try
-      body
-    catch {
-      case NonFatal(e) =>
-        val ctx = qe.sparkSession.sparkContext
-        logError(s"Unexpected error occurred during lineage processing for application: ${ctx.appName} #${ctx.applicationId}", e)
-    }
-  }
-}
-
-object SplineQueryExecutionListener extends Logging {
-
-  private def constructEventHandler(): Option[QueryExecutionEventHandler] = {
+  private val maybeListener: Option[QueryExecutionListener] = {
     val sparkSession = SparkSession.getActiveSession
       .orElse(SparkSession.getDefaultSession)
       .getOrElse(throw new IllegalStateException("Session is unexpectedly missing. Spline cannot be initialized."))
 
-    val configurer = DefaultSplineConfigurer(sparkSession)
+    new SparkLineageInitializer(sparkSession).createListener(isCodelessInit = true)
+  }
 
-    new QueryExecutionEventHandlerFactory(sparkSession).createEventHandler(configurer, isCodelessInit = true)
+  override def onSuccess(funcName: String, qe: QueryExecution, durationNs: Long): Unit = {
+    maybeListener.foreach(_.onSuccess(funcName, qe, durationNs))
+  }
+
+  override def onFailure(funcName: String, qe: QueryExecution, exception: Exception): Unit = {
+    maybeListener.foreach(_.onFailure(funcName, qe, exception))
   }
 }

@@ -24,12 +24,13 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.commons.scalatest.EnvFixture
 import za.co.absa.spline.harvester.{HarvestingContext, IdGenerators}
-import za.co.absa.spline.harvester.postprocessing.extra.DeclarativeExtraInjectingFilter.InjectRulesKey
+import za.co.absa.spline.harvester.postprocessing.extra.ExtraMetadataCapturingFilter.{ExtraDef, InjectRulesKey}
+import za.co.absa.spline.harvester.postprocessing.extra.model.predicate.BaseNodeName
 import za.co.absa.spline.producer.model.v1_1._
 
 import java.util.UUID
 
-class DeclarativeExtraInjectingFilterSpec extends AnyFlatSpec with EnvFixture with Matchers with MockitoSugar {
+class ExtraMetadataCapturingFilterSpec extends AnyFlatSpec with EnvFixture with Matchers with MockitoSugar {
 
   private val logicalPlan = mock[LogicalPlan]
   private val sparkSession = SparkSession.builder
@@ -48,7 +49,7 @@ class DeclarativeExtraInjectingFilterSpec extends AnyFlatSpec with EnvFixture wi
   private val ee = ExecutionEvent(UUID.randomUUID(), 66L, None, None, None, Some(
     Map("foo" -> "a", "bar" -> false, "baz" -> Seq(1, 2, 3))))
 
-  behavior of "DeclarativeExtraInjectingFilter"
+  behavior of "ExtraMetaDataCapturingFilter"
 
   it should "parse and replace all variables with values" in {
     val configString =
@@ -72,7 +73,7 @@ class DeclarativeExtraInjectingFilterSpec extends AnyFlatSpec with EnvFixture wi
       addPropertyDirect(InjectRulesKey, configString)
     }
 
-    val filter = DeclarativeExtraInjectingFilter(config).get
+    val filter = new ExtraMetadataCapturingFilter(config)
 
     val processedPlan = filter.processExecutionPlan(ep, harvestingContext)
 
@@ -84,6 +85,11 @@ class DeclarativeExtraInjectingFilterSpec extends AnyFlatSpec with EnvFixture wi
     extra("bar") shouldBe "rabbit"
     extra("baz") shouldBe "123"
     extra("daz") shouldBe "nice"
+  }
+
+  it should "handle missing JSON property" in {
+    val filter = new ExtraMetadataCapturingFilter(Map.empty[BaseNodeName.Value, Seq[ExtraDef]])
+    filter.processExecutionPlan(mock[ExecutionPlan], mock[HarvestingContext]) should not be null
   }
 
   it should "handle json nesting" in {
@@ -105,7 +111,7 @@ class DeclarativeExtraInjectingFilterSpec extends AnyFlatSpec with EnvFixture wi
       addPropertyDirect(InjectRulesKey, configString)
     }
 
-    val filter = DeclarativeExtraInjectingFilter(config).get
+    val filter = new ExtraMetadataCapturingFilter(config)
 
     val processedEvent = filter.processExecutionEvent(ee, harvestingContext)
 
@@ -140,7 +146,7 @@ class DeclarativeExtraInjectingFilterSpec extends AnyFlatSpec with EnvFixture wi
       addPropertyDirect(InjectRulesKey, configString)
     }
 
-    val filter = DeclarativeExtraInjectingFilter(config).get
+    val filter = new ExtraMetadataCapturingFilter(config)
 
     val processedEvent = filter.processExecutionEvent(ee, harvestingContext)
 
@@ -177,7 +183,7 @@ class DeclarativeExtraInjectingFilterSpec extends AnyFlatSpec with EnvFixture wi
       addPropertyDirect(InjectRulesKey, configString)
     }
 
-    val filter = DeclarativeExtraInjectingFilter(config).get
+    val filter = new ExtraMetadataCapturingFilter(config)
 
     val processedEvent = filter.processExecutionEvent(ee, harvestingContext)
 
@@ -203,7 +209,7 @@ class DeclarativeExtraInjectingFilterSpec extends AnyFlatSpec with EnvFixture wi
       addPropertyDirect(InjectRulesKey, configString)
     }
 
-    val filter = DeclarativeExtraInjectingFilter(config).get
+    val filter = new ExtraMetadataCapturingFilter(config)
 
     val processedEvent = filter.processExecutionEvent(ee, harvestingContext)
 

@@ -30,7 +30,7 @@ case class Predicate(expr: Expr) extends Logging {
     Try(expr.eval(bindings).asInstanceOf[Boolean]) match {
       case Success(value) => value
       case Failure(exception) =>
-        logWarning("DeclarativeExtraInjectingFilter's predicate evaluation failed, " +
+        logWarning("predicate evaluation failed, " +
           "filter will not be applied.", exception)
         false
     }
@@ -162,7 +162,9 @@ object ComparisonSymbol {
   val GTE = ">="
 }
 
-object BaseNodeNames {
+object BaseNodeName {
+  type Value = String
+
   val ExecutionPlan = "executionPlan"
   val ExecutionEvent = "executionEvent"
   val Operation = "operation"

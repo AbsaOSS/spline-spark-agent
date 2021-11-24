@@ -56,6 +56,8 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
   @volatile
   private var _lastSeenPlan: ExecutionPlan = _
 
+  override def name = "HDFS"
+
   override def send(plan: ExecutionPlan): Unit = {
     this._lastSeenPlan = plan
   }

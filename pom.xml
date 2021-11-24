@@ -74,6 +74,11 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+
+        <!-- Loggers -->
+
         <slf4j.version>1.7.25</slf4j.version>
 
         <!-- Docker -->
@@ -110,7 +115,7 @@
         <default.scala.version>${scala_2.11.version}</default.scala.version>
 
         <scala_2.11.version>2.11.12</scala_2.11.version>
-        <scala_2.12.version>2.12.14</scala_2.12.version>
+        <scala_2.12.version>2.12.15</scala_2.12.version>
 
         <!-- Controlled by `scala-cross-build` plugin -->
         <scala.version>2.11.12</scala.version>
@@ -138,10 +143,11 @@
             <plugin>
                 <groupId>com.github.wajda</groupId>
                 <artifactId>scala-cross-build-maven-plugin</artifactId>
-                <version>0.2.1</version>
+                <version>0.2.2</version>
                 <configuration>
                     <defaultScalaBinaryVersion>${default.scala.binary.version}</defaultScalaBinaryVersion>
                     <defaultScalaVersion>${default.scala.version}</defaultScalaVersion>
+                    <generatePomBackupFiles>false</generatePomBackupFiles>
                 </configuration>
             </plugin>
 

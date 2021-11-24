@@ -16,6 +16,7 @@
 
 package za.co.absa.spline.harvester.iwd
 
+import za.co.absa.commons.NamedEntity
 import za.co.absa.spline.harvester.LineageHarvester.Metrics
 
 /**
@@ -32,6 +33,6 @@ import za.co.absa.spline.harvester.LineageHarvester.Metrics
  * </p>
  *
  */
-trait IgnoredWriteDetectionStrategy {
+trait IgnoredWriteDetectionStrategy extends NamedEntity {
   def wasWriteIgnored(writeMetrics: Metrics): Boolean
 }

@@ -30,6 +30,8 @@ class LoggingLineageDispatcher(logFn: LogFn)
     logFn = LevelLogger.valueOf(conf.getRequiredString(LevelKey)).logFn
   )
 
+  override def name = "Logging"
+
   override protected def send(json: String): Unit = logFn(json)
 
 }

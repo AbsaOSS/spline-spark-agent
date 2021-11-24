@@ -13,26 +13,22 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester
+package za.co.absa.spline.harvester.listener
 
 import org.apache.spark.sql.execution.QueryExecution
-import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
+import org.apache.spark.sql.util.QueryExecutionListener
+import za.co.absa.spline.agent.SplineAgent
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class QueryExecutionEventHandler(
-  harvesterFactory: LineageHarvesterFactory,
-  lineageDispatcher: LineageDispatcher) {
+class QueryExecutionListenerDelegate(agent: SplineAgent) extends QueryExecutionListener {
 
-  def handle(qe: QueryExecution, result: Either[Throwable, Duration]): Unit = {
-    harvesterFactory
-      .harvester(qe.analyzed, Some(qe.executedPlan))
-      .harvest(result)
-      .foreach({
-        case (plan, event) =>
-          lineageDispatcher.send(plan)
-          lineageDispatcher.send(event)
-      })
+  override def onSuccess(funcName: String, qe: QueryExecution, durationNs: Long): Unit = {
+    agent.handle(qe, Right(durationNs.nanos))
+  }
+
+  override def onFailure(funcName: String, qe: QueryExecution, exception: Exception): Unit = {
+    agent.handle(qe, Left(exception))
   }
 }

@@ -43,8 +43,7 @@ class HDFSLineageDispatcherSpec
       .config("spark.spline.lineageDispatcher", "hdfs")
       .config("spark.spline.lineageDispatcher.hdfs.className", classOf[HDFSLineageDispatcher].getName)
     ) { implicit spark =>
-      withRealConfigLineageTracking { captor =>
-
+      withLineageTracking { captor =>
         import spark.implicits._
         val dummyDF = Seq((1, 2)).toDF
         val destPath = TempDirectory("spline_", ".parquet", pathOnly = true).deleteOnExit().path

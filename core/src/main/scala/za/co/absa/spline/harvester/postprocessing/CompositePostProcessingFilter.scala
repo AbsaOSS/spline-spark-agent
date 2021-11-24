@@ -30,6 +30,8 @@ class CompositePostProcessingFilter(delegatees: Seq[PostProcessingFilter])
     objectFactory.createComponentsByKey(FiltersKey)
   )
 
+  override def name: String = delegatees.map(_.name) mkString ", "
+
   override def processExecutionEvent(event: ExecutionEvent, ctx: HarvestingContext): ExecutionEvent = chainCall(event) {
     _.processExecutionEvent(_, ctx)
   }

@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.postprocessing
 import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.producer.model.v1_1.{DataOperation, ExecutionPlan}
 
-class OneRowRelationFilter extends AbstractPostProcessingFilter {
+class OneRowRelationFilter extends AbstractInternalPostProcessingFilter {
 
   override def processExecutionPlan(plan: ExecutionPlan, ctx: HarvestingContext): ExecutionPlan = {
     val oneRowRelations = plan.operations.other

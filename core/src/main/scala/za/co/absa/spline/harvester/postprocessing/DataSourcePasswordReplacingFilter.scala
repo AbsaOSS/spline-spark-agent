@@ -29,7 +29,7 @@ class DataSourcePasswordReplacingFilter(
   replacement: String,
   sensitiveNameRegexes: Seq[Regex],
   sensitiveValueRegexes: Seq[Regex]
-) extends AbstractPostProcessingFilter {
+) extends AbstractPostProcessingFilter("Password replace") {
 
   def this(conf: Configuration) = this(
     conf.getRequiredString(ReplacementKey),

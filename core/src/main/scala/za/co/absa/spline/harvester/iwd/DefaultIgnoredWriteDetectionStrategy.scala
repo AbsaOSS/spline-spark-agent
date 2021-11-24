@@ -38,6 +38,8 @@ class DefaultIgnoredWriteDetectionStrategy(ignoreLineageOnMissingMetric: Boolean
     behaviour == Behaviour.IgnoreLineage
   })
 
+  override def name = "Write metrics"
+
   override def wasWriteIgnored(writeMetrics: Metrics): Boolean = {
     writeMetrics.get("numFiles").map(_ == 0).getOrElse(ignoreLineageOnMissingMetric)
   }

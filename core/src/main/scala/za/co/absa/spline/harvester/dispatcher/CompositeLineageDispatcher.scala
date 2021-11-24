@@ -33,6 +33,8 @@ class CompositeLineageDispatcher(delegatees: Seq[LineageDispatcher], failOnError
     objectFactory.configuration.getRequiredBoolean(FailOnErrorsKey)
   )
 
+  override def name: String = delegatees.map(_.name) mkString ", "
+
   override def send(plan: ExecutionPlan): Unit = delegate {
     _.send(plan)
   }

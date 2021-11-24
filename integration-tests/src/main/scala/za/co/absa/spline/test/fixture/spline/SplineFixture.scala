@@ -17,17 +17,11 @@ package za.co.absa.spline.test.fixture.spline
 
 import org.apache.commons.configuration.BaseConfiguration
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.catalyst.TableIdentifier
 
 
 trait SplineFixture {
-
   def withLineageTracking[T](testBody: LineageCaptor => T)(implicit session: SparkSession): T = {
-    testBody(new LineageCaptor(false))
-  }
-
-  def withRealConfigLineageTracking[T](testBody: LineageCaptor => T)(implicit session: SparkSession): T = {
-    testBody(new LineageCaptor(true))
+    testBody(new LineageCaptor)
   }
 }
 

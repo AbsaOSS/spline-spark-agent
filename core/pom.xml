@@ -42,7 +42,7 @@
         <dependency>
             <groupId>za.co.absa.commons</groupId>
             <artifactId>commons_${scala.binary.version}</artifactId>
-            <version>0.1.0</version>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -84,12 +84,12 @@
         <dependency>
             <groupId>org.scalaj</groupId>
             <artifactId>scalaj-http_${scala.binary.version}</artifactId>
-            <version>2.4.1</version>
+            <version>2.4.2</version>
         </dependency>
         <dependency>
             <groupId>io.github.classgraph</groupId>
             <artifactId>classgraph</artifactId>
-            <version>4.8.116</version>
+            <version>4.8.132</version>
         </dependency>
         <dependency>
             <groupId>org.scala-graph</groupId>

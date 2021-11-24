@@ -153,23 +153,65 @@ import za.co.absa.spline.harvester.SparkLineageInitializer;
 SparkLineageInitializer.enableLineageTracking(session);
 ```
 
-The method `SparkLineageInitializer.enableLineageTracking()` is overloaded, and accepts `SplineConfigurer` optional parameter.
-`SplineConfigurer` is a factory that creates a Spark execution listener. By default, `DefaultSplineConfigurer` is used.
-If you want to override some of Spline agent behavior you can extend `DefaultSplineConfigurer` 
-or create your own implementation of `SplineConfigurer` trait, and pass it into the `SparkLineageInitializer.enableLineageTracking()` method.
+The method `enableLineageTracking()` accepts optional `AgentConfig` object that can be used to customize Spline behavior.
+This is an alternative way to configure Spline. The other one if via the [property based configuration](#configuration).
+
+The instance of `AgentConfig` can be created by using a builder or one of the factory methods.
+```scala
+// from a sequence of key-value pairs 
+val config = AgentConfig.from(???: Iterable[(String, Any)])
+
+// from a Common Configuration
+val config = AgentConfig.from(???: org.apache.commons.configuration.Configuration)
+
+// using a builder
+val config = AgentConfig.builder()
+  // call some builder methods here...
+  .build()
+
+sparkSession.enableLineageTracking(config)
+```
+
+**Note**: `AgentConfig` object doesn't override the standard configuration stack. Instead, it serves as an additional configuration mean
+with the precedence set between the `spline.properties` and `spline.default.properties` files (see below). 
 
 <a id="configuration"></a>
 ## Configuration
 
-The agent looks for configuration properties in the following sources (in order of precedence):
+The agent looks for configuration in the following sources (listed in order of precedence):
 - Hadoop configuration (`core-site.xml`)
 - Spark configuration
 - JVM system properties
 - `spline.properties` file on classpath
+- `AgentConfig` object
+- `spline.default.properties` file on classpath
 
 The file [spline.default.properties](core/src/main/resources/spline.default.properties) contains default values 
 for all Spline properties along with additional documentation.
 It's a good idea to look in the file to see what properties are available.
+
+The order of precedence might look counter-intuitive, as one woudl expect that explicitly provided config (`AgentConfig` instance) should 
+override ones defined in the outer scope. However, prioritizing global config to local one makes it easier to manage Spline settings centrally
+on clusters, while still allowing room for customization by job developers.
+
+For example, a company could require lineage metadata from jobs executed on a particular cluster to be sanitized, enhanced with some metrics 
+and credentials and stored in a certain metadata store (a database, file, Spline server etc). The Spline configured needs to be set globally
+and applied to all Spark jobs automatically. However, some jobs might contain hardcoded properties that the developers used locally or on 
+a testing environment, and forgot to remove them before submitting jobs into a production.
+In such situation we want cluster settings to have precedence over the hardcoded ones.
+Assuming that hardcoded settings would most likely be defined in thone of the `AgentConfig` object, a property file or a JVM properties, 
+on the cluster we could define them in the Spark config or Hadoop config.
+
+When a property is defined in multiple places, from the perspective of how the conflict is resolved, we can describe two kinds of Spline 
+configuration properties. For majority properties the "first occurrence wins" rule is applied. But there are two that are composed instead
+of been overridden: `spline.lineageDispatcher` and `spline.postProcessingFilter`. E.g. if a _LineageDispatcher_ is set to be _Kafka_ in one config
+source and 'Http' in another, they would be implicitly wrapped by a composite dispatcher, so both would be called in the order 
+corresponding the config source precedence. See `CompositeLineageDispatcher` and `CompositePostProcessingFilter`.
+
+Every config property is resolved independently. So, for instance, if a `DataSourcePasswordReplacingFilter` is used some of its properties might be
+taken from one config source and the other ones form another, according to the conflict resolution rules described above. 
+This allows administrators to tweak settings of individual Spline components (filters, dispatchers or plugins) without having to redefine and override
+the whole piece of configuration for a given component.
 
 <a id="properties"></a>
 ### Properties

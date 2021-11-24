@@ -32,7 +32,6 @@ import za.co.absa.spline.model.dt
 import za.co.absa.spline.producer.model.v1_1._
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
-import za.co.absa.spline.test.harvester.dispatcher.NoOpLineageDispatcher
 
 import java.util.UUID
 import java.util.UUID.randomUUID
@@ -354,11 +353,10 @@ class LineageHarvesterSpec extends AsyncFlatSpec
         |""".stripMargin
 
     withCustomSparkSession(_
-      .config("spark.spline.userExtraMetadata.injectRules", injectRules)
-      .config("spark.spline.lineageDispatcher", "noOp")
-      .config("spark.spline.lineageDispatcher.noOp.className", classOf[NoOpLineageDispatcher].getName)
+      .config("spark.spline.postProcessingFilter", "userExtraMeta")
+      .config("spark.spline.postProcessingFilter.userExtraMeta.rules", injectRules)
     ) { implicit spark =>
-      withRealConfigLineageTracking { captor =>
+      withLineageTracking { captor =>
         import spark.implicits._
 
         val dummyCSVFile = TempFile(prefix = "spline-test", suffix = ".csv").deleteOnExit().path
@@ -511,9 +509,9 @@ object LineageHarvesterSpec extends Matchers {
   }
 
   def assertDataLineage(
-                         expectedOperations: Seq[AnyRef],
-                         expectedAttributes: Seq[Attribute],
-                         actualPlan: ExecutionPlan): Assertion = {
+    expectedOperations: Seq[AnyRef],
+    expectedAttributes: Seq[Attribute],
+    actualPlan: ExecutionPlan): Assertion = {
 
     import za.co.absa.commons.ProducerApiAdapters._
 
