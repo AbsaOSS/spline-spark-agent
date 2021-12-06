@@ -199,7 +199,7 @@ and credentials and stored in a certain metadata store (a database, file, Spline
 and applied to all Spark jobs automatically. However, some jobs might contain hardcoded properties that the developers used locally or on 
 a testing environment, and forgot to remove them before submitting jobs into a production.
 In such situation we want cluster settings to have precedence over the hardcoded ones.
-Assuming that hardcoded settings would most likely be defined in thone of the `AgentConfig` object, a property file or a JVM properties, 
+Assuming that hardcoded settings would most likely be defined in the `AgentConfig` object, a property file or a JVM properties, 
 on the cluster we could define them in the Spark config or Hadoop config.
 
 When a property is defined in multiple places, from the perspective of how the conflict is resolved, we can describe two kinds of Spline 
