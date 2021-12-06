@@ -50,17 +50,11 @@ object AgentBOM {
     private val objectFactory = new HierarchicalObjectFactory(mergedConfig)
 
     override def splineMode: SplineMode = {
-      mergedConfig.getRequiredEnum(
-        ConfProperty.Mode,
-        SplineMode.valueOf,
-        SplineMode.values)
+      mergedConfig.getRequiredEnum[SplineMode](ConfProperty.Mode)
     }
 
     override def sqlFailureCaptureMode: SQLFailureCaptureMode = {
-      mergedConfig.getRequiredEnum(
-        ConfProperty.SQLFailureCaptureMode,
-        SQLFailureCaptureMode.valueOf,
-        SQLFailureCaptureMode.values)
+      mergedConfig.getRequiredEnum[SQLFailureCaptureMode](ConfProperty.SQLFailureCaptureMode)
     }
 
     override def execPlanUUIDVersion: UUIDVersion = {

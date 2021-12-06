@@ -19,16 +19,22 @@ package za.co.absa.commons
 import org.apache.commons.configuration.Configuration
 import za.co.absa.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
 
+import scala.reflect.ClassTag
+import scala.util.control.NonFatal
+
 object ConfigurationImplicits {
 
   implicit class ConfOps(val conf: Configuration) extends AnyVal {
-    def getRequiredEnum[A <: Enum[A]](key: String, valueOfFn: String => A, values: Seq[A]): A = {
+
+    def getRequiredEnum[A <: Enum[A] : ClassTag](key: String): A = {
+      val clazz = implicitly[ClassTag[A]].runtimeClass.asInstanceOf[Class[A]]
       val name = conf.getRequiredString(key)
       try {
-        valueOfFn(name)
+        Enum.valueOf[A](clazz, name)
       } catch {
-        case _: NoSuchElementException => throw new IllegalArgumentException(
-          s"Invalid value for property $key=$name. Should be one of: ${values mkString ", "}")
+        case NonFatal(e) =>
+          val values = clazz.getEnumConstants
+          throw new IllegalArgumentException(s"Invalid value for property $key=$name. Should be one of: ${values mkString ", "}", e)
       }
     }
   }
