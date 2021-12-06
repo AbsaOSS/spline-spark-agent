@@ -195,7 +195,7 @@ override ones defined in the outer scope. However, prioritizing global config to
 on clusters, while still allowing room for customization by job developers.
 
 For example, a company could require lineage metadata from jobs executed on a particular cluster to be sanitized, enhanced with some metrics 
-and credentials and stored in a certain metadata store (a database, file, Spline server etc). The Spline configured needs to be set globally
+and credentials and stored in a certain metadata store (a database, file, Spline server etc). The Spline configuration needs to be set globally
 and applied to all Spark jobs automatically. However, some jobs might contain hardcoded properties that the developers used locally or on 
 a testing environment, and forgot to remove them before submitting jobs into a production.
 In such situation we want cluster settings to have precedence over the hardcoded ones.
