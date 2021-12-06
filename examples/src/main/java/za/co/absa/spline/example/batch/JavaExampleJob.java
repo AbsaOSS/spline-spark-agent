@@ -31,20 +31,20 @@ public class JavaExampleJob {
         // Explicitly enable Spline lineage tracking
         // This step is optional - see https://github.com/AbsaOSS/spline-spark-agent#programmatic-initialization
         final AgentConfig splineConfig =
-                AgentConfig.builder()
-                        .splineMode(SplineMode.REQUIRED)
-                        .build();
+            AgentConfig.builder()
+                .splineMode(SplineMode.REQUIRED)
+                .build();
 
         SparkLineageInitializer.enableLineageTracking(session, splineConfig);
 
         // run a Spark job as usual
         session.read()
-                .option("header", "true")
-                .option("inferSchema", "true")
-                .csv("data/input/batch/wikidata.csv")
-                .as("source")
-                .write()
-                .mode(SaveMode.Overwrite)
-                .csv("data/output/batch/java-sample.csv");
+            .option("header", "true")
+            .option("inferSchema", "true")
+            .csv("data/input/batch/wikidata.csv")
+            .as("source")
+            .write()
+            .mode(SaveMode.Overwrite)
+            .csv("data/output/batch/java-sample.csv");
     }
 }
