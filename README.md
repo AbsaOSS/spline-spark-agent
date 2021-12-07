@@ -190,7 +190,7 @@ The file [spline.default.properties](core/src/main/resources/spline.default.prop
 for all Spline properties along with additional documentation.
 It's a good idea to look in the file to see what properties are available.
 
-The order of precedence might look counter-intuitive, as one woudl expect that explicitly provided config (`AgentConfig` instance) should 
+The order of precedence might look counter-intuitive, as one would expect that explicitly provided config (`AgentConfig` instance) should 
 override ones defined in the outer scope. However, prioritizing global config to local one makes it easier to manage Spline settings centrally
 on clusters, while still allowing room for customization by job developers.
 
@@ -198,15 +198,14 @@ For example, a company could require lineage metadata from jobs executed on a pa
 and credentials and stored in a certain metadata store (a database, file, Spline server etc). The Spline configuration needs to be set globally
 and applied to all Spark jobs automatically. However, some jobs might contain hardcoded properties that the developers used locally or on 
 a testing environment, and forgot to remove them before submitting jobs into a production.
-In such situation we want cluster settings to have precedence over the hardcoded ones.
+In such situation we want cluster settings to have precedence over the job settings.
 Assuming that hardcoded settings would most likely be defined in the `AgentConfig` object, a property file or a JVM properties, 
 on the cluster we could define them in the Spark config or Hadoop config.
 
-When a property is defined in multiple places, from the perspective of how the conflict is resolved, we can describe two kinds of Spline 
-configuration properties. For majority properties the "first occurrence wins" rule is applied. But there are two that are composed instead
-of been overridden: `spline.lineageDispatcher` and `spline.postProcessingFilter`. E.g. if a _LineageDispatcher_ is set to be _Kafka_ in one config
-source and 'Http' in another, they would be implicitly wrapped by a composite dispatcher, so both would be called in the order 
-corresponding the config source precedence. See `CompositeLineageDispatcher` and `CompositePostProcessingFilter`.
+In case of multiple definitions of property the first occurrence wins, but `spline.lineageDispatcher` and `spline.postProcessingFilter` properties
+are composed instead. E.g. if a _LineageDispatcher_ is set to be _Kafka_ in one config source and 'Http' in another, they would be implicitly
+wrapped by a composite dispatcher, so both would be called in the order corresponding the config source precedence.
+See `CompositeLineageDispatcher` and `CompositePostProcessingFilter`.
 
 Every config property is resolved independently. So, for instance, if a `DataSourcePasswordReplacingFilter` is used some of its properties might be
 taken from one config source and the other ones form another, according to the conflict resolution rules described above. 
