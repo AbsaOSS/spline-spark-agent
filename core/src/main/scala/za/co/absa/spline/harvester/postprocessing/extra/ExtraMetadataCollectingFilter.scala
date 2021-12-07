@@ -24,7 +24,7 @@ import za.co.absa.spline.harvester.ExtraMetadataImplicits._
 import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
 import za.co.absa.spline.harvester.postprocessing.PostProcessingFilter
-import za.co.absa.spline.harvester.postprocessing.extra.ExtraMetadataCapturingFilter.{ExtraDef, createDefs, evaluateExtraDefs}
+import za.co.absa.spline.harvester.postprocessing.extra.ExtraMetadataCollectingFilter.{ExtraDef, createDefs, evaluateExtraDefs}
 import za.co.absa.spline.harvester.postprocessing.extra.model.predicate.{BaseNodeName, Predicate}
 import za.co.absa.spline.harvester.postprocessing.extra.model.template.ExtraTemplate
 import za.co.absa.spline.producer.model.v1_1._
@@ -32,7 +32,7 @@ import za.co.absa.spline.producer.model.v1_1._
 import java.net.URL
 import scala.util.Try
 
-class ExtraMetadataCapturingFilter(allDefs: Map[BaseNodeName.Value, Seq[ExtraDef]]) extends PostProcessingFilter {
+class ExtraMetadataCollectingFilter(allDefs: Map[BaseNodeName.Value, Seq[ExtraDef]]) extends PostProcessingFilter {
 
   def this(conf: Configuration) = this(createDefs(conf))
 
@@ -69,7 +69,7 @@ class ExtraMetadataCapturingFilter(allDefs: Map[BaseNodeName.Value, Seq[ExtraDef
   }
 }
 
-object ExtraMetadataCapturingFilter extends Logging {
+object ExtraMetadataCollectingFilter extends Logging {
 
   val InjectRulesKey = "rules"
 

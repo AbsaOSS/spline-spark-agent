@@ -24,13 +24,13 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.commons.scalatest.EnvFixture
 import za.co.absa.spline.harvester.{HarvestingContext, IdGenerators}
-import za.co.absa.spline.harvester.postprocessing.extra.ExtraMetadataCapturingFilter.{ExtraDef, InjectRulesKey}
+import za.co.absa.spline.harvester.postprocessing.extra.ExtraMetadataCollectingFilter.{ExtraDef, InjectRulesKey}
 import za.co.absa.spline.harvester.postprocessing.extra.model.predicate.BaseNodeName
 import za.co.absa.spline.producer.model.v1_1._
 
 import java.util.UUID
 
-class ExtraMetadataCapturingFilterSpec extends AnyFlatSpec with EnvFixture with Matchers with MockitoSugar {
+class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matchers with MockitoSugar {
 
   private val logicalPlan = mock[LogicalPlan]
   private val sparkSession = SparkSession.builder
@@ -49,7 +49,7 @@ class ExtraMetadataCapturingFilterSpec extends AnyFlatSpec with EnvFixture with 
   private val ee = ExecutionEvent(UUID.randomUUID(), 66L, None, None, None, Some(
     Map("foo" -> "a", "bar" -> false, "baz" -> Seq(1, 2, 3))))
 
-  behavior of "ExtraMetaDataCapturingFilter"
+  behavior of "ExtraMetadataCollectingFilter"
 
   it should "parse and replace all variables with values" in {
     val configString =
@@ -73,7 +73,7 @@ class ExtraMetadataCapturingFilterSpec extends AnyFlatSpec with EnvFixture with 
       addPropertyDirect(InjectRulesKey, configString)
     }
 
-    val filter = new ExtraMetadataCapturingFilter(config)
+    val filter = new ExtraMetadataCollectingFilter(config)
 
     val processedPlan = filter.processExecutionPlan(ep, harvestingContext)
 
@@ -88,7 +88,7 @@ class ExtraMetadataCapturingFilterSpec extends AnyFlatSpec with EnvFixture with 
   }
 
   it should "handle missing JSON property" in {
-    val filter = new ExtraMetadataCapturingFilter(Map.empty[BaseNodeName.Value, Seq[ExtraDef]])
+    val filter = new ExtraMetadataCollectingFilter(Map.empty[BaseNodeName.Value, Seq[ExtraDef]])
     filter.processExecutionPlan(mock[ExecutionPlan], mock[HarvestingContext]) should not be null
   }
 
@@ -111,7 +111,7 @@ class ExtraMetadataCapturingFilterSpec extends AnyFlatSpec with EnvFixture with 
       addPropertyDirect(InjectRulesKey, configString)
     }
 
-    val filter = new ExtraMetadataCapturingFilter(config)
+    val filter = new ExtraMetadataCollectingFilter(config)
 
     val processedEvent = filter.processExecutionEvent(ee, harvestingContext)
 
@@ -146,7 +146,7 @@ class ExtraMetadataCapturingFilterSpec extends AnyFlatSpec with EnvFixture with 
       addPropertyDirect(InjectRulesKey, configString)
     }
 
-    val filter = new ExtraMetadataCapturingFilter(config)
+    val filter = new ExtraMetadataCollectingFilter(config)
 
     val processedEvent = filter.processExecutionEvent(ee, harvestingContext)
 
@@ -183,7 +183,7 @@ class ExtraMetadataCapturingFilterSpec extends AnyFlatSpec with EnvFixture with 
       addPropertyDirect(InjectRulesKey, configString)
     }
 
-    val filter = new ExtraMetadataCapturingFilter(config)
+    val filter = new ExtraMetadataCollectingFilter(config)
 
     val processedEvent = filter.processExecutionEvent(ee, harvestingContext)
 
@@ -209,7 +209,7 @@ class ExtraMetadataCapturingFilterSpec extends AnyFlatSpec with EnvFixture with 
       addPropertyDirect(InjectRulesKey, configString)
     }
 
-    val filter = new ExtraMetadataCapturingFilter(config)
+    val filter = new ExtraMetadataCollectingFilter(config)
 
     val processedEvent = filter.processExecutionEvent(ee, harvestingContext)
 
