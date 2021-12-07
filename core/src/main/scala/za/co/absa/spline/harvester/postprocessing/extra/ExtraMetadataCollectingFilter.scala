@@ -32,7 +32,7 @@ import za.co.absa.spline.producer.model.v1_1._
 import java.net.URL
 import scala.util.Try
 
-class ExtraMetadataCollectingFilter(allDefs: Map[BaseNodeName.Value, Seq[ExtraDef]]) extends PostProcessingFilter {
+class ExtraMetadataCollectingFilter(allDefs: Map[BaseNodeName.Type, Seq[ExtraDef]]) extends PostProcessingFilter {
 
   def this(conf: Configuration) = this(createDefs(conf))
 
@@ -58,7 +58,7 @@ class ExtraMetadataCollectingFilter(allDefs: Map[BaseNodeName.Value, Seq[ExtraDe
     withEvaluatedExtra(BaseNodeName.Operation, operation, ctx)
   }
 
-  private def withEvaluatedExtra[A: ExtraAdder](name: BaseNodeName.Value, entity: A, ctx: HarvestingContext): A = {
+  private def withEvaluatedExtra[A: ExtraAdder](name: BaseNodeName.Type, entity: A, ctx: HarvestingContext): A = {
     allDefs
       .get(name)
       .map(defs => {
@@ -73,9 +73,9 @@ object ExtraMetadataCollectingFilter extends Logging {
 
   val InjectRulesKey = "rules"
 
-  case class ExtraDef(nodeName: BaseNodeName.Value, predicate: Predicate, template: ExtraTemplate)
+  case class ExtraDef(nodeName: BaseNodeName.Type, predicate: Predicate, template: ExtraTemplate)
 
-  private def createDefs(conf: Configuration): Map[BaseNodeName.Value, Seq[ExtraDef]] = {
+  private def createDefs(conf: Configuration): Map[BaseNodeName.Type, Seq[ExtraDef]] = {
     val rulesJsonOrUrl: String = conf.getRequiredString(InjectRulesKey)
 
     val rulesJson =
@@ -98,7 +98,7 @@ object ExtraMetadataCollectingFilter extends Logging {
     extraDefMap
   }
 
-  private def evaluateExtraDefs(nodeName: BaseNodeName.Value, node: Any, defs: Seq[ExtraDef], ctx: HarvestingContext): Map[String, Any] = {
+  private def evaluateExtraDefs(nodeName: BaseNodeName.Type, node: Any, defs: Seq[ExtraDef], ctx: HarvestingContext): Map[String, Any] = {
     if (defs.isEmpty) {
       Map.empty
     }

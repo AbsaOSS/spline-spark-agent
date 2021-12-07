@@ -163,7 +163,7 @@ object ComparisonSymbol {
 }
 
 object BaseNodeName {
-  type Value = String
+  type Type = String
 
   val ExecutionPlan = "executionPlan"
   val ExecutionEvent = "executionEvent"

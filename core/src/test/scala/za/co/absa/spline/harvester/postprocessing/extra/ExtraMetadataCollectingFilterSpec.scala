@@ -88,7 +88,7 @@ class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with
   }
 
   it should "handle missing JSON property" in {
-    val filter = new ExtraMetadataCollectingFilter(Map.empty[BaseNodeName.Value, Seq[ExtraDef]])
+    val filter = new ExtraMetadataCollectingFilter(Map.empty[BaseNodeName.Type, Seq[ExtraDef]])
     filter.processExecutionPlan(mock[ExecutionPlan], mock[HarvestingContext]) should not be null
   }
 
