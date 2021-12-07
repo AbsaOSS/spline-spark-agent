@@ -55,6 +55,8 @@ class HttpLineageDispatcher(restClient: RestClient)
     serverHeaders(SplineHttpHeaders.AcceptRequestEncoding)
       .exists(_.toLowerCase == Encoding.GZIP)
 
+  override def name = "Http"
+
   override def send(plan: ExecutionPlan): Unit = {
     val execPlanDTO = modelMapper.toDTO(plan)
     sendJson(execPlanDTO.toJson, executionPlansEndpoint)

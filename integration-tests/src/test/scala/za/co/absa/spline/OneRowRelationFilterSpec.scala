@@ -19,7 +19,6 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
-import za.co.absa.spline.test.harvester.dispatcher.NoOpLineageDispatcher
 
 class OneRowRelationFilterSpec extends AsyncFlatSpec
   with Matchers
@@ -29,11 +28,8 @@ class OneRowRelationFilterSpec extends AsyncFlatSpec
 
   "OneRowRelationFilter" should "produce lineage without OneRowRelation operation" in
     withRestartingSparkContext {
-      withCustomSparkSession(_
-        .config("spark.spline.lineageDispatcher", "noOp")
-        .config("spark.spline.lineageDispatcher.noOp.className", classOf[NoOpLineageDispatcher].getName)
-      ) { implicit spark =>
-        withRealConfigLineageTracking { lineageCaptor =>
+      withSparkSession { implicit spark =>
+        withLineageTracking { lineageCaptor =>
           withDatabase("testDB") {
             for {
               (plan, _) <- lineageCaptor.lineageOf {

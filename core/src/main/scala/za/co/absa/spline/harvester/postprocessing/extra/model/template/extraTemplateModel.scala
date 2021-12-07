@@ -27,7 +27,7 @@ class ExtraTemplate(extra: Map[String, Any]) extends Logging {
     Try(tryEval(bindings)) match {
       case Success(value) => value
       case Failure(e) =>
-        logWarning("DeclarativeExtraInjectingFilter's template evaluation failed, filter will not be applied.", e)
+        logWarning("Template evaluation failed, filter will not be applied.", e)
         Map.empty
     }
 

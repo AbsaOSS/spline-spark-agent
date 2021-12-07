@@ -16,53 +16,45 @@
 
 package za.co.absa.spline.harvester
 
+import org.apache.spark
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
-import za.co.absa.commons.spark.NonFatalQueryExecutionListenerAdapter
-import za.co.absa.spline.harvester.conf.SplineConfigurer.SQLFailureCaptureMode._
-import za.co.absa.spline.harvester.conf.{DefaultSplineConfigurer, SplineConfigurer}
-import za.co.absa.spline.harvester.listener.{SplineQueryExecutionListener, SuccessfulQueryExecutionListenerAdapter}
+import org.apache.spark.sql.util.QueryExecutionListener
+import za.co.absa.commons.version.Version
+import za.co.absa.commons.version.Version._
+import za.co.absa.spline.agent.{AgentBOM, AgentConfig, SplineAgent}
+import za.co.absa.spline.harvester.IdGenerator.{UUIDGeneratorFactory, UUIDNamespace}
+import za.co.absa.spline.harvester.SparkLineageInitializer.{InitFlagKey, SparkQueryExecutionListenersKey}
+import za.co.absa.spline.harvester.conf._
+import za.co.absa.spline.harvester.listener.QueryExecutionListenerDecorators._
+import za.co.absa.spline.harvester.listener.{QueryExecutionListenerDelegate, SplineQueryExecutionListener}
+import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
 
 import scala.concurrent.ExecutionContext
+import scala.util.control.NonFatal
 
 /**
- * Spline agent initializer
+ * Spline agent initializer - enables lineage tracking for the given Spark Session.
+ * This is an alternative method to so called "codeless initialization" (via using `spark.sql.queryExecutionListeners`
+ * config parameter). Use either of those, not both.
+ *
+ * The programmatic approach provides a higher level of customization in comparison to the declarative (codeless) one,
+ * but on the other hand for the majority of practical purposes the codeless initialization is sufficient and
+ * provides a lower coupling between the Spline agent and the target application by not requiring any dependency
+ * on Spline agent library from the client source code. Thus we recommend to prefer a codeless init, rather than
+ * calling this method directly unless you have specific customization requirements.
+ *
+ * (See the Spline agent doc for details)
+ *
  */
-object SparkLineageInitializer extends Logging {
+object SparkLineageInitializer {
 
-  def enableLineageTracking(sparkSession: SparkSession): SparkSession =
-    enableLineageTracking(sparkSession, DefaultSplineConfigurer(sparkSession))
+  def enableLineageTracking(sparkSession: SparkSession): SparkSession = {
+    sparkSession.enableLineageTracking()
+  }
 
-  /**
-   * Enable lineage tracking for the given Spark Session.
-   * This is an alternative method to so called "codeless initialization" (via using `spark.sql.queryExecutionListeners`
-   * config parameter). Use either of those, not both.
-   *
-   * The programmatic approach provides a higher level of customization in comparison to the declarative (codeless) one,
-   * but on the other hand for the majority of practical purposes the codeless initialization is sufficient and
-   * provides a lower coupling between the Spline agent and the target application by not requiring any dependency
-   * on Spline agent library from the client source code. Thus we recommend to prefer a codeless init, rather than
-   * calling this method directly unless you have specific customization requirements.
-   *
-   * (See the Spline agent doc for details)
-   *
-   * @param sparkSession a Spark Session on which the lineage tracking should be enabled.
-   * @param configurer   A collection of settings for the library initialization
-   * @return An original Spark session
-   */
-  def enableLineageTracking(sparkSession: SparkSession, configurer: SplineConfigurer): SparkSession = {
-    new QueryExecutionEventHandlerFactory(sparkSession)
-      .createEventHandler(configurer, isCodelessInit = false)
-      .foreach(eventHandler => {
-        val listener = configurer.sqlFailureCaptureMode match {
-          case NONE => new SplineQueryExecutionListener(Some(eventHandler)) with SuccessfulQueryExecutionListenerAdapter
-          case NON_FATAL => new SplineQueryExecutionListener(Some(eventHandler)) with NonFatalQueryExecutionListenerAdapter
-          case ALL => new SplineQueryExecutionListener(Some(eventHandler))
-        }
-        sparkSession.listenerManager.register(listener)
-      })
-
-    sparkSession
+  def enableLineageTracking(sparkSession: SparkSession, userConfig: AgentConfig): SparkSession = {
+    sparkSession.enableLineageTracking(userConfig)
   }
 
   /**
@@ -81,12 +73,139 @@ object SparkLineageInitializer extends Logging {
 
     private implicit val executionContext: ExecutionContext = ExecutionContext.global
 
-    def enableLineageTracking(configurer: SplineConfigurer = DefaultSplineConfigurer(sparkSession)): SparkSession = {
-      SparkLineageInitializer.enableLineageTracking(sparkSession, configurer)
+    /**
+     * Enables data lineage tracking on a Spark Session.
+     * The method is used for programmatic initialization of Spline agent.
+     *
+     * <br>
+     * Usage examples:
+     *
+     * <br>
+     *  1. Enable Spline using default configuration. See [[https://github.com/AbsaOSS/spline-spark-agent#configuration]]
+     * {{{
+     *  spark.enableLineageTracking()
+     * }}}
+     *
+     *  1. Enable Spline using customized configuration
+     * {{{
+     *  spark.enableLineageTracking(
+     *    AgentConfig.builder()
+     *      .splineMode(...)
+     *      .config("key1", "value1")
+     *      .config("key2", "value2")
+     *      .build()
+     *  )
+     * }}}
+     *
+     * @see [[https://github.com/AbsaOSS/spline-spark-agent#initialization-programmatic]]
+     * @param userConfig user agent configuration. See [[AgentConfig]]
+     * @return the same instance of the spark session
+     */
+    def enableLineageTracking(userConfig: AgentConfig = AgentConfig.empty): SparkSession = {
+      new SparkLineageInitializer(sparkSession)
+        .createListener(isCodelessInit = false, userConfig)
+        .foreach(eventHandler =>
+          sparkSession.listenerManager.register(eventHandler)
+        )
+      sparkSession
     }
   }
 
   val InitFlagKey = "spline.initializedFlag"
 
   val SparkQueryExecutionListenersKey = "spark.sql.queryExecutionListeners"
+}
+
+private[spline] class SparkLineageInitializer(sparkSession: SparkSession) extends Logging {
+
+  def createListener(isCodelessInit: Boolean, userConfig: AgentConfig = AgentConfig.empty): Option[QueryExecutionListener] = {
+    val confs = StandardSplineConfigurationStack(sparkSession, userConfig)
+    val bom = AgentBOM.createFrom(confs)
+
+    logInfo("Initializing Spline Agent...")
+    logInfo(s"Spline Version: ${SplineBuildInfo.Version} (rev. ${SplineBuildInfo.Revision})")
+    logInfo(s"Init Type: ${if (isCodelessInit) "AUTO (codeless)" else "PROGRAMMATIC"}")
+    logInfo(s"Init Mode: ${bom.splineMode}")
+
+    if (bom.splineMode == SplineMode.DISABLED) {
+      logInfo("initialization aborted")
+      None
+    }
+    else withErrorHandling(bom.splineMode) {
+      if (isCodelessInit)
+        Some(createListener(bom))
+      else
+        assureOneListenerPerSession(createListener(bom))
+    }
+  }
+
+  def createListener(bom: AgentBOM): QueryExecutionListener = {
+    logInfo(s"Lineage Dispatcher: ${bom.lineageDispatcher.name}")
+    logInfo(s"Post-Processing Filter: ${bom.postProcessingFilter.map(_.name) getOrElse ""}")
+    logInfo(s"Ignore-Write Detection Strategy: ${bom.iwdStrategy.name}")
+
+    val lineageDispatcher = bom.lineageDispatcher
+    val userPostProcessingFilter = bom.postProcessingFilter
+    val iwdStrategy = bom.iwdStrategy
+    val execPlanUUIDGeneratorFactory = UUIDGeneratorFactory.forVersion[UUIDNamespace, ExecutionPlan](bom.execPlanUUIDVersion)
+
+    val agent = SplineAgent.create(
+      sparkSession,
+      lineageDispatcher,
+      userPostProcessingFilter,
+      iwdStrategy,
+      execPlanUUIDGeneratorFactory
+    )
+
+    logInfo("Spline successfully initialized. Spark Lineage tracking is ENABLED.")
+
+    bom.sqlFailureCaptureMode match {
+      case SQLFailureCaptureMode.NONE => new QueryExecutionListenerDelegate(agent) with AnyFailureOmitting
+      case SQLFailureCaptureMode.NON_FATAL => new QueryExecutionListenerDelegate(agent) with FatalFailureOmitting
+      case SQLFailureCaptureMode.ALL => new QueryExecutionListenerDelegate(agent)
+    }
+  }
+
+  private def withErrorHandling(splineMode: SplineMode)(body: => Option[QueryExecutionListener]) = {
+    try {
+      body
+    } catch {
+      case NonFatal(e) if splineMode == SplineMode.BEST_EFFORT =>
+        logError(s"Spline initialization failed! Spark Lineage tracking is DISABLED.", e)
+        None
+    }
+  }
+
+  private def assureOneListenerPerSession(body: => QueryExecutionListener) = {
+    val isCodelessInitActive =
+      (Version.asSimple(spark.SPARK_VERSION) >= ver"2.3.0"
+        && sparkSession.sparkContext.getConf
+        .getOption(SparkQueryExecutionListenersKey).toSeq
+        .flatMap(s => s.split(",").toSeq)
+        .contains(classOf[SplineQueryExecutionListener].getCanonicalName))
+
+    def getOrSetIsInitialized(): Boolean = sparkSession.synchronized {
+      val sessionConf = sparkSession.conf
+      sessionConf getOption InitFlagKey match {
+        case Some("true") =>
+          true
+        case _ =>
+          sessionConf.set(InitFlagKey, true.toString)
+          false
+      }
+    }
+
+    if (isCodelessInitActive || getOrSetIsInitialized()) {
+      logWarning("Spline lineage tracking is already initialized!")
+      None
+    } else try {
+      Some(body)
+    } catch {
+      case NonFatal(e) =>
+        sparkSession.synchronized {
+          sparkSession.conf.set(InitFlagKey, false.toString)
+        }
+        throw e
+    }
+  }
 }

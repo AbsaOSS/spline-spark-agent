@@ -18,7 +18,7 @@ package za.co.absa.spline.harvester.conf
 
 import org.apache.commons.configuration.Configuration
 import za.co.absa.commons.HierarchicalObjectFactory.ClassName
-import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer.ConfProperty._
+import za.co.absa.spline.agent.AgentConfig.ConfProperty._
 import za.co.absa.spline.harvester.conf.Spline05ConfigurationAdapter._
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.HttpLineageDispatcherConfig._
 import za.co.absa.spline.harvester.iwd.DefaultIgnoredWriteDetectionStrategy._

@@ -27,7 +27,7 @@ import za.co.absa.spline.producer.model.v1_1.{DataOperation, ExecutionPlan, Writ
 
 import scala.language.reflectiveCalls
 
-class AttributeReorderingFilter extends AbstractPostProcessingFilter {
+class AttributeReorderingFilter extends AbstractInternalPostProcessingFilter {
 
   override def processExecutionPlan(plan: ExecutionPlan, ctx: HarvestingContext): ExecutionPlan = {
     val isByName = plan

@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.test.harvester.dispatcher
+package za.co.absa.commons
 
-import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
-import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
-
-class NoOpLineageDispatcher extends LineageDispatcher {
-  override def send(plan: ExecutionPlan): Unit = ()
-  override def send(event: ExecutionEvent): Unit = ()
+trait NamedEntity {
+  def name: String = getClass.getSimpleName
 }

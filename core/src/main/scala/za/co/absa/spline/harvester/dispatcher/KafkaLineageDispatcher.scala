@@ -50,6 +50,8 @@ class KafkaLineageDispatcher(topic: String, producerProperties: Properties)
 
   sys.addShutdownHook(producer.close())
 
+  override def name = "Kafka"
+
   private val planKafkaHeaders = Seq[Header](
     new KafkaHeader(SplineKafkaHeaders.ApiVersion, ProducerApiVersion.Default.asString),
     new KafkaHeader(SplineKafkaHeaders.TypeId, "ExecutionPlan")

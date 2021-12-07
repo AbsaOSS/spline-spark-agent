@@ -31,6 +31,8 @@ class ConsoleLineageDispatcher(stream: => PrintStream)
     stream = StdStream.valueOf(conf.getRequiredString(StreamKey)).stream()
   )
 
+  override def name = "Console"
+
   override protected def send(json: String): Unit = stream.println(json)
 }
 

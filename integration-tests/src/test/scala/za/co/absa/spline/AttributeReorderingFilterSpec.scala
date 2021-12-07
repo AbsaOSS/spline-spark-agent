@@ -24,7 +24,6 @@ import za.co.absa.spline.AttributeReorderingFilterSpec._
 import za.co.absa.spline.producer.model.v1_1._
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
-import za.co.absa.spline.test.harvester.dispatcher.NoOpLineageDispatcher
 
 class AttributeReorderingFilterSpec extends AsyncFlatSpec
   with Matchers
@@ -38,10 +37,8 @@ class AttributeReorderingFilterSpec extends AsyncFlatSpec
       withCustomSparkSession(_
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
         .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
-        .config("spark.spline.lineageDispatcher", "noOp")
-        .config("spark.spline.lineageDispatcher.noOp.className", classOf[NoOpLineageDispatcher].getName)
       ) { implicit spark =>
-        withRealConfigLineageTracking { lineageCaptor =>
+        withLineageTracking { lineageCaptor =>
           withDatabase("testDB") {
 
             import spark.implicits._

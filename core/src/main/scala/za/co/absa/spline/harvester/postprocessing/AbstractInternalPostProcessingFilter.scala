@@ -19,8 +19,8 @@ package za.co.absa.spline.harvester.postprocessing
 import za.co.absa.spline.harvester.{ExtraMetadataJavaOps, HarvestingContext}
 import za.co.absa.spline.producer.model.v1_1._
 
-abstract class AbstractPostProcessingFilter(override val name: String)
-  extends PostProcessingFilter
+private[postprocessing] abstract class AbstractInternalPostProcessingFilter
+  extends AbstractPostProcessingFilter("internal")
     with ExtraMetadataJavaOps {
 
   override def processExecutionEvent(event: ExecutionEvent, ctx: HarvestingContext): ExecutionEvent = event

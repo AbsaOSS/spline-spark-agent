@@ -16,6 +16,8 @@
 
 package za.co.absa.spline.harvester.dispatcher
 
+import za.co.absa.commons.NamedEntity
+import za.co.absa.spline.agent.AgentConfig.ConfProperty
 import za.co.absa.spline.harvester.exception.SplineInitializationException
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 
@@ -25,11 +27,11 @@ import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
  * When the lineage data is ready the instance of this trait is called to publish the result.
  * Which implementation is used depends on the configuration.
  * <br>
- * See [[za.co.absa.spline.harvester.conf.SplineConfigurer#lineageDispatcher]]
+ * See [[ConfProperty.RootLineageDispatcher]]
  * </p>
  * <br>
  * <p>
- * If you are using default Spline configurer a custom lineage dispatcher can be registered via the configuration properties.
+ * A custom lineage dispatcher can be registered via the configuration properties.
  * First you define name and then class for that dispatcher same way as it's done in spline.default.properties
  * for the default http dispatcher.
  *
@@ -38,8 +40,7 @@ import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
  * </p>
  * <br>
  * <p>
- * When registering the class via a property (using the Default Spline Configurer)
- * the class has to have a constructor with the following signature:
+ * When registering a class by config properties, the constructor can have access to the configuration object via constructor injection:
  * {{{
  *    @throws[SplineInitializationException]
  *    def constr(conf: org.apache.commons.configuration.Configuration)
@@ -49,9 +50,7 @@ import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
  *
  */
 @throws[SplineInitializationException]
-trait LineageDispatcher {
-
+trait LineageDispatcher extends NamedEntity {
   def send(plan: ExecutionPlan): Unit
-
   def send(event: ExecutionEvent): Unit
 }

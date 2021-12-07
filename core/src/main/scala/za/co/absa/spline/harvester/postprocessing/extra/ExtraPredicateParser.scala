@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.postprocessing.extra
 import fastparse.Parsed.{Failure, Success}
 import fastparse.SingleLineWhitespace._
 import fastparse._
-import za.co.absa.spline.harvester.postprocessing.extra.model.predicate.BaseNodeNames._
+import za.co.absa.spline.harvester.postprocessing.extra.model.predicate.BaseNodeName._
 import za.co.absa.spline.harvester.postprocessing.extra.model.predicate.ComparisonSymbol._
 import za.co.absa.spline.harvester.postprocessing.extra.model.predicate._
 

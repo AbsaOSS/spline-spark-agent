@@ -24,7 +24,7 @@ import za.co.absa.spline.producer.model.v1_1.WriteOperation
 
 class PostProcessorSpec extends AnyFlatSpec with Matchers with MockitoSugar {
 
-  class UriAppendingPostProcessingFilterMock(str: String) extends AbstractPostProcessingFilter {
+  class UriAppendingPostProcessingFilterMock(str: String) extends AbstractPostProcessingFilter("Mock") {
     override def processWriteOperation(op: WriteOperation, ctx: HarvestingContext): WriteOperation =
       op.copy(outputSource = op.outputSource + str)
   }

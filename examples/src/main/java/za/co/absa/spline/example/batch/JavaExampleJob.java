@@ -18,15 +18,26 @@ package za.co.absa.spline.example.batch;
 
 import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
+import za.co.absa.spline.agent.AgentConfig;
 import za.co.absa.spline.harvester.SparkLineageInitializer;
+import za.co.absa.spline.harvester.conf.SplineMode;
 
 public class JavaExampleJob {
 
     public static void main(String[] args) {
-        SparkSession.Builder builder = SparkSession.builder();
-        SparkSession session = builder.appName("java example app").master("local[*]").getOrCreate();
-        // configure Spline to track lineage
-        SparkLineageInitializer.enableLineageTracking(session);
+        final SparkSession.Builder builder = SparkSession.builder();
+        final SparkSession session = builder.appName("java example app").master("local[*]").getOrCreate();
+
+        // Explicitly enable Spline lineage tracking
+        // This step is optional - see https://github.com/AbsaOSS/spline-spark-agent#programmatic-initialization
+        final AgentConfig splineConfig =
+            AgentConfig.builder()
+                .splineMode(SplineMode.REQUIRED)
+                .build();
+
+        SparkLineageInitializer.enableLineageTracking(session, splineConfig);
+
+        // run a Spark job as usual
         session.read()
             .option("header", "true")
             .option("inferSchema", "true")
