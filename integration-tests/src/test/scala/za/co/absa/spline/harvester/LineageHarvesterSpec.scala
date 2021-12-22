@@ -336,16 +336,16 @@ class LineageHarvesterSpec extends AsyncFlatSpec
         |{
         |    "executionPlan": {
         |        "test.extra": { "$js": "executionPlan" }
-        |    },
+        |    }\,
         |    "executionEvent": {
         |        "test.extra": { "$js": "executionEvent" }
-        |    },
+        |    }\,
         |    "read": {
         |        "test.extra": { "$js": "read" }
-        |    },
+        |    }\,
         |    "write": {
         |        "test.extra": { "$js": "write" }
-        |    },
+        |    }\,
         |    "operation": {
         |        "test.extra": { "$js": "operation" }
         |    }
