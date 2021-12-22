@@ -16,11 +16,10 @@
 
 package za.co.absa.spline.harvester.conf
 
-import java.util
-
 import org.apache.hadoop.conf.{Configuration => SparkHadoopConf}
 
-import scala.collection.JavaConverters._
+import java.util
+import java.util.function.Consumer
 
 
 /**
@@ -28,13 +27,17 @@ import scala.collection.JavaConverters._
  *
  * @param shc A source of Hadoop configuration
  */
-class HadoopConfiguration(shc: SparkHadoopConf) extends ReadOnlyConfiguration {
+class HadoopConfiguration(shc: SparkHadoopConf)
+  extends ReadOnlyConfiguration
+    with MapLikeConfigurationAdapter {
 
-  override def getProperty(key: String): AnyRef = shc get key
-
-  override def getKeys: util.Iterator[String] = shc.iterator.asScala.map(_.getKey).asJava
-
-  override def containsKey(key: String): Boolean = Option(shc get key).isDefined
-
-  override def isEmpty: Boolean = shc.size < 1
+  override protected def propertiesMap: util.Map[String, _ <: AnyRef] = {
+    val aMap = new util.HashMap[String, String]()
+    shc.iterator().forEachRemaining(new Consumer[util.Map.Entry[String, String]] {
+      override def accept(t: util.Map.Entry[String, String]): Unit = {
+        aMap.put(t.getKey, t.getValue)
+      }
+    })
+    aMap
+  }
 }

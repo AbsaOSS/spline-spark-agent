@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 ABSA Group Limited
+ * Copyright 2021 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,23 @@
 
 package za.co.absa.spline.harvester.conf
 
-import org.apache.spark.SparkConf
+import org.apache.commons.configuration.MapConfiguration
 
-class SparkConfigurationTest extends ReadOnlyConfigurationTest {
+import java.util
 
-  override protected val givenConf = new SparkConfiguration(new SparkConf() {
-    this.set("spark.spline.x.y", "foo")
-    this.set("spark.spline.w.z", "bar")
-    this.set("spark.spline.xs", "a,b,c")
-  })
+trait MapLikeConfigurationAdapter {
+  this: ReadOnlyConfiguration =>
 
-  override protected val emptyConf = new SparkConfiguration(new SparkConf() {
-    override def getAll: Array[(String, String)] = Array.empty
-  })
+  private val mapConf = new MapConfiguration(propertiesMap)
+
+  protected def propertiesMap: util.Map[String, _ <: AnyRef]
+
+  override def getProperty(key: String): AnyRef = mapConf.getProperty(key)
+
+  override def getKeys: util.Iterator[_] = mapConf.getKeys()
+
+  override def containsKey(key: String): Boolean = mapConf.containsKey(key)
+
+  override def isEmpty: Boolean = mapConf.isEmpty
+
 }
