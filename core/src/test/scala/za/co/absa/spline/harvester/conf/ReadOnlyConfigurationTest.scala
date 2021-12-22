@@ -19,6 +19,8 @@ package za.co.absa.spline.harvester.conf
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
+import java.util
+
 trait ReadOnlyConfigurationTest extends AnyFunSuite with Matchers {
   protected val givenConf: ReadOnlyConfiguration
   protected val emptyConf: ReadOnlyConfiguration
@@ -26,13 +28,27 @@ trait ReadOnlyConfigurationTest extends AnyFunSuite with Matchers {
   test("testContainsKey") {
     givenConf containsKey "spline.x.y" shouldBe true
     givenConf containsKey "spline.w.z" shouldBe true
+    givenConf containsKey "spline.xs" shouldBe true
     givenConf containsKey "non-existent" shouldBe false
   }
 
   test("testGetProperty") {
     givenConf getProperty "spline.x.y" shouldEqual "foo"
     givenConf getProperty "spline.w.z" shouldEqual "bar"
+    givenConf getProperty "spline.xs" should be(a[util.List[String]])
     givenConf getProperty "non-existent" shouldBe null
+  }
+
+  test("testGetStringArray") {
+    val xs: Array[String] = givenConf.getStringArray("spline.xs")
+    xs should not be null
+    xs should contain theSameElementsInOrderAs Seq("a", "b", "c")
+  }
+
+  test("testGetList") {
+    val xs: util.List[_] = givenConf.getList("spline.xs")
+    xs should not be null
+    xs should contain theSameElementsInOrderAs Seq("a", "b", "c")
   }
 
   test("testIsEmpty") {
@@ -44,6 +60,7 @@ trait ReadOnlyConfigurationTest extends AnyFunSuite with Matchers {
     import scala.collection.JavaConverters._
     (givenConf getKeys "spline.x").asScala.toSeq should contain("spline.x.y")
     (givenConf getKeys "spline.x").asScala.toSeq shouldNot contain("spline.w.z")
+    (givenConf getKeys "spline.x").asScala.toSeq shouldNot contain("spline.xs")
     (givenConf getKeys "non-existent").asScala shouldBe empty
   }
 }

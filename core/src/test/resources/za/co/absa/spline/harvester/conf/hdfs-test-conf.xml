@@ -31,4 +31,10 @@
         <description>test property spline.w.z</description>
     </property>
 
+    <property>
+        <name>spline.xs</name>
+        <value>a,b,c</value>
+        <description>test array property</description>
+    </property>
+
 </configuration>
