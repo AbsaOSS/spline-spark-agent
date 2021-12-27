@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ABSA Group Limited
+ * Copyright 2021 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,23 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.dispatcher.httpdispatcher.modelmapper
+package za.co.absa.spline.harvester.dispatcher.kafkadispatcher
 
-import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
+import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.common.header.Header
 
-object ModelMapperV1_2 extends ModelMapper {
+import java.util.UUID
+import java.{lang => jl, util => ju}
 
-  // v1.2 is the latest api version supported so no conversion is needed
-
-  override def toDTO(plan: ExecutionPlan): AnyRef = plan
-
-  override def toDTO(event: ExecutionEvent): AnyRef = event
-}
+class SplineProducerRecord(
+  topic: String,
+  recordId: UUID,
+  recordContent: String,
+  headers: Array[_ <: Header]
+) extends ProducerRecord(
+  topic,
+  null,
+  recordId.toString,
+  recordContent,
+  ju.Arrays.asList(headers: _*): jl.Iterable[Header]
+)

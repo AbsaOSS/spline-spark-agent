@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.dispatcher.kafkadispatcher
+package za.co.absa.spline.harvester.dispatcher.modelmapper
 
-import org.apache.kafka.common.header.Header
-import java.nio.charset.StandardCharsets
+import za.co.absa.spline.producer.model.{v1_1 => v1_2}
 
-class KafkaHeader(key: String, value: String) extends Header {
+object ModelMapperV12 extends ModelMapper[v1_2.ExecutionPlan, v1_2.ExecutionEvent] {
 
-  override def key(): String = key
+  override def toDTO(plan: TPlan): Option[v1_2.ExecutionPlan] = Some(plan)
 
-  override def value(): Array[Byte] = value.getBytes(StandardCharsets.UTF_8)
+  override def toDTO(event: TEvent): Option[v1_2.ExecutionEvent] = Some(event)
 }
-

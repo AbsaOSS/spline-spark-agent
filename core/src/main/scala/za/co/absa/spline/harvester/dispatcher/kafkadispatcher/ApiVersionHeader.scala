@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ABSA Group Limited
+ * Copyright 2021 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.dispatcher.httpdispatcher
+package za.co.absa.spline.harvester.dispatcher.kafkadispatcher
 
-object SplineHttpHeaders {
-  private val Prefix = "ABSA-Spline"
+import za.co.absa.commons.version.Version
+import za.co.absa.spline.harvester.dispatcher.SplineHeaders
 
-  val ApiVersion = s"$Prefix-API-Version"
-  val ApiLTSVersion = s"$Prefix-API-LTS-Version"
-  val AcceptRequestEncoding = s"$Prefix-Accept-Request-Encoding"
-}
+class ApiVersionHeader(version: Version)
+  extends StringRecordHeader(SplineHeaders.ApiVersion, version.asString)

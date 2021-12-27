@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.dispatcher.httpdispatcher
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.version.Version._
-import za.co.absa.spline.harvester.dispatcher.httpdispatcher.ProducerApiVersion.SupportedApiRange
+import za.co.absa.spline.harvester.dispatcher.ProducerApiVersion.SupportedApiRange
 
 class ProducerApiCompatibilityManagerSpec extends AnyFlatSpec with Matchers {
 

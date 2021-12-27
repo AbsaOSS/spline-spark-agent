@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ABSA Group Limited
+ * Copyright 2021 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.dispatcher.httpdispatcher.modelmapper
+package za.co.absa.spline.harvester.dispatcher.modelmapper
 
-import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
+import za.co.absa.spline.producer.model.v1_1
 
-object ModelMapperV1_1 extends ModelMapper {
+object ModelMapperV11 extends ModelMapper[v1_1.ExecutionPlan, v1_1.ExecutionEvent] {
 
-  // v1.1 is fully compatible with v1.2
+  override def toDTO(plan: TPlan): Option[v1_1.ExecutionPlan] = {
+    Some(plan)
+  }
 
-  override def toDTO(plan: ExecutionPlan): AnyRef = ModelMapperV1_2.toDTO(plan)
-
-  override def toDTO(event: ExecutionEvent): AnyRef = ModelMapperV1_2.toDTO(event)
+  override def toDTO(event: TEvent): Option[v1_1.ExecutionEvent] = PartialFunction.condOpt(event) {
+    case e if e.error.isEmpty => e
+  }
 }

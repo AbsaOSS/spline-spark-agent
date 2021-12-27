@@ -17,85 +17,63 @@
 package za.co.absa.spline.harvester.dispatcher
 
 import org.apache.commons.configuration.{Configuration, ConfigurationConverter}
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
-import org.apache.kafka.common.header.Header
+import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.spark.internal.Logging
 import za.co.absa.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
-import za.co.absa.spline.harvester.dispatcher.httpdispatcher.ProducerApiVersion
+import za.co.absa.commons.version.Version
+import za.co.absa.spline.harvester.dispatcher.KafkaLineageDispatcher._
 import za.co.absa.spline.harvester.dispatcher.kafkadispatcher._
-import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
+import za.co.absa.spline.harvester.dispatcher.modelmapper.ModelMapper
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
-import KafkaLineageDispatcher._
-
-import java.util.Properties
-import scala.collection.JavaConverters.asJavaIterableConverter
-import scala.util.control.NonFatal
 
 /**
  * KafkaLineageDispatcher is responsible for sending the lineage data to spline gateway through kafka
  */
-class KafkaLineageDispatcher(topic: String, producerProperties: Properties)
-  extends LineageDispatcher
-    with Logging {
+class KafkaLineageDispatcher(
+  apiVersion: Version,
+  createSenderFactory: Version => SplineRecordSenderFactory
+) extends LineageDispatcher
+  with Logging {
 
+  import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
 
   def this(configuration: Configuration) = this(
-    configuration.getRequiredString(TopicKey),
-    ConfigurationConverter.getProperties(configuration.subset(ProducerKey))
+    Version.asSimple(configuration.getRequiredString(ApiVersion)),
+    apiVersion => new SplineRecordSenderFactory(
+      apiVersion,
+      configuration.getRequiredString(TopicKey),
+      () => new KafkaProducer(ConfigurationConverter.getProperties(configuration.subset(ProducerKey)))
+    )
   )
-
-  private val producer = new KafkaProducer[String, String](producerProperties)
-
-  logInfo(s"Kafka topic: $topic")
-
-  sys.addShutdownHook(producer.close())
 
   override def name = "Kafka"
 
-  private val planKafkaHeaders = Seq[Header](
-    new KafkaHeader(SplineKafkaHeaders.ApiVersion, ProducerApiVersion.Default.asString),
-    new KafkaHeader(SplineKafkaHeaders.TypeId, "ExecutionPlan")
-  )
+  private val senderFactory = {
+    val sf = createSenderFactory(apiVersion)
+    sys.addShutdownHook(sf.close())
+    sf
+  }
 
-  private val eventKafkaHeaders = Seq[Header](
-    new KafkaHeader(SplineKafkaHeaders.ApiVersion, ProducerApiVersion.Default.asString),
-    new KafkaHeader(SplineKafkaHeaders.TypeId, "ExecutionEvent")
-  )
+  private val planRecordSender = senderFactory.createSender[ExecutionPlan](SplineEntityType.ExecutionPlan)
+  private val eventRecordSender = senderFactory.createSender[ExecutionEvent](SplineEntityType.ExecutionEvent)
+  private val modelMapper = ModelMapper.forApiVersion(apiVersion)
 
   override def send(plan: ExecutionPlan): Unit = {
-    sendRecord(new ProducerRecord(
-      topic,
-      null,
-      plan.id.get.toString,
-      plan.toJson,
-      planKafkaHeaders.asJava
-    ))
+    for (planDTO <- modelMapper.toDTO(plan)) {
+      planRecordSender.send(planDTO.toJson, plan.id.get)
+    }
   }
 
   override def send(event: ExecutionEvent): Unit = {
-    sendRecord(new ProducerRecord(
-      topic,
-      null,
-      event.planId.toString,
-      event.toJson,
-      eventKafkaHeaders.asJava
-    ))
-  }
-
-  private def sendRecord(record: ProducerRecord[String, String]) = {
-    logTrace(s"sending message to kafka topic: ${record.topic}\n"
-      + "key: ${record.key}\nvalue: ${record.value.asPrettyJson}")
-
-    try {
-      producer.send(record).get()
-    } catch {
-      case NonFatal(e) =>
-        throw new RuntimeException(s"Cannot send lineage data to kafka topic ${record.topic()}", e)
+    for (eventDTO <- modelMapper.toDTO(event)) {
+      eventRecordSender.send(eventDTO.toJson, event.planId)
     }
   }
+
 }
 
 object KafkaLineageDispatcher {
   private val TopicKey = "topic"
+  private val ApiVersion = "apiVersion"
   private val ProducerKey = "producer"
 }

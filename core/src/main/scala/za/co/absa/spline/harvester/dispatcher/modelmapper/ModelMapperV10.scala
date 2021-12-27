@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ABSA Group Limited
+ * Copyright 2021 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.dispatcher.httpdispatcher.modelmapper
+package za.co.absa.spline.harvester.dispatcher.modelmapper
 
 import za.co.absa.spline.harvester.IdGenerators
 import za.co.absa.spline.harvester.converter.ExpressionConverter.{ExprExtra, ExprV1}
-import za.co.absa.spline.producer.model.{v1_0, v1_1}
+import za.co.absa.spline.producer.model.{v1_0, v1_1 => v1_2}
 
 import java.text.MessageFormat
 
 
-object ModelMapperV1 extends ModelMapper {
+object ModelMapperV10 extends ModelMapper[v1_0.ExecutionPlan, v1_0.ExecutionEvent] {
 
   object FieldsV1 {
 
@@ -61,10 +61,7 @@ object ModelMapperV1 extends ModelMapper {
     val Literal = "expr.Literal"
   }
 
-  /**
-   * Convert ExecutionPlan v1.1 to ExecutionPlan v1.0
-   */
-  override def toDTO(plan: v1_1.ExecutionPlan): AnyRef = {
+  override def toDTO(plan: v1_2.ExecutionPlan): Option[v1_0.ExecutionPlan] = {
     val exprById =
       plan.expressions
         .map(expressions =>
@@ -73,14 +70,14 @@ object ModelMapperV1 extends ModelMapper {
             ).mapValues(_.head))
         .getOrElse(Map.empty)
 
-    def toV1Operations(operations: v1_1.Operations) =
+    def toV1Operations(operations: v1_2.Operations) =
       v1_0.Operations(
         toV1WriteOperation(operations.write),
         operations.reads.map(ops => ops.map(toV1ReadOperation)),
         operations.other.map(ops => ops.map(toV1DataOperation))
       )
 
-    def toV1WriteOperation(operation: v1_1.WriteOperation) =
+    def toV1WriteOperation(operation: v1_2.WriteOperation) =
       v1_0.WriteOperation(
         operation.outputSource,
         None,
@@ -91,7 +88,7 @@ object ModelMapperV1 extends ModelMapper {
         Some(operation.extra.getOrElse(Map.empty) ++ operation.name.map(FieldsV1.OperationExtras.Name -> _))
       )
 
-    def toV1ReadOperation(operation: v1_1.ReadOperation) =
+    def toV1ReadOperation(operation: v1_2.ReadOperation) =
       v1_0.ReadOperation(
         Nil,
         operation.inputSources,
@@ -101,7 +98,7 @@ object ModelMapperV1 extends ModelMapper {
         Some(operation.extra.getOrElse(Map.empty) ++ operation.name.map(FieldsV1.OperationExtras.Name -> _))
       )
 
-    def toV1DataOperation(operation: v1_1.DataOperation) =
+    def toV1DataOperation(operation: v1_2.DataOperation) =
       v1_0.DataOperation(
         toV1OperationId(operation.id),
         operation.childIds.map(ids => ids.map(toV1OperationId)),
@@ -115,37 +112,37 @@ object ModelMapperV1 extends ModelMapper {
       opIdV1Str.toInt
     }
 
-    def toV1SystemInfo(nav: v1_1.NameAndVersion) = v1_0.SystemInfo(nav.name, nav.version)
+    def toV1SystemInfo(nav: v1_2.NameAndVersion) = v1_0.SystemInfo(nav.name, nav.version)
 
-    def toV1AgentInfo(nav: v1_1.NameAndVersion) = v1_0.AgentInfo(nav.name, nav.version)
+    def toV1AgentInfo(nav: v1_2.NameAndVersion) = v1_0.AgentInfo(nav.name, nav.version)
 
     def toV1OperationParams(params: Map[String, Any]): Map[String, Any] = {
       def convert(x: Any): Any = x match {
         case Some(v) => convert(v)
         case xs: Seq[_] => xs.map(convert)
         case ys: Map[String, _] => ys.mapValues(convert)
-        case ref: v1_1.AttrOrExprRef => refToV1Expression(ref)
+        case ref: v1_2.AttrOrExprRef => refToV1Expression(ref)
         case _ => x
       }
 
       params.mapValues(convert)
     }
 
-    def refToV1Expression(ref: v1_1.AttrOrExprRef): Map[String, Any] = ref match {
-      case v1_1.AttrOrExprRef(None, Some(exprId)) => exprToV1Expression(exprById(exprId))
-      case v1_1.AttrOrExprRef(Some(attrId), None) => Map(
+    def refToV1Expression(ref: v1_2.AttrOrExprRef): Map[String, Any] = ref match {
+      case v1_2.AttrOrExprRef(None, Some(exprId)) => exprToV1Expression(exprById(exprId))
+      case v1_2.AttrOrExprRef(Some(attrId), None) => Map(
         FieldsV1.Expression.TypeHint -> ExprTypesV1.AttrRef,
         FieldsV1.Expression.RefId -> attrId
       )
     }
 
     def exprToV1Expression(expr: Product): Map[String, Any] = expr match {
-      case lit: v1_1.Literal => Map(
+      case lit: v1_2.Literal => Map(
         FieldsV1.Expression.TypeHint -> ExprTypesV1.Literal,
         FieldsV1.Expression.Value -> lit.value,
         FieldsV1.Expression.DataTypeId -> lit.dataType
       )
-      case fun: v1_1.FunctionalExpression =>
+      case fun: v1_2.FunctionalExpression =>
         fun.extra.map(_ (FieldsV1.Expression.TypeHint)).foldLeft(Map.empty[String, Any]) {
           case (exprV1, typeHint) => (
             exprV1
@@ -190,13 +187,13 @@ object ModelMapperV1 extends ModelMapper {
         }
     }
 
-    def toV1Attribute(attr: v1_1.Attribute): Map[String, Any] = Map(
+    def toV1Attribute(attr: v1_2.Attribute): Map[String, Any] = Map(
       "id" -> attr.id,
       "name" -> attr.name,
       "dataTypeId" -> attr.dataType
     )
 
-    v1_0.ExecutionPlan(
+    Some(v1_0.ExecutionPlan(
       plan.id,
       toV1Operations(plan.operations),
       toV1SystemInfo(plan.systemInfo),
@@ -205,17 +202,16 @@ object ModelMapperV1 extends ModelMapper {
         ++ plan.name.map(FieldsV1.ExecutionPlanExtra.AppName -> _)
         ++ plan.attributes.map(FieldsV1.ExecutionPlanExtra.Attributes -> _.map(toV1Attribute))
       )
-    )
+    ))
   }
 
-  /**
-   * Convert ExecutionEvent v1.1 to ExecutionEvent v1.0
-   */
-  override def toDTO(event: v1_1.ExecutionEvent): AnyRef =
-    v1_0.ExecutionEvent(
-      event.planId,
-      event.timestamp,
-      event.error,
-      Some(event.extra.getOrElse(Map.empty) ++ event.durationNs.map(FieldsV1.ExecutionEventExtra.DurationNs -> _))
-    )
+  override def toDTO(event: v1_2.ExecutionEvent): Option[v1_0.ExecutionEvent] = PartialFunction.condOpt(event) {
+    case e if e.error.isEmpty =>
+      v1_0.ExecutionEvent(
+        event.planId,
+        event.timestamp,
+        event.error,
+        Some(event.extra.getOrElse(Map.empty) ++ event.durationNs.map(FieldsV1.ExecutionEventExtra.DurationNs -> _))
+      )
+  }
 }
