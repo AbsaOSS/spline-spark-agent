@@ -20,13 +20,12 @@ import org.apache.spark.internal.Logging
 import scalaj.http.{Http, HttpStatusException}
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.version.Version
+import za.co.absa.spline.harvester.dispatcher.ProducerApiVersion.SupportedApiRange
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.HttpConstants.Encoding
-import za.co.absa.spline.harvester.dispatcher.httpdispatcher.ProducerApiVersion.SupportedApiRange
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher._
-import za.co.absa.spline.harvester.dispatcher.httpdispatcher.modelmapper.ModelMapper
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest.{RestClient, RestEndpoint}
+import za.co.absa.spline.harvester.dispatcher.modelmapper.ModelMapper
 import za.co.absa.spline.harvester.exception.SplineInitializationException
-import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
 
 import javax.ws.rs.core.MediaType
@@ -41,6 +40,7 @@ class HttpLineageDispatcher(restClient: RestClient)
     with Logging {
 
   import za.co.absa.spline.harvester.dispatcher.HttpLineageDispatcher._
+  import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
 
   def this(configuration: Configuration) = this(HttpLineageDispatcher.createDefaultRestClient(configuration))
 
@@ -52,21 +52,19 @@ class HttpLineageDispatcher(restClient: RestClient)
   private val modelMapper = ModelMapper.forApiVersion(apiVersion)
 
   private val requestCompressionSupported: Boolean =
-    serverHeaders(SplineHttpHeaders.AcceptRequestEncoding)
+    serverHeaders(SplineHeaders.AcceptRequestEncoding)
       .exists(_.toLowerCase == Encoding.GZIP)
 
   override def name = "Http"
 
   override def send(plan: ExecutionPlan): Unit = {
-    val execPlanDTO = modelMapper.toDTO(plan)
-    sendJson(execPlanDTO.toJson, executionPlansEndpoint)
+    for (execPlanDTO <- modelMapper.toDTO(plan)) {
+      sendJson(execPlanDTO.toJson, executionPlansEndpoint)
+    }
   }
 
   override def send(event: ExecutionEvent): Unit = {
-    // Even though Producer API ver 1.0 and 1.1 allowed for capturing failed execution events, that feature was not really implemented on the server.
-    // The earliest server version that properly supports failed execution capturing is the one that implements Producer API version 1.2
-    if (event.error.isEmpty || apiVersion >= ProducerApiVersion.V1_2) {
-      val eventDTO = modelMapper.toDTO(event)
+    for (eventDTO <- modelMapper.toDTO(event)) {
       sendJson(Seq(eventDTO).toJson, executionEventsEndpoint)
     }
   }
@@ -133,13 +131,13 @@ object HttpLineageDispatcher extends Logging {
 
   private def resolveApiVersion(serverHeaders: Map[String, IndexedSeq[String]]): Version = {
     val serverApiVersions =
-      serverHeaders(SplineHttpHeaders.ApiVersion)
+      serverHeaders(SplineHeaders.ApiVersion)
         .map(Version.asSimple)
         .asOption
         .getOrElse(Seq(ProducerApiVersion.Default))
 
     val serverApiLTSVersions =
-      serverHeaders(SplineHttpHeaders.ApiLTSVersion)
+      serverHeaders(SplineHeaders.ApiLTSVersion)
         .map(Version.asSimple)
         .asOption
         .getOrElse(serverApiVersions)
