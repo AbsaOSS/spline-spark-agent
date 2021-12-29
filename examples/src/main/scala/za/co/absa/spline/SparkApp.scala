@@ -36,6 +36,16 @@ abstract class SparkApp
   sparkBuilder.appName(name)
   sparkBuilder.master(master)
 
+  sparkBuilder.config("spark.spline.postProcessingFilter.composite.filters", "userExtraMeta")
+  sparkBuilder.config("spark.spline.postProcessingFilter.userExtraMeta.rules",
+    """
+      |{
+      |  "labels": {
+      |    "tags": [ "example" ] \,
+      |    "appName": { "$js": "session.conf().get('spark.app.name')" }
+      |  }
+      |}""".stripMargin)
+
   for ((k, v) <- conf) sparkBuilder.config(k, v)
 
   /**
