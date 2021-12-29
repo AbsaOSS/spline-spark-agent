@@ -18,7 +18,7 @@ package za.co.absa.spline.harvester.converter
 
 import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.Converter
-import za.co.absa.spline.producer.model.v1_1.AttrOrExprRef
+import za.co.absa.spline.producer.model.AttrOrExprRef
 
 class ExprToRefConverter(
   attributeConverter: AttributeConverter,

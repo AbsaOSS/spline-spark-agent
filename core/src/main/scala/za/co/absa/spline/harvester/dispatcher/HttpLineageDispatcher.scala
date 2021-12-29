@@ -26,7 +26,7 @@ import za.co.absa.spline.harvester.dispatcher.httpdispatcher._
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest.{RestClient, RestEndpoint}
 import za.co.absa.spline.harvester.dispatcher.modelmapper.ModelMapper
 import za.co.absa.spline.harvester.exception.SplineInitializationException
-import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
+import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
 import javax.ws.rs.core.MediaType
 import scala.util.Try

@@ -28,7 +28,7 @@ import za.co.absa.spline.harvester.SparkLineageInitializer.{InitFlagKey, SparkQu
 import za.co.absa.spline.harvester.conf._
 import za.co.absa.spline.harvester.listener.QueryExecutionListenerDecorators._
 import za.co.absa.spline.harvester.listener.{QueryExecutionListenerDelegate, SplineQueryExecutionListener}
-import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
+import za.co.absa.spline.producer.model.ExecutionPlan
 
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal

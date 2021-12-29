@@ -16,7 +16,7 @@
 
 package za.co.absa.commons
 
-import za.co.absa.spline.producer.model.v1_1.{DataOperation, Operations, ReadOperation}
+import za.co.absa.spline.producer.model.{DataOperation, Operations, ReadOperation}
 
 object ProducerApiAdapters {
 

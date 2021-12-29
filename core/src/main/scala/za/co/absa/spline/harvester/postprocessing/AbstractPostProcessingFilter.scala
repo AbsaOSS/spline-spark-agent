@@ -17,7 +17,7 @@
 package za.co.absa.spline.harvester.postprocessing
 
 import za.co.absa.spline.harvester.{ExtraMetadataJavaOps, HarvestingContext}
-import za.co.absa.spline.producer.model.v1_1._
+import za.co.absa.spline.producer.model._
 
 abstract class AbstractPostProcessingFilter(override val name: String)
   extends PostProcessingFilter

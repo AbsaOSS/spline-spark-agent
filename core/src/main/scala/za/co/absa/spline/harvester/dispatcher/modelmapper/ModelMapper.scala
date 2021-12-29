@@ -18,15 +18,12 @@ package za.co.absa.spline.harvester.dispatcher.modelmapper
 
 import za.co.absa.commons.version.Version
 import za.co.absa.spline.harvester.dispatcher.ProducerApiVersion
-import za.co.absa.spline.producer.model.{v1_1 => v1_2}
+import za.co.absa.spline.producer.model._
 
 trait ModelMapper[TPlanDTO <: AnyRef, TEventDTO <: AnyRef] {
 
-  final type TPlan = v1_2.ExecutionPlan
-  final type TEvent = v1_2.ExecutionEvent
-
-  def toDTO(plan: TPlan): Option[TPlanDTO]
-  def toDTO(event: TEvent): Option[TEventDTO]
+  def toDTO(plan: ExecutionPlan): Option[TPlanDTO]
+  def toDTO(event: ExecutionEvent): Option[TEventDTO]
 }
 
 object ModelMapper {

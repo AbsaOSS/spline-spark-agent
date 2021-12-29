@@ -32,7 +32,7 @@ import za.co.absa.spline.harvester.plugin.registry.AutoDiscoveryPluginRegistry
 import za.co.absa.spline.harvester.postprocessing.{AttributeReorderingFilter, OneRowRelationFilter, PostProcessingFilter, PostProcessor}
 import za.co.absa.spline.harvester.qualifier.HDFSPathQualifier
 import za.co.absa.spline.harvester.{HarvestingContext, IdGenerators, LineageHarvester}
-import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
+import za.co.absa.spline.producer.model.ExecutionPlan
 
 import scala.concurrent.duration.Duration
 import scala.util.control.NonFatal

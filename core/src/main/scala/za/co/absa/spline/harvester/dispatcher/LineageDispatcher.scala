@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.dispatcher
 import za.co.absa.commons.NamedEntity
 import za.co.absa.spline.agent.AgentConfig.ConfProperty
 import za.co.absa.spline.harvester.exception.SplineInitializationException
-import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
+import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
 /**
  * <p>

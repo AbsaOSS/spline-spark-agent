@@ -23,7 +23,7 @@ import za.co.absa.spline.harvester.ModelConstants.OperationExtras
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter, IOParamsConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
-import za.co.absa.spline.producer.model.v1_1.ReadOperation
+import za.co.absa.spline.producer.model.ReadOperation
 
 class ReadNodeBuilder
   (val command: ReadCommand)

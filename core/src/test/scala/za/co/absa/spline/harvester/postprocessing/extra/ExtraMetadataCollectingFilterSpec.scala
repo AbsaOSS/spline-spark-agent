@@ -26,7 +26,7 @@ import za.co.absa.commons.scalatest.EnvFixture
 import za.co.absa.spline.harvester.{HarvestingContext, IdGenerators}
 import za.co.absa.spline.harvester.postprocessing.extra.ExtraMetadataCollectingFilter.{ExtraDef, InjectRulesKey}
 import za.co.absa.spline.harvester.postprocessing.extra.model.predicate.BaseNodeName
-import za.co.absa.spline.producer.model.v1_1._
+import za.co.absa.spline.producer.model._
 
 import java.util.UUID
 
@@ -45,8 +45,8 @@ class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with
   private val wop = WriteOperation("foo", append = false, "42", None, Seq.empty, None, None)
   private val nav = NameAndVersion("foo", "bar")
   private val defaultExtra = Some(Map("ttt" -> 777))
-  private val ep = ExecutionPlan(None, Some("pn"), None, Operations(wop, None, None), None, None, nav, None, defaultExtra)
-  private val ee = ExecutionEvent(UUID.randomUUID(), 66L, None, None, None, Some(
+  private val ep = ExecutionPlan(None, Some("pn"), None, None, Operations(wop, None, None), None, None, nav, None, defaultExtra)
+  private val ee = ExecutionEvent(UUID.randomUUID(), None, 66L, None, None, None, Some(
     Map("foo" -> "a", "bar" -> false, "baz" -> Seq(1, 2, 3))))
 
   behavior of "ExtraMetadataCollectingFilter"

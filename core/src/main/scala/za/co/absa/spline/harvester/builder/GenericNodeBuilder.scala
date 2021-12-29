@@ -21,7 +21,7 @@ import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.harvester.IdGenerators
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter, OperationParamsConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
-import za.co.absa.spline.producer.model.v1_1.DataOperation
+import za.co.absa.spline.producer.model.DataOperation
 
 class GenericNodeBuilder
   (val operation: LogicalPlan)

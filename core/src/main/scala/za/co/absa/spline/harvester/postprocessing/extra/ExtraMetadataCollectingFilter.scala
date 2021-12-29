@@ -27,7 +27,7 @@ import za.co.absa.spline.harvester.postprocessing.PostProcessingFilter
 import za.co.absa.spline.harvester.postprocessing.extra.ExtraMetadataCollectingFilter.{ExtraDef, createDefs, evaluateExtraDefs}
 import za.co.absa.spline.harvester.postprocessing.extra.model.predicate.{BaseNodeName, Predicate}
 import za.co.absa.spline.harvester.postprocessing.extra.model.template.ExtraTemplate
-import za.co.absa.spline.producer.model.v1_1._
+import za.co.absa.spline.producer.model._
 
 import java.net.URL
 import scala.util.Try

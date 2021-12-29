@@ -21,7 +21,7 @@ import org.apache.spark.sql.catalyst.plans.logical.Join
 import za.co.absa.spline.harvester.IdGenerators
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
-import za.co.absa.spline.producer.model.v1_1.DataOperation
+import za.co.absa.spline.producer.model.DataOperation
 
 class JoinNodeBuilder
   (operation: Join)

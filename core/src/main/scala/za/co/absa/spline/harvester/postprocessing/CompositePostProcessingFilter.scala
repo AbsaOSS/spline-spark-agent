@@ -20,7 +20,7 @@ import org.apache.spark.internal.Logging
 import za.co.absa.commons.HierarchicalObjectFactory
 import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.harvester.postprocessing.CompositePostProcessingFilter.FiltersKey
-import za.co.absa.spline.producer.model.v1_1._
+import za.co.absa.spline.producer.model._
 
 class CompositePostProcessingFilter(delegatees: Seq[PostProcessingFilter])
   extends PostProcessingFilter

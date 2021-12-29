@@ -109,6 +109,13 @@
         <delta-08.version>0.8.0</delta-08.version>
         <delta-10.version>1.0.0</delta-10.version>
 
+        <!-- Automapper -->
+
+        <automapper.version>${automapper-scala211.version}</automapper.version>
+        <automapper-scala211.version>0.6.1</automapper-scala211.version>
+        <automapper-scala212.version>0.6.2</automapper-scala212.version>
+        <automapper-scala213.version>0.7.0</automapper-scala213.version>
+
         <!-- Cross build properties -->
 
         <default.scala.binary.version>2.11</default.scala.binary.version>
@@ -595,6 +602,7 @@
             <properties>
                 <scala.binary.version>2.11</scala.binary.version>
                 <scala.version>${scala_2.11.version}</scala.version>
+                <automapper.version>${automapper-scala211.version}</automapper.version>
             </properties>
             <modules>
                 <module>bundle-2.2</module>
@@ -608,6 +616,7 @@
             <properties>
                 <scala.binary.version>2.12</scala.binary.version>
                 <scala.version>${scala_2.12.version}</scala.version>
+                <automapper.version>${automapper-scala212.version}</automapper.version>
             </properties>
             <modules>
                 <module>bundle-2.4</module>

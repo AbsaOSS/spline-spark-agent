@@ -18,7 +18,7 @@ package za.co.absa.spline.test.fixture.spline
 import org.apache.spark.sql.SparkSession
 import za.co.absa.spline.agent.AgentConfig
 import za.co.absa.spline.harvester.SparkLineageInitializer._
-import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
+import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 

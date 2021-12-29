@@ -16,10 +16,13 @@
 
 package za.co.absa.spline.harvester.dispatcher.modelmapper
 
-import org.mockito.Mockito._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import za.co.absa.spline.producer.dto.v1_2
+import za.co.absa.spline.producer.model._
+
+import java.util.UUID
 
 class ModelMapperV12Spec
   extends AnyFlatSpec
@@ -30,20 +33,194 @@ class ModelMapperV12Spec
 
   behavior of "toDTO()"
 
-  it should "convert ExecutionPlan model from the current version to DTO ver 1.2" in {
-    val mockPlan = mock[mapper.TPlan]
-    mapper.toDTO(mockPlan) shouldEqual Some(mockPlan)
+  it should "convert ExecutionPlan entity to DTO ver 1.2" in {
+    val dummyDataType = new Object()
+
+    val planEntity = ExecutionPlan(
+      id = Some(UUID.fromString("00000000-0000-0000-0000-000000000000")),
+      name = Some("Foo Plan"),
+      discriminator = None,
+      labels = Some(Map("lbl1" -> Seq("a", "b"))),
+      operations = Operations(
+        write = WriteOperation(
+          outputSource = "aaa",
+          append = true,
+          id = "op-0",
+          name = Some("Write Operation"),
+          childIds = Seq("op-1"),
+          params = Some(Map("param1" -> 42)),
+          extra = Some(Map("extra1" -> 42))
+        ),
+        reads = Some(Seq(ReadOperation(
+          inputSources = Seq("bbb"),
+          id = "op-2",
+          name = Some("Read Operation"),
+          output = Some(Seq("attr-1", "attr-2")),
+          params = Some(Map("param2" -> 42)),
+          extra = Some(Map("extra2" -> 42))
+        ))),
+        other = Some(Seq(DataOperation(
+          id = "op-1",
+          name = Some("Data Operation"),
+          childIds = Some(Seq("op-2")),
+          output = Some(Seq("attr-3")),
+          params = Some(Map("param3" -> 42)),
+          extra = Some(Map("extra3" -> 42))
+        )))
+      ),
+      attributes = Some(Seq(
+        Attribute(
+          id = "attr-1",
+          dataType = Some(dummyDataType),
+          childRefs = None,
+          extra = None,
+          name = "A"
+        ),
+        Attribute(
+          id = "attr-2",
+          dataType = Some(dummyDataType),
+          childRefs = None,
+          extra = None,
+          name = "B"
+        ),
+        Attribute(
+          id = "attr-3",
+          dataType = Some(dummyDataType),
+          childRefs = None,
+          extra = None,
+          name = "C"
+        )
+      )),
+      expressions = Some(Expressions(
+        functions = Some(Seq(
+          FunctionalExpression(
+            id = "e1",
+            dataType = Some(dummyDataType),
+            childRefs = Some(Seq(AttrOrExprRef(Some("a1"), None))),
+            extra = Some(Map("extra_e1" -> 777)),
+            name = "Expr1",
+            params = None
+          )
+        )),
+        constants = Some(Seq(
+          Literal(
+            id = "c1",
+            dataType = None,
+            extra = None,
+            value = "forty two"
+          )
+        ))
+      )),
+      systemInfo = NameAndVersion("xxx", "777"),
+      agentInfo = Some(NameAndVersion("yyy", "777")),
+      extraInfo = Some(Map("extra42" -> 42))
+    )
+
+    val planDTO = v1_2.ExecutionPlan(
+      id = Some(UUID.fromString("00000000-0000-0000-0000-000000000000")),
+      name = Some("Foo Plan"),
+      discriminator = None,
+      labels = Some(Map("lbl1" -> Seq("a", "b"))),
+      operations = v1_2.Operations(
+        write = v1_2.WriteOperation(
+          outputSource = "aaa",
+          append = true,
+          id = "op-0",
+          name = Some("Write Operation"),
+          childIds = Seq("op-1"),
+          params = Some(Map("param1" -> 42)),
+          extra = Some(Map("extra1" -> 42))
+        ),
+        reads = Some(Seq(v1_2.ReadOperation(
+          inputSources = Seq("bbb"),
+          id = "op-2",
+          name = Some("Read Operation"),
+          output = Some(Seq("attr-1", "attr-2")),
+          params = Some(Map("param2" -> 42)),
+          extra = Some(Map("extra2" -> 42))
+        ))),
+        other = Some(Seq(v1_2.DataOperation(
+          id = "op-1",
+          name = Some("Data Operation"),
+          childIds = Some(Seq("op-2")),
+          output = Some(Seq("attr-3")),
+          params = Some(Map("param3" -> 42)),
+          extra = Some(Map("extra3" -> 42))
+        )))
+      ),
+      attributes = Some(Seq(
+        v1_2.Attribute(
+          id = "attr-1",
+          dataType = Some(dummyDataType),
+          childRefs = None,
+          extra = None,
+          name = "A"
+        ),
+        v1_2.Attribute(
+          id = "attr-2",
+          dataType = Some(dummyDataType),
+          childRefs = None,
+          extra = None,
+          name = "B"
+        ),
+        v1_2.Attribute(
+          id = "attr-3",
+          dataType = Some(dummyDataType),
+          childRefs = None,
+          extra = None,
+          name = "C"
+        )
+      )),
+      expressions = Some(v1_2.Expressions(
+        functions = Some(Seq(
+          v1_2.FunctionalExpression(
+            id = "e1",
+            dataType = Some(dummyDataType),
+            childRefs = Some(Seq(v1_2.AttrOrExprRef(Some("a1"), None))),
+            extra = Some(Map("extra_e1" -> 777)),
+            name = "Expr1",
+            params = None
+          )
+        )),
+        constants = Some(Seq(
+          v1_2.Literal(
+            id = "c1",
+            dataType = None,
+            extra = None,
+            value = "forty two"
+          )
+        ))
+      )),
+      systemInfo = v1_2.NameAndVersion("xxx", "777"),
+      agentInfo = Some(v1_2.NameAndVersion("yyy", "777")),
+      extraInfo = Some(Map("extra42" -> 42))
+    )
+
+    mapper.toDTO(planEntity) shouldEqual Some(planDTO)
   }
 
-  it should "convert ExecutionEvent model from the current version to DTO ver 1.2" in {
-    val mockEvent = mock[mapper.TEvent]
-    when(mockEvent.error) thenReturn None
-    mapper.toDTO(mockEvent) shouldEqual Some(mockEvent)
-  }
+  for (error <- Seq(None, Some("oops"))) yield
+    it should s"convert ExecutionEvent entity with error $error to DTO ver 1.2" in {
+      val eventEntity = ExecutionEvent(
+        planId = UUID.fromString("00000000-0000-0000-0000-000000000000"),
+        discriminator = Some("foo"),
+        labels = Some(Map("lbl1" -> Seq("a", "b"))),
+        timestamp = 123456789,
+        durationNs = Some(555),
+        error = None,
+        extra = Some(Map("extra1" -> 42))
+      )
 
-  it should "not skip failed events" in {
-    val mockEvent = mock[mapper.TEvent]
-    when(mockEvent.error) thenReturn Some("dummy error")
-    mapper.toDTO(mockEvent) shouldEqual Some(mockEvent)
-  }
+      val eventDTO = v1_2.ExecutionEvent(
+        planId = UUID.fromString("00000000-0000-0000-0000-000000000000"),
+        discriminator = Some("foo"),
+        labels = Some(Map("lbl1" -> Seq("a", "b"))),
+        timestamp = 123456789,
+        durationNs = Some(555),
+        error = None,
+        extra = Some(Map("extra1" -> 42))
+      )
+
+      mapper.toDTO(eventEntity) shouldEqual Some(eventDTO)
+    }
 }

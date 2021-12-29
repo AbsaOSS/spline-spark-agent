@@ -22,7 +22,7 @@ import za.co.absa.commons.lang.CachingConverter
 import za.co.absa.spline.harvester.IdGenerators
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder.OperationId
 import za.co.absa.spline.harvester.converter._
-import za.co.absa.spline.producer.model.v1_1.{Attribute, FunctionalExpression, Literal}
+import za.co.absa.spline.producer.model.{Attribute, FunctionalExpression, Literal}
 
 trait OperationNodeBuilder {
 
