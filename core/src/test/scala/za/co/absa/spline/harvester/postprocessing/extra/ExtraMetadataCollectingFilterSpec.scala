@@ -23,9 +23,9 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.commons.scalatest.EnvFixture
-import za.co.absa.spline.harvester.{HarvestingContext, IdGenerators}
 import za.co.absa.spline.harvester.postprocessing.extra.ExtraMetadataCollectingFilter.{ExtraDef, InjectRulesKey}
 import za.co.absa.spline.harvester.postprocessing.extra.model.predicate.BaseNodeName
+import za.co.absa.spline.harvester.{HarvestingContext, IdGenerators}
 import za.co.absa.spline.producer.model._
 
 import java.util.UUID
@@ -57,7 +57,7 @@ class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with
         |{
         |    "executionPlan": {
         |        "qux": 42,
-        |        "tags": ["aaa", "bbb", "ccc"],
+        |        "seq": [ "aaa", "bbb", "ccc" ],
         |        "foo": { "$js": "executionPlan.name()" },
         |        "bar": { "$env": "BAR_HOME" },
         |        "baz": { "$jvm": "some.jvm.prop" },
@@ -80,11 +80,53 @@ class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with
     val extra = processedPlan.extraInfo.get
     extra("ttt") shouldBe 777
     extra("qux") shouldBe 42
-    extra("tags") shouldBe Seq("aaa", "bbb", "ccc")
+    extra("seq") shouldBe Seq("aaa", "bbb", "ccc")
     extra("foo") shouldBe Some("pn")
     extra("bar") shouldBe "rabbit"
     extra("baz") shouldBe "123"
     extra("daz") shouldBe "nice"
+  }
+
+  it should "support labels" in {
+    val configString =
+      """
+        |{
+        |    "labels": {
+        |        "qux": 42,
+        |        "tags": [ "aaa", "bbb", null, "ccc" ],
+        |        "foo1": null,
+        |        "foo2": [],
+        |        "foo3": [null],
+        |        "bar": { "$env": "BAR_HOME" },
+        |        "baz": { "$jvm": "some.jvm.prop" },
+        |        "daz": { "$js": "session.conf().get('k')" }
+        |    }
+        |}
+        |""".stripMargin
+
+    System.setProperty("some.jvm.prop", "123")
+    setEnv("BAR_HOME", "rabbit")
+
+    val config = new BaseConfiguration {
+      addPropertyDirect(InjectRulesKey, configString)
+    }
+
+    val filter = new ExtraMetadataCollectingFilter(config)
+
+    val processedPlan = filter.processExecutionPlan(ep, harvestingContext)
+    val processedEvent = filter.processExecutionEvent(ee, harvestingContext)
+
+    Seq(
+      processedPlan.labels,
+      processedEvent.labels
+    ).foreach(
+      _ shouldEqual Some(Map(
+        "qux" -> Seq("42"),
+        "tags" -> Seq("aaa", "bbb", "ccc"),
+        "bar" -> Seq("rabbit"),
+        "baz" -> Seq("123"),
+        "daz" -> Seq("nice")
+      )))
   }
 
   it should "handle missing JSON property" in {

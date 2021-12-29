@@ -39,31 +39,35 @@ class ExtraMetadataCollectingFilter(allDefs: Map[BaseNodeName.Type, Seq[ExtraDef
   override def name = "Extra metadata"
 
   override def processExecutionEvent(event: ExecutionEvent, ctx: HarvestingContext): ExecutionEvent = {
-    withEvaluatedExtra(BaseNodeName.ExecutionEvent, event, ctx)
+    val event1 = withEvaluatedValues(BaseNodeName.ExecutionEvent, event, ctx)(_ withAddedExtra _)
+    val event2 = withEvaluatedValues(BaseNodeName.Labels, event1, ctx)(_ withAddedLabels _)
+    event2
   }
 
   override def processExecutionPlan(plan: ExecutionPlan, ctx: HarvestingContext): ExecutionPlan = {
-    withEvaluatedExtra(BaseNodeName.ExecutionPlan, plan, ctx)
+    val plan1 = withEvaluatedValues(BaseNodeName.ExecutionPlan, plan, ctx)(_ withAddedExtra _)
+    val plan2 = withEvaluatedValues(BaseNodeName.Labels, plan1, ctx)(_ withAddedLabels _)
+    plan2
   }
 
   override def processReadOperation(read: ReadOperation, ctx: HarvestingContext): ReadOperation = {
-    withEvaluatedExtra(BaseNodeName.Read, read, ctx)
+    withEvaluatedValues(BaseNodeName.Read, read, ctx)(_ withAddedExtra _)
   }
 
   override def processWriteOperation(write: WriteOperation, ctx: HarvestingContext): WriteOperation = {
-    withEvaluatedExtra(BaseNodeName.Write, write, ctx)
+    withEvaluatedValues(BaseNodeName.Write, write, ctx)(_ withAddedExtra _)
   }
 
   override def processDataOperation(operation: DataOperation, ctx: HarvestingContext): DataOperation = {
-    withEvaluatedExtra(BaseNodeName.Operation, operation, ctx)
+    withEvaluatedValues(BaseNodeName.Operation, operation, ctx)(_ withAddedExtra _)
   }
 
-  private def withEvaluatedExtra[A: ExtraAdder](name: BaseNodeName.Type, entity: A, ctx: HarvestingContext): A = {
+  private def withEvaluatedValues[A: ExtraAdder](name: BaseNodeName.Type, entity: A, ctx: HarvestingContext)(fn: (A, Map[String, Any]) => A): A = {
     allDefs
       .get(name)
       .map(defs => {
-        val addedExtra = evaluateExtraDefs(name, entity, defs, ctx)
-        entity.withAddedExtra(addedExtra)
+        val values = evaluateExtraDefs(name, entity, defs, ctx)
+        fn(entity, values)
       })
       .getOrElse(entity)
   }

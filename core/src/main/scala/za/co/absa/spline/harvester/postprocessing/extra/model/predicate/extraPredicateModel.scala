@@ -170,4 +170,5 @@ object BaseNodeName {
   val Operation = "operation"
   val Read = "read"
   val Write = "write"
+  val Labels = "labels"
 }
