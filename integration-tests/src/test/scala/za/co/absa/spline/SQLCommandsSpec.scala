@@ -125,7 +125,7 @@ class SQLCommandsSpec extends AsyncFlatSpec
             )
           } yield {
             plan.operations.reads.get.head.inputSources.head should be(s"file:$warehouseDir/sourcetable")
-            plan.operations.write.outputSource should be(csvFile.toUri.toString.init)
+            plan.operations.write.outputSource should be(csvFile.toFile.toURI.toString.init)
           }
         }
       }

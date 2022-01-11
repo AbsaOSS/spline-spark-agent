@@ -44,7 +44,7 @@ object ShortTypeHintForSpline03ModelSupport {
   abstract class AbstractSplineShortTypeHints(classes: Seq[Class[_]]) extends TypeHints {
     override val hints: List[Class[_]] = classes.toList
 
-    override def classFor(hint: String): Option[Class[_]] = classes find (hintForAsString(_) == hint)
+    override def classFor(hint: String, a: Class[_]): Option[Class[_]] = classes find (hintForAsString(_) == hint)
 
     // TypeHints.hintFor() has a different return type in Json4s >= 3.7
     // So we should not use it directly, and use this method instead.

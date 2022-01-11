@@ -234,6 +234,8 @@ object ExpressionConverterSpec {
     override def eval(input: InternalRow): Any = ()
 
     override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = null
+
+    override protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = copy(children = newChildren)
   }
 
   object Foo {

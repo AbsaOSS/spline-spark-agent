@@ -91,7 +91,7 @@
         <json4s-32.version>3.2.11</json4s-32.version>
         <json4s-35.version>3.5.3</json4s-35.version>
         <json4s-36.version>3.6.10</json4s-36.version>
-        <json4s-37.version>3.7.0-M5</json4s-37.version>
+        <json4s-37.version>3.7.0-M11</json4s-37.version>
 
         <!-- Spark -->
 
