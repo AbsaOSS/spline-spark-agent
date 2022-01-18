@@ -26,6 +26,7 @@ import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.extra.{UserExtraAppendingPostProcessingFilter, UserExtraMetadataProvider}
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
+import za.co.absa.spline.harvester.listener.SplineSparkApplicationEndListener
 import za.co.absa.spline.harvester.postprocessing.{AttributeReorderingFilter, OneRowRelationFilter, PostProcessingFilter}
 import za.co.absa.spline.harvester.{LineageHarvesterFactory, QueryExecutionEventHandler}
 import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
@@ -86,6 +87,8 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
   import SplineMode._
 
   import collection.JavaConverters._
+
+  sparkSession.sparkContext.addSparkListener(SplineSparkApplicationEndListener)
 
   private val configuration = new CompositeConfiguration(Seq(
     userConfiguration,

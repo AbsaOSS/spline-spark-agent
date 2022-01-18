@@ -21,11 +21,12 @@ import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.header.Header
 import org.apache.spark.internal.Logging
 import za.co.absa.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
+import za.co.absa.spline.harvester.dispatcher.KafkaLineageDispatcher._
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.ProducerApiVersion
 import za.co.absa.spline.harvester.dispatcher.kafkadispatcher._
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
+import za.co.absa.spline.harvester.listener.SplineSparkApplicationEndListener
 import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
-import KafkaLineageDispatcher._
 
 import java.util.Properties
 import scala.collection.JavaConverters.asJavaIterableConverter
@@ -47,8 +48,7 @@ class KafkaLineageDispatcher(topic: String, producerProperties: Properties)
   private val producer = new KafkaProducer[String, String](producerProperties)
 
   logInfo(s"Kafka topic: $topic")
-
-  sys.addShutdownHook(producer.close())
+  SplineSparkApplicationEndListener.addAppEndHook(() =>producer.close())
 
   private val planKafkaHeaders = Seq[Header](
     new KafkaHeader(SplineKafkaHeaders.ApiVersion, ProducerApiVersion.Default.asString),
