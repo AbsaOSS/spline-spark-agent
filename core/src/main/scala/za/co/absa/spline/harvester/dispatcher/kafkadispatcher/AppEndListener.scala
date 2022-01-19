@@ -14,30 +14,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.listener
+package za.co.absa.spline.harvester.dispatcher.kafkadispatcher
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
 
-import scala.collection.mutable
 import scala.util.control.NonFatal
 
-object SplineSparkApplicationEndListener extends SparkListener with Logging {
-
-  private val appEndHooks = new mutable.ListBuffer[() => Unit]
-
-  def addAppEndHook(hook: () => Unit): Unit = {
-    appEndHooks.append(hook)
-  }
+class AppEndListener(body: () => Unit) extends SparkListener with Logging {
 
   override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
-    logDebug("Running all app end hooks")
-
-    appEndHooks.foreach { hook =>
-      try hook()
-      catch {
-        case e if NonFatal(e) => logWarning("Exception when executing app end hook: ", e)
-      }
+    try body()
+    catch {
+      case e if NonFatal(e) => logWarning("Exception when executing app end hook: ", e)
     }
   }
 }

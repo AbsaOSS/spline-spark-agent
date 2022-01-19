@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.harvester.conf
 
-import org.apache.commons.configuration.{CompositeConfiguration, Configuration, PropertiesConfiguration}
+import org.apache.commons.configuration.{CompositeConfiguration, Configuration, MapConfiguration, PropertiesConfiguration}
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import za.co.absa.commons.HierarchicalObjectFactory
@@ -26,7 +26,6 @@ import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.extra.{UserExtraAppendingPostProcessingFilter, UserExtraMetadataProvider}
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
-import za.co.absa.spline.harvester.listener.SplineSparkApplicationEndListener
 import za.co.absa.spline.harvester.postprocessing.{AttributeReorderingFilter, OneRowRelationFilter, PostProcessingFilter}
 import za.co.absa.spline.harvester.{LineageHarvesterFactory, QueryExecutionEventHandler}
 import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
@@ -88,12 +87,11 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
 
   import collection.JavaConverters._
 
-  sparkSession.sparkContext.addSparkListener(SplineSparkApplicationEndListener)
-
   private val configuration = new CompositeConfiguration(Seq(
     userConfiguration,
     new Spline05ConfigurationAdapter(userConfiguration),
-    new PropertiesConfiguration(defaultPropertiesFileName)
+    new PropertiesConfiguration(defaultPropertiesFileName),
+    new MapConfiguration(Map("spline.lineageDispatcher.kafka.sparkSession" -> sparkSession).asJava)
   ).asJava)
 
   private val objectFactory = new HierarchicalObjectFactory(configuration)
