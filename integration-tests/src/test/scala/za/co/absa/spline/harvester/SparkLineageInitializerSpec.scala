@@ -17,10 +17,10 @@
 package za.co.absa.spline.harvester
 
 import org.apache.commons.configuration.{Configuration, SystemConfiguration}
-import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.util.QueryExecutionListener
+import org.apache.spark.{SPARK_VERSION, SparkContext}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.Mockito._
@@ -34,7 +34,7 @@ import za.co.absa.commons.json.DefaultJacksonJsonSerDe
 import za.co.absa.commons.scalatest.ConditionalTestTags._
 import za.co.absa.commons.version.Version._
 import za.co.absa.spline.harvester.SparkLineageInitializer._
-import za.co.absa.spline.harvester.SparkLineageInitializerSpec.{MockLineageDispatcher, _}
+import za.co.absa.spline.harvester.SparkLineageInitializerSpec._
 import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer
 import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer.ConfProperty._
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode._
@@ -259,10 +259,14 @@ object SparkLineageInitializerSpec {
     Seq((1, 2)).toDF.write.save(TempFile(pathOnly = true).deleteOnExit().path.toString)
   }
 
-  private def createFailingConfigurer(): DefaultSplineConfigurer =
-    new DefaultSplineConfigurer(mock[SparkSession], new SystemConfiguration) {
+  private def createFailingConfigurer(): DefaultSplineConfigurer = {
+    val sparkSessionMock = mock[SparkSession]
+    when(sparkSessionMock.sparkContext).thenReturn(mock[SparkContext])
+
+    new DefaultSplineConfigurer(sparkSessionMock, new SystemConfiguration) {
       override def lineageDispatcher: LineageDispatcher = sys.error("Testing exception - please ignore.")
     }
+  }
 
   private def onSuccessListenerFuture(spark: SparkSession): Future[Unit] = {
     val promise = Promise[Unit]
