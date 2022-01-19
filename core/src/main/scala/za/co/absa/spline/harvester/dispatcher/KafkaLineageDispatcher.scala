@@ -39,10 +39,10 @@ class KafkaLineageDispatcher(topic: String, producerProperties: Properties, spar
   extends LineageDispatcher
     with Logging {
 
-  def this(configuration: Configuration) = this(
+  def this(configuration: Configuration, sparkSession: SparkSession) = this(
     configuration.getRequiredString(TopicKey),
     ConfigurationConverter.getProperties(configuration.subset(ProducerKey)),
-    configuration.getProperty("sparkSession").asInstanceOf[SparkSession]
+    sparkSession
   )
 
   logInfo(s"Kafka topic: $topic")
