@@ -17,14 +17,18 @@
 package za.co.absa.commons
 
 import org.apache.commons.configuration.{Configuration, MapConfiguration}
+import org.apache.spark.sql.SparkSession
 import org.scalatest.Inside.inside
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.commons.HierarchicalObjectFactorySpec.{BarComponent, DummyComponenet, Foo2Arg, Foo2Component, FooComponent}
+import org.scalatestplus.mockito.MockitoSugar
+import za.co.absa.commons.HierarchicalObjectFactorySpec.{BarComponent, DummyComponenet, Foo2Component, FooComponent}
 
-class HierarchicalObjectFactorySpec extends AnyFlatSpec with Matchers {
+class HierarchicalObjectFactorySpec extends AnyFlatSpec with Matchers with MockitoSugar {
 
   "createComponentsByKey()" should "create components" in {
+    val sparkMock = mock[SparkSession]
+
     val rootObjFactory =
       new HierarchicalObjectFactory(
         new MapConfiguration(new java.util.HashMap[String, AnyRef] {
@@ -33,9 +37,7 @@ class HierarchicalObjectFactorySpec extends AnyFlatSpec with Matchers {
           put("foo2.className", classOf[Foo2Component].getName)
           put("bar.className", classOf[BarComponent].getName)
         }),
-        Seq(
-          classOf[Foo2Arg] -> new Foo2Arg(42)
-        )
+        sparkMock
       ).child("test")
 
     val subDispatchers = rootObjFactory.createComponentsByKey[DummyComponenet]("child.names")
@@ -45,7 +47,7 @@ class HierarchicalObjectFactorySpec extends AnyFlatSpec with Matchers {
       case Seq(FooComponent(fooConf), Foo2Component(foo2Conf, foo2Arg), BarComponent(barObjFactory)) =>
         fooConf.getString("className") should equal(classOf[FooComponent].getName)
         foo2Conf.getString("className") should equal(classOf[Foo2Component].getName)
-        foo2Arg.x should equal(42)
+        foo2Arg should equal(sparkMock)
         barObjFactory.configuration.getString("className") should equal(classOf[BarComponent].getName)
     }
   }
@@ -58,9 +60,7 @@ object HierarchicalObjectFactorySpec {
 
   case class FooComponent(conf: Configuration) extends DummyComponenet
 
-  class Foo2Arg(val x: Int)
-
-  case class Foo2Component(conf: Configuration, foo2arg: Foo2Arg) extends DummyComponenet
+  case class Foo2Component(conf: Configuration, sparkSession: SparkSession) extends DummyComponenet
 
   case class BarComponent(objectFactory: HierarchicalObjectFactory) extends DummyComponenet
 

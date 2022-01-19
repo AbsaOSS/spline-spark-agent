@@ -18,6 +18,7 @@ package za.co.absa.commons
 
 import org.apache.commons.configuration.Configuration
 import org.apache.spark.internal.Logging
+import org.apache.spark.sql.SparkSession
 import za.co.absa.commons.HierarchicalObjectFactory.ClassName
 import za.co.absa.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
 
@@ -27,12 +28,12 @@ import scala.util.Try
 
 final class HierarchicalObjectFactory(
   val configuration: Configuration,
-  val arguments: Seq[(Class[_], AnyRef)],
+  val sparkSession: SparkSession,
   val parentFactory: HierarchicalObjectFactory = null
 ) extends Logging {
 
   def child(namespace: String): HierarchicalObjectFactory = {
-    new HierarchicalObjectFactory(configuration.subset(namespace), arguments, this)
+    new HierarchicalObjectFactory(configuration.subset(namespace), sparkSession, this)
   }
 
   def instantiate[A: ClassTag](className: String = configuration.getRequiredString(ClassName)): A = {
@@ -41,9 +42,9 @@ final class HierarchicalObjectFactory(
     try {
       Try(clazz.getConstructor(classOf[HierarchicalObjectFactory]).newInstance(this))
         .recover { case _: NoSuchMethodException =>
-          val argTypes = classOf[Configuration] +: arguments.map({ case (t, _) => t })
-          val argVals = configuration +: arguments.map({ case (_, v) => v })
-          clazz.getConstructor(argTypes: _*).newInstance(argVals: _*)
+          clazz
+            .getConstructor(classOf[Configuration], classOf[SparkSession])
+            .newInstance(configuration, sparkSession)
         }
         .recover { case _: NoSuchMethodException =>
           clazz.getConstructor(classOf[Configuration]).newInstance(configuration)
