@@ -27,11 +27,12 @@ import scala.util.Try
 
 final class HierarchicalObjectFactory(
   val configuration: Configuration,
+  val arguments: Seq[(Class[_], AnyRef)],
   val parentFactory: HierarchicalObjectFactory = null
 ) extends Logging {
 
   def child(namespace: String): HierarchicalObjectFactory = {
-    new HierarchicalObjectFactory(configuration.subset(namespace), this)
+    new HierarchicalObjectFactory(configuration.subset(namespace), arguments, this)
   }
 
   def instantiate[A: ClassTag](className: String = configuration.getRequiredString(ClassName)): A = {
@@ -39,6 +40,11 @@ final class HierarchicalObjectFactory(
     val clazz = Class.forName(className.trim)
     try {
       Try(clazz.getConstructor(classOf[HierarchicalObjectFactory]).newInstance(this))
+        .recover { case _: NoSuchMethodException =>
+          val argTypes = classOf[Configuration] +: arguments.map({ case (t, _) => t })
+          val argVals = configuration +: arguments.map({ case (_, v) => v })
+          clazz.getConstructor(argTypes: _*).newInstance(argVals: _*)
+        }
         .recover { case _: NoSuchMethodException =>
           clazz.getConstructor(classOf[Configuration]).newInstance(configuration)
         }
