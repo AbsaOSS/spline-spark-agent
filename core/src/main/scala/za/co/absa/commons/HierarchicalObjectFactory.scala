@@ -18,6 +18,7 @@ package za.co.absa.commons
 
 import org.apache.commons.configuration.Configuration
 import org.apache.spark.internal.Logging
+import org.apache.spark.sql.SparkSession
 import za.co.absa.commons.HierarchicalObjectFactory.ClassName
 import za.co.absa.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
 
@@ -27,11 +28,12 @@ import scala.util.Try
 
 final class HierarchicalObjectFactory(
   val configuration: Configuration,
+  val sparkSession: SparkSession,
   val parentFactory: HierarchicalObjectFactory = null
 ) extends Logging {
 
   def child(namespace: String): HierarchicalObjectFactory = {
-    new HierarchicalObjectFactory(configuration.subset(namespace), this)
+    new HierarchicalObjectFactory(configuration.subset(namespace), sparkSession, this)
   }
 
   def instantiate[A: ClassTag](className: String = configuration.getRequiredString(ClassName)): A = {
@@ -39,6 +41,11 @@ final class HierarchicalObjectFactory(
     val clazz = Class.forName(className.trim)
     try {
       Try(clazz.getConstructor(classOf[HierarchicalObjectFactory]).newInstance(this))
+        .recover { case _: NoSuchMethodException =>
+          clazz
+            .getConstructor(classOf[Configuration], classOf[SparkSession])
+            .newInstance(configuration, sparkSession)
+        }
         .recover { case _: NoSuchMethodException =>
           clazz.getConstructor(classOf[Configuration]).newInstance(configuration)
         }

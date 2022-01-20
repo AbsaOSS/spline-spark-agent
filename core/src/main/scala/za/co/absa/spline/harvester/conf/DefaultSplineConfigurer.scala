@@ -93,7 +93,7 @@ class DefaultSplineConfigurer(sparkSession: SparkSession, userConfiguration: Con
     new PropertiesConfiguration(defaultPropertiesFileName)
   ).asJava)
 
-  private val objectFactory = new HierarchicalObjectFactory(configuration)
+  private val objectFactory = new HierarchicalObjectFactory(configuration, sparkSession)
 
   val splineMode: SplineMode = {
     val modeName = configuration.getRequiredString(Mode)

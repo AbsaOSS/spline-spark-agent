@@ -34,7 +34,7 @@ import za.co.absa.commons.json.DefaultJacksonJsonSerDe
 import za.co.absa.commons.scalatest.ConditionalTestTags._
 import za.co.absa.commons.version.Version._
 import za.co.absa.spline.harvester.SparkLineageInitializer._
-import za.co.absa.spline.harvester.SparkLineageInitializerSpec.{MockLineageDispatcher, _}
+import za.co.absa.spline.harvester.SparkLineageInitializerSpec._
 import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer
 import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer.ConfProperty._
 import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode._
