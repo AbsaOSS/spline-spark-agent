@@ -23,10 +23,24 @@ import javax.script.{ScriptEngine, ScriptEngineManager}
 
 object ExtraTemplateParser {
 
-  def parse(extra: Map[String, Any]): ExtraTemplate = {
+  def parse(templates: Map[String, Any]): ExtraTemplate = {
+    val extraTemplate = getTemplate(templates, Key.Extra)
+    val labelsTemplate = getTemplate(templates, Key.Labels)
+    assert(extraTemplate.nonEmpty || labelsTemplate.nonEmpty)
+
     val jsEngine = new ScriptEngineManager().getEngineByMimeType("text/javascript")
-    new ExtraTemplate(extra.transform((k, v) => parseRec(v, jsEngine)))
+
+    new ExtraTemplate(
+      parseTemplate(extraTemplate, jsEngine),
+      parseTemplate(labelsTemplate, jsEngine)
+    )
   }
+
+  private def getTemplate(template: Map[String, Any], key: String) =
+    template.get(key).map(_.asInstanceOf[Map[String, Any]]).getOrElse(Map.empty)
+
+  private def parseTemplate(template: Map[String, Any], jsEngine: ScriptEngine) =
+    template.transform((k, v) => parseRec(v, jsEngine))
 
   private def parseRec(v: Any, jsEngine: ScriptEngine): Any = v match {
     case m: Map[String, _] => m.toSeq match {
@@ -39,5 +53,10 @@ object ExtraTemplateParser {
     }
     case s: Seq[_] => s.map(parseRec(_, jsEngine))
     case v => v
+  }
+
+  object Key {
+    val Extra = "extra"
+    val Labels = "labels"
   }
 }

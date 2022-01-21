@@ -16,6 +16,7 @@
 
 package za.co.absa.spline.harvester
 
+import za.co.absa.spline.harvester.postprocessing.extra.model.template.EvaluatedTemplate
 import za.co.absa.spline.producer.model._
 
 object ExtraMetadataImplicits {
@@ -27,23 +28,13 @@ object ExtraMetadataImplicits {
       if (moreExtra.isEmpty) entity
       else implicitly[ExtraAdder[A]].addedExtra(entity, moreExtra)
 
-    def withAddedLabels(moreLabels: Map[String, Any]): A = {
-      if (moreLabels.isEmpty) {
-        entity
-      }
-      else {
-        def toStringSeq(x: Any): Seq[String] = x match {
-          case null => Nil
-          case xs: Traversable[_] => xs.toSeq.flatMap(toStringSeq)
-          case x => Seq(x.toString)
-        }
+    def withAddedMetadata(metadata: EvaluatedTemplate): A = {
+      val entityWithExtra =
+        if (metadata.extra.isEmpty) entity
+        else implicitly[ExtraAdder[A]].addedExtra(entity, metadata.extra)
 
-        val mapOfNonEmptyStrings = moreLabels
-          .mapValues(toStringSeq)
-          .filter { case (_, v) => v.nonEmpty }
-
-        implicitly[ExtraAdder[A]].addedLabels(entity, mapOfNonEmptyStrings)
-      }
+      if (metadata.labels.isEmpty) entityWithExtra
+      else implicitly[ExtraAdder[A]].addedLabels(entity, metadata.labels)
     }
   }
 

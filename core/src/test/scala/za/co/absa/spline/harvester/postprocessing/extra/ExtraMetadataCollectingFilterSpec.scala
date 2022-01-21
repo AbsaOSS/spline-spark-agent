@@ -56,12 +56,14 @@ class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with
       """
         |{
         |    "executionPlan": {
-        |        "qux": 42,
-        |        "seq": [ "aaa", "bbb", "ccc" ],
-        |        "foo": { "$js": "executionPlan.name()" },
-        |        "bar": { "$env": "BAR_HOME" },
-        |        "baz": { "$jvm": "some.jvm.prop" },
-        |        "daz": { "$js": "session.conf().get('k')" }
+        |        "extra": {
+        |            "qux": 42,
+        |            "seq": [ "aaa", "bbb", "ccc" ],
+        |            "foo": { "$js": "executionPlan.name()" },
+        |            "bar": { "$env": "BAR_HOME" },
+        |            "baz": { "$jvm": "some.jvm.prop" },
+        |            "daz": { "$js": "session.conf().get('k')" }
+        |       }
         |    }
         |}
         |""".stripMargin
@@ -91,15 +93,23 @@ class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with
     val configString =
       """
         |{
-        |    "labels": {
-        |        "qux": 42,
-        |        "tags": [ "aaa", "bbb", null, "ccc" ],
-        |        "foo1": null,
-        |        "foo2": [],
-        |        "foo3": [null],
-        |        "bar": { "$env": "BAR_HOME" },
-        |        "baz": { "$jvm": "some.jvm.prop" },
-        |        "daz": { "$js": "session.conf().get('k')" }
+        |    "executionPlan": {
+        |        "labels": {
+        |            "qux": 42,
+        |            "tags": [ "aaa", "bbb", null, "ccc" ],
+        |            "foo1": null,
+        |            "foo2": [],
+        |            "foo3": [null],
+        |            "notFlat": ["a", ["b", "c"]],
+        |            "bar": { "$env": "BAR_HOME" },
+        |            "baz": { "$jvm": "some.jvm.prop" },
+        |            "daz": { "$js": "session.conf().get('k')" }
+        |        }
+        |    },
+        |    "executionEvent": {
+        |        "labels": {
+        |            "qux": 42
+        |        }
         |    }
         |}
         |""".stripMargin
@@ -116,17 +126,18 @@ class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with
     val processedPlan = filter.processExecutionPlan(ep, harvestingContext)
     val processedEvent = filter.processExecutionEvent(ee, harvestingContext)
 
-    Seq(
-      processedPlan.labels,
-      processedEvent.labels
-    ).foreach(
-      _ shouldEqual Some(Map(
-        "qux" -> Seq("42"),
-        "tags" -> Seq("aaa", "bbb", "ccc"),
-        "bar" -> Seq("rabbit"),
-        "baz" -> Seq("123"),
-        "daz" -> Seq("nice")
-      )))
+    processedPlan.labels shouldEqual Some(Map(
+      "qux" -> Seq("42"),
+      "tags" -> Seq("aaa", "bbb", "ccc"),
+      "notFlat" -> Seq("a", "b", "c"),
+      "bar" -> Seq("rabbit"),
+      "baz" -> Seq("123"),
+      "daz" -> Seq("nice")
+    ))
+
+    processedEvent.labels shouldEqual Some(Map(
+      "qux" -> Seq("42"),
+    ))
   }
 
   it should "handle missing JSON property" in {
@@ -139,11 +150,13 @@ class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with
       """
         |{
         |    "executionEvent": {
-        |        "tux": {
-        |           "qux": 42,
-        |           "qax": {
-        |               "tax": { "$js": "session.conf().get('k')" }
-        |           }
+        |        "extra": {
+        |            "tux": {
+        |               "qux": 42,
+        |               "qax": {
+        |                   "tax": { "$js": "session.conf().get('k')" }
+        |               }
+        |            }
         |        }
         |    }
         |}
@@ -170,15 +183,19 @@ class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with
       """
         |{
         |    "executionEvent": {
-        |        "tux": {
-        |           "qux": 42,
-        |           "qax": ["ta", "pa"]
+        |        "extra": {
+        |            "tux": {
+        |               "qux": 42,
+        |               "qax": ["ta", "pa"]
+        |            }
         |        }
         |    },
         |    "executionEvent[true]": {
-        |        "tux": {
-        |           "qax": ["da", "ta"],
-        |           "fax": 33
+        |        "extra": {
+        |            "tux": {
+        |               "qax": ["da", "ta"],
+        |               "fax": 33
+        |            }
         |        }
         |    }
         |}
@@ -204,19 +221,19 @@ class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with
       """
         |{
         |    "executionEvent[@.timestamp > 65]": {
-        |        "tux": 1
+        |        "extra": { "tux": 1 }
         |    },
         |    "executionEvent[@.extra['foo'] == 'a' && @.extra['bar'] == 'x']": {
-        |        "bux": 2
+        |        "extra": { "bux": 2 }
         |    },
         |    "executionEvent[@.extra['foo'] == 'a' && !@.extra['bar']]": {
-        |        "dux": 3
+        |        "extra": { "dux": 3 }
         |    },
         |    "executionEvent[@.extra['baz'][2] >= 3]": {
-        |        "mux": 4
+        |        "extra": { "mux": 4 }
         |    },
         |    "executionEvent[@.extra['baz'][2] < 3]": {
-        |        "fux": 5
+        |        "extra": { "fux": 5 }
         |    }
         |}
         |""".stripMargin
@@ -242,7 +259,7 @@ class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with
       """
         |{
         |    "executionEvent[session.sparkContext.conf['spark.ui.enabled'] == 'false']": {
-        |        "tux": 1
+        |        "extra": { "tux": 1 }
         |    }
         |}
         |""".stripMargin
@@ -257,6 +274,23 @@ class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with
 
     val extra = processedEvent.extra.get
     extra("tux") shouldBe 1
+  }
+
+  it should "throw an exception when parsing labels on unexpected places" in {
+    val configString =
+      """
+        |{
+        |    "operation": {
+        |        "labels": { "tux": 1 }
+        |    }
+        |}
+        |""".stripMargin
+
+    val config = new BaseConfiguration {
+      addPropertyDirect(InjectRulesKey, configString)
+    }
+
+    (the [IllegalArgumentException] thrownBy new ExtraMetadataCollectingFilter(config)).getMessage should include("Labels are not supported")
   }
 
 }

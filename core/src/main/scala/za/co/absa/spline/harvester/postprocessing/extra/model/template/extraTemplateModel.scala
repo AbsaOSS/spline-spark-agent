@@ -21,18 +21,29 @@ import org.apache.spark.internal.Logging
 import javax.script.ScriptEngine
 import scala.util.{Failure, Success, Try}
 
-class ExtraTemplate(extra: Map[String, Any]) extends Logging {
+class ExtraTemplate(val extra: Map[String, Any], val labels: Map[String, Any]) extends Logging {
 
-  def eval(bindings: Map[String, Any]): Map[String, Any] =
-    Try(tryEval(bindings)) match {
-      case Success(value) => value
+  def eval(bindings: Map[String, Any]): EvaluatedTemplate =
+    Try(new EvaluatedTemplate(evalExtra(bindings), evalLabels(bindings))) match {
+      case Success(evaluatedTemplate) => evaluatedTemplate
       case Failure(e) =>
         logWarning("Template evaluation failed, filter will not be applied.", e)
-        Map.empty
+        new EvaluatedTemplate(Map.empty, Map.empty)
     }
 
-  private def tryEval(bindings: Map[String, Any]): Map[String, Any] =
+  private def evalExtra(bindings: Map[String, Any]): Map[String, Any] =
     extra.transform((k, v) => evalValue(v, bindings))
+
+  private def evalLabels(bindings: Map[String, Any]): Map[String, Seq[String]] =
+    labels
+      .transform((k, v) => toStringSeq(evalValue(v, bindings)))
+      .filter { case (k, v) => v.nonEmpty }
+
+  private def toStringSeq(v: Any): Seq[String] = v match {
+    case null => Seq.empty
+    case xs: Traversable[_] => xs.toSeq.flatMap(toStringSeq)
+    case x => Seq(x.toString)
+  }
 
   private def evalValue(value: Any, bindings: Map[String, Any]): Any = value match {
     case m: Map[String, _] => m.transform((k, v) => evalValue(v, bindings))
@@ -41,6 +52,37 @@ class ExtraTemplate(extra: Map[String, Any]) extends Logging {
     case v => v
   }
 }
+
+class EvaluatedTemplate(val extra: Map[String, Any], val labels: Map[String, Seq[String]]) {
+
+  def merge(other: EvaluatedTemplate): EvaluatedTemplate =
+    new EvaluatedTemplate(
+      deepMergeMaps(extra, other.extra),
+      deepMergeMaps(labels, other.labels).asInstanceOf[Map[String, Seq[String]]]
+    )
+
+  private def deepMergeMaps(m1: Map[String, Any], m2: Map[String, Any]): Map[String, Any] =
+    (m1.keySet ++ m2.keySet)
+      .map(k => k -> mergeOptionalValues(m1.get(k), m2.get(k)))
+      .toMap
+
+  private def mergeOptionalValues(mv1: Option[Any], mv2: Option[Any]): Any = (mv1, mv2) match {
+    case (Some(v1), Some(v2)) => mergeValues(v1, v2)
+    case (None, Some(v2)) => v2
+    case (Some(v1), None) => v1
+  }
+
+  private def mergeValues(v1: Any, v2: Any): Any = (v1, v2) match {
+    case (v1: Map[String, _], v2: Map[String, _]) => deepMergeMaps(v1, v2)
+    case (v1: Seq[Any], v2: Seq[Any]) => (v1 ++ v2).distinct
+    case (_, v2) => v2
+  }
+}
+
+object EvaluatedTemplate{
+  val empty = new EvaluatedTemplate(Map.empty, Map.empty)
+}
+
 
 sealed trait Evaluable {
   def eval(bindings: Map[String, Any]): AnyRef

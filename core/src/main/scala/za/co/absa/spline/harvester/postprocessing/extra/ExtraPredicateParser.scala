@@ -41,7 +41,7 @@ object ExtraPredicateParser {
 
   private def parser[_: P] = P(extraElementName ~ selector.? ~ End)
 
-  private def extraElementName[_: P] = P(Labels | ExecutionPlan | ExecutionEvent | Operation | Read | Write).!
+  private def extraElementName[_: P] = P(ExecutionPlan | ExecutionEvent | Operation | Read | Write).!
 
   private def selector[_: P] = P("[" ~/ expr ~ "]")
 
