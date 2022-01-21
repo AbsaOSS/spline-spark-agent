@@ -23,8 +23,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.commons.scalatest.EnvFixture
-import za.co.absa.spline.harvester.postprocessing.extra.model.predicate.BaseNodeName
-import za.co.absa.spline.harvester.postprocessing.metadata.MetadataCollectingFilter
+import za.co.absa.spline.harvester.postprocessing.metadata.MetadataCollectingFilter._
+import za.co.absa.spline.harvester.postprocessing.metadata.{BaseNodeName, MetadataCollectingFilter}
 import za.co.absa.spline.harvester.{HarvestingContext, IdGenerators}
 import za.co.absa.spline.producer.model._
 
@@ -136,7 +136,7 @@ class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matc
     ))
 
     processedEvent.labels shouldEqual Some(Map(
-      "qux" -> Seq("42"),
+      "qux" -> Seq("42")
     ))
   }
 
