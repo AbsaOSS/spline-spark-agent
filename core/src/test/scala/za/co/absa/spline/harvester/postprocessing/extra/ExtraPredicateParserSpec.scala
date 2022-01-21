@@ -19,34 +19,35 @@ package za.co.absa.spline.harvester.postprocessing.extra
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.spline.harvester.postprocessing.extra.model.predicate._
+import za.co.absa.spline.harvester.postprocessing.metadata.PredicateParser
 
 private class ExtraPredicateParserSpec  extends AnyFlatSpec with Matchers {
 
   behavior of "ExtraSelectorParser"
 
   it should "parse selector without predicate" in {
-    val (name, predicate) = ExtraPredicateParser.parse("executionPlan")
+    val (name, predicate) = PredicateParser.parse("executionPlan")
 
     name shouldBe "executionPlan"
     predicate shouldBe Predicate(Bool(true))
   }
 
   it should "parse boolean predicate" in {
-    val (name, predicate) = ExtraPredicateParser.parse("executionPlan[true]")
+    val (name, predicate) = PredicateParser.parse("executionPlan[true]")
 
     name shouldBe "executionPlan"
     predicate shouldBe Predicate(Bool(true))
   }
 
   it should "parse path predicate" in {
-    val (name, predicate) = ExtraPredicateParser.parse("executionPlan[@.extraInfo.isAllRight]")
+    val (name, predicate) = PredicateParser.parse("executionPlan[@.extraInfo.isAllRight]")
 
     name shouldBe "executionPlan"
     predicate shouldBe Predicate(Path(PropertyPS("@"), PropertyPS("extraInfo"), PropertyPS("isAllRight")))
   }
 
   it should "parse path predicate with eq" in {
-    val (name, predicate) = ExtraPredicateParser.parse("executionPlan[@.extraInfo.isAllRight == false]")
+    val (name, predicate) = PredicateParser.parse("executionPlan[@.extraInfo.isAllRight == false]")
 
     name shouldBe "executionPlan"
     predicate shouldBe Predicate(
@@ -57,7 +58,7 @@ private class ExtraPredicateParserSpec  extends AnyFlatSpec with Matchers {
   }
 
   it should "parse long" in {
-    val (name, predicate) = ExtraPredicateParser.parse("executionPlan[x == 66L]")
+    val (name, predicate) = PredicateParser.parse("executionPlan[x == 66L]")
 
     predicate shouldBe Predicate(
       Eq(
@@ -68,7 +69,7 @@ private class ExtraPredicateParserSpec  extends AnyFlatSpec with Matchers {
   }
 
   it should "parse text" in {
-    val (name, predicate) = ExtraPredicateParser.parse("executionPlan[x == 'abc']")
+    val (name, predicate) = PredicateParser.parse("executionPlan[x == 'abc']")
 
     predicate shouldBe Predicate(
       Eq(
@@ -79,7 +80,7 @@ private class ExtraPredicateParserSpec  extends AnyFlatSpec with Matchers {
   }
 
   it should "parse nested boolean exprs" in {
-    val (name, predicate) = ExtraPredicateParser.parse("executionPlan[!(true && (false || !false))]")
+    val (name, predicate) = PredicateParser.parse("executionPlan[!(true && (false || !false))]")
 
     predicate shouldBe Predicate(
       Not(
@@ -95,7 +96,7 @@ private class ExtraPredicateParserSpec  extends AnyFlatSpec with Matchers {
   }
 
   it should "parse path to sequence" in {
-    val (name, predicate) = ExtraPredicateParser.parse("executionPlan[foo.bar[32] < 42]")
+    val (name, predicate) = PredicateParser.parse("executionPlan[foo.bar[32] < 42]")
 
     predicate shouldBe Predicate(
       Comparison(Path(PropertyPS("foo") , PropertyPS("bar"), ArrayPS(32)), IntNum(42), "<")
@@ -103,7 +104,7 @@ private class ExtraPredicateParserSpec  extends AnyFlatSpec with Matchers {
   }
 
   it should "parse path to map" in {
-    val (name, predicate) = ExtraPredicateParser.parse("executionPlan[foo.map['abc'] != 42]")
+    val (name, predicate) = PredicateParser.parse("executionPlan[foo.map['abc'] != 42]")
 
     predicate shouldBe Predicate(
       Neq(Path(PropertyPS("foo") , PropertyPS("map"), MapPS("abc")), IntNum(42))
@@ -111,7 +112,7 @@ private class ExtraPredicateParserSpec  extends AnyFlatSpec with Matchers {
   }
 
   it should "parse multiple paths" in {
-    val (name, predicate) = ExtraPredicateParser.parse("executionPlan[(foo.bar.x < 42) && (x.y.z > 5)]")
+    val (name, predicate) = PredicateParser.parse("executionPlan[(foo.bar.x < 42) && (x.y.z > 5)]")
 
     predicate shouldBe Predicate(
       And(
@@ -122,7 +123,7 @@ private class ExtraPredicateParserSpec  extends AnyFlatSpec with Matchers {
   }
 
   it should "parse using proper precedence" in {
-    val (name, predicate) = ExtraPredicateParser.parse("executionPlan[x <= 42 && y >= 5]")
+    val (name, predicate) = PredicateParser.parse("executionPlan[x <= 42 && y >= 5]")
 
     predicate shouldBe Predicate(
       And(

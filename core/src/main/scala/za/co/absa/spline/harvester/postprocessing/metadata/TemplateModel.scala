@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 ABSA Group Limited
+ * Copyright 2022 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.postprocessing.extra.model.template
+package za.co.absa.spline.harvester.postprocessing.metadata
 
 import org.apache.spark.internal.Logging
 
 import javax.script.ScriptEngine
 import scala.util.{Failure, Success, Try}
 
-class ExtraTemplate(val extra: Map[String, Any], val labels: Map[String, Any]) extends Logging {
+class DataTemplate(val extra: Map[String, Any], val labels: Map[String, Any]) extends Logging {
 
   def eval(bindings: Map[String, Any]): EvaluatedTemplate =
     Try(new EvaluatedTemplate(evalExtra(bindings), evalLabels(bindings))) match {

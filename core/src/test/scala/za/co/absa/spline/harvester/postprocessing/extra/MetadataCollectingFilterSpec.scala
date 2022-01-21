@@ -23,14 +23,14 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.commons.scalatest.EnvFixture
-import za.co.absa.spline.harvester.postprocessing.extra.ExtraMetadataCollectingFilter.{ExtraDef, InjectRulesKey}
 import za.co.absa.spline.harvester.postprocessing.extra.model.predicate.BaseNodeName
+import za.co.absa.spline.harvester.postprocessing.metadata.MetadataCollectingFilter
 import za.co.absa.spline.harvester.{HarvestingContext, IdGenerators}
 import za.co.absa.spline.producer.model._
 
 import java.util.UUID
 
-class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matchers with MockitoSugar {
+class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matchers with MockitoSugar {
 
   private val logicalPlan = mock[LogicalPlan]
   private val sparkSession = SparkSession.builder
@@ -75,7 +75,7 @@ class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with
       addPropertyDirect(InjectRulesKey, configString)
     }
 
-    val filter = new ExtraMetadataCollectingFilter(config)
+    val filter = new MetadataCollectingFilter(config)
 
     val processedPlan = filter.processExecutionPlan(ep, harvestingContext)
 
@@ -121,7 +121,7 @@ class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with
       addPropertyDirect(InjectRulesKey, configString)
     }
 
-    val filter = new ExtraMetadataCollectingFilter(config)
+    val filter = new MetadataCollectingFilter(config)
 
     val processedPlan = filter.processExecutionPlan(ep, harvestingContext)
     val processedEvent = filter.processExecutionEvent(ee, harvestingContext)
@@ -141,7 +141,7 @@ class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with
   }
 
   it should "handle missing JSON property" in {
-    val filter = new ExtraMetadataCollectingFilter(Map.empty[BaseNodeName.Type, Seq[ExtraDef]])
+    val filter = new MetadataCollectingFilter(Map.empty[BaseNodeName.Type, Seq[RuleDef]])
     filter.processExecutionPlan(mock[ExecutionPlan], mock[HarvestingContext]) should not be null
   }
 
@@ -166,7 +166,7 @@ class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with
       addPropertyDirect(InjectRulesKey, configString)
     }
 
-    val filter = new ExtraMetadataCollectingFilter(config)
+    val filter = new MetadataCollectingFilter(config)
 
     val processedEvent = filter.processExecutionEvent(ee, harvestingContext)
 
@@ -205,7 +205,7 @@ class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with
       addPropertyDirect(InjectRulesKey, configString)
     }
 
-    val filter = new ExtraMetadataCollectingFilter(config)
+    val filter = new MetadataCollectingFilter(config)
 
     val processedEvent = filter.processExecutionEvent(ee, harvestingContext)
 
@@ -242,7 +242,7 @@ class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with
       addPropertyDirect(InjectRulesKey, configString)
     }
 
-    val filter = new ExtraMetadataCollectingFilter(config)
+    val filter = new MetadataCollectingFilter(config)
 
     val processedEvent = filter.processExecutionEvent(ee, harvestingContext)
 
@@ -268,7 +268,7 @@ class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with
       addPropertyDirect(InjectRulesKey, configString)
     }
 
-    val filter = new ExtraMetadataCollectingFilter(config)
+    val filter = new MetadataCollectingFilter(config)
 
     val processedEvent = filter.processExecutionEvent(ee, harvestingContext)
 
@@ -290,7 +290,7 @@ class ExtraMetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with
       addPropertyDirect(InjectRulesKey, configString)
     }
 
-    (the [IllegalArgumentException] thrownBy new ExtraMetadataCollectingFilter(config)).getMessage should include("Labels are not supported")
+    (the [IllegalArgumentException] thrownBy new MetadataCollectingFilter(config)).getMessage should include("Labels are not supported")
   }
 
 }

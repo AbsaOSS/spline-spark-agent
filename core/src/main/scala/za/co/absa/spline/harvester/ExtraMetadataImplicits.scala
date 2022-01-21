@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.harvester
 
-import za.co.absa.spline.harvester.postprocessing.extra.model.template.EvaluatedTemplate
+import za.co.absa.spline.harvester.postprocessing.metadata.EvaluatedTemplate
 import za.co.absa.spline.producer.model._
 
 object ExtraMetadataImplicits {
