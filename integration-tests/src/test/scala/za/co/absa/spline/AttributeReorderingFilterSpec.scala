@@ -21,7 +21,7 @@ import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version.VersionStringInterpolator
 import za.co.absa.spline.AttributeReorderingFilterSpec._
-import za.co.absa.spline.producer.model.v1_1._
+import za.co.absa.spline.producer.model._
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 

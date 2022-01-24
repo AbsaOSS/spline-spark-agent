@@ -24,7 +24,7 @@ import za.co.absa.spline.harvester.ModelConstants.OperationExtras
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter, IOParamsConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
-import za.co.absa.spline.producer.model.v1_1.{Attribute, WriteOperation}
+import za.co.absa.spline.producer.model.{Attribute, WriteOperation}
 
 class WriteNodeBuilder
 (command: WriteCommand)

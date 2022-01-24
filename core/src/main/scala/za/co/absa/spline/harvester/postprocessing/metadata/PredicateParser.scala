@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 ABSA Group Limited
+ * Copyright 2022 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.postprocessing.extra
+package za.co.absa.spline.harvester.postprocessing.metadata
 
 import fastparse.Parsed.{Failure, Success}
 import fastparse.SingleLineWhitespace._
 import fastparse._
-import za.co.absa.spline.harvester.postprocessing.extra.model.predicate.BaseNodeName._
-import za.co.absa.spline.harvester.postprocessing.extra.model.predicate.ComparisonSymbol._
-import za.co.absa.spline.harvester.postprocessing.extra.model.predicate._
+import za.co.absa.spline.harvester.postprocessing.metadata.BaseNodeName._
+import za.co.absa.spline.harvester.postprocessing.metadata.ComparisonSymbol._
 
-
-object ExtraPredicateParser {
+object PredicateParser {
 
   def parse(input: String): (String, Predicate) =
     fastparse.parse(input, parser(_)) match {
@@ -50,17 +48,17 @@ object ExtraPredicateParser {
 
   private def expr[_: P]: P[Expr] = P(or)
 
-  private def or[_: P]: P[Expr] = P(and ~ ("||" ~/ and).rep).map{
-    case (e, seq) if seq.isEmpty  => e
+  private def or[_: P]: P[Expr] = P(and ~ ("||" ~/ and).rep).map {
+    case (e, seq) if seq.isEmpty => e
     case (e, seq) => Or(e +: seq: _*)
   }
 
-  private def and[_: P]: P[Expr] = P(equalityOp ~ ("&&" ~/ equalityOp).rep).map{
+  private def and[_: P]: P[Expr] = P(equalityOp ~ ("&&" ~/ equalityOp).rep).map {
     case (e, seq) if seq.isEmpty => e
     case (e, seq) => And(e +: seq: _*)
   }
 
-  private def equalityOp[_: P]: P[Expr] = P(comparisonOp ~ (("==" | "!=").! ~/ comparisonOp).? ).map{
+  private def equalityOp[_: P]: P[Expr] = P(comparisonOp ~ (("==" | "!=").! ~/ comparisonOp).?).map {
     case (e, None) => e
     case (l, Some((operand, r))) => operand match {
       case "==" => Eq(l, r)
@@ -68,17 +66,17 @@ object ExtraPredicateParser {
     }
   }
 
-  private def comparisonOp[_: P]: P[Expr] = P(factor ~ ((LTE | GTE | LT | GT).! ~/ factor).?).map{
+  private def comparisonOp[_: P]: P[Expr] = P(factor ~ ((LTE | GTE | LT | GT).! ~/ factor).?).map {
     case (e, None) => e
     case (l, Some((operand, r))) => Comparison(l, r, operand)
   }
 
-  private def factor[_: P]: P[Expr] = P( not | literal | path  | parens )
+  private def factor[_: P]: P[Expr] = P(not | literal | path | parens)
 
   private def not[_: P]: P[Expr] = P("!" ~/ factor).map(Not)
 
 
-  private def parens[_: P] = P( "(" ~/ expr ~ ")")
+  private def parens[_: P] = P("(" ~/ expr ~ ")")
 
   // -------- Literals --------
 
@@ -89,6 +87,7 @@ object ExtraPredicateParser {
       case "true" => Bool(true)
       case "false" => Bool(false)
     }
+
   private def long[_: P] = P(CharIn("0-9").rep(1).! ~ "L").map(l => LongNum(l.toLong))
 
   private def integer[_: P] = P(CharIn("0-9").rep(1)).!.map(i => IntNum(i.toInt))
@@ -99,7 +98,7 @@ object ExtraPredicateParser {
 
   private def path[_: P] = P(pathSegment).rep(min = 1, sep = ".").map(s => Path(s.flatten: _*))
 
-  private def pathSegment[_: P] = P(pathProperty ~ (pathArrayAccess | pathMapAccess).rep).map{
+  private def pathSegment[_: P] = P(pathProperty ~ (pathArrayAccess | pathMapAccess).rep).map {
     case (segment, segmentSeq) => segment +: segmentSeq
   }
 

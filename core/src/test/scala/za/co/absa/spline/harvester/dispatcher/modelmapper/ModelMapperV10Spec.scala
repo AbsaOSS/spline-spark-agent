@@ -16,13 +16,14 @@
 
 package za.co.absa.spline.harvester.dispatcher.modelmapper
 
+import org.mockito.Mockito._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import za.co.absa.spline.producer.model.{v1_0, v1_1 => v1_2}
+import za.co.absa.spline.producer.dto.v1_0
+import za.co.absa.spline.producer.model._
 
 import java.util.UUID
-import org.mockito.Mockito._
 
 class ModelMapperV10Spec
   extends AnyFlatSpec
@@ -33,16 +34,17 @@ class ModelMapperV10Spec
 
   behavior of "toDTO()"
 
-  it should "convert ExecutionPlan model from the current version to DTO ver 1.0" in {
+  it should "convert ExecutionPlan entity to DTO ver 1.0" in {
 
     val dummyDataType = new Object()
 
-    val planCur = v1_2.ExecutionPlan(
+    val planEntity = ExecutionPlan(
       id = Some(UUID.fromString("00000000-0000-0000-0000-000000000000")),
       name = Some("Foo Plan"),
       discriminator = None,
-      operations = v1_2.Operations(
-        write = v1_2.WriteOperation(
+      labels = Some(Map("lbl1" -> Seq("a", "b"))),
+      operations = Operations(
+        write = WriteOperation(
           outputSource = "aaa",
           append = true,
           id = "op-0",
@@ -51,7 +53,7 @@ class ModelMapperV10Spec
           params = Some(Map("param1" -> 42)),
           extra = Some(Map("extra1" -> 42))
         ),
-        reads = Some(Seq(v1_2.ReadOperation(
+        reads = Some(Seq(ReadOperation(
           inputSources = Seq("bbb"),
           id = "op-2",
           name = Some("Read Operation"),
@@ -59,7 +61,7 @@ class ModelMapperV10Spec
           params = Some(Map("param2" -> 42)),
           extra = Some(Map("extra2" -> 42))
         ))),
-        other = Some(Seq(v1_2.DataOperation(
+        other = Some(Seq(DataOperation(
           id = "op-1",
           name = Some("Data Operation"),
           childIds = Some(Seq("op-2")),
@@ -69,21 +71,21 @@ class ModelMapperV10Spec
         )))
       ),
       attributes = Some(Seq(
-        v1_2.Attribute(
+        Attribute(
           id = "attr-1",
           dataType = Some(dummyDataType),
           childRefs = None,
           extra = None,
           name = "A"
         ),
-        v1_2.Attribute(
+        Attribute(
           id = "attr-2",
           dataType = Some(dummyDataType),
           childRefs = None,
           extra = None,
           name = "B"
         ),
-        v1_2.Attribute(
+        Attribute(
           id = "attr-3",
           dataType = Some(dummyDataType),
           childRefs = None,
@@ -91,15 +93,32 @@ class ModelMapperV10Spec
           name = "C"
         )
       )),
-      expressions = None,
-      systemInfo = v1_2.NameAndVersion("xxx", "777"),
-      agentInfo = Some(v1_2.NameAndVersion("yyy", "777")),
+      expressions = Some(Expressions(
+        functions = Some(Seq(
+          FunctionalExpression(
+            id = "e1",
+            dataType = Some(dummyDataType),
+            childRefs = Some(Seq(AttrOrExprRef(Some("a1"), None))),
+            extra = Some(Map("extra_e1" -> 777)),
+            name = "Expr1",
+            params = None
+          )
+        )),
+        constants = Some(Seq(
+          Literal(
+            id = "c1",
+            dataType = None,
+            extra = None,
+            value = "forty two"
+          )
+        ))
+      )),
+      systemInfo = NameAndVersion("xxx", "777"),
+      agentInfo = Some(NameAndVersion("yyy", "777")),
       extraInfo = Some(Map("extra42" -> 42))
     )
 
-    val planV1 = mapper.toDTO(planCur)
-
-    planV1 shouldEqual Some(v1_0.ExecutionPlan(
+    val planDTO = v1_0.ExecutionPlan(
       id = Some(UUID.fromString("00000000-0000-0000-0000-000000000000")),
       operations = v1_0.Operations(
         write = v1_0.WriteOperation(
@@ -146,22 +165,23 @@ class ModelMapperV10Spec
           Map("id" -> "attr-2", "name" -> "B", "dataTypeId" -> Some(dummyDataType)),
           Map("id" -> "attr-3", "name" -> "C", "dataTypeId" -> Some(dummyDataType))
         )))
-    ))
+    )
+
+    mapper.toDTO(planEntity) shouldEqual Some(planDTO)
   }
 
-  it should "convert ExecutionEvent model from the current version to DTO ver 1.0" in {
-    val eventCur = v1_2.ExecutionEvent(
+  it should "convert ExecutionEvent entity to DTO ver 1.0" in {
+    val eventEntity = ExecutionEvent(
       planId = UUID.fromString("00000000-0000-0000-0000-000000000000"),
-      discriminator = None,
+      discriminator = Some("foo"),
+      labels = Some(Map("lbl1" -> Seq("a", "b"))),
       timestamp = 123456789,
       durationNs = Some(555),
       error = None,
       extra = Some(Map("extra1" -> 42))
     )
 
-    val eventV1 = mapper.toDTO(eventCur)
-
-    eventV1 shouldEqual Some(v1_0.ExecutionEvent(
+    val eventDTO = v1_0.ExecutionEvent(
       planId = UUID.fromString("00000000-0000-0000-0000-000000000000"),
       timestamp = 123456789,
       error = None,
@@ -169,11 +189,13 @@ class ModelMapperV10Spec
         "extra1" -> 42,
         "durationNs" -> 555
       ))
-    ))
+    )
+
+    mapper.toDTO(eventEntity) shouldEqual Some(eventDTO)
   }
 
   it should "skip failed events" in {
-    val mockEvent = mock[v1_2.ExecutionEvent]
+    val mockEvent = mock[ExecutionEvent]
     when(mockEvent.error) thenReturn Some("dummy error")
 
     mapper.toDTO(mockEvent) shouldEqual None

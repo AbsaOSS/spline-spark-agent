@@ -20,7 +20,7 @@ import org.mockito.Mockito._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
+import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
 class CompositeLineageDispatcherSpec
   extends AnyFlatSpec

@@ -16,15 +16,29 @@
 
 package za.co.absa.spline.harvester.dispatcher.modelmapper
 
-import za.co.absa.spline.producer.model.v1_1
+import io.bfil.automapper._
+import za.co.absa.spline.producer.dto.v1_1
+import za.co.absa.spline.producer.model._
+
+import scala.language.implicitConversions
 
 object ModelMapperV11 extends ModelMapper[v1_1.ExecutionPlan, v1_1.ExecutionEvent] {
 
-  override def toDTO(plan: TPlan): Option[v1_1.ExecutionPlan] = {
-    Some(plan)
+  override def toDTO(plan: ExecutionPlan): Option[v1_1.ExecutionPlan] = Some(automap(plan).to[v1_1.ExecutionPlan])
+
+  override def toDTO(event: ExecutionEvent): Option[v1_1.ExecutionEvent] = PartialFunction.condOpt(event) {
+    case e if e.error.isEmpty => automap(e).to[v1_1.ExecutionEvent]
   }
 
-  override def toDTO(event: TEvent): Option[v1_1.ExecutionEvent] = PartialFunction.condOpt(event) {
-    case e if e.error.isEmpty => e
-  }
+  implicit def map1(o: Option[Seq[ReadOperation]]): Option[Seq[v1_1.ReadOperation]] = o.map(_.map(automap(_).to[v1_1.ReadOperation]))
+
+  implicit def map2(o: Option[Seq[DataOperation]]): Option[Seq[v1_1.DataOperation]] = o.map(_.map(automap(_).to[v1_1.DataOperation]))
+
+  implicit def map3(o: Option[Seq[AttrOrExprRef]]): Option[Seq[v1_1.AttrOrExprRef]] = o.map(_.map(automap(_).to[v1_1.AttrOrExprRef]))
+
+  implicit def map4(o: Option[Seq[Attribute]]): Option[Seq[v1_1.Attribute]] = o.map(_.map(automap(_).to[v1_1.Attribute]))
+
+  implicit def map5(o: Option[Seq[Literal]]): Option[Seq[v1_1.Literal]] = o.map(_.map(automap(_).to[v1_1.Literal]))
+
+  implicit def map6(o: Option[Seq[FunctionalExpression]]): Option[Seq[v1_1.FunctionalExpression]] = o.map(_.map(automap(_).to[v1_1.FunctionalExpression]))
 }

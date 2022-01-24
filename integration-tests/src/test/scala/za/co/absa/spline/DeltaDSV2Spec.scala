@@ -23,7 +23,7 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version.VersionStringInterpolator
-import za.co.absa.spline.producer.model.v1_1.AttrOrExprRef
+import za.co.absa.spline.producer.model.AttrOrExprRef
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 

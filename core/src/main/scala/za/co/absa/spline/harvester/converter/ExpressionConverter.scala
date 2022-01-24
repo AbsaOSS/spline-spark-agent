@@ -22,7 +22,7 @@ import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.Converter
 import za.co.absa.spline.harvester.IdGenerator
 import za.co.absa.spline.harvester.converter.ReflectiveExtractor.extractProperties
-import za.co.absa.spline.producer.model.v1_1._
+import za.co.absa.spline.producer.model._
 
 import scala.language.reflectiveCalls
 

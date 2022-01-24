@@ -23,7 +23,7 @@ import za.co.absa.spline.harvester.IdGenerators
 import za.co.absa.spline.harvester.builder.UnionNodeBuilder._
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
-import za.co.absa.spline.producer.model.v1_1.{AttrOrExprRef, Attribute, FunctionalExpression}
+import za.co.absa.spline.producer.model.{AttrOrExprRef, Attribute, FunctionalExpression}
 
 class UnionNodeBuilder
 (override val operation: Union)

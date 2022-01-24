@@ -29,7 +29,7 @@ import org.scalatest.{Inside, OneInstancePerTest}
 import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.spline.harvester.IdGenerator
 import za.co.absa.spline.model.dt
-import za.co.absa.spline.producer.model.v1_1.FunctionalExpression
+import za.co.absa.spline.producer.model.FunctionalExpression
 
 import java.util.UUID
 

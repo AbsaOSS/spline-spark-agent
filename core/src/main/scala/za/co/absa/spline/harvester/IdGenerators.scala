@@ -18,7 +18,7 @@ package za.co.absa.spline.harvester
 
 import za.co.absa.spline.harvester.IdGenerator._
 import za.co.absa.spline.harvester.IdGenerators._
-import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
+import za.co.absa.spline.producer.model.ExecutionPlan
 
 import java.util.UUID
 

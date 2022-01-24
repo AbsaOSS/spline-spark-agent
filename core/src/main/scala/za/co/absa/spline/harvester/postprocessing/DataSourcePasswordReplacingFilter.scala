@@ -21,7 +21,7 @@ import za.co.absa.commons.CaptureGroupReplacer
 import za.co.absa.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
 import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.harvester.postprocessing.DataSourcePasswordReplacingFilter._
-import za.co.absa.spline.producer.model.v1_1.{ReadOperation, WriteOperation}
+import za.co.absa.spline.producer.model.{ReadOperation, WriteOperation}
 
 import scala.util.matching.Regex
 

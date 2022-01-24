@@ -1,5 +1,6 @@
 /*
- * Copyright 2019 ABSA Group Limited
+ * Copyright 2021 ABSA Group Limited
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,20 +14,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.test.fixture.spline
+package za.co.absa.spline.producer.model
 
-import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
-import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
+import java.util.UUID
 
-class LineageCapturingDispatcher(lineageCaptor: LineageCaptor.Setter) extends LineageDispatcher {
-
-  override def name = "Test"
-
-  override def send(plan: ExecutionPlan): Unit = {
-    lineageCaptor.capture(plan)
-  }
-
-  override def send(event: ExecutionEvent): Unit = {
-    lineageCaptor.capture(event)
-  }
-}
+case class ExecutionEvent (
+  planId: UUID,
+  labels: Option[Map[String, Seq[String]]],
+  timestamp: Long,
+  durationNs: Option[Long],
+  discriminator: Option[String],
+  error: Option[Any],
+  extra: Option[Map[String, Any]]
+)

@@ -22,7 +22,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.spline.harvester.IdGenerator.UUIDGeneratorFactory
-import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
+import za.co.absa.spline.producer.model.ExecutionPlan
 
 import java.security.MessageDigest
 import java.util.UUID

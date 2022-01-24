@@ -37,7 +37,7 @@ import za.co.absa.spline.harvester.converter.DataTypeConverter
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.logging.ObjectStructureLogging
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
-import za.co.absa.spline.producer.model.v1_1._
+import za.co.absa.spline.producer.model._
 
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
@@ -98,6 +98,7 @@ class LineageHarvester(
           val p = ExecutionPlan(
             id = None,
             discriminator = None,
+            labels = None,
             name = ctx.session.sparkContext.appName.asOption, // `appName` for now, but could be different (user defined) in the future
             operations = Operations(writeOp, opReads.asOption, opOthers.asOption),
             attributes = attributes.asOption,
@@ -125,6 +126,7 @@ class LineageHarvester(
           val ev = ExecutionEvent(
             planId = planId,
             discriminator = None,
+            labels = None,
             timestamp = System.currentTimeMillis,
             durationNs = maybeDurationNs,
             error = maybeErrorString,

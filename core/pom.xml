@@ -124,6 +124,11 @@
             <groupId>com.lihaoyi</groupId>
             <artifactId>fastparse_${scala.binary.version}</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.bfil</groupId>
+            <artifactId>automapper_${scala.binary.version}</artifactId>
+            <version>${automapper.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -176,7 +181,7 @@
                         </goals>
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/producer.api.v1.0.json</inputSpec>
-                            <modelPackage>za.co.absa.spline.producer.model.v1_0</modelPackage>
+                            <modelPackage>za.co.absa.spline.producer.dto.v1_0</modelPackage>
                             <language/>
                         </configuration>
                     </execution>
@@ -187,7 +192,18 @@
                         </goals>
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/producer.api.v1.1.json</inputSpec>
-                            <modelPackage>za.co.absa.spline.producer.model.v1_1</modelPackage>
+                            <modelPackage>za.co.absa.spline.producer.dto.v1_1</modelPackage>
+                            <language/>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>swagger.api.v1_2</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/producer.api.v1.2.json</inputSpec>
+                            <modelPackage>za.co.absa.spline.producer.dto.v1_2</modelPackage>
                             <language/>
                         </configuration>
                     </execution>

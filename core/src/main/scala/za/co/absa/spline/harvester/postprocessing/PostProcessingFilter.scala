@@ -18,7 +18,7 @@ package za.co.absa.spline.harvester.postprocessing
 
 import za.co.absa.commons.NamedEntity
 import za.co.absa.spline.harvester.HarvestingContext
-import za.co.absa.spline.producer.model.v1_1._
+import za.co.absa.spline.producer.model._
 
 trait PostProcessingFilter extends NamedEntity {
   def processExecutionEvent(event: ExecutionEvent, ctx: HarvestingContext): ExecutionEvent

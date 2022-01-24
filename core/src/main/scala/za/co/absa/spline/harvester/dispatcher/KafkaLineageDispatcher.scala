@@ -24,7 +24,7 @@ import za.co.absa.commons.version.Version
 import za.co.absa.spline.harvester.dispatcher.KafkaLineageDispatcher._
 import za.co.absa.spline.harvester.dispatcher.kafkadispatcher._
 import za.co.absa.spline.harvester.dispatcher.modelmapper.ModelMapper
-import za.co.absa.spline.producer.model.v1_1.{ExecutionEvent, ExecutionPlan}
+import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
 /**
  * KafkaLineageDispatcher is responsible for sending the lineage data to spline gateway through kafka

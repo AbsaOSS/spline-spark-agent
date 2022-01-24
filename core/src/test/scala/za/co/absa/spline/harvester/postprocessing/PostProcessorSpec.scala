@@ -20,7 +20,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.spline.harvester.HarvestingContext
-import za.co.absa.spline.producer.model.v1_1.WriteOperation
+import za.co.absa.spline.producer.model.WriteOperation
 
 class PostProcessorSpec extends AnyFlatSpec with Matchers with MockitoSugar {
 

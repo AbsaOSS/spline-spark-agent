@@ -27,7 +27,7 @@ import za.co.absa.spline.harvester.{IdGenerator, IdGenerators}
 import za.co.absa.spline.harvester.builder.read.{ReadCommand, ReadNodeBuilder}
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
-import za.co.absa.spline.producer.model.v1_1.ReadOperation
+import za.co.absa.spline.producer.model.ReadOperation
 
 class BuilderSpec extends AnyFlatSpec with Matchers with MockitoSugar {
 

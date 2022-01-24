@@ -17,7 +17,7 @@
 package za.co.absa.spline.harvester.postprocessing
 
 import za.co.absa.spline.harvester.HarvestingContext
-import za.co.absa.spline.producer.model.v1_1._
+import za.co.absa.spline.producer.model._
 
 class PostProcessor(filters: Seq[PostProcessingFilter], ctx: HarvestingContext) {
 
