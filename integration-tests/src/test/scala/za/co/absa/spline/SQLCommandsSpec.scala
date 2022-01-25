@@ -96,6 +96,7 @@ class SQLCommandsSpec extends AsyncFlatSpec
       }
     }
 
+  // failing
   it should "capture lineage of 'INSERT OVERWRITE AS` - non-Hive" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in
     withRestartingSparkContext {
       withCustomSparkSession(_.enableHiveSupport) { implicit spark =>
@@ -124,8 +125,12 @@ class SQLCommandsSpec extends AsyncFlatSpec
                    | WHERE id > 1""".stripMargin)
             )
           } yield {
+            // TODO failing
+            // pending slash dropped by spark
+            val file = csvFile
+            println(file)
             plan.operations.reads.get.head.inputSources.head should be(s"file:$warehouseDir/sourcetable")
-            plan.operations.write.outputSource should be(csvFile.toFile.toURI.toString.init)
+            plan.operations.write.outputSource should be(csvFile.toUri.toString.stripSuffix("/"))
           }
         }
       }
