@@ -24,6 +24,7 @@ import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.TempDirectory
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version._
+import za.co.absa.spline.test.SplineMatchers._
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 
@@ -57,9 +58,9 @@ class SQLCommandsSpec extends AsyncFlatSpec
                   | WHERE id > 1""".stripMargin))
 
           } yield {
-            plan1.operations.write.outputSource should be(s"file:$warehouseDir/sourcetable")
-            plan2.operations.reads.get.head.inputSources.head should be(plan1.operations.write.outputSource)
-            plan2.operations.write.outputSource should be(s"file:$warehouseDir/targettable")
+            plan1.operations.write.outputSource should beSameUriAs(s"file:$warehouseDir/sourcetable")
+            plan2.operations.reads.get.head.inputSources.head should beSameUriAs(plan1.operations.write.outputSource)
+            plan2.operations.write.outputSource should beSameUriAs(s"file:$warehouseDir/targettable")
           }
         }
       }
@@ -89,14 +90,13 @@ class SQLCommandsSpec extends AsyncFlatSpec
                    | FROM sourceTable
                    | WHERE id > 1""".stripMargin))
           } yield {
-            plan.operations.reads.get.head.inputSources.head should be(s"file:$warehouseDir/sourcetable")
-            plan.operations.write.outputSource should be(dir.toUri.toString.init)
+            plan.operations.reads.get.head.inputSources.head should beSameUriAs(s"file:$warehouseDir/sourcetable")
+            plan.operations.write.outputSource should beSameUriAs(dir.toUri.toString.stripSuffix("/"))
           }
         }
       }
     }
 
-  // failing
   it should "capture lineage of 'INSERT OVERWRITE AS` - non-Hive" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in
     withRestartingSparkContext {
       withCustomSparkSession(_.enableHiveSupport) { implicit spark =>
@@ -125,12 +125,8 @@ class SQLCommandsSpec extends AsyncFlatSpec
                    | WHERE id > 1""".stripMargin)
             )
           } yield {
-            // TODO failing
-            // pending slash dropped by spark
-            val file = csvFile
-            println(file)
-            plan.operations.reads.get.head.inputSources.head should be(s"file:$warehouseDir/sourcetable")
-            plan.operations.write.outputSource should be(csvFile.toUri.toString.stripSuffix("/"))
+            plan.operations.reads.get.head.inputSources.head should beSameUriAs(s"file:$warehouseDir/sourcetable")
+            plan.operations.write.outputSource should beSameUriAs(csvFile.toUri.toString.stripSuffix("/"))
           }
         }
       }
