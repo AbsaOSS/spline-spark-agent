@@ -91,7 +91,8 @@
         <json4s-32.version>3.2.11</json4s-32.version>
         <json4s-35.version>3.5.3</json4s-35.version>
         <json4s-36.version>3.6.10</json4s-36.version>
-        <json4s-37.version>3.7.0-M11</json4s-37.version>
+        <json4s-37-M5.version>3.7.0-M5</json4s-37-M5.version>
+        <json4s-37-M11.version>3.7.0-M11</json4s-37-M11.version>
 
         <!-- Spark -->
 
@@ -127,8 +128,8 @@
         <scala_2.12.version>2.12.15</scala_2.12.version>
 
         <!-- Controlled by `scala-cross-build` plugin -->
-        <scala.version>2.11.12</scala.version>
-        <scala.binary.version>2.11</scala.binary.version>
+        <scala.version>2.12.15</scala.version>
+        <scala.binary.version>2.12</scala.binary.version>
     </properties>
 
     <scm>
@@ -5161,7 +5162,7 @@
             <id>spark-3.1</id>
             <properties>
                 <spark.version>${spark-31.version}</spark.version>
-                <json4s.version>${json4s-37.version}</json4s.version>
+                <json4s.version>${json4s-37-M5.version}</json4s.version>
                 <delta.version>${delta-10.version}</delta.version>
             </properties>
             <dependencyManagement>
@@ -6539,7 +6540,7 @@
             <id>spark-3.2</id>
             <properties>
                 <spark.version>${spark-32.version}</spark.version>
-                <json4s.version>${json4s-37.version}</json4s.version>
+                <json4s.version>${json4s-37-M11.version}</json4s.version>
                 <delta.version>${delta-11.version}</delta.version>
             </properties>
             <dependencyManagement>
