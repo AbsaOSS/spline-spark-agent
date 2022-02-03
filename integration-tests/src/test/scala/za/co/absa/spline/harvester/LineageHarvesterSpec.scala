@@ -99,38 +99,32 @@ class LineageHarvesterSpec extends AsyncFlatSpec
 
         val df = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
 
-        val expectedAttributes = Seq(
-          Attribute("attr-0", Some(integerType.id), None, None, "i"),
-          Attribute("attr-1", Some(doubleType.id), None, None, "d"),
-          Attribute("attr-2", Some(stringType.id), None, None, "s"))
-
-        val expectedOperations = Operations(
-          WriteOperation(
-            id = "op-0",
-            name = Some("InsertIntoHadoopFsRelationCommand"),
-            childIds = Seq("op-1"),
-            outputSource = s"file:$tmpPath",
-            append = false,
-            params = Map("path" -> tmpPath).asOption,
-            extra = Map("destinationType" -> Some("parquet")).asOption
-          ),
-          None,
-          Seq(
-            DataOperation(
-              id = "op-1",
-              name = Some("LocalRelation"),
-              childIds = None,
-              output = expectedAttributes.map(_.id).asOption,
-              params = Map("isStreaming" -> Some(false)).asOption,
-              extra = None)
-          ).asOption
-        )
-
         for {
           (plan, _) <- captor.lineageOf(df.write.save(tmpPath))
         } yield {
-          plan.operations shouldEqual expectedOperations
-          plan.attributes shouldEqual Some(expectedAttributes)
+          val write = plan.operations.write
+          write.id shouldBe("op-0")
+          write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
+          write.childIds should be(Seq("op-1"))
+          write.outputSource should be(s"file:$tmpPath")
+          write.params should contain(Map("path" -> tmpPath))
+          write.extra should contain(Map("destinationType" -> Some("parquet")))
+
+          plan.operations.reads should not be defined
+
+          plan.operations.other.get.size should be(1)
+
+          val op = plan.operations.other.get(0)
+          op.id should be("op-1")
+          op.name should contain("LocalRelation")
+          op.childIds should not be defined
+          op.output should contain(Seq("attr-0", "attr-1", "attr-2"))
+
+          plan.attributes should contain(Seq(
+            Attribute("attr-0", Some(integerType.id), None, None, "i"),
+            Attribute("attr-1", Some(doubleType.id), None, None, "d"),
+            Attribute("attr-2", Some(stringType.id), None, None, "s")
+          ))
         }
       }
     }
@@ -145,54 +139,52 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           .withColumnRenamed("i", "A")
           .filter($"A".notEqual(5))
 
-        val expectedAttributes = Seq(
-          Attribute("attr-0", Some(integerType.id), None, None, "i"),
-          Attribute("attr-1", Some(doubleType.id), None, None, "d"),
-          Attribute("attr-2", Some(stringType.id), None, None, "s"),
-          Attribute("attr-3", Some(integerType.id), Seq(AttrOrExprRef(None, Some("expr-0"))).asOption, None, "A")
-        )
-
-        val outputBeforeRename = Seq("attr-0", "attr-1", "attr-2")
-        val outputAfterRename = Seq("attr-3", "attr-1", "attr-2")
-
-        val expectedOperations = Operations(
-          WriteOperation(
-            id = "op-0",
-            name = Some("InsertIntoHadoopFsRelationCommand"),
-            childIds = Seq("op-1"),
-            outputSource = s"file:$tmpPath",
-            append = false,
-            params = Map("path" -> tmpPath).asOption,
-            extra = Map("destinationType" -> Some("parquet")).asOption
-          ),
-          None,
-          Seq(
-            DataOperation(
-              "op-3", Some("LocalRelation"), None, outputBeforeRename.asOption,
-              params = Map("isStreaming" -> Some(false)).asOption,
-              None),
-            DataOperation(
-              "op-2", Some("Project"), Seq("op-3").asOption, outputAfterRename.asOption,
-              params = Map(
-                "projectList" -> Seq(
-                  AttrOrExprRef(None, Some("expr-0")),
-                  AttrOrExprRef(Some("attr-1"), None),
-                  AttrOrExprRef(Some("attr-2"), None)
-                ).asOption
-              ).asOption,
-              None),
-            DataOperation(
-              "op-1", Some("Filter"), Seq("op-2").asOption, outputAfterRename.asOption,
-              params = Map("condition" -> Some(AttrOrExprRef(None, Some("expr-1")))).asOption,
-              None)
-          ).asOption
-        )
-
         for {
           (plan, _) <- captor.lineageOf(df.write.save(tmpPath))
         } yield {
-          plan.operations shouldEqual expectedOperations
-          plan.attributes shouldEqual Some(expectedAttributes)
+          val write = plan.operations.write
+          write.id shouldBe("op-0")
+          write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
+          write.childIds should be(Seq("op-1"))
+          write.outputSource should be(s"file:$tmpPath")
+          write.append should be(false)
+          write.params should contain(Map("path" -> tmpPath))
+          write.extra should contain(Map("destinationType" -> Some("parquet")))
+
+          plan.operations.reads should not be defined
+
+          plan.operations.other.get.size should be(3)
+
+          val localRelation = plan.operations.other.get(0)
+          localRelation.id should be("op-3")
+          localRelation.name should contain("LocalRelation")
+          localRelation.childIds should not be defined
+          localRelation.output should contain(Seq("attr-0", "attr-1", "attr-2"))
+
+          val project = plan.operations.other.get(1)
+          project.id should be("op-2")
+          project.name should contain("Project")
+          project.childIds should contain(Seq("op-3"))
+          project.output should contain(Seq("attr-3", "attr-1", "attr-2"))
+          project.params.get("projectList") should be(Some(Seq(
+            AttrOrExprRef(None, Some("expr-0")),
+            AttrOrExprRef(Some("attr-1"), None),
+            AttrOrExprRef(Some("attr-2"), None)
+          )))
+
+          val filter = plan.operations.other.get(2)
+          filter.id should be("op-1")
+          filter.name should contain("Filter")
+          filter.childIds should contain(Seq("op-2"))
+          filter.output should contain(Seq("attr-3", "attr-1", "attr-2"))
+          filter.params.get("condition") should be(Some(AttrOrExprRef(None, Some("expr-1"))))
+
+          plan.attributes should contain(Seq(
+            Attribute("attr-0", Some(integerType.id), None, None, "i"),
+            Attribute("attr-1", Some(doubleType.id), None, None, "d"),
+            Attribute("attr-2", Some(stringType.id), None, None, "s"),
+            Attribute("attr-3", Some(integerType.id), Seq(AttrOrExprRef(None, Some("expr-0"))).asOption, None, "A")
+          ))
         }
       }
     }
