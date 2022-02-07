@@ -31,6 +31,7 @@ import za.co.absa.commons.version.Version._
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder.OutputAttIds
 import za.co.absa.spline.model.dt
 import za.co.absa.spline.producer.model._
+import za.co.absa.spline.test.LineageWalker
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 
@@ -189,128 +190,161 @@ class LineageHarvesterSpec extends AsyncFlatSpec
       }
     }
 
-//  it should "support union operation, forming a diamond graph" /* taggedAs ignoreIf(ver"$SPARK_VERSION" >= ver"3.0.0") */ in
-//    withNewSparkSession { implicit spark =>
-//      withLineageTracking { captor =>
-//        import spark.implicits._
-//        val tmpPath = tmpDest
-//
-//        val initialDF = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
-//        val filteredDF1 = initialDF.filter($"i".notEqual(5))
-//        val filteredDF2 = initialDF.filter($"d".notEqual(5.0))
-//        val df = filteredDF1.union(filteredDF2)
-//
-//        val expectedAttributes =
-//          Seq(
-//            Attribute("attr-0", Some(integerType.id), None, None, "i"),
-//            Attribute("attr-1", Some(doubleType.id), None, None, "d"),
-//            Attribute("attr-2", Some(stringType.id), None, None, "s"),
-//            Attribute("attr-3", Some(integerType.id), Some(List(AttrOrExprRef(None,Some("expr-6")))),Some(Map("synthetic" -> true)), "i"),
-//            Attribute("attr-4", Some(doubleType.id), Some(List(AttrOrExprRef(None,Some("expr-7")))),Some(Map("synthetic" -> true)), "d"),
-//            Attribute("attr-5", Some(stringType.id), Some(List(AttrOrExprRef(None,Some("expr-8")))),Some(Map("synthetic" -> true)), "s"))
-//
-//        val inputAttIds = Seq("attr-0", "attr-1", "attr-2")
-//        val outputAttIds = Seq("attr-3", "attr-4", "attr-5")
-//
-//        val expectedOperations = Operations(
-//          WriteOperation(
-//            id = "op-0",
-//            name = Some("InsertIntoHadoopFsRelationCommand"),
-//            childIds = Seq("op-1"),
-//            outputSource = s"file:$tmpPath",
-//            append = false,
-//            params = Map("path" -> tmpPath).asOption,
-//            extra = Map("destinationType" -> Some("parquet")).asOption
-//          ),
-//          None,
-//          Seq(
-//            DataOperation("op-3", Some("LocalRelation"), None, inputAttIds.asOption, Some(Map("isStreaming" -> Some(false))), None),
-//            DataOperation("op-2", Some("Filter"), Seq("op-3").asOption, inputAttIds.asOption, Some(Map("condition" -> Some(AttrOrExprRef(None,Some("expr-0"))))), None),
-//            DataOperation("op-4", Some("Filter"), Seq("op-3").asOption, inputAttIds.asOption, Some(Map("condition" -> Some(AttrOrExprRef(None,Some("expr-3"))))), None),
-//            DataOperation("op-1", Some("Union"), Seq("op-2", "op-4").asOption, outputAttIds.asOption, None, None)
-//          ).asOption
-//        )
-//        for {
-//          (plan, _) <- captor.lineageOf(df.write.save(tmpPath))
-//        } yield {
-//          plan.operations shouldEqual expectedOperations
-//          plan.attributes shouldEqual Some(expectedAttributes)
-//        }
-//      }
-//    }
-//
-//  //failing
-//  it should "support join operation, forming a diamond graph" in
-//    withNewSparkSession { implicit spark =>
-//      withLineageTracking { captor =>
-//        import org.apache.spark.sql.functions._
-//        import spark.implicits._
-//        val tmpPath = tmpDest
-//
-//        val initialDF = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
-//        val filteredDF = initialDF
-//          .filter($"i" =!= 5)
-//        val aggregatedDF = initialDF
-//          .withColumnRenamed("i", "A")
-//          .groupBy($"A")
-//          .agg(
-//            min("d").as("MIN"),
-//            max("s").as("MAX"))
-//
-//        val joinExpr = filteredDF.col("i").eqNullSafe(aggregatedDF.col("A"))
-//        val df = filteredDF.join(aggregatedDF, joinExpr, "inner")
-//
-//        val expectedAttributes = Seq(
-//          Attribute("attr-0", Some(integerType.id), None, None, "i"),
-//          Attribute("attr-1", Some(doubleType.id), None, None, "d"),
-//          Attribute("attr-2", Some(stringType.id), None, None, "s"),
-//          Attribute("attr-3", Some(integerType.id), Some(List(AttrOrExprRef(None,Some("expr-3")))), None, "A"),
-//          Attribute("attr-4", Some(doubleNullableType.id), Seq(AttrOrExprRef(None,Some("expr-4"))).asOption, None, "MIN"),
-//          Attribute("attr-5", Some(stringType.id), Seq(AttrOrExprRef(None,Some("expr-7"))).asOption, None, "MAX"))
-//
-//        val expectedOperations = Operations(
-//          WriteOperation(
-//            id = "op-0",
-//            name = Some("InsertIntoHadoopFsRelationCommand"),
-//            childIds = Seq("op-1"),
-//            outputSource = s"file:$tmpPath",
-//            append = false,
-//            params = Map("path" -> tmpPath).asOption,
-//            extra = Map("destinationType" -> Some("parquet")).asOption
-//          ),
-//          None,
-//          Seq(
-//            DataOperation(
-//              "op-3", Some("LocalRelation"), None, Seq("attr-0", "attr-1", "attr-2").asOption,
-//              params = Map("isStreaming" -> Some(false)).asOption,
-//              None),
-//            DataOperation(
-//              "op-2", Some("Filter"), Seq("op-3").asOption, Seq("attr-0", "attr-1", "attr-2").asOption,
-//              Some(Map("condition" -> Some(AttrOrExprRef(None,Some("expr-0"))))),None),
-//            DataOperation(
-//              "op-5", Some("Project"), Seq("op-3").asOption, Seq("attr-3", "attr-1", "attr-2").asOption,
-//              Some(Map("projectList" -> Some(Seq(AttrOrExprRef(None,Some("expr-3")), AttrOrExprRef(Some("attr-1"),None), AttrOrExprRef(Some("attr-2"),None))))),None),
-//            DataOperation(
-//              "op-4", Some("Aggregate"), Seq("op-5").asOption, Seq("attr-3", "attr-4", "attr-5").asOption,
-//              Some(Map(
-//                "groupingExpressions" -> Some(Seq(AttrOrExprRef(Some("attr-3"),None))),
-//                "aggregateExpressions" -> Some(Seq(AttrOrExprRef(Some("attr-3"),None), AttrOrExprRef(None,Some("expr-4")), AttrOrExprRef(None,Some("expr-7")))))),
-//              None),
-//            DataOperation(
-//              "op-1", Some("Join"), Seq("op-2", "op-4").asOption, Seq("attr-0", "attr-1", "attr-2", "attr-3", "attr-4", "attr-5").asOption,
-//              Map("joinType" -> Some("INNER"), "condition" -> Some(AttrOrExprRef(None,Some("expr-10")))).asOption, None)
-//          ).asOption
-//        )
-//        for {
-//          (plan, _) <- captor.lineageOf(df.write.save(tmpPath))
-//        } yield {
-//          plan.operations shouldEqual expectedOperations
-//          plan.attributes shouldEqual Some(expectedAttributes)
-//        }
-//      }
-//    }
+  it should "support union operation, forming a diamond graph" in
+    withNewSparkSession { implicit spark =>
+      withLineageTracking { captor =>
+        import spark.implicits._
+        val tmpPath = tmpDest
 
-  // failing
+        val initialDF = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
+        val filteredDF1 = initialDF.filter($"i".notEqual(5))
+        val filteredDF2 = initialDF.filter($"d".notEqual(5.0))
+        val df = filteredDF1.union(filteredDF2)
+
+        for {
+          (plan, _) <- captor.lineageOf(df.write.save(tmpPath))
+        } yield {
+          val walker = LineageWalker(plan)
+
+          val write = plan.operations.write
+          write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
+          write.outputSource should be(s"file:$tmpPath")
+          write.append should be(false)
+          write.params should contain(Map("path" -> tmpPath))
+          write.extra should contain(Map("destinationType" -> Some("parquet")))
+
+          val union = walker.op(write).precedingOp
+          union.name should contain("Union")
+          union.childIds.get.size should be(2)
+
+          val Seq(filter1, filter2) = walker.op(union).precedingOps
+          filter1.name should contain("Filter")
+          filter1.params.get should contain key("condition")
+
+          filter2.name should contain("Filter")
+          filter2.params.get should contain key("condition")
+
+          val localRelation1 = walker.op(filter1).precedingOp
+          localRelation1.name should contain("LocalRelation")
+
+          val localRelation2 = walker.op(filter2).precedingOp
+          localRelation2.name should contain("LocalRelation")
+
+
+          union.output.get
+            .zip(filter1.output.get)
+            .forall{ case (unionAttId, filterAttId) =>
+              walker.att(unionAttId).dependsOn(filterAttId)
+            } should be(true)
+
+          union.output.get
+            .zip(filter2.output.get)
+            .forall{ case (unionAttId, filterAttId) =>
+              walker.att(unionAttId).dependsOn(filterAttId)
+            } should be(true)
+
+          filter1.output.get
+            .zip(localRelation1.output.get)
+            .forall{ case (unionAttId, filterAttId) =>
+              walker.att(unionAttId).dependsOn(filterAttId)
+            } should be(true)
+
+          filter2.output.get
+            .zip(localRelation2.output.get)
+            .forall{ case (unionAttId, filterAttId) =>
+              walker.att(unionAttId).dependsOn(filterAttId)
+            } should be(true)
+        }
+      }
+    }
+
+  //failing
+  it should "support join operation, forming a diamond graph" in
+    withNewSparkSession { implicit spark =>
+      withLineageTracking { captor =>
+        import org.apache.spark.sql.functions._
+        import spark.implicits._
+        val tmpPath = tmpDest
+
+        val initialDF = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
+        val filteredDF = initialDF
+          .filter($"i" =!= 5)
+        val aggregatedDF = initialDF
+          .withColumnRenamed("i", "A")
+          .groupBy($"A")
+          .agg(
+            min("d").as("MIN"),
+            max("s").as("MAX"))
+
+        val joinExpr = filteredDF.col("i").eqNullSafe(aggregatedDF.col("A"))
+        val df = filteredDF.join(aggregatedDF, joinExpr, "inner")
+
+        for {
+          (plan, _) <- captor.lineageOf(df.write.save(tmpPath))
+        } yield {
+          val walker = LineageWalker(plan)
+
+          val write = plan.operations.write
+          write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
+          write.outputSource should be(s"file:$tmpPath")
+          write.append should be(false)
+          write.params should contain(Map("path" -> tmpPath))
+          write.extra should contain(Map("destinationType" -> Some("parquet")))
+
+          val join = walker.op(write).precedingOp
+          join.name should contain("Join")
+          join.childIds.get.size should be(2)
+
+          val Seq(filter, aggregate) = walker.op(join).precedingOps
+          filter.name should contain("Filter")
+          filter.params.get should contain key("condition")
+
+          aggregate.name should contain("Aggregate")
+          aggregate.params.get should contain key("groupingExpressions")
+          aggregate.params.get should contain key("aggregateExpressions")
+
+          val project = walker.op(aggregate).precedingOp
+          project.name should contain("Project")
+
+          val localRelation1 = walker.op(filter).precedingOp
+          localRelation1.name should contain("LocalRelation")
+
+          val localRelation2 = walker.op(project).precedingOp
+          localRelation2.name should contain("LocalRelation")
+
+          inside(join.output.get) { case Seq(i ,d ,s, a, min, max) =>
+            inside(filter.output.get) { case Seq(inI, inD, inS) =>
+              walker.att(i).dependsOn(inI) shouldBe true
+              walker.att(d).dependsOn(inD) shouldBe true
+              walker.att(s).dependsOn(inS) shouldBe true
+            }
+            inside(aggregate.output.get) { case Seq(inA, inMin, inMax) =>
+              walker.att(a).dependsOn(inA) shouldBe true
+              walker.att(min).dependsOn(inMin) shouldBe true
+              walker.att(max).dependsOn(inMax) shouldBe true
+            }
+          }
+
+          inside(filter.output.get) { case Seq(i, d, s) =>
+            inside(localRelation1.output.get) { case Seq(inI, inD, inS) =>
+              walker.att(i).dependsOn(inI) shouldBe true
+              walker.att(d).dependsOn(inD) shouldBe true
+              walker.att(s).dependsOn(inS) shouldBe true
+            }
+          }
+
+          inside(aggregate.output.get) { case Seq(a, min, max) =>
+            inside(localRelation2.output.get) { case Seq(inI, inD, inS) =>
+              walker.att(a).dependsOn(inI) shouldBe true
+              walker.att(min).dependsOn(inD) shouldBe true
+              walker.att(max).dependsOn(inS) shouldBe true
+            }
+          }
+
+        }
+      }
+    }
+
   it should "support `CREATE TABLE ... AS SELECT` in Hive" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in
     withRestartingSparkContext {
       withCustomSparkSession(_
@@ -346,15 +380,8 @@ class LineageHarvesterSpec extends AsyncFlatSpec
               val secondOperation = otherOperations(1)
               secondOperation.id shouldEqual "op-2"
               secondOperation.childIds.get shouldEqual Seq("op-3")
-              secondOperation.name should (equal(Some("SubqueryAlias")) or equal(Some("`tempview`"))) // Spark 2.3/2.4
+              secondOperation.name should contain oneOf("SubqueryAlias", "`tempview`") // Spark 2.3/2.4
               secondOperation.extra shouldBe empty
-
-// TODO: do we really want to test this?? - additional view operation breaks the test
-//              val thirdOperation = otherOperations(2)
-//              thirdOperation.id shouldEqual "op-3"
-//              thirdOperation.childIds shouldEqual None
-//              thirdOperation.name shouldEqual Some("LocalRelation")
-//              thirdOperation.extra shouldBe empty
             }
           }
         }
