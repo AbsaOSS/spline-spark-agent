@@ -217,9 +217,16 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           union.name should contain("Union")
           union.childIds.get.size should be(2)
 
-          val Seq(filter1, filter2) = walker.op(union).precedingOps
+          val Seq(filter1, maybeFilter2) = walker.op(union).precedingOps
           filter1.name should contain("Filter")
           filter1.params.get should contain key("condition")
+
+          val filter2 =
+            if(maybeFilter2.name.get == "Project") {
+              walker.op(maybeFilter2).precedingOp // skip additional select (in Spark 3.0 and 3.1 only)
+            } else {
+              maybeFilter2
+            }
 
           filter2.name should contain("Filter")
           filter2.params.get should contain key("condition")
