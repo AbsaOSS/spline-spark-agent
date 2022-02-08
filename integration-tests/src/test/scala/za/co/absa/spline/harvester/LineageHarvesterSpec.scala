@@ -19,7 +19,6 @@ package za.co.absa.spline.harvester
 import org.apache.commons.io.FileUtils
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SaveMode
-import org.scalatest.Assertion
 import org.scalatest.Inside._
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -28,10 +27,11 @@ import za.co.absa.commons.io.{TempDirectory, TempFile}
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version._
-import za.co.absa.spline.harvester.builder.OperationNodeBuilder.OutputAttIds
 import za.co.absa.spline.model.dt
 import za.co.absa.spline.producer.model._
 import za.co.absa.spline.test.LineageWalker
+import za.co.absa.spline.test.ProducerModelImplicits._
+import za.co.absa.spline.test.SplineMatchers.dependOn
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 
@@ -204,7 +204,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
         for {
           (plan, _) <- captor.lineageOf(df.write.save(tmpPath))
         } yield {
-          val walker = LineageWalker(plan)
+          implicit val walker = LineageWalker(plan)
 
           val write = plan.operations.write
           write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
@@ -213,59 +213,63 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           write.params should contain(Map("path" -> tmpPath))
           write.extra should contain(Map("destinationType" -> Some("parquet")))
 
-          val union = walker.op(write).precedingOp
+          val union = write.precedingOp
           union.name should contain("Union")
           union.childIds.get.size should be(2)
 
-          val Seq(filter1, maybeFilter2) = walker.op(union).precedingOps
+          val Seq(filter1, maybeFilter2) = union.precedingOps
           filter1.name should contain("Filter")
-          filter1.params.get should contain key("condition")
+          filter1.params.get should contain key ("condition")
 
           val filter2 =
-            if(maybeFilter2.name.get == "Project") {
-              walker.op(maybeFilter2).precedingOp // skip additional select (in Spark 3.0 and 3.1 only)
+            if (maybeFilter2.name.get == "Project") {
+              maybeFilter2.precedingOp // skip additional select (in Spark 3.0 and 3.1 only)
             } else {
               maybeFilter2
             }
 
           filter2.name should contain("Filter")
-          filter2.params.get should contain key("condition")
+          filter2.params.get should contain key ("condition")
 
-          val localRelation1 = walker.op(filter1).precedingOp
+          val localRelation1 = filter1.precedingOp
           localRelation1.name should contain("LocalRelation")
 
-          val localRelation2 = walker.op(filter2).precedingOp
+          val localRelation2 = filter2.precedingOp
           localRelation2.name should contain("LocalRelation")
 
+          inside(union.outputAttributes) { case Seq(i, d, s) =>
+            inside(filter1.outputAttributes) { case Seq(f1I, f1D, f1S) =>
+              i should dependOn(f1I)
+              d should dependOn(f1D)
+              s should dependOn(f1S)
+            }
+            inside(filter2.outputAttributes) { case Seq(f2I, f2D, f2S) =>
+              i should dependOn(f2I)
+              d should dependOn(f2D)
+              s should dependOn(f2S)
+            }
+          }
 
-          union.output.get
-            .zip(filter1.output.get)
-            .forall{ case (unionAttId, filterAttId) =>
-              walker.att(unionAttId).dependsOn(filterAttId)
-            } should be(true)
+          inside(filter1.outputAttributes) { case Seq(i, d, s) =>
+            inside(localRelation1.outputAttributes) { case Seq(lr1I, lr1D, lr1S) =>
+              i should dependOn(lr1I)
+              d should dependOn(lr1D)
+              s should dependOn(lr1S)
+            }
+          }
 
-          union.output.get
-            .zip(filter2.output.get)
-            .forall{ case (unionAttId, filterAttId) =>
-              walker.att(unionAttId).dependsOn(filterAttId)
-            } should be(true)
+          inside(filter2.outputAttributes) { case Seq(i, d, s) =>
+            inside(localRelation2.outputAttributes) { case Seq(lr2I, lr2D, lr2S) =>
+              i should dependOn(lr2I)
+              d should dependOn(lr2D)
+              s should dependOn(lr2S)
+            }
+          }
 
-          filter1.output.get
-            .zip(localRelation1.output.get)
-            .forall{ case (unionAttId, filterAttId) =>
-              walker.att(unionAttId).dependsOn(filterAttId)
-            } should be(true)
-
-          filter2.output.get
-            .zip(localRelation2.output.get)
-            .forall{ case (unionAttId, filterAttId) =>
-              walker.att(unionAttId).dependsOn(filterAttId)
-            } should be(true)
         }
       }
     }
 
-  //failing
   it should "support join operation, forming a diamond graph" in
     withNewSparkSession { implicit spark =>
       withLineageTracking { captor =>
@@ -289,7 +293,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
         for {
           (plan, _) <- captor.lineageOf(df.write.save(tmpPath))
         } yield {
-          val walker = LineageWalker(plan)
+          implicit val walker = LineageWalker(plan)
 
           val write = plan.operations.write
           write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
@@ -298,11 +302,11 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           write.params should contain(Map("path" -> tmpPath))
           write.extra should contain(Map("destinationType" -> Some("parquet")))
 
-          val join = walker.op(write).precedingOp
+          val join = write.precedingOp
           join.name should contain("Join")
           join.childIds.get.size should be(2)
 
-          val Seq(filter, aggregate) = walker.op(join).precedingOps
+          val Seq(filter, aggregate) = join.precedingOps
           filter.name should contain("Filter")
           filter.params.get should contain key("condition")
 
@@ -310,41 +314,41 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           aggregate.params.get should contain key("groupingExpressions")
           aggregate.params.get should contain key("aggregateExpressions")
 
-          val project = walker.op(aggregate).precedingOp
+          val project = aggregate.precedingOp
           project.name should contain("Project")
 
-          val localRelation1 = walker.op(filter).precedingOp
+          val localRelation1 = filter.precedingOp
           localRelation1.name should contain("LocalRelation")
 
-          val localRelation2 = walker.op(project).precedingOp
+          val localRelation2 = project.precedingOp
           localRelation2.name should contain("LocalRelation")
 
-          inside(join.output.get) { case Seq(i ,d ,s, a, min, max) =>
-            inside(filter.output.get) { case Seq(inI, inD, inS) =>
-              walker.att(i).dependsOn(inI) shouldBe true
-              walker.att(d).dependsOn(inD) shouldBe true
-              walker.att(s).dependsOn(inS) shouldBe true
+          inside(join.outputAttributes) { case Seq(i, d, s, a, min, max) =>
+            inside(filter.outputAttributes) { case Seq(inI, inD, inS) =>
+              i should dependOn(inI)
+              d should dependOn(inD)
+              s should dependOn(inS)
             }
-            inside(aggregate.output.get) { case Seq(inA, inMin, inMax) =>
-              walker.att(a).dependsOn(inA) shouldBe true
-              walker.att(min).dependsOn(inMin) shouldBe true
-              walker.att(max).dependsOn(inMax) shouldBe true
-            }
-          }
-
-          inside(filter.output.get) { case Seq(i, d, s) =>
-            inside(localRelation1.output.get) { case Seq(inI, inD, inS) =>
-              walker.att(i).dependsOn(inI) shouldBe true
-              walker.att(d).dependsOn(inD) shouldBe true
-              walker.att(s).dependsOn(inS) shouldBe true
+            inside(aggregate.outputAttributes) { case Seq(inA, inMin, inMax) =>
+              a should dependOn(inA)
+              min should dependOn(inMin)
+              max should dependOn(inMax)
             }
           }
 
-          inside(aggregate.output.get) { case Seq(a, min, max) =>
-            inside(localRelation2.output.get) { case Seq(inI, inD, inS) =>
-              walker.att(a).dependsOn(inI) shouldBe true
-              walker.att(min).dependsOn(inD) shouldBe true
-              walker.att(max).dependsOn(inS) shouldBe true
+          inside(filter.outputAttributes) { case Seq(i, d, s) =>
+            inside(localRelation1.outputAttributes) { case Seq(inI, inD, inS) =>
+              i should dependOn(inI)
+              d should dependOn(inD)
+              s should dependOn(inS)
+            }
+          }
+
+          inside(aggregate.outputAttributes) { case Seq(a, min, max) =>
+            inside(localRelation2.outputAttributes) { case Seq(inI, inD, inS) =>
+              a should dependOn(inI)
+              min should dependOn(inD)
+              max should dependOn(inS)
             }
           }
 
@@ -536,35 +540,6 @@ object LineageHarvesterSpec extends Matchers with MockitoSugar {
 
   private val integerType = dt.Simple(UUID.fromString("e63adadc-648a-56a0-9424-3289858cf0bb"), "int", nullable = false)
   private val doubleType = dt.Simple(UUID.fromString("75fe27b9-9a00-5c7d-966f-33ba32333133"), "double", nullable = false)
-  private val doubleNullableType = dt.Simple(UUID.fromString("455d9d5b-7620-529e-840b-897cee45e560"), "double", nullable = true)
   private val stringType = dt.Simple(UUID.fromString("a155e715-56ab-59c4-a94b-ed1851a6984a"), "string", nullable = true)
-
-  implicit class ReferenceMatchers(outputAttIds: OutputAttIds) {
-
-    import ReferenceMatchers._
-
-    def shouldReference(references: Seq[Attribute]) = new ReferenceMatcher[Attribute](outputAttIds, references)
-
-    def references(references: Seq[Attribute]) = new ReferenceMatcher[Attribute](outputAttIds, references)
-  }
-
-  object ReferenceMatchers {
-
-    import scala.language.reflectiveCalls
-
-    type ID = String
-    type Refs = Seq[ID]
-
-    class ReferenceMatcher[A <: {def id: ID}](val refs: Refs, val attributes: Seq[A]) {
-      private lazy val targets = attributes.map(_.id)
-
-      private def referencePositions = refs.map(targets.indexOf)
-
-      def as(anotherComparator: ReferenceMatcher[A]): Assertion = {
-        referencePositions shouldEqual anotherComparator.referencePositions
-      }
-    }
-
-  }
 
 }

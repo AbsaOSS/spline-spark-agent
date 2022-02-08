@@ -17,6 +17,7 @@
 package za.co.absa.spline.test
 
 import org.scalatest.matchers._
+import za.co.absa.spline.producer.model.Attribute
 
 import java.net.URI
 
@@ -36,6 +37,19 @@ trait SplineMatchers {
   }
 
   def beSameUriAs(expectedUri: String) = new SameUriAs(expectedUri)
+
+  class AttributeDependsOnAttribute(right: Attribute, walker: LineageWalker) extends Matcher[Attribute] {
+
+    def apply(left: Attribute): MatchResult = {
+      MatchResult(
+        walker.dependsOn(left, right),
+        s"Attribute (name: ${left.name}, id: ${left.id}) did not depend on attribute (name: ${right.name}, id: ${right.id})",
+        s"Attribute(name: ${left.name}, id: ${left.id}) did depend on attribute (name: ${right.name}, id: ${right.id})",
+      )
+    }
+  }
+
+  def dependOn(att: Attribute)(implicit walker: LineageWalker) = new AttributeDependsOnAttribute(att, walker)
 
 }
 

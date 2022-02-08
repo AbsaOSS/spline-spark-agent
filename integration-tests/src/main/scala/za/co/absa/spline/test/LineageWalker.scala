@@ -25,37 +25,26 @@ class LineageWalker(
   attrMap: Map[String, Attribute]
 ) {
 
-  def op(write: WriteOperation): WriteWalker = new WriteWalker(write)
-  def op(op: DataOperation): OperationWalker = new OperationWalker(op)
-  def att(attributeId: String): AttributeWalker = new AttributeWalker(attrMap(attributeId))
+  def attributeById(attributeId: String): Attribute = attrMap(attributeId);
 
-
-  class WriteWalker(write: WriteOperation) {
-    def precedingOp: DataOperation = {
-      assert(write.childIds.size == 1)
-      opMap(write.childIds(0))
-    }
-
-    def precedingOps: Seq[DataOperation] = {
-      write.childIds.map(opMap)
-    }
+  def precedingOp(op: DataOperation): DataOperation = {
+    opMap(op.childIds.get(0))
   }
 
-  class OperationWalker(op: DataOperation) {
-    def precedingOp: DataOperation = {
-      assert(op.childIds.get.size == 1)
-      opMap(op.childIds.get(0))
-    }
-
-    def precedingOps: Seq[DataOperation] = {
-      op.childIds.get.map(opMap)
-    }
+  def precedingOp(write: WriteOperation): DataOperation = {
+    opMap(write.childIds(0))
   }
 
-  class AttributeWalker(current: Attribute) {
-    def dependsOn(id: String): Boolean = {
-      dependsOnRec(AttrOrExprRef(Some(current.id), None), id)
-    }
+  def precedingOps(op: DataOperation): Seq[DataOperation] = {
+    op.childIds.getOrElse(Seq.empty).map(opMap)
+  }
+
+  def precedingOps(write: WriteOperation): Seq[DataOperation] = {
+    write.childIds.map(opMap)
+  }
+
+  def dependsOn(att: Attribute, onAtt: Attribute): Boolean = {
+    dependsOnRec(AttrOrExprRef(Some(att.id), None), onAtt.id)
   }
 
   private def dependsOnRec(maybeRefs: Option[Seq[AttrOrExprRef]], id: String): Boolean =
@@ -81,7 +70,7 @@ object LineageWalker {
 
   def apply(plan: ExecutionPlan): LineageWalker = {
     val opMap = plan.operations.other
-      .map(opSeqToMap(_))
+      .map(_.map(op => op.id -> op).toMap)
       .getOrElse(Map.empty)
 
     val funMap = plan.expressions
@@ -99,11 +88,6 @@ object LineageWalker {
       .getOrElse(Map.empty)
 
     new LineageWalker(opMap, funMap, litMap, attMap)
-
   }
-
-  private def opSeqToMap(ops: Seq[DataOperation]): Map[String, DataOperation] =
-    ops.map(op => op.id -> op).toMap
-
 
 }
