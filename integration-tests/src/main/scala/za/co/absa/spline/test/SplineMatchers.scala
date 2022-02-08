@@ -44,7 +44,7 @@ trait SplineMatchers {
       MatchResult(
         walker.dependsOn(left, right),
         s"Attribute (name: ${left.name}, id: ${left.id}) did not depend on attribute (name: ${right.name}, id: ${right.id})",
-        s"Attribute(name: ${left.name}, id: ${left.id}) did depend on attribute (name: ${right.name}, id: ${right.id})",
+        s"Attribute(name: ${left.name}, id: ${left.id}) did depend on attribute (name: ${right.name}, id: ${right.id})"
       )
     }
   }
