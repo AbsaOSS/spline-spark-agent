@@ -17,6 +17,7 @@
 package za.co.absa.spline.agent
 
 import org.apache.commons.configuration.{CompositeConfiguration, Configuration}
+import org.apache.spark.sql.SparkSession
 import za.co.absa.commons.HierarchicalObjectFactory
 import za.co.absa.spline.agent.AgentConfig.ConfProperty
 import za.co.absa.spline.harvester.IdGenerator.UUIDVersion
@@ -45,9 +46,9 @@ object AgentBOM {
   import za.co.absa.commons.ConfigurationImplicits._
   import za.co.absa.commons.config.ConfigurationImplicits._
 
-  def createFrom(configs: Seq[Configuration]): AgentBOM = new AgentBOM {
+  def createFrom(configs: Seq[Configuration], sparkSession: SparkSession): AgentBOM = new AgentBOM {
     private val mergedConfig = new CompositeConfiguration(configs.asJava)
-    private val objectFactory = new HierarchicalObjectFactory(mergedConfig)
+    private val objectFactory = new HierarchicalObjectFactory(mergedConfig, sparkSession)
 
     override def splineMode: SplineMode = {
       mergedConfig.getRequiredEnum[SplineMode](ConfProperty.Mode)
