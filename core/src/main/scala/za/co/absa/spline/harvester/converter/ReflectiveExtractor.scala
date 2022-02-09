@@ -22,7 +22,7 @@ import za.co.absa.commons.reflect.ReflectionUtils
 import java.lang.reflect.{Field, Method}
 import scala.util.control.NonFatal
 
-object ReflectiveExtractor extends Logging{
+object ReflectiveExtractor extends Logging {
 
   def extractProperties(obj: AnyRef): Map[String, _] =
     try ReflectionUtils.extractProperties(obj)
@@ -30,8 +30,7 @@ object ReflectiveExtractor extends Logging{
       // a workaround for Scala bug #12190
       // catching everything because the bug causes various errors and exceptions
       case NonFatal(e) =>
-        logWarning("Exception thrown during attempt to extract object properties via Scala reflection." +
-          "Will try to extract properties via Java reflection as a workaround", e)
+        logWarning("Extracting object properties via Scala reflection failed. Trying Java reflection as a workaround...", e)
 
         extractPropertiesViaJavaReflection(obj)
     }
