@@ -43,7 +43,7 @@ ENV WORKDIR=/opt/spline-spark-agent/examples
 
 WORKDIR $WORKDIR
 
-CMD mvn test -P examples \
+CMD exec mvn test -P examples \
     -D spline.producer.url=$SPLINE_PRODUCER_URL \
     -D spline.mode=$SPLINE_MODE \
     -D http.proxyHost=$HTTP_PROXY_HOST \
