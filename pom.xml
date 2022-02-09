@@ -128,8 +128,8 @@
         <scala_2.12.version>2.12.15</scala_2.12.version>
 
         <!-- Controlled by `scala-cross-build` plugin -->
-        <scala.version>2.12.15</scala.version>
-        <scala.binary.version>2.12</scala.binary.version>
+        <scala.version>2.11.12</scala.version>
+        <scala.binary.version>2.11</scala.binary.version>
     </properties>
 
     <scm>

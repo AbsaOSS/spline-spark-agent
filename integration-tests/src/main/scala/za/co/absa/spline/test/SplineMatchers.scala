@@ -23,7 +23,7 @@ import java.net.URI
 
 trait SplineMatchers {
 
-  class SameUriAs(expectedUri: String) extends Matcher[String] {
+  class EqualToUri(expectedUri: String) extends Matcher[String] {
 
     def apply(left: String): MatchResult = {
       URI.create(left) == URI.create(expectedUri)
@@ -36,7 +36,7 @@ trait SplineMatchers {
     }
   }
 
-  def beSameUriAs(expectedUri: String) = new SameUriAs(expectedUri)
+  def equalToUri(expectedUri: String) = new EqualToUri(expectedUri)
 
   class AttributeDependsOnAttribute(right: Attribute, walker: LineageWalker) extends Matcher[Attribute] {
 

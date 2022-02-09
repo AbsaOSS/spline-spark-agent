@@ -58,9 +58,9 @@ class SQLCommandsSpec extends AsyncFlatSpec
                   | WHERE id > 1""".stripMargin))
 
           } yield {
-            plan1.operations.write.outputSource should beSameUriAs(s"file:$warehouseDir/sourcetable")
-            plan2.operations.reads.get.head.inputSources.head should beSameUriAs(plan1.operations.write.outputSource)
-            plan2.operations.write.outputSource should beSameUriAs(s"file:$warehouseDir/targettable")
+            plan1.operations.write.outputSource should equalToUri(s"file:$warehouseDir/sourcetable")
+            plan2.operations.reads.get.head.inputSources.head should equalToUri(plan1.operations.write.outputSource)
+            plan2.operations.write.outputSource should equalToUri(s"file:$warehouseDir/targettable")
           }
         }
       }
@@ -90,8 +90,8 @@ class SQLCommandsSpec extends AsyncFlatSpec
                    | FROM sourceTable
                    | WHERE id > 1""".stripMargin))
           } yield {
-            plan.operations.reads.get.head.inputSources.head should beSameUriAs(s"file:$warehouseDir/sourcetable")
-            plan.operations.write.outputSource should beSameUriAs(dir.toUri.toString.stripSuffix("/"))
+            plan.operations.reads.get.head.inputSources.head should equalToUri(s"file:$warehouseDir/sourcetable")
+            plan.operations.write.outputSource should equalToUri(dir.toUri.toString.stripSuffix("/"))
           }
         }
       }
@@ -125,8 +125,8 @@ class SQLCommandsSpec extends AsyncFlatSpec
                    | WHERE id > 1""".stripMargin)
             )
           } yield {
-            plan.operations.reads.get.head.inputSources.head should beSameUriAs(s"file:$warehouseDir/sourcetable")
-            plan.operations.write.outputSource should beSameUriAs(csvFile.toUri.toString.stripSuffix("/"))
+            plan.operations.reads.get.head.inputSources.head should equalToUri(s"file:$warehouseDir/sourcetable")
+            plan.operations.write.outputSource should equalToUri(csvFile.toUri.toString.stripSuffix("/"))
           }
         }
       }
