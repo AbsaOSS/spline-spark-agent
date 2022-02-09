@@ -19,6 +19,7 @@ package za.co.absa.spline.harvester.dispatcher
 import org.apache.commons.configuration.{Configuration, ConfigurationConverter}
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.spark.internal.Logging
+import org.apache.spark.sql.SparkSession
 import za.co.absa.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
 import za.co.absa.commons.version.Version
 import za.co.absa.spline.harvester.dispatcher.KafkaLineageDispatcher._
@@ -37,12 +38,16 @@ class KafkaLineageDispatcher(
 
   import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
 
-  def this(configuration: Configuration) = this(
+  def this(configuration: Configuration, sparkSession: SparkSession) = this(
     Version.asSimple(configuration.getRequiredString(ApiVersion)),
     apiVersion => new SplineRecordSenderFactory(
       apiVersion,
       configuration.getRequiredString(TopicKey),
-      () => new KafkaProducer(ConfigurationConverter.getProperties(configuration.subset(ProducerKey)))
+      () => {
+        val kp = new KafkaProducer[String, String](ConfigurationConverter.getProperties(configuration.subset(ProducerKey)))
+        sparkSession.sparkContext.addSparkListener(new AppEndListener(kp.close))
+        kp
+      }
     )
   )
 

@@ -120,7 +120,7 @@ private[spline] class SparkLineageInitializer(sparkSession: SparkSession) extend
 
   def createListener(isCodelessInit: Boolean, userConfig: AgentConfig = AgentConfig.empty): Option[QueryExecutionListener] = {
     val confs = StandardSplineConfigurationStack(sparkSession, userConfig)
-    val bom = AgentBOM.createFrom(confs)
+    val bom = AgentBOM.createFrom(confs, sparkSession)
 
     logInfo("Initializing Spline Agent...")
     logInfo(s"Spline Version: ${SplineBuildInfo.Version} (rev. ${SplineBuildInfo.Revision})")
