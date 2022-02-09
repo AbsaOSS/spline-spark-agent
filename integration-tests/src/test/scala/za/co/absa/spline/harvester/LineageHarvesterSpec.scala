@@ -22,19 +22,20 @@ import org.apache.spark.sql.SaveMode
 import org.scalatest.Inside._
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.{Assertion, Succeeded}
+import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.commons.io.{TempDirectory, TempFile}
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version._
-import za.co.absa.spline.harvester.builder.OperationNodeBuilder.OutputAttIds
 import za.co.absa.spline.model.dt
 import za.co.absa.spline.producer.model._
+import za.co.absa.spline.test.LineageWalker
+import za.co.absa.spline.test.ProducerModelImplicits._
+import za.co.absa.spline.test.SplineMatchers.dependOn
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 
 import java.util.UUID
-import java.util.UUID.randomUUID
 import scala.language.reflectiveCalls
 import scala.util.Try
 
@@ -95,36 +96,36 @@ class LineageHarvesterSpec extends AsyncFlatSpec
     withNewSparkSession { implicit spark =>
       withLineageTracking { captor =>
         import spark.implicits._
+        val tmpPath = tmpDest
 
         val df = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
 
-        val expectedAttributes = Seq(
-          Attribute(randomUUID.toString, Some(integerType.id), None, None, "i"),
-          Attribute(randomUUID.toString, Some(doubleType.id), None, None, "d"),
-          Attribute(randomUUID.toString, Some(stringType.id), None, None, "s"))
-
-        val expectedOperations = Seq(
-          WriteOperation(
-            id = "op-0",
-            name = Some("AAA"),
-            childIds = Seq("op-1"),
-            outputSource = s"file:$tmpDest",
-            append = false,
-            params = None,
-            extra = None
-          ),
-          DataOperation(
-            id = "op-1",
-            name = Some("LocalRelation"),
-            childIds = None,
-            output = expectedAttributes.map(_.id).asOption,
-            params = None,
-            extra = None))
-
         for {
-          (plan, _) <- captor.lineageOf(df.write.save(tmpDest))
+          (plan, _) <- captor.lineageOf(df.write.save(tmpPath))
         } yield {
-          assertDataLineage(expectedOperations, expectedAttributes, plan)
+          val write = plan.operations.write
+          write.id shouldBe("op-0")
+          write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
+          write.childIds should be(Seq("op-1"))
+          write.outputSource should be(s"file:$tmpPath")
+          write.params should contain(Map("path" -> tmpPath))
+          write.extra should contain(Map("destinationType" -> Some("parquet")))
+
+          plan.operations.reads should not be defined
+
+          plan.operations.other.get.size should be(1)
+
+          val op = plan.operations.other.get(0)
+          op.id should be("op-1")
+          op.name should contain("LocalRelation")
+          op.childIds should not be defined
+          op.output should contain(Seq("attr-0", "attr-1", "attr-2"))
+
+          plan.attributes should contain(Seq(
+            Attribute("attr-0", Some(integerType.id), None, None, "i"),
+            Attribute("attr-1", Some(doubleType.id), None, None, "d"),
+            Attribute("attr-2", Some(stringType.id), None, None, "s")
+          ))
         }
       }
     }
@@ -133,90 +134,138 @@ class LineageHarvesterSpec extends AsyncFlatSpec
     withNewSparkSession { implicit spark =>
       withLineageTracking { captor =>
         import spark.implicits._
+        val tmpPath = tmpDest
 
         val df = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
           .withColumnRenamed("i", "A")
           .filter($"A".notEqual(5))
 
-        val expectedAttributes = Seq(
-          Attribute(randomUUID.toString, Some(integerType.id), None, None, "i"),
-          Attribute(randomUUID.toString, Some(doubleType.id), None, None, "d"),
-          Attribute(randomUUID.toString, Some(stringType.id), None, None, "s"),
-          Attribute(randomUUID.toString, Some(integerType.id), None, None, "A")
-        )
-
-        val outputBeforeRename = Seq(expectedAttributes(0).id, expectedAttributes(1).id, expectedAttributes(2).id)
-        val outputAfterRename = Seq(expectedAttributes(3).id, expectedAttributes(1).id, expectedAttributes(2).id)
-
-        val expectedOperations = Seq(
-          WriteOperation(
-            id = "op-0",
-            name = Some("BBB"),
-            childIds = Seq("op-1"),
-            outputSource = s"file:$tmpDest",
-            append = false,
-            params = None,
-            extra = None
-          ),
-          DataOperation(
-            "op-1", Some("Filter"), Seq("op-2").asOption, outputAfterRename.asOption,
-            None, None),
-          DataOperation(
-            "op-2", Some("Project"), Seq("op-3").asOption, outputAfterRename.asOption,
-            None, None),
-          DataOperation(
-            "op-3", Some("LocalRelation"), None, outputBeforeRename.asOption,
-            None, None))
-
         for {
-          (plan, _) <- captor.lineageOf(df.write.save(tmpDest))
+          (plan, _) <- captor.lineageOf(df.write.save(tmpPath))
         } yield {
-          assertDataLineage(expectedOperations, expectedAttributes, plan)
+          val write = plan.operations.write
+          write.id shouldBe("op-0")
+          write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
+          write.childIds should be(Seq("op-1"))
+          write.outputSource should be(s"file:$tmpPath")
+          write.append should be(false)
+          write.params should contain(Map("path" -> tmpPath))
+          write.extra should contain(Map("destinationType" -> Some("parquet")))
+
+          plan.operations.reads should not be defined
+
+          plan.operations.other.get.size should be(3)
+
+          val localRelation = plan.operations.other.get(0)
+          localRelation.id should be("op-3")
+          localRelation.name should contain("LocalRelation")
+          localRelation.childIds should not be defined
+          localRelation.output should contain(Seq("attr-0", "attr-1", "attr-2"))
+
+          val project = plan.operations.other.get(1)
+          project.id should be("op-2")
+          project.name should contain("Project")
+          project.childIds should contain(Seq("op-3"))
+          project.output should contain(Seq("attr-3", "attr-1", "attr-2"))
+          project.params.get("projectList") should be(Some(Seq(
+            AttrOrExprRef(None, Some("expr-0")),
+            AttrOrExprRef(Some("attr-1"), None),
+            AttrOrExprRef(Some("attr-2"), None)
+          )))
+
+          val filter = plan.operations.other.get(2)
+          filter.id should be("op-1")
+          filter.name should contain("Filter")
+          filter.childIds should contain(Seq("op-2"))
+          filter.output should contain(Seq("attr-3", "attr-1", "attr-2"))
+          filter.params.get("condition") should be(Some(AttrOrExprRef(None, Some("expr-1"))))
+
+          plan.attributes should contain(Seq(
+            Attribute("attr-0", Some(integerType.id), None, None, "i"),
+            Attribute("attr-1", Some(doubleType.id), None, None, "d"),
+            Attribute("attr-2", Some(stringType.id), None, None, "s"),
+            Attribute("attr-3", Some(integerType.id), Seq(AttrOrExprRef(None, Some("expr-0"))).asOption, None, "A")
+          ))
         }
       }
     }
 
-  it should "support union operation, forming a diamond graph" taggedAs ignoreIf(ver"$SPARK_VERSION" >= ver"3.0.0") in
+  it should "support union operation, forming a diamond graph" in
     withNewSparkSession { implicit spark =>
       withLineageTracking { captor =>
         import spark.implicits._
+        val tmpPath = tmpDest
 
         val initialDF = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
         val filteredDF1 = initialDF.filter($"i".notEqual(5))
         val filteredDF2 = initialDF.filter($"d".notEqual(5.0))
         val df = filteredDF1.union(filteredDF2)
 
-        val expectedAttributes =
-          Seq(
-            Attribute(randomUUID.toString, Some(integerType.id), None, None, "i"),
-            Attribute(randomUUID.toString, Some(doubleType.id), None, None, "d"),
-            Attribute(randomUUID.toString, Some(stringType.id), None, None, "s"),
-            Attribute(randomUUID.toString, Some(integerType.id), None, None, "i"),
-            Attribute(randomUUID.toString, Some(doubleType.id), None, None, "d"),
-            Attribute(randomUUID.toString, Some(stringType.id), None, None, "s")
-          )
-
-        val inputAttIds = expectedAttributes.slice(0, 3).map(_.id)
-        val outputAttIds = expectedAttributes.slice(3, 6).map(_.id)
-
-        val expectedOperations = Seq(
-          WriteOperation(
-            id = "op-0",
-            name = Some("CCC"),
-            childIds = Seq("op-1"),
-            outputSource = s"file:$tmpDest",
-            append = false,
-            params = None,
-            extra = None
-          ),
-          DataOperation("op-1", Some("Union"), Seq("op-2", "op-4").asOption, outputAttIds.asOption, None, None),
-          DataOperation("op-2", Some("Filter"), Seq("op-3").asOption, inputAttIds.asOption, None, None),
-          DataOperation("op-4", Some("Filter"), Seq("op-3").asOption, inputAttIds.asOption, None, None),
-          DataOperation("op-3", Some("LocalRelation"), None, inputAttIds.asOption, None, None))
         for {
-          (plan, _) <- captor.lineageOf(df.write.save(tmpDest))
+          (plan, _) <- captor.lineageOf(df.write.save(tmpPath))
         } yield {
-          assertDataLineage(expectedOperations, expectedAttributes, plan)
+          implicit val walker = LineageWalker(plan)
+
+          val write = plan.operations.write
+          write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
+          write.outputSource should be(s"file:$tmpPath")
+          write.append should be(false)
+          write.params should contain(Map("path" -> tmpPath))
+          write.extra should contain(Map("destinationType" -> Some("parquet")))
+
+          val union = write.precedingOp
+          union.name should contain("Union")
+          union.childIds.get.size should be(2)
+
+          val Seq(filter1, maybeFilter2) = union.precedingOps
+          filter1.name should contain("Filter")
+          filter1.params.get should contain key ("condition")
+
+          val filter2 =
+            if (maybeFilter2.name.get == "Project") {
+              maybeFilter2.precedingOp // skip additional select (in Spark 3.0 and 3.1 only)
+            } else {
+              maybeFilter2
+            }
+
+          filter2.name should contain("Filter")
+          filter2.params.get should contain key ("condition")
+
+          val localRelation1 = filter1.precedingOp
+          localRelation1.name should contain("LocalRelation")
+
+          val localRelation2 = filter2.precedingOp
+          localRelation2.name should contain("LocalRelation")
+
+          inside(union.outputAttributes) { case Seq(i, d, s) =>
+            inside(filter1.outputAttributes) { case Seq(f1I, f1D, f1S) =>
+              i should dependOn(f1I)
+              d should dependOn(f1D)
+              s should dependOn(f1S)
+            }
+            inside(filter2.outputAttributes) { case Seq(f2I, f2D, f2S) =>
+              i should dependOn(f2I)
+              d should dependOn(f2D)
+              s should dependOn(f2S)
+            }
+          }
+
+          inside(filter1.outputAttributes) { case Seq(i, d, s) =>
+            inside(localRelation1.outputAttributes) { case Seq(lr1I, lr1D, lr1S) =>
+              i should dependOn(lr1I)
+              d should dependOn(lr1D)
+              s should dependOn(lr1S)
+            }
+          }
+
+          inside(filter2.outputAttributes) { case Seq(i, d, s) =>
+            inside(localRelation2.outputAttributes) { case Seq(lr2I, lr2D, lr2S) =>
+              i should dependOn(lr2I)
+              d should dependOn(lr2D)
+              s should dependOn(lr2S)
+            }
+          }
+
         }
       }
     }
@@ -226,6 +275,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
       withLineageTracking { captor =>
         import org.apache.spark.sql.functions._
         import spark.implicits._
+        val tmpPath = tmpDest
 
         val initialDF = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
         val filteredDF = initialDF
@@ -240,43 +290,68 @@ class LineageHarvesterSpec extends AsyncFlatSpec
         val joinExpr = filteredDF.col("i").eqNullSafe(aggregatedDF.col("A"))
         val df = filteredDF.join(aggregatedDF, joinExpr, "inner")
 
-        val expectedAttributes = Seq(
-          Attribute(randomUUID.toString, Some(integerType.id), None, None, "i"),
-          Attribute(randomUUID.toString, Some(doubleType.id), None, None, "d"),
-          Attribute(randomUUID.toString, Some(stringType.id), None, None, "s"),
-          Attribute(randomUUID.toString, Some(integerType.id), None, None, "A"),
-          Attribute(randomUUID.toString, Some(doubleNullableType.id), None, None, "MIN"),
-          Attribute(randomUUID.toString, Some(stringType.id), None, None, "MAX"))
-
-        val expectedOperations = Seq(
-          WriteOperation(
-            id = "op-0",
-            name = Some("DDD"),
-            childIds = Seq("op-1"),
-            outputSource = s"file:$tmpDest",
-            append = false,
-            params = None,
-            extra = None
-          ),
-          DataOperation(
-            "op-1", Some("Join"), Seq("op-2", "op-4").asOption, expectedAttributes.map(_.id).asOption,
-            Map("joinType" -> Some("INNER")).asOption, None),
-          DataOperation(
-            "op-2", Some("Filter"), Seq("op-3").asOption, Seq(expectedAttributes(0).id, expectedAttributes(1).id, expectedAttributes(2).id).asOption,
-            None, None),
-          DataOperation(
-            "op-3", Some("LocalRelation"), None, Seq(expectedAttributes(0).id, expectedAttributes(1).id, expectedAttributes(2).id).asOption,
-            None, None),
-          DataOperation(
-            "op-4", Some("Aggregate"), Seq("op-5").asOption, Seq(expectedAttributes(3).id, expectedAttributes(4).id, expectedAttributes(5).id).asOption,
-            None, None),
-          DataOperation(
-            "op-5", Some("Project"), Seq("op-3").asOption, Seq(expectedAttributes(3).id, expectedAttributes(1).id, expectedAttributes(2).id).asOption,
-            None, None))
         for {
-          (plan, _) <- captor.lineageOf(df.write.save(tmpDest))
+          (plan, _) <- captor.lineageOf(df.write.save(tmpPath))
         } yield {
-          assertDataLineage(expectedOperations, expectedAttributes, plan)
+          implicit val walker = LineageWalker(plan)
+
+          val write = plan.operations.write
+          write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
+          write.outputSource should be(s"file:$tmpPath")
+          write.append should be(false)
+          write.params should contain(Map("path" -> tmpPath))
+          write.extra should contain(Map("destinationType" -> Some("parquet")))
+
+          val join = write.precedingOp
+          join.name should contain("Join")
+          join.childIds.get.size should be(2)
+
+          val Seq(filter, aggregate) = join.precedingOps
+          filter.name should contain("Filter")
+          filter.params.get should contain key("condition")
+
+          aggregate.name should contain("Aggregate")
+          aggregate.params.get should contain key("groupingExpressions")
+          aggregate.params.get should contain key("aggregateExpressions")
+
+          val project = aggregate.precedingOp
+          project.name should contain("Project")
+
+          val localRelation1 = filter.precedingOp
+          localRelation1.name should contain("LocalRelation")
+
+          val localRelation2 = project.precedingOp
+          localRelation2.name should contain("LocalRelation")
+
+          inside(join.outputAttributes) { case Seq(i, d, s, a, min, max) =>
+            inside(filter.outputAttributes) { case Seq(inI, inD, inS) =>
+              i should dependOn(inI)
+              d should dependOn(inD)
+              s should dependOn(inS)
+            }
+            inside(aggregate.outputAttributes) { case Seq(inA, inMin, inMax) =>
+              a should dependOn(inA)
+              min should dependOn(inMin)
+              max should dependOn(inMax)
+            }
+          }
+
+          inside(filter.outputAttributes) { case Seq(i, d, s) =>
+            inside(localRelation1.outputAttributes) { case Seq(inI, inD, inS) =>
+              i should dependOn(inI)
+              d should dependOn(inD)
+              s should dependOn(inS)
+            }
+          }
+
+          inside(aggregate.outputAttributes) { case Seq(a, min, max) =>
+            inside(localRelation2.outputAttributes) { case Seq(inI, inD, inS) =>
+              a should dependOn(inI)
+              min should dependOn(inD)
+              max should dependOn(inS)
+            }
+          }
+
         }
       }
     }
@@ -316,14 +391,8 @@ class LineageHarvesterSpec extends AsyncFlatSpec
               val secondOperation = otherOperations(1)
               secondOperation.id shouldEqual "op-2"
               secondOperation.childIds.get shouldEqual Seq("op-3")
-              secondOperation.name should (equal(Some("SubqueryAlias")) or equal(Some("`tempview`"))) // Spark 2.3/2.4
+              secondOperation.name should contain oneOf("SubqueryAlias", "`tempview`") // Spark 2.3/2.4
               secondOperation.extra shouldBe empty
-
-              val thirdOperation = otherOperations(2)
-              thirdOperation.id shouldEqual "op-3"
-              thirdOperation.childIds shouldEqual None
-              thirdOperation.name shouldEqual Some("LocalRelation")
-              thirdOperation.extra shouldBe empty
             }
           }
         }
@@ -463,92 +532,14 @@ class LineageHarvesterSpec extends AsyncFlatSpec
     }
 }
 
-object LineageHarvesterSpec extends Matchers {
+object LineageHarvesterSpec extends Matchers with MockitoSugar {
 
   case class TestRow(i: Int, d: Double, s: String)
 
   private def tmpDest: String = TempDirectory(pathOnly = true).deleteOnExit().path.toString
 
-  private val integerType = dt.Simple(UUID.randomUUID(), "int", nullable = false)
-  private val doubleType = dt.Simple(UUID.randomUUID(), "double", nullable = false)
-  private val doubleNullableType = dt.Simple(UUID.randomUUID(), "double", nullable = true)
-  private val stringType = dt.Simple(UUID.randomUUID(), "string", nullable = true)
-  private val testTypesById = Seq(
-    integerType,
-    doubleType,
-    doubleNullableType,
-    stringType)
-    .map(t => t.id -> t).toMap
-
-  implicit class ReferenceMatchers(outputAttIds: OutputAttIds) {
-
-    import ReferenceMatchers._
-
-    def shouldReference(references: Seq[Attribute]) = new ReferenceMatcher[Attribute](outputAttIds, references)
-
-    def references(references: Seq[Attribute]) = new ReferenceMatcher[Attribute](outputAttIds, references)
-  }
-
-  object ReferenceMatchers {
-
-    import scala.language.reflectiveCalls
-
-    type ID = String
-    type Refs = Seq[ID]
-
-    class ReferenceMatcher[A <: {def id: ID}](val refs: Refs, val attributes: Seq[A]) {
-      private lazy val targets = attributes.map(_.id)
-
-      private def referencePositions = refs.map(targets.indexOf)
-
-      def as(anotherComparator: ReferenceMatcher[A]): Assertion = {
-        referencePositions shouldEqual anotherComparator.referencePositions
-      }
-    }
-
-  }
-
-  def assertDataLineage(
-    expectedOperations: Seq[AnyRef],
-    expectedAttributes: Seq[Attribute],
-    actualPlan: ExecutionPlan): Assertion = {
-
-    import za.co.absa.commons.ProducerApiAdapters._
-
-    actualPlan.operations shouldNot be(null)
-
-    val actualAttributes = actualPlan.attributes.get
-    val actualDataTypes = actualPlan.extraInfo.get("dataTypes").asInstanceOf[Seq[dt.DataType]].map(t => t.id -> t).toMap
-
-    val actualOperationsSorted = actualPlan.operations.all.sortBy(x => x.id)
-    val expectedOperationsSorted = expectedOperations.map(_.asInstanceOf[OperationLike]).sortBy(_.id)
-
-    for ((opActual, opExpected) <- actualOperationsSorted.zip(expectedOperationsSorted)) {
-      opActual.childIdList should contain theSameElementsInOrderAs opExpected.childIdList
-      opActual.id should be(opExpected.id)
-      for (expectedParams <- opExpected.params) opActual.params.get should contain allElementsOf expectedParams
-      for (expectedExtra <- opExpected.extra) opActual.extra.get should contain allElementsOf expectedExtra
-
-
-      val actualOutput = opActual.output
-      val expectedOutput = opExpected.output
-      actualOutput shouldReference actualAttributes as (expectedOutput references expectedAttributes)
-
-      opActual.output.size shouldEqual opExpected.output.size
-    }
-
-    for ((attrActual: Attribute, attrExpected: Attribute) <- actualAttributes.zip(expectedAttributes)) {
-      attrActual.name shouldEqual attrExpected.name
-      val typeActual = actualDataTypes(attrActual.dataType.get.asInstanceOf[UUID])
-      val typeExpected = testTypesById(attrExpected.dataType.get.asInstanceOf[UUID])
-      inside(typeActual) {
-        case dt.Simple(_, typeName, nullable) =>
-          typeName should be(typeExpected.name)
-          nullable should be(typeExpected.nullable)
-      }
-    }
-
-    Succeeded
-  }
+  private val integerType = dt.Simple(UUID.fromString("e63adadc-648a-56a0-9424-3289858cf0bb"), "int", nullable = false)
+  private val doubleType = dt.Simple(UUID.fromString("75fe27b9-9a00-5c7d-966f-33ba32333133"), "double", nullable = false)
+  private val stringType = dt.Simple(UUID.fromString("a155e715-56ab-59c4-a94b-ed1851a6984a"), "string", nullable = true)
 
 }
