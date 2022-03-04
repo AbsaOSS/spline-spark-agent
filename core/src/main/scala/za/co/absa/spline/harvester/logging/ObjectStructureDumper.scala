@@ -16,10 +16,12 @@
 
 package za.co.absa.spline.harvester.logging
 
+import za.co.absa.commons.ThrowableImplicits._
 import za.co.absa.commons.reflect.ReflectionUtils
 
 import java.lang.reflect.Modifier
 import scala.annotation.tailrec
+import scala.util.Random
 import scala.util.control.NonFatal
 
 object ObjectStructureDumper {
@@ -94,7 +96,7 @@ object ObjectStructureDumper {
                 try {
                   extractFieldValue(value, f.getName)
                 } catch {
-                  case NonFatal(e) => s"! error occurred: ${e.getMessage} at ${e.getStackTrace()(0)}"
+                  case NonFatal(e) => s"! error occurred: ${e.toShortString}"
                 }
               ObjectBox(subValue, f.getName, f.getType.getName, depth + 1)
             }.toList
@@ -119,9 +121,13 @@ object ObjectStructureDumper {
 
   private def isReadyForPrint(value: AnyRef): Boolean = {
     isPrimitiveLike(value) ||
-      Set("String")(value.getClass.getSimpleName) ||
+      value.isInstanceOf[java.lang.CharSequence]  ||
       value.isInstanceOf[Traversable[_]] ||
-      value.isInstanceOf[Enum[_]]
+      value.isInstanceOf[Enum[_]] ||
+      value.isInstanceOf[java.util.Random] ||
+      value.isInstanceOf[Random] ||
+      value.isInstanceOf[java.lang.Number] ||
+      value.isInstanceOf[Numeric[_]]
   }
 
   private def isPrimitiveLike(value: Any): Boolean = {

@@ -22,6 +22,9 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.spline.harvester.logging.ObjectStructureDumper.ExtractFieldValueFn
 
+import java.util.concurrent.atomic.AtomicInteger
+import scala.util.Random
+
 class ObjectStructureDumperSpec extends AnyFlatSpec with Matchers with MockitoSugar {
 
   behavior of "dump()"
@@ -54,5 +57,11 @@ class ObjectStructureDumperSpec extends AnyFlatSpec with Matchers with MockitoSu
       should (include("bar: java.lang.String = null")
       and include("baz: java.lang.String = ! error occurred: fake at za.co.absa.spline.harvester.logging.ObjectStructureDumper")
       ))
+  }
+
+  it should "not fail on numbers and Random" in {
+    ObjectStructureDumper.dump(new java.util.Random()) should include("java.util.Random")
+    ObjectStructureDumper.dump(new Random()) should include("scala.util.Random")
+    ObjectStructureDumper.dump(new AtomicInteger(42)) should include("java.util.concurrent.atomic.AtomicInteger")
   }
 }
