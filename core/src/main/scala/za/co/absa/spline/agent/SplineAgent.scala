@@ -31,7 +31,7 @@ import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.plugin.registry.AutoDiscoveryPluginRegistry
 import za.co.absa.spline.harvester.postprocessing.{AttributeReorderingFilter, OneRowRelationFilter, PostProcessingFilter, PostProcessor}
 import za.co.absa.spline.harvester.qualifier.HDFSPathQualifier
-import za.co.absa.spline.harvester.{HarvestingContext, IdGenerators, LineageHarvester}
+import za.co.absa.spline.harvester.{HarvestingContext, IdGeneratorsBundle, LineageHarvester}
 import za.co.absa.spline.producer.model.ExecutionPlan
 
 import scala.concurrent.duration.Duration
@@ -63,7 +63,7 @@ object SplineAgent extends Logging {
 
     new SplineAgent {
       def handle(qe: QueryExecution, result: Either[Throwable, Duration]): Unit = withErrorHandling {
-        val idGenerators = new IdGenerators(execPlanUUIDGeneratorFactory)
+        val idGenerators = new IdGeneratorsBundle(execPlanUUIDGeneratorFactory)
         val harvestingContext = new HarvestingContext(qe.analyzed, Some(qe.executedPlan), session, idGenerators)
         val postProcessor = new PostProcessor(filters, harvestingContext)
         val dataTypeConverter = new DataTypeConverter(idGenerators.dataTypeIdGenerator) with CachingConverter

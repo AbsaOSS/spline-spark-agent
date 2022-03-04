@@ -18,14 +18,14 @@ package za.co.absa.spline.harvester.builder
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.plans.logical.Join
-import za.co.absa.spline.harvester.IdGenerators
+import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.DataOperation
 
 class JoinNodeBuilder
   (operation: Join)
-  (idGenerators: IdGenerators, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
+  (idGenerators: IdGeneratorsBundle, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
   extends GenericNodeBuilder(operation)(idGenerators, dataTypeConverter, dataConverter, postProcessor) with Logging {
 
   override def build(): DataOperation = {
