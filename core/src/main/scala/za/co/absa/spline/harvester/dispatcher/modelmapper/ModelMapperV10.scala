@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.harvester.dispatcher.modelmapper
 
-import za.co.absa.spline.harvester.IdGenerators
+import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.converter.ExpressionConverter.{ExprExtra, ExprV1}
 import za.co.absa.spline.producer.dto.v1_0
 import za.co.absa.spline.producer.model._
@@ -109,7 +109,7 @@ object ModelMapperV10 extends ModelMapper[v1_0.ExecutionPlan, v1_0.ExecutionEven
       )
 
     def toV1OperationId(opIdV11: String): Int = {
-      val Array(opIdV1Str: String) = new MessageFormat(IdGenerators.OperationIdTemplate).parse(opIdV11)
+      val Array(opIdV1Str: String) = new MessageFormat(IdGeneratorsBundle.OperationIdTemplate).parse(opIdV11)
       opIdV1Str.toInt
     }
 

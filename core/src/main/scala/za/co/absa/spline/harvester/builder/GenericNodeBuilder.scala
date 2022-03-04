@@ -18,14 +18,14 @@ package za.co.absa.spline.harvester.builder
 
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.commons.lang.OptionImplicits._
-import za.co.absa.spline.harvester.IdGenerators
+import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter, OperationParamsConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.DataOperation
 
 class GenericNodeBuilder
   (val operation: LogicalPlan)
-  (val idGenerators: IdGenerators, val dataTypeConverter: DataTypeConverter, val dataConverter: DataConverter, postProcessor: PostProcessor)
+  (val idGenerators: IdGeneratorsBundle, val dataTypeConverter: DataTypeConverter, val dataConverter: DataConverter, postProcessor: PostProcessor)
   extends OperationNodeBuilder {
 
   override protected type R = DataOperation

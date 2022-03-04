@@ -25,7 +25,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.commons.scalatest.EnvFixture
 import za.co.absa.spline.harvester.postprocessing.metadata.MetadataCollectingFilter._
 import za.co.absa.spline.harvester.postprocessing.metadata.{BaseNodeName, MetadataCollectingFilter}
-import za.co.absa.spline.harvester.{HarvestingContext, IdGenerators}
+import za.co.absa.spline.harvester.{HarvestingContext, IdGeneratorsBundle}
 import za.co.absa.spline.producer.model._
 
 import java.util.UUID
@@ -39,7 +39,7 @@ class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matc
     .config("k", "nice")
     .getOrCreate()
 
-  private val idGenerators = mock[IdGenerators]
+  private val idGenerators = mock[IdGeneratorsBundle]
   private val harvestingContext = new HarvestingContext(logicalPlan, None, sparkSession, idGenerators)
 
   private val wop = WriteOperation("foo", append = false, "42", None, Seq.empty, None, None)

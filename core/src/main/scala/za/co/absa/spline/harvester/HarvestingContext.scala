@@ -24,5 +24,5 @@ class HarvestingContext(
   val logicalPlan: LogicalPlan,
   val executedPlanOpt: Option[SparkPlan],
   val session: SparkSession,
-  val idGenerators: IdGenerators
+  val idGenerators: IdGeneratorsBundle
 )
