@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.builder.write
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.commons.lang.OptionImplicits._
-import za.co.absa.spline.harvester.IdGenerators
+import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.ModelConstants.OperationExtras
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter, IOParamsConverter}
@@ -28,7 +28,7 @@ import za.co.absa.spline.producer.model.v1_1.{Attribute, WriteOperation}
 
 class WriteNodeBuilder
 (command: WriteCommand)
-  (val idGenerators: IdGenerators, val dataTypeConverter: DataTypeConverter, val dataConverter: DataConverter, postProcessor: PostProcessor)
+  (val idGenerators: IdGeneratorsBundle, val dataTypeConverter: DataTypeConverter, val dataConverter: DataConverter, postProcessor: PostProcessor)
   extends OperationNodeBuilder {
 
   override protected type R = WriteOperation

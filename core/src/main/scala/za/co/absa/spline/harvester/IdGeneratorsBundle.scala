@@ -17,12 +17,12 @@
 package za.co.absa.spline.harvester
 
 import za.co.absa.spline.harvester.IdGenerator._
-import za.co.absa.spline.harvester.IdGenerators._
+import za.co.absa.spline.harvester.IdGeneratorsBundle._
 import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
 
 import java.util.UUID
 
-class IdGenerators(execPlanUUIDGeneratorFactory: UUIDGeneratorFactory[UUIDNamespace, ExecutionPlan]) {
+class IdGeneratorsBundle(execPlanUUIDGeneratorFactory: UUIDGeneratorFactory[UUIDNamespace, ExecutionPlan]) {
   val execPlanIdGenerator: IdGenerator[ExecutionPlan, UUID] = execPlanUUIDGeneratorFactory(UUIDNamespace.ExecutionPlan)
   val attributeIdGenerator: IdGenerator[Any, String] = new SequentialIdGenerator(AttributeIdTemplate)
   val expressionIdGenerator: IdGenerator[Any, String] = new SequentialIdGenerator(ExpressionIdTemplate)
@@ -34,7 +34,7 @@ class IdGenerators(execPlanUUIDGeneratorFactory: UUIDGeneratorFactory[UUIDNamesp
     )
 }
 
-object IdGenerators {
+object IdGeneratorsBundle {
   val AttributeIdTemplate = "attr-{0}"
   val ExpressionIdTemplate = "expr-{0}"
   val OperationIdTemplate = "op-{0}"

@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.builder
 import org.apache.spark.sql.catalyst.plans.logical.Union
 import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.OptionImplicits._
-import za.co.absa.spline.harvester.IdGenerators
+import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.builder.UnionNodeBuilder._
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
@@ -27,7 +27,7 @@ import za.co.absa.spline.producer.model.v1_1.{AttrOrExprRef, Attribute, Function
 
 class UnionNodeBuilder
 (override val operation: Union)
-  (idGenerators: IdGenerators, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
+  (idGenerators: IdGeneratorsBundle, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
   extends GenericNodeBuilder(operation)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
 
   private lazy val unionInputs: Seq[Seq[Attribute]] = inputAttributes.transpose

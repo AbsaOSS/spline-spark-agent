@@ -17,7 +17,7 @@
 package za.co.absa.spline.harvester.builder
 
 import org.apache.spark.sql.catalyst.plans.logical.{Aggregate, Generate, Join, LogicalPlan, Project, Union, Window}
-import za.co.absa.spline.harvester.IdGenerators
+import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.builder.read.{ReadCommand, ReadNodeBuilder}
 import za.co.absa.spline.harvester.builder.write.{WriteCommand, WriteNodeBuilder}
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
@@ -27,7 +27,7 @@ class OperationNodeBuilderFactory(
   postProcessor: PostProcessor,
   dataTypeConverter: DataTypeConverter,
   dataConverter: DataConverter,
-  idGenerators: IdGenerators
+  idGenerators: IdGeneratorsBundle
 ) {
   def writeNodeBuilder(wc: WriteCommand): WriteNodeBuilder =
     new WriteNodeBuilder(wc)(idGenerators, dataTypeConverter, dataConverter, postProcessor)

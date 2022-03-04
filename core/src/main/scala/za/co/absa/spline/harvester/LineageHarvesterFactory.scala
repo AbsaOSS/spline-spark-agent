@@ -49,7 +49,7 @@ class LineageHarvesterFactory(
   private val readCommandExtractor = new PluggableReadCommandExtractor(pluginRegistry, dataSourceFormatResolver)
 
   def harvester(logicalPlan: LogicalPlan, executedPlan: Option[SparkPlan]): LineageHarvester = {
-    val idGenerators = new IdGenerators(execPlanUUIDGeneratorFactory)
+    val idGenerators = new IdGeneratorsBundle(execPlanUUIDGeneratorFactory)
     val harvestingContext = new HarvestingContext(logicalPlan, executedPlan, session, idGenerators)
     val postProcessor = new PostProcessor(filters, harvestingContext)
     val dataTypeConverter = new DataTypeConverter(idGenerators.dataTypeIdGenerator) with CachingConverter
