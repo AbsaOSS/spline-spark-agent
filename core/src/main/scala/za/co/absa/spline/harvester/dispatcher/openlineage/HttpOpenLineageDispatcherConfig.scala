@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.dispatcher.openlindispatcher
+package za.co.absa.spline.harvester.dispatcher.openlineage
 
 import org.apache.commons.configuration.Configuration
 import za.co.absa.commons.config.ConfigurationImplicits.{ConfigurationOptionalWrapper, ConfigurationRequiredWrapper}
 import za.co.absa.commons.version.Version
-import za.co.absa.spline.harvester.dispatcher.openlindispatcher.HttpOpenLineageDispatcherConfig._
+import za.co.absa.spline.harvester.dispatcher.openlineage.HttpOpenLineageDispatcherConfig._
 
 import scala.concurrent.duration.{Duration, DurationInt, DurationLong}
 
 object HttpOpenLineageDispatcherConfig {
-  val ProducerUrlProperty = "producer.url"
+  val apiUrlProperty = "api.url"
   val ConnectionTimeoutMsKey = "timeout.connection"
   val ReadTimeoutMsKey = "timeout.read"
   val ApiVersion = "apiVersion"
@@ -39,7 +39,7 @@ object HttpOpenLineageDispatcherConfig {
 }
 
 class HttpOpenLineageDispatcherConfig(config: Configuration) {
-  val producerUrl: String = config.getRequiredString(ProducerUrlProperty)
+  val apiUrl: String = config.getRequiredString(apiUrlProperty)
 
   val connTimeout: Duration = config
     .getOptionalLong(ConnectionTimeoutMsKey)

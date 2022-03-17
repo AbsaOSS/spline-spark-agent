@@ -18,8 +18,9 @@ package za.co.absa.spline.harvester.dispatcher.modelmapper
 
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.version.Version
+import za.co.absa.spline.harvester.LineageHarvester
 import za.co.absa.spline.harvester.dispatcher.modelmapper.OpenLineageModelMapper._
-import za.co.absa.spline.harvester.dispatcher.openlindispatcher.model.facet.SplineLineageFacet
+import za.co.absa.spline.harvester.dispatcher.openlineage.model.facet.SplinePayloadFacet
 import za.co.absa.spline.producer.model.openlineage.v0_3_1._
 import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
@@ -50,21 +51,16 @@ class OpenLineageModelMapper(splineModelMapper: ModelMapper[_, _], apiVersion: V
     val eventCompleted = RunEvent(
       eventType = event.error.map(_ => EventType.Fail).orElse(EventType.Complete.asOption),
       eventTime = java.util.Date.from(completeTime),
-      run = Run(runId = runId, facets = Some(Map("splineLineage" -> createSplineLineageFacet(plan, event)))),
+      run = Run(runId = runId, facets = Some(Map(
+        SplineEvent -> createSplinePayloadFacet(splineModelMapper.toDTO(event), "TODO"), // see issue #416
+        SplinePlan -> createSplinePayloadFacet(splineModelMapper.toDTO(plan), "TODO") // see issue #416
+      ))),
       job = job,
       inputs = plan.operations.reads
         .getOrElse(Seq.empty)
-        .flatMap(ro => ro.inputSources.map(sn => InputDataset(
-          namespace = namespace,
-          name = sn,
-          facets = None,
-          inputFacets = None)))
+        .flatMap(ro => ro.inputSources.map(createInputDataset))
         .asOption,
-      outputs = Some(Seq(OutputDataset(
-        namespace = namespace,
-        name = plan.operations.write.outputSource,
-        facets = None,
-        outputFacets = None))),
+      outputs = Some(Seq(createOutputDataset(plan.operations.write.outputSource))),
       producer = Producer,
       schemaURL = SchemaUrl
     )
@@ -72,18 +68,38 @@ class OpenLineageModelMapper(splineModelMapper: ModelMapper[_, _], apiVersion: V
     Seq(eventStart, eventCompleted)
   }
 
-  private def createSplineLineageFacet(plan: ExecutionPlan, event: ExecutionEvent): SplineLineageFacet =
-    new SplineLineageFacet(
+  private def createSplinePayloadFacet(payload: AnyRef, payloadSchemaUrl: String) =
+    new SplinePayloadFacet(
       _producer = Producer,
-      _schemaURL = "TODO", // TODO this should be probably defined on spline server side
-      executionPlan = splineModelMapper.toDTO(plan),
-      executionEvent = splineModelMapper.toDTO(event),
-      apiVersion = apiVersion.asString
+      _schemaURL = "TODO", // see issue #416
+      payloadSchemaURL = payloadSchemaUrl,
+      payload = payload
     )
+
+  private def createInputDataset(source: String): InputDataset = {
+    val (namespace, name) = OpenLineageUriMapper.uriToNamespaceAndName(source)
+    InputDataset(
+      namespace = namespace,
+      name = name,
+      facets = None,
+      inputFacets = None
+    )
+  }
+
+  private def createOutputDataset(source: String): OutputDataset = {
+    val (namespace, name) = OpenLineageUriMapper.uriToNamespaceAndName(source)
+    OutputDataset(
+      namespace = namespace,
+      name = name,
+      facets = None,
+      outputFacets = None
+    )
+  }
+
 }
 
 object OpenLineageModelMapper {
-  private val Producer = "https://github.com/AbsaOSS/spline-spark-agent"
+  private val Producer = s"https://github.com/AbsaOSS/spline-spark-agent/tree/release/${LineageHarvester.SplineVersionInfo.version}"
   private val SchemaUrl = "https://openlineage.io/spec/1-0-2/OpenLineage.json#/$defs/RunEvent"
 
   object EventType {
@@ -92,4 +108,6 @@ object OpenLineageModelMapper {
     val Fail = "FAIL"
   }
 
+  private val SplineEvent = "splineEvent"
+  private val SplinePlan = "splineEvent"
 }

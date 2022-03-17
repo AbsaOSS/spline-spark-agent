@@ -206,12 +206,12 @@ object LineageHarvester {
 
   import za.co.absa.commons.version.Version
 
-  private val SparkVersionInfo = NameAndVersion(
+  val SparkVersionInfo: NameAndVersion = NameAndVersion(
     name = AppMetaInfo.Spark,
     version = spark.SPARK_VERSION
   )
 
-  private val SplineVersionInfo = NameAndVersion(
+  val SplineVersionInfo: NameAndVersion = NameAndVersion(
     name = AppMetaInfo.Spline,
     version = {
       val splineSemver = Version.asSemVer(SplineBuildInfo.Version)

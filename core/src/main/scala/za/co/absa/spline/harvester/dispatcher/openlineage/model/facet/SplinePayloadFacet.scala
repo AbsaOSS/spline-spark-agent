@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.dispatcher.openlindispatcher.model.facet
+package za.co.absa.spline.harvester.dispatcher.openlineage.model.facet
 
 import za.co.absa.spline.producer.model.openlineage.v0_3_1.RunFacet
 
-class SplineLineageFacet(
+class SplinePayloadFacet(
   override val _producer: String,
   override val _schemaURL: String,
-  val executionPlan: AnyRef,
-  val executionEvent: AnyRef,
-  val apiVersion: String
+  val payloadSchemaURL: String,
+  val payload: AnyRef
 ) extends RunFacet(_producer, _schemaURL)

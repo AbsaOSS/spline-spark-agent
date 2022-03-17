@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.dispatcher.openlindispatcher
+package za.co.absa.spline.harvester.dispatcher.openlineage
 
 object RESTResource {
   val Lineage = "lineage"

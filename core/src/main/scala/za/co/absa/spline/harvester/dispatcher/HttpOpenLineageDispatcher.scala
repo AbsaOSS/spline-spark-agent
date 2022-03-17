@@ -21,7 +21,7 @@ import scalaj.http.{Http, HttpStatusException}
 import za.co.absa.commons.version.Version
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest.{RestClient, RestEndpoint}
 import za.co.absa.spline.harvester.dispatcher.modelmapper.{ModelMapper, OpenLineageModelMapper}
-import za.co.absa.spline.harvester.dispatcher.openlindispatcher.{HttpOpenLineageDispatcherConfig, RESTResource}
+import za.co.absa.spline.harvester.dispatcher.openlineage.{HttpOpenLineageDispatcherConfig, RESTResource}
 import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
 import javax.ws.rs.core.MediaType
@@ -51,7 +51,7 @@ class HttpOpenLineageDispatcher(restClient: RestClient, apiVersion: Version, ope
   private val modelMapper = ModelMapper.forApiVersion(apiVersion)
   private val openLineageModelMapper = new OpenLineageModelMapper(modelMapper, apiVersion, openLineageNamespace)
 
-  private var cachedPlan: ExecutionPlan = null
+  private var cachedPlan: ExecutionPlan = _
 
   override def send(plan: ExecutionPlan): Unit = {
     cachedPlan = plan
@@ -89,10 +89,10 @@ class HttpOpenLineageDispatcher(restClient: RestClient, apiVersion: Version, ope
 object HttpOpenLineageDispatcher extends Logging {
   
   private def createDefaultRestClient(config: HttpOpenLineageDispatcherConfig): RestClient = {
-    logInfo(s"Producer URL: ${config.producerUrl}")
+    logInfo(s"Producer URL: ${config.apiUrl}")
     RestClient(
       Http,
-      config.producerUrl,
+      config.apiUrl,
       config.connTimeout,
       config.readTimeout
     )
