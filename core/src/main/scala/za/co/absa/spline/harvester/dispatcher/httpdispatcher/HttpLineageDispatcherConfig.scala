@@ -27,22 +27,11 @@ object HttpLineageDispatcherConfig {
   val ConnectionTimeoutMsKey = "timeout.connection"
   val ReadTimeoutMsKey = "timeout.read"
 
-  val DefaultConnectionTimeout: Duration = 1.second
-  val DefaultReadTimeout: Duration = 20.second
-
   def apply(c: Configuration) = new HttpLineageDispatcherConfig(c)
 }
 
 class HttpLineageDispatcherConfig(config: Configuration) {
   val producerUrl: String = config.getRequiredString(ProducerUrlProperty)
-
-  val connTimeout: Duration = config
-    .getOptionalLong(ConnectionTimeoutMsKey)
-    .map(_.millis)
-    .getOrElse(DefaultConnectionTimeout)
-
-  val readTimeout: Duration = config
-    .getOptionalLong(ReadTimeoutMsKey)
-    .map(_.millis)
-    .getOrElse(DefaultReadTimeout)
+  val connTimeout: Duration = config.getRequiredLong(ConnectionTimeoutMsKey).millis
+  val readTimeout: Duration = config.getRequiredLong(ReadTimeoutMsKey).millis
 }
