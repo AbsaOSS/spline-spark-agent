@@ -22,4 +22,6 @@ object SplineHttpHeaders {
   val ApiVersion = s"$Prefix-API-Version"
   val ApiLTSVersion = s"$Prefix-API-LTS-Version"
   val AcceptRequestEncoding = s"$Prefix-Accept-Request-Encoding"
+
+  val Timeout = "X-SPLINE-TIMEOUT"
 }
