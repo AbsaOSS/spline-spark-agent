@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.dispatcher
+package za.co.absa.commons
 
-object SplineHeaders {
-  private val Prefix = "ABSA-Spline"
+object ThrowableImplicits {
 
-  // Common
-  val ApiVersion = s"$Prefix-API-Version"
-  val ApiLTSVersion = s"$Prefix-API-LTS-Version"
+  implicit class ThrowableOps(val e: Throwable) extends AnyVal {
 
-  // Http specific
-  val AcceptRequestEncoding = s"$Prefix-Accept-Request-Encoding"
-  val Timeout = "X-SPLINE-TIMEOUT"
+    def toShortString: String = {
+      val stackTrace = e.getStackTrace
 
-  // Kafka specific
-  val SplineEntityType = s"$Prefix-Entity-Type"
-  val SpringClassId = "__TypeId__"
+      if (stackTrace != null && stackTrace.nonEmpty)
+        s"${e.getMessage} at ${stackTrace(0)}"
+      else
+        s"${e.getMessage} (no stack trace available)"
+    }
+
+  }
 }

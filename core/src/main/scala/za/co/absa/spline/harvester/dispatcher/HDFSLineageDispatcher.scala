@@ -49,7 +49,7 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
 
   def this(conf: Configuration) = this(
     filename = conf.getRequiredString(FileNameKey),
-    permission = new FsPermission(conf.getOptionalString(FilePermissionsKey).getOrElse(DefaultFilePermission.toShort.toString)),
+    permission = new FsPermission(conf.getRequiredString(FilePermissionsKey)),
     bufferSize = conf.getRequiredInt(BufferSizeKey)
   )
 
@@ -106,8 +106,6 @@ object HDFSLineageDispatcher {
   private val FilePermissionsKey = "filePermissions"
   private val BufferSizeKey = "fileBufferSize"
 
-  private val DefaultFilePermission = new FsPermission("777")
-
   /**
    * Converts string full path to Hadoop FS and Path, e.g.
    * `s3://mybucket1/path/to/file` -> S3 FS + `path/to/file`
@@ -117,7 +115,7 @@ object HDFSLineageDispatcher {
    *
    * @param pathString path to convert to FS and relative path
    * @return FS + relative path
-   **/
+   */
   def pathStringToFsWithPath(pathString: String): (FileSystem, Path) = {
     pathString.toSimpleS3Location match {
       case Some(s3Location) =>

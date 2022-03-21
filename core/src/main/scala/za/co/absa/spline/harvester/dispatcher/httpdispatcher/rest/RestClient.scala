@@ -18,6 +18,7 @@ package za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest
 
 import org.apache.spark.internal.Logging
 import scalaj.http.BaseHttp
+import za.co.absa.spline.harvester.dispatcher.httpdispatcher.SplineHttpHeaders
 
 import scala.concurrent.duration.Duration
 
@@ -47,6 +48,7 @@ object RestClient extends Logging {
       override def endpoint(resource: String): RestEndpoint = new RestEndpoint(
         baseHttp(s"$baseURL/$resource")
           .timeout(connectionTimeout.toMillis.toInt, readTimeout.toMillis.toInt)
+          .header(SplineHttpHeaders.Timeout, readTimeout.toMillis.toString)
           .compress(true))
     }
   }
