@@ -28,13 +28,7 @@ object OpenLineageUriMapper {
     (namespace, name)
   }
 
-  private def preProcessUri(uri: String): String = {
-    val jdbcSchema = "jdbc:"
-
-    if (uri.startsWith(jdbcSchema)){
-      uri.substring(jdbcSchema.length)
-    }
-    else uri
-  }
+  private def preProcessUri(uri: String): String =
+    uri.stripPrefix("jdbc:")
 
 }
