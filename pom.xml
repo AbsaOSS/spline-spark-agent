@@ -571,6 +571,7 @@
                 <module>bundle-2.4</module>
                 <module>bundle-3.0</module>
                 <module>bundle-3.1</module>
+                <module>bundle-3.2</module>
             </modules>
         </profile>
 
