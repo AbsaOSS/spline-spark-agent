@@ -104,7 +104,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           (plan, _) <- captor.lineageOf(df.write.save(tmpPath))
         } yield {
           val write = plan.operations.write
-          write.id shouldBe("op-0")
+          write.id shouldBe "op-0"
           write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
           write.childIds should be(Seq("op-1"))
           write.outputSource should be(s"file:$tmpPath")
@@ -115,7 +115,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
 
           plan.operations.other.get.size should be(1)
 
-          val op = plan.operations.other.get(0)
+          val op = plan.operations.other.get.head
           op.id should be("op-1")
           op.name should contain("LocalRelation")
           op.childIds should not be defined
@@ -144,7 +144,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           (plan, _) <- captor.lineageOf(df.write.save(tmpPath))
         } yield {
           val write = plan.operations.write
-          write.id shouldBe("op-0")
+          write.id shouldBe "op-0"
           write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
           write.childIds should be(Seq("op-1"))
           write.outputSource should be(s"file:$tmpPath")
@@ -156,7 +156,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
 
           plan.operations.other.get.size should be(3)
 
-          val localRelation = plan.operations.other.get(0)
+          val localRelation = plan.operations.other.get.head
           localRelation.id should be("op-3")
           localRelation.name should contain("LocalRelation")
           localRelation.childIds should not be defined
@@ -204,7 +204,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
         for {
           (plan, _) <- captor.lineageOf(df.write.save(tmpPath))
         } yield {
-          implicit val walker = LineageWalker(plan)
+          implicit val walker: LineageWalker = LineageWalker(plan)
 
           val write = plan.operations.write
           write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
@@ -219,7 +219,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
 
           val Seq(filter1, maybeFilter2) = union.precedingOps
           filter1.name should contain("Filter")
-          filter1.params.get should contain key ("condition")
+          filter1.params.get should contain key "condition"
 
           val filter2 =
             if (maybeFilter2.name.get == "Project") {
@@ -229,7 +229,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
             }
 
           filter2.name should contain("Filter")
-          filter2.params.get should contain key ("condition")
+          filter2.params.get should contain key "condition"
 
           val localRelation1 = filter1.precedingOp
           localRelation1.name should contain("LocalRelation")
@@ -293,7 +293,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
         for {
           (plan, _) <- captor.lineageOf(df.write.save(tmpPath))
         } yield {
-          implicit val walker = LineageWalker(plan)
+          implicit val walker: LineageWalker = LineageWalker(plan)
 
           val write = plan.operations.write
           write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
@@ -308,11 +308,11 @@ class LineageHarvesterSpec extends AsyncFlatSpec
 
           val Seq(filter, aggregate) = join.precedingOps
           filter.name should contain("Filter")
-          filter.params.get should contain key("condition")
+          filter.params.get should contain key "condition"
 
           aggregate.name should contain("Aggregate")
-          aggregate.params.get should contain key("groupingExpressions")
-          aggregate.params.get should contain key("aggregateExpressions")
+          aggregate.params.get should contain key "groupingExpressions"
+          aggregate.params.get should contain key "aggregateExpressions"
 
           val project = aggregate.precedingOp
           project.name should contain("Project")
@@ -382,7 +382,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
 
               val otherOperations = plan.operations.other.get.sortBy(_.id)
 
-              val firstOperation = otherOperations(0)
+              val firstOperation = otherOperations.head
               firstOperation.id shouldEqual "op-1"
               firstOperation.childIds.get shouldEqual Seq("op-2")
               firstOperation.name shouldEqual Some("Project")

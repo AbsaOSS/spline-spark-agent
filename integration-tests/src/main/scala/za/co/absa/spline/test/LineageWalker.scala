@@ -25,14 +25,14 @@ class LineageWalker(
   attrMap: Map[String, Attribute]
 ) {
 
-  def attributeById(attributeId: String): Attribute = attrMap(attributeId);
+  def attributeById(attributeId: String): Attribute = attrMap(attributeId)
 
   def precedingOp(op: DataOperation): DataOperation = {
-    opMap(op.childIds.get(0))
+    opMap(op.childIds.get.head)
   }
 
   def precedingOp(write: WriteOperation): DataOperation = {
-    opMap(write.childIds(0))
+    opMap(write.childIds.head)
   }
 
   def precedingOps(op: DataOperation): Seq[DataOperation] = {
@@ -48,9 +48,7 @@ class LineageWalker(
   }
 
   private def dependsOnRec(maybeRefs: Option[Seq[AttrOrExprRef]], id: String): Boolean =
-    maybeRefs
-      .map(_.exists(dependsOnRec(_, id)))
-      .getOrElse(false)
+    maybeRefs.exists(_.exists(dependsOnRec(_, id)))
 
   private def dependsOnRec(ref: AttrOrExprRef, id: String): Boolean = ref match {
     case AttrOrExprRef(Some(attrIfd), _) =>
