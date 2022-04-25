@@ -1384,7 +1384,7 @@
                     <dependency>
                         <groupId>io.netty</groupId>
                         <artifactId>netty-all</artifactId>
-                        <version>4.0.43.Final</version>
+                        <version>4.1.42.Final</version>
                     </dependency>
                     <dependency>
                         <groupId>org.objenesis</groupId>
@@ -2492,7 +2492,7 @@
                     <dependency>
                         <groupId>io.netty</groupId>
                         <artifactId>netty-all</artifactId>
-                        <version>4.1.17.Final</version>
+                        <version>4.1.42.Final</version>
                     </dependency>
                     <dependency>
                         <groupId>org.objenesis</groupId>
@@ -3610,7 +3610,7 @@
                     <dependency>
                         <groupId>io.netty</groupId>
                         <artifactId>netty-all</artifactId>
-                        <version>4.1.17.Final</version>
+                        <version>4.1.42.Final</version>
                     </dependency>
                     <dependency>
                         <groupId>org.objenesis</groupId>
@@ -4808,7 +4808,7 @@
                     <dependency>
                         <groupId>io.netty</groupId>
                         <artifactId>netty-all</artifactId>
-                        <version>4.1.47.Final</version>
+                        <version>4.1.42.Final</version>
                     </dependency>
                     <dependency>
                         <groupId>org.objenesis</groupId>
@@ -6176,7 +6176,7 @@
                     <dependency>
                         <groupId>io.netty</groupId>
                         <artifactId>netty-all</artifactId>
-                        <version>4.1.51.Final</version>
+                        <version>4.1.42.Final</version>
                     </dependency>
                     <dependency>
                         <groupId>com.nimbusds</groupId>
@@ -7354,7 +7354,7 @@
                     <dependency>
                         <groupId>io.netty</groupId>
                         <artifactId>netty-all</artifactId>
-                        <version>4.1.68.Final</version>
+                        <version>4.1.42.Final</version>
                     </dependency>
                     <dependency>
                         <groupId>org.objenesis</groupId>
