@@ -53,6 +53,37 @@
             <artifactId>spark-sql_${scala.binary.version}</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.scalaj</groupId>
+            <artifactId>scalaj-http_${scala.binary.version}</artifactId>
+            <version>2.4.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.classgraph</groupId>
+            <artifactId>classgraph</artifactId>
+            <version>4.8.116</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-graph</groupId>
+            <artifactId>graph-core_${scala.binary.version}</artifactId>
+            <version>1.12.5</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.uuid</groupId>
+            <artifactId>java-uuid-generator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.lihaoyi</groupId>
+            <artifactId>fastparse_${scala.binary.version}</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.bfil</groupId>
+            <artifactId>automapper_${scala.binary.version}</artifactId>
+            <version>${automapper.version}</version>
+        </dependency>
+
+        <!-- optional dependencies (for plugins) -->
+
+        <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-hive_${scala.binary.version}</artifactId>
             <optional>true</optional>
@@ -78,29 +109,6 @@
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>org.json4s</groupId>
-            <artifactId>json4s-ext_${scala.binary.version}</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.scalaj</groupId>
-            <artifactId>scalaj-http_${scala.binary.version}</artifactId>
-            <version>2.4.2</version>
-        </dependency>
-        <dependency>
-            <groupId>io.github.classgraph</groupId>
-            <artifactId>classgraph</artifactId>
-            <version>4.8.138</version>
-        </dependency>
-        <dependency>
-            <groupId>org.scala-graph</groupId>
-            <artifactId>graph-core_${scala.binary.version}</artifactId>
-            <version>1.12.5</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.uuid</groupId>
-            <artifactId>java-uuid-generator</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.datastax.spark</groupId>
             <artifactId>spark-cassandra-connector_${scala.binary.version}</artifactId>
             <optional>true</optional>
@@ -120,14 +128,13 @@
             <artifactId>spark-cobol_${scala.binary.version}</artifactId>
             <optional>true</optional>
         </dependency>
+
+        <!-- test scope -->
+
         <dependency>
-            <groupId>com.lihaoyi</groupId>
-            <artifactId>fastparse_${scala.binary.version}</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.bfil</groupId>
-            <artifactId>automapper_${scala.binary.version}</artifactId>
-            <version>${automapper.version}</version>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-ext_${scala.binary.version}</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

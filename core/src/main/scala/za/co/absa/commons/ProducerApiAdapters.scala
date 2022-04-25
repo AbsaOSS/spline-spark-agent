@@ -18,6 +18,8 @@ package za.co.absa.commons
 
 import za.co.absa.spline.producer.model.{DataOperation, Operations, ReadOperation}
 
+import scala.language.reflectiveCalls
+
 object ProducerApiAdapters {
 
   type OperationLike = {
@@ -27,7 +29,7 @@ object ProducerApiAdapters {
     def extra: Option[Map[String, Any]]
   }
 
-  implicit class OperationsAdapter(op: Operations) {
+  implicit class OperationsAdapter(val op: Operations) extends AnyVal {
     def all: Seq[OperationLike] =
       Seq(
         Seq(op.write),
@@ -36,7 +38,7 @@ object ProducerApiAdapters {
       ).flatten.map(_.asInstanceOf[OperationLike])
   }
 
-  implicit class OperationLikeAdapter(op: OperationLike) {
+  implicit class OperationLikeAdapter(val op: OperationLike) extends AnyVal {
     def childIdList: Seq[_] = op.childIds match {
       case ids: Seq[_] => ids
       case Some(ids: Seq[_]) => ids
