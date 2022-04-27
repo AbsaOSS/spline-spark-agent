@@ -229,6 +229,7 @@
                     <excludes combine.children="append">
                         <exclude>**/*.mock</exclude>
                         <exclude>**/*.iml</exclude>
+                        <exclude>.editorconfig</exclude>
                     </excludes>
                 </configuration>
             </plugin>
