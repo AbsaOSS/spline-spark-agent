@@ -96,8 +96,7 @@ object ObjectStructureDumper {
                 try {
                   extractFieldValue(value, f.getName)
                 } catch {
-                  case e: LinkageError => s"! error occurred: ${e.toShortString}"
-                  case NonFatal(e) => s"! error occurred: ${e.toShortString}"
+                  case e @ (_:LinkageError | NonFatal(_)) => s"! error occurred: ${e.toShortString}"
                 }
               ObjectBox(subValue, f.getName, f.getType.getName, depth + 1)
             }.toList
