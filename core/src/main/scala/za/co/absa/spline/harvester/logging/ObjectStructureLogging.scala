@@ -37,9 +37,13 @@ trait ObjectStructureLogging {
     obj: AnyRef,
     logFunction: String => Unit,
     logFunctionThrowable: (String, Throwable) => Unit
-  ): Unit =
-    Try(ObjectStructureDumper.dump(obj)) match {
-      case Success(s) => logFunction(s)
-      case Failure(e) => logFunctionThrowable(s"Attempt to dump structure of ${obj.getClass} failed", e)
+  ): Unit = {
+    try {
+      val structureString = ObjectStructureDumper.dump(obj)
+      logFunction(structureString)
+    } catch {
+      case e @ (_: LinkageError | NonFatal(_)) =>
+        logFunctionThrowable(s"Attempt to dump structure of ${obj.getClass} failed", e)
     }
+  }
 }

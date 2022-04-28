@@ -40,7 +40,7 @@ class PluggableReadCommandExtractor(
         if processFn.isDefinedAt(operation) =>
         processFn(operation)
     }.map({
-      case (SourceIdentifier(maybeFormat, uris@_*), params) =>
+      case (SourceIdentifier(maybeFormat, uris @ _*), params) =>
         val maybeResolvedFormat = maybeFormat.map(dataSourceFormatResolver.resolve)
         val sourceId = SourceIdentifier(maybeResolvedFormat, uris: _*)
         ReadCommand(sourceId, operation, params)

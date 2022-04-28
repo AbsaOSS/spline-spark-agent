@@ -46,7 +46,7 @@ class PluggableWriteCommandExtractor(
     if (maybeCapturedResult.isEmpty) alertWhenUnimplementedCommand(operation)
 
     maybeCapturedResult.map({
-      case (SourceIdentifier(maybeFormat, uris@_*), mode, plan, params) =>
+      case (SourceIdentifier(maybeFormat, uris @ _*), mode, plan, params) =>
         val maybeResolvedFormat = maybeFormat.map(dataSourceFormatResolver.resolve)
         val sourceId = SourceIdentifier(maybeResolvedFormat, uris: _*)
         WriteCommand(operation.nodeName, sourceId, mode, plan, params)
