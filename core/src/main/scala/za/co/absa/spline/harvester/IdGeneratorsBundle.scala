@@ -29,13 +29,14 @@ class IdGeneratorsBundle(execPlanUUIDGeneratorFactory: UUIDGeneratorFactory[UUID
   val operationIdGenerator: IdGenerator[Any, String] = new SequentialIdGenerator(OperationIdTemplate)
   val dataTypeIdGenerator: IdGenerator[Any, UUID] =
     new ComposableIdGenerator(
-      new SequentialIdGenerator("{0}"),
+      new SequentialIdGenerator(NumberTemplate),
       new UUID5IdGenerator[String](UUIDNamespace.DataType)
     )
 }
 
 object IdGeneratorsBundle {
-  val AttributeIdTemplate = "attr-{0}"
-  val ExpressionIdTemplate = "expr-{0}"
-  val OperationIdTemplate = "op-{0}"
+  val NumberTemplate = "{0,number,#}"
+  val AttributeIdTemplate = s"attr-$NumberTemplate"
+  val ExpressionIdTemplate = s"expr-$NumberTemplate"
+  val OperationIdTemplate = s"op-$NumberTemplate"
 }

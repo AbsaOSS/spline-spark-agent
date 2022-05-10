@@ -22,6 +22,8 @@ import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.spline.harvester.IdGenerator.UUIDGeneratorFactory
 import za.co.absa.spline.producer.model.v1_1.ExecutionPlan
 
+import java.text.MessageFormat
+
 class IdGeneratorsBundleSpec
   extends AnyFlatSpec
     with Matchers
@@ -30,7 +32,6 @@ class IdGeneratorsBundleSpec
   behavior of "dataTypeIdGenerator"
 
   it should "generate deterministic sequence of unique ID" in {
-
     val execPlanUUIDGeneratorFactoryMock = mock[UUIDGeneratorFactory[Any, ExecutionPlan]]
 
     val gen1 = new IdGeneratorsBundle(execPlanUUIDGeneratorFactoryMock).dataTypeIdGenerator
@@ -41,6 +42,26 @@ class IdGeneratorsBundleSpec
 
     seq1 shouldEqual seq2
     seq1.distinct.length shouldBe 10
+  }
+
+  // https://github.com/AbsaOSS/spline-spark-agent/issues/431
+  it should "properly format integers >= 1000 in ID strings" in {
+    val execPlanUUIDGeneratorFactoryMock = mock[UUIDGeneratorFactory[Any, ExecutionPlan]]
+    val idGenBundle = new IdGeneratorsBundle(execPlanUUIDGeneratorFactoryMock)
+
+    val gen1 = idGenBundle.attributeIdGenerator
+    val gen2 = idGenBundle.expressionIdGenerator
+    val gen3 = idGenBundle.operationIdGenerator
+
+    (1 to 1000).foreach(_ => {
+      gen1.nextId()
+      gen2.nextId()
+      gen3.nextId()
+    })
+
+    new MessageFormat(IdGeneratorsBundle.AttributeIdTemplate).parse(gen1.nextId()).head shouldBe 1000
+    new MessageFormat(IdGeneratorsBundle.ExpressionIdTemplate).parse(gen2.nextId()).head shouldBe 1000
+    new MessageFormat(IdGeneratorsBundle.OperationIdTemplate).parse(gen3.nextId()).head shouldBe 1000
   }
 
 }
