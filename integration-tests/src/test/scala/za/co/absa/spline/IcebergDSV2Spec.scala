@@ -42,11 +42,6 @@ class IcebergDSV2Spec extends AsyncFlatSpec
         withLineageTracking { lineageCaptor =>
           spark.sql("CREATE TABLE iceberg_catalog.foo (id bigint, data string) USING iceberg;")
 
-          spark
-            .catalog
-            .listDatabases
-            .show(truncate = false)
-
           for {
             (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
               spark.sql("INSERT INTO iceberg_catalog.foo VALUES (1, 'a'), (2, 'b'), (3, 'c');")
@@ -73,13 +68,8 @@ class IcebergDSV2Spec extends AsyncFlatSpec
           spark.sql("CREATE TABLE iceberg_catalog.bar (id bigint, data string) USING iceberg;")
           spark.sql("CREATE TABLE iceberg_catalog.baz (id bigint, data string) USING iceberg;")
 
-          spark
-            .catalog
-            .listDatabases
-            .show(truncate = false)
-
           for {
-            (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
+            (_, Seq(_)) <- lineageCaptor.lineageOf {
               spark.sql("INSERT INTO iceberg_catalog.bar VALUES (1, 'a'), (2, 'b'), (3, 'c');")
             }
             (plan2, Seq(event2)) <- lineageCaptor.lineageOf {
