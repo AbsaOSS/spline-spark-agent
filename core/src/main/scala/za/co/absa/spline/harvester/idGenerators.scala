@@ -53,10 +53,11 @@ class ComposableIdGenerator[-A, B, +C](idGen1: IdGenerator[A, B], idGen2: IdGene
 }
 
 abstract class HashBasedUUIDGenerator[-A <: AnyRef](namespace: UUID, hashAlgorithm: String) extends IdGenerator[A, UUID] {
+  private val digest = MessageDigest.getInstance(hashAlgorithm)
+  private val generator = Generators.nameBasedGenerator(namespace, digest)
+
   override def nextId(entity: A): UUID = {
     val input = entity.toJson
-    val digest = MessageDigest.getInstance(hashAlgorithm)
-    val generator = Generators.nameBasedGenerator(namespace, digest)
     generator.generate(input)
   }
 }

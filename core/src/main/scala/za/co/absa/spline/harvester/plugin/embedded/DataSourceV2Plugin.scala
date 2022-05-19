@@ -25,6 +25,7 @@ import za.co.absa.spline.harvester.plugin.Plugin.{Params, Precedence, ReadNodeIn
 import za.co.absa.spline.harvester.plugin.embedded.DataSourceV2Plugin._
 import za.co.absa.spline.harvester.plugin.{Plugin, ReadNodeProcessing, WriteNodeProcessing}
 
+import java.net.URI
 import javax.annotation.Priority
 import scala.language.reflectiveCalls
 import scala.util.Try
@@ -138,18 +139,25 @@ class DataSourceV2Plugin
       val name = extractFieldValue[AnyRef](metadata, "name")
       SourceIdentifier(Some("cassandra"), s"cassandra:$keyspace:$name")
 
-    case `_: DeltaTableV2`(dt) => extractSourceIdFromDeltaTableV2(dt)
     case `_: DatabricksDeltaTableV2`(dt) => extractSourceIdFromDeltaTableV2(dt)
 
     case `_: FileTable`(ft) =>
       val format = extractFieldValue[String](ft, "formatName").toLowerCase
       val paths = extractFieldValue[Seq[String]](ft, "paths")
       SourceIdentifier(Some(format), paths: _*)
+
+    case `_: TableV2`(tv2) => extractSourceIdFromDeltaTableV2(tv2)
   }
 
   private def extractSourceIdFromDeltaTableV2(table: AnyRef): SourceIdentifier = {
     val tableProps = extractFieldValue[java.util.Map[String, String]](table, "properties")
-    val uri = tableProps.get("location")
+    val location = tableProps.get("location")
+    val uri =
+      if(URI.create(location).getScheme == null) {
+        s"file:$location"
+      } else {
+        location
+      }
     val provider = tableProps.get("provider")
     SourceIdentifier(Some(provider), uri)
   }
@@ -183,13 +191,14 @@ object DataSourceV2Plugin {
   object `_: FileTable` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.execution.datasources.v2.FileTable")
 
-  object `_: DeltaTableV2` extends SafeTypeMatchingExtractor[AnyRef](
-    "org.apache.spark.sql.delta.catalog.DeltaTableV2")
-
   object `_: DatabricksDeltaTableV2` extends SafeTypeMatchingExtractor[AnyRef](
     "com.databricks.sql.transaction.tahoe.catalog.DeltaTableV2")
 
   object `_: CassandraTable` extends SafeTypeMatchingExtractor[AnyRef](
     "com.datastax.spark.connector.datasource.CassandraTable")
+
+  object `_: TableV2` extends SafeTypeMatchingExtractor[AnyRef](
+    "org.apache.spark.sql.connector.catalog.Table")
+
 
 }

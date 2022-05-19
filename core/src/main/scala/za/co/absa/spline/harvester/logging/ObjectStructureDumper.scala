@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.logging
 import za.co.absa.commons.ThrowableImplicits._
 import za.co.absa.commons.reflect.ReflectionUtils
 
-import java.lang.reflect.Modifier
+import java.lang.reflect.{Field, Modifier}
 import scala.annotation.tailrec
 import scala.util.Random
 import scala.util.control.NonFatal
@@ -89,14 +89,13 @@ object ObjectStructureDumper {
         }
         case _ => {
           val newFields = value.getClass.getDeclaredFields
-            .filter(f => !Set("child", "session")(f.getName))
-            .filter(f => !Modifier.isStatic(f.getModifiers))
+            .filter(!isIgnoredField(_))
             .map { f =>
               val subValue =
                 try {
                   extractFieldValue(value, f.getName)
                 } catch {
-                  case NonFatal(e) => s"! error occurred: ${e.toShortString}"
+                  case e @ (_:LinkageError | NonFatal(_)) => s"! error occurred: ${e.toShortString}"
                 }
               ObjectBox(subValue, f.getName, f.getType.getName, depth + 1)
             }.toList
@@ -118,6 +117,11 @@ object ObjectStructureDumper {
       objectToStringRec(extractFieldValue)(newStack, newVisited, newResult)
     }
   }
+  private def isIgnoredField(f: Field): Boolean = {
+    Set("child", "session")(f.getName) ||
+      Modifier.isStatic(f.getModifiers) ||
+      Modifier.isTransient(f.getModifiers)
+  }
 
   private def isReadyForPrint(value: AnyRef): Boolean = {
     isPrimitiveLike(value) ||
@@ -127,7 +131,8 @@ object ObjectStructureDumper {
       value.isInstanceOf[java.util.Random] ||
       value.isInstanceOf[Random] ||
       value.isInstanceOf[java.lang.Number] ||
-      value.isInstanceOf[Numeric[_]]
+      value.isInstanceOf[Numeric[_]] ||
+      value.isInstanceOf[Class[_]]
   }
 
   private def isPrimitiveLike(value: Any): Boolean = {

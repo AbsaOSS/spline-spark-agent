@@ -59,9 +59,42 @@ class ObjectStructureDumperSpec extends AnyFlatSpec with Matchers with MockitoSu
       ))
   }
 
+  it should "survive linkage errors" in {
+    case class Foo(bar: String, baz: String)
+
+    val foo = Foo("bar", "baz")
+
+    val extractFieldValueFnMock1: ExtractFieldValueFn = mock[ExtractFieldValueFn]
+    Mockito.when(extractFieldValueFnMock1.apply(foo, "bar")).thenThrow(new NoClassDefFoundError("fake"))
+
+    (ObjectStructureDumper.dump(foo, extractFieldValueFnMock1)
+      should (include("bar: java.lang.String = ! error occurred: fake at za.co.absa.spline.harvester.logging.ObjectStructureDumper")
+      and include("baz: java.lang.String = null")
+      ))
+  }
+
   it should "not fail on numbers and Random" in {
     ObjectStructureDumper.dump(new java.util.Random()) should include("java.util.Random")
     ObjectStructureDumper.dump(new Random()) should include("scala.util.Random")
     ObjectStructureDumper.dump(new AtomicInteger(42)) should include("java.util.concurrent.atomic.AtomicInteger")
   }
+
+  it should "not descend into fields of type of Class[_]" in {
+    case class ClassBox(cl: Class[_])
+
+    val classBoxDump = ObjectStructureDumper.dump(ClassBox(classOf[java.net.URI]))
+    classBoxDump should include("java.net.URI")
+    classBoxDump should not include("canonicalName")
+  }
+
+  it should "ignore transient fields" in {
+    class Foo {
+      @transient lazy val bar = "42"
+    }
+
+    val fooDump = ObjectStructureDumper.dump(new Foo)
+    fooDump should not include("bar")
+    fooDump should not include("42")
+  }
+
 }

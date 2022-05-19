@@ -18,20 +18,31 @@ package za.co.absa.spline.harvester.logging
 
 import org.apache.spark.internal.Logging
 
-import scala.util.{Failure, Success, Try}
+import scala.util.control.NonFatal
 
 trait ObjectStructureLogging {
   self: Logging =>
 
   protected def logObjectStructureAsTrace(obj: => AnyRef): Unit =
-    if (log.isTraceEnabled) logObjectStructure(obj, log.trace)
+    if (log.isTraceEnabled) logObjectStructure(obj, log.trace, log.trace)
+
+  protected def logObjectStructureAsWarn(obj: => AnyRef): Unit =
+    if (log.isWarnEnabled) logObjectStructure(obj, log.warn, log.warn)
 
   protected def logObjectStructureAsError(obj: => AnyRef): Unit =
-    if (log.isErrorEnabled) logObjectStructure(obj, log.error)
+    if (log.isErrorEnabled) logObjectStructure(obj, log.error, log.error)
 
-  private def logObjectStructure(obj: AnyRef, logFunction: String => Unit): Unit =
-    Try(ObjectStructureDumper.dump(obj)) match {
-      case Success(s) => logFunction(s)
-      case Failure(e) => log.error(s"Attempt to dump structure of ${obj.getClass} failed", e)
+  private def logObjectStructure(
+    obj: AnyRef,
+    logFunction: String => Unit,
+    logFunctionThrowable: (String, Throwable) => Unit
+  ): Unit = {
+    try {
+      val structureString = ObjectStructureDumper.dump(obj)
+      logFunction(structureString)
+    } catch {
+      case e @ (_: LinkageError | NonFatal(_)) =>
+        logFunctionThrowable(s"Attempt to dump structure of ${obj.getClass} failed", e)
     }
+  }
 }

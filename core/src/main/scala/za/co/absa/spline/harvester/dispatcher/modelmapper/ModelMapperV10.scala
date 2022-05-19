@@ -109,8 +109,8 @@ object ModelMapperV10 extends ModelMapper[v1_0.ExecutionPlan, v1_0.ExecutionEven
       )
 
     def toV1OperationId(opIdV11: String): Int = {
-      val Array(opIdV1Str: String) = new MessageFormat(IdGeneratorsBundle.OperationIdTemplate).parse(opIdV11)
-      opIdV1Str.toInt
+      val Array(opIdV1: Number) = new MessageFormat(IdGeneratorsBundle.OperationIdTemplate).parse(opIdV11)
+      opIdV1.intValue()
     }
 
     def toV1SystemInfo(nav: NameAndVersion) = v1_0.SystemInfo(nav.name, nav.version)
