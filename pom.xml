@@ -929,7 +929,7 @@
                     <dependency>
                         <groupId>com.google.code.gson</groupId>
                         <artifactId>gson</artifactId>
-                        <version>2.2.4</version>
+                        <version>2.8.9</version>
                     </dependency>
                     <dependency>
                         <groupId>com.google.inject</groupId>
@@ -2017,7 +2017,7 @@
                     <dependency>
                         <groupId>com.google.code.gson</groupId>
                         <artifactId>gson</artifactId>
-                        <version>2.2.4</version>
+                        <version>2.8.9</version>
                     </dependency>
                     <dependency>
                         <groupId>com.google.inject</groupId>
@@ -3135,7 +3135,7 @@
                     <dependency>
                         <groupId>com.google.code.gson</groupId>
                         <artifactId>gson</artifactId>
-                        <version>2.2.4</version>
+                        <version>2.8.9</version>
                     </dependency>
                     <dependency>
                         <groupId>com.google.inject</groupId>
@@ -4248,7 +4248,7 @@
                     <dependency>
                         <groupId>com.google.code.gson</groupId>
                         <artifactId>gson</artifactId>
-                        <version>2.2.4</version>
+                        <version>2.8.9</version>
                     </dependency>
                     <dependency>
                         <groupId>com.google.inject</groupId>
@@ -5466,7 +5466,7 @@
                     <dependency>
                         <groupId>com.google.code.gson</groupId>
                         <artifactId>gson</artifactId>
-                        <version>2.2.4</version>
+                        <version>2.8.9</version>
                     </dependency>
                     <dependency>
                         <groupId>com.google.inject</groupId>
@@ -6814,7 +6814,7 @@
                     <dependency>
                         <groupId>com.google.code.gson</groupId>
                         <artifactId>gson</artifactId>
-                        <version>2.2.4</version>
+                        <version>2.8.9</version>
                     </dependency>
                     <dependency>
                         <groupId>com.google.guava</groupId>
