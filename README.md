@@ -62,13 +62,12 @@ versions is dropped, we'll increment the _Major_ version component.
 <a id="compat-matrix"></a>
 ### Spark / Scala version compatibility matrix
 
-|              | Scala 2.11                 | Scala 2.12 |
-|--------------|:--------------------------:|:----------:|
-|**Spark 2.2** | (no SQL; no codeless init) | &mdash;    |
-|**Spark 2.3** | (no Delta support)         | &mdash;    |
-|**Spark 2.4** | Yes                        | Yes        |
-|**Spark 3.0** | &mdash;                    | Yes        |
-|**Spark 3.1** | &mdash;                    | Yes        |
+|                        | Scala 2.11                 | Scala 2.12 |
+|------------------------|:--------------------------:|:----------:|
+| **Spark 2.2**          | (no SQL; no codeless init) | &mdash;    |
+| **Spark 2.3**          | (no Delta support)         | &mdash;    |
+| **Spark 2.4**          | Yes                        | Yes        |
+| **Spark 3.0 or newer** | &mdash;                    | Yes        |
 
 <a id="usage"></a>
 ## Usage
