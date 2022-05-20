@@ -22,7 +22,7 @@ import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.harvester.postprocessing.CompositePostProcessingFilter.FiltersKey
 import za.co.absa.spline.producer.model._
 
-class CompositePostProcessingFilter(delegatees: Seq[PostProcessingFilter])
+class CompositePostProcessingFilter(val delegatees: Seq[PostProcessingFilter])
   extends PostProcessingFilter
     with Logging {
 

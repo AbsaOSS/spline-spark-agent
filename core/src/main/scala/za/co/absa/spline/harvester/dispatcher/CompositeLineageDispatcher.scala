@@ -24,7 +24,7 @@ import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
 import scala.util.control.NonFatal
 
-class CompositeLineageDispatcher(delegatees: Seq[LineageDispatcher], failOnErrors: Boolean)
+class CompositeLineageDispatcher(val delegatees: Seq[LineageDispatcher], failOnErrors: Boolean)
   extends LineageDispatcher
     with Logging {
 
