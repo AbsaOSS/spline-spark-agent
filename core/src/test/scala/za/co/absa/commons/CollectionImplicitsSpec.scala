@@ -16,6 +16,7 @@
 
 package za.co.absa.commons
 
+import org.scalatest.TryValues._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.CollectionImplicits._
@@ -36,5 +37,26 @@ class CollectionImplicitsSpec
     (Map.empty[String, Int] |+| Map.empty[String, Int]) should be(empty)
     (Map.empty[String, Int] |+| Map("a" -> 1)) should equal(Map("a" -> 1))
     (Map("a" -> 1) |+| Map.empty[String, Int]) should equal(Map("a" -> 1))
+  }
+
+  behavior of "SeqOps.tryReduce"
+
+  it should "require non-empty input" in {
+    an[UnsupportedOperationException] should be thrownBy Nil.tryReduce(identity[Nothing])
+  }
+
+  it should "map a sequence on a given function and wrap a result in Try.Success" in {
+    Seq(1, 2, 3).tryReduce(2./).success.value shouldEqual Seq(2, 1, 2 / 3)
+  }
+
+  it should "skip items on which a mapping function fails" in {
+    Seq(0, 1, 2).tryReduce(2./).success.value shouldEqual Seq(2, 1) // 2 divided by 0 fails and is skipped
+    Seq(-1, 0, 1).tryReduce(2./).success.value shouldEqual Seq(-2, 2) // 2 divided by 0 fails and is skipped
+    Seq(-2, -1, 0).tryReduce(2./).success.value shouldEqual Seq(-1, -2) // 2 divided by 0 fails and is skipped
+  }
+
+  it should "return the first Try.Failure if a function failed on all items" in {
+    Seq(1).tryReduce(_ => sys.error(s"the error")).failure.exception.getMessage shouldEqual "the error"
+    Seq(1, 2).tryReduce(i => sys.error(s"meh $i")).failure.exception.getMessage shouldEqual "meh 1"
   }
 }
