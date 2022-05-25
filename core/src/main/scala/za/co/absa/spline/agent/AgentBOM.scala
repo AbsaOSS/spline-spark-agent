@@ -61,12 +61,12 @@ object AgentBOM {
     }
 
     override lazy val postProcessingFilter: Option[PostProcessingFilter] = {
-      val nonDefaultRefs = configs.flatMap(getOptionalObject(_, ConfProperty.RootPostProcessingFilter))
+      val nonDefaultRefs = configs.flatMap(_.getOptionalObject[AnyRef](ConfProperty.RootPostProcessingFilter))
       val refs =
         if(nonDefaultRefs.nonEmpty) {
           nonDefaultRefs
         } else {
-          getOptionalObject(defaultConfig, ConfProperty.RootPostProcessingFilter)
+          defaultConfig.getOptionalObject(ConfProperty.RootPostProcessingFilter)
             .map(Seq(_))
             .getOrElse(Seq.empty)
         }
@@ -81,7 +81,7 @@ object AgentBOM {
     }
 
     override lazy val lineageDispatcher: LineageDispatcher = {
-      val nonDefaultRefs = configs.flatMap(getOptionalObject(_, ConfProperty.RootLineageDispatcher))
+      val nonDefaultRefs = configs.flatMap(_.getOptionalObject(ConfProperty.RootLineageDispatcher))
       val refs=
         if(nonDefaultRefs.nonEmpty) {
           nonDefaultRefs
@@ -109,14 +109,6 @@ object AgentBOM {
           .child(key)
           .child(objName)
           .instantiate[A]()
-    }
-
-    // CODE REVIEW NOTE: will be replace by commons version once it's available
-    private def getOptionalObject(conf: Configuration, key: String): Option[AnyRef] = {
-      if (conf.containsKey(key))
-        Option(conf.getProperty(key))
-      else
-        None
     }
   }
 }
