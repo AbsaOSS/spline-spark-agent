@@ -28,7 +28,6 @@ import za.co.absa.spline.harvester.postprocessing.{CompositePostProcessingFilter
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
-import scala.util.Try
 
 
 private[spline] trait AgentBOM {
@@ -42,12 +41,11 @@ private[spline] trait AgentBOM {
 
 object AgentBOM {
 
-  import za.co.absa.commons.CollectionImplicits._
   import za.co.absa.commons.ConfigurationImplicits._
   import za.co.absa.commons.config.ConfigurationImplicits._
 
-  def createFrom(configs: Seq[Configuration], sparkSession: SparkSession): AgentBOM = new AgentBOM {
-    private val mergedConfig = new CompositeConfiguration(configs.asJava)
+  def createFrom(defaultConfig: Configuration, configs: Seq[Configuration], sparkSession: SparkSession): AgentBOM = new AgentBOM {
+    private val mergedConfig = new CompositeConfiguration((configs :+ defaultConfig).asJava)
     private val objectFactory = new HierarchicalObjectFactory(mergedConfig, sparkSession)
 
     override def splineMode: SplineMode = {
@@ -63,15 +61,36 @@ object AgentBOM {
     }
 
     override lazy val postProcessingFilter: Option[PostProcessingFilter] = {
-      tryObtainAll[PostProcessingFilter](ConfProperty.RootPostProcessingFilter)
-        .map(new CompositePostProcessingFilter(_))
-        .toOption
+      val nonDefaultRefs = configs.flatMap(getOptionalObject(_, ConfProperty.RootPostProcessingFilter))
+      val refs =
+        if(nonDefaultRefs.nonEmpty) {
+          nonDefaultRefs
+        } else {
+          getOptionalObject(defaultConfig, ConfProperty.RootPostProcessingFilter)
+            .map(Seq(_))
+            .getOrElse(Seq.empty)
+        }
+
+      val filters = refs.map(obtain[PostProcessingFilter](ConfProperty.RootPostProcessingFilter, _))
+
+      if (filters.nonEmpty) {
+        Some(new CompositePostProcessingFilter(filters))
+      } else {
+        None
+      }
     }
 
     override lazy val lineageDispatcher: LineageDispatcher = {
-      tryObtainAll[LineageDispatcher](ConfProperty.RootLineageDispatcher)
-        .map(new CompositeLineageDispatcher(_, failOnErrors = false))
-        .get
+      val nonDefaultRefs = configs.flatMap(getOptionalObject(_, ConfProperty.RootLineageDispatcher))
+      val refs=
+        if(nonDefaultRefs.nonEmpty) {
+          nonDefaultRefs
+        } else {
+          Seq(defaultConfig.getRequiredObject[AnyRef](ConfProperty.RootLineageDispatcher))
+        }
+
+      val dispatchers = refs.map(obtain[LineageDispatcher](ConfProperty.RootLineageDispatcher, _))
+      new CompositeLineageDispatcher(dispatchers, failOnErrors = false)
     }
 
     override lazy val iwdStrategy: IgnoredWriteDetectionStrategy = {
@@ -83,12 +102,6 @@ object AgentBOM {
       obtain[A](key, value)
     }
 
-    private def tryObtainAll[A <: AnyRef : ClassTag](key: String): Try[Seq[A]] = {
-      val triedRefs = configs.tryReduce[AnyRef](_.getRequiredObject[AnyRef](key))
-      val triedVals = triedRefs.flatMap(_.tryReduce[A](obtain(key, _)))
-      triedVals
-    }
-
     private def obtain[A <: AnyRef : ClassTag](key: String, value: AnyRef): A = value match {
       case instance: A => instance
       case objName: String =>
@@ -96,6 +109,14 @@ object AgentBOM {
           .child(key)
           .child(objName)
           .instantiate[A]()
+    }
+
+    // CODE REVIEW NOTE: will be replace by commons version once it's available
+    private def getOptionalObject(conf: Configuration, key: String): Option[AnyRef] = {
+      if (conf.containsKey(key))
+        Option(conf.getProperty(key))
+      else
+        None
     }
   }
 }

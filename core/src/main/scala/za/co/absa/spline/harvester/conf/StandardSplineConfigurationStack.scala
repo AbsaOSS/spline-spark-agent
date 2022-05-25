@@ -40,14 +40,15 @@ object StandardSplineConfigurationStack {
   private val PropertiesFileName = "spline.properties"
   private val DefaultPropertiesFileName = "spline.default.properties"
 
-  def apply(sparkSession: SparkSession, userConfig: Configuration = null): Seq[Configuration] = {
+  def defaultConfig: Configuration = new PropertiesConfiguration(StandardSplineConfigurationStack.DefaultPropertiesFileName)
+
+  def configStack(sparkSession: SparkSession, userConfig: Configuration = null): Seq[Configuration] = {
     Seq(
       Some(new HadoopConfiguration(sparkSession.sparkContext.hadoopConfiguration)),
       Some(new SparkConfiguration(sparkSession.sparkContext.getConf)),
       Some(new SystemConfiguration),
       Try(new PropertiesConfiguration(PropertiesFileName)).toOption,
-      Option(userConfig),
-      Some(new PropertiesConfiguration(DefaultPropertiesFileName))
+      Option(userConfig)
     ).flatten
       .map(withBackwardCompatibility)
   }
