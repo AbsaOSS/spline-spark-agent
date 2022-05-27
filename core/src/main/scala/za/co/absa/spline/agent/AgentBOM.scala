@@ -66,7 +66,7 @@ object AgentBOM {
         if(nonDefaultRefs.nonEmpty) {
           nonDefaultRefs
         } else {
-          defaultConfig.getOptionalObject(ConfProperty.RootPostProcessingFilter)
+          defaultConfig.getOptionalObject[AnyRef](ConfProperty.RootPostProcessingFilter)
             .map(Seq(_))
             .getOrElse(Seq.empty)
         }
@@ -81,7 +81,7 @@ object AgentBOM {
     }
 
     override lazy val lineageDispatcher: LineageDispatcher = {
-      val nonDefaultRefs = configs.flatMap(_.getOptionalObject(ConfProperty.RootLineageDispatcher))
+      val nonDefaultRefs = configs.flatMap(_.getOptionalObject[AnyRef](ConfProperty.RootLineageDispatcher))
       val refs=
         if(nonDefaultRefs.nonEmpty) {
           nonDefaultRefs
