@@ -43,6 +43,7 @@ object AgentBOM {
 
   import za.co.absa.commons.ConfigurationImplicits._
   import za.co.absa.commons.config.ConfigurationImplicits._
+  import za.co.absa.commons.lang.OptionImplicits._
 
   def createFrom(defaultConfig: Configuration, configs: Seq[Configuration], sparkSession: SparkSession): AgentBOM = new AgentBOM {
     private val mergedConfig = new CompositeConfiguration((configs :+ defaultConfig).asJava)
@@ -63,7 +64,7 @@ object AgentBOM {
     override lazy val postProcessingFilter: Option[PostProcessingFilter] = {
       val nonDefaultRefs = configs.flatMap(_.getOptionalObject[AnyRef](ConfProperty.RootPostProcessingFilter))
       val refs =
-        if(nonDefaultRefs.nonEmpty) {
+        if (nonDefaultRefs.nonEmpty) {
           nonDefaultRefs
         } else {
           defaultConfig.getOptionalObject[AnyRef](ConfProperty.RootPostProcessingFilter)
@@ -73,17 +74,16 @@ object AgentBOM {
 
       val filters = refs.map(obtain[PostProcessingFilter](ConfProperty.RootPostProcessingFilter, _))
 
-      if (filters.nonEmpty) {
-        Some(new CompositePostProcessingFilter(filters))
-      } else {
-        None
+      filters.asOption.map {
+        case Seq(filter) => filter
+        case fs: Seq[_] => new CompositePostProcessingFilter(fs)
       }
     }
 
     override lazy val lineageDispatcher: LineageDispatcher = {
       val nonDefaultRefs = configs.flatMap(_.getOptionalObject[AnyRef](ConfProperty.RootLineageDispatcher))
-      val refs=
-        if(nonDefaultRefs.nonEmpty) {
+      val refs =
+        if (nonDefaultRefs.nonEmpty) {
           nonDefaultRefs
         } else {
           Seq(defaultConfig.getRequiredObject[AnyRef](ConfProperty.RootLineageDispatcher))
