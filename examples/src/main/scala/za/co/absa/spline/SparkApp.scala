@@ -40,9 +40,11 @@ abstract class SparkApp
   sparkBuilder.config("spark.spline.postProcessingFilter.userExtraMeta.rules",
     """
       |{
-      |  "labels": {
-      |    "tags": [ "example" ] \,
-      |    "appName": { "$js": "session.conf().get('spark.app.name')" }
+      |  "executionPlan": {
+      |    "labels": {
+      |      "tags": [ "example" ] \,
+      |      "appName": { "$js": "session.conf().get('spark.app.name')" }
+      |    }
       |  }
       |}""".stripMargin)
 

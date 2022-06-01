@@ -38,12 +38,4 @@ object CollectionImplicits {
     }
   }
 
-  implicit class SeqOps[A](val xs: Seq[A]) extends AnyVal {
-    def tryReduce[B](fn: A => B): Try[Seq[B]] = xs
-      .map(a => Try(Seq(fn(a))))
-      .reduceLeft[Try[Seq[B]]]({
-        case (Success(bs1), Success(bs2)) => Success(bs1 ++ bs2)
-        case (try1, try2) => if (try2.isSuccess) try2 else try1
-      })
-  }
 }
