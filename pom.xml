@@ -342,6 +342,11 @@
             <version>3.0.2</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.github.bigwheel</groupId>
+            <artifactId>util-backports_${scala.binary.version}</artifactId>
+            <version>2.1</version>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>
@@ -4333,7 +4338,8 @@
                     <dependency>
                         <groupId>org.apache.hive</groupId>
                         <artifactId>hive-exec</artifactId>
-                        <version>2.3.7-core</version>
+                        <classifier>core</classifier>
+                        <version>2.3.7</version>
                     </dependency>
                     <dependency>
                         <groupId>org.apache.hive</groupId>
@@ -5546,7 +5552,8 @@
                     <dependency>
                         <groupId>org.apache.hive</groupId>
                         <artifactId>hive-exec</artifactId>
-                        <version>2.3.7-core</version>
+                        <classifier>core</classifier>
+                        <version>2.3.7</version>
                     </dependency>
                     <dependency>
                         <groupId>org.apache.hive</groupId>
@@ -6839,7 +6846,8 @@
                     <dependency>
                         <groupId>org.apache.hive</groupId>
                         <artifactId>hive-exec</artifactId>
-                        <version>2.3.9-core</version>
+                        <classifier>core</classifier>
+                        <version>2.3.9</version>
                     </dependency>
                     <dependency>
                         <groupId>org.apache.hive</groupId>
