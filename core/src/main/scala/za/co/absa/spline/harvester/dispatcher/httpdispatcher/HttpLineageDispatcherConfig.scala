@@ -18,6 +18,7 @@ package za.co.absa.spline.harvester.dispatcher.httpdispatcher
 
 import org.apache.commons.configuration.Configuration
 import za.co.absa.commons.config.ConfigurationImplicits._
+import za.co.absa.commons.version.Version
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.HttpLineageDispatcherConfig._
 
 import scala.concurrent.duration._
@@ -26,6 +27,9 @@ object HttpLineageDispatcherConfig {
   val ProducerUrlProperty = "producer.url"
   val ConnectionTimeoutMsKey = "timeout.connection"
   val ReadTimeoutMsKey = "timeout.read"
+  val ConfigureUsingServer = "configureUsingServer"
+  val ApiVersion = "api.version"
+  val RequestCompression = "requestCompression"
 
   def apply(c: Configuration) = new HttpLineageDispatcherConfig(c)
 }
@@ -34,4 +38,13 @@ class HttpLineageDispatcherConfig(config: Configuration) {
   val producerUrl: String = config.getRequiredString(ProducerUrlProperty)
   val connTimeout: Duration = config.getRequiredLong(ConnectionTimeoutMsKey).millis
   val readTimeout: Duration = config.getRequiredLong(ReadTimeoutMsKey).millis
+
+  val configureUsingServer: Boolean = config.getRequiredBoolean(ConfigureUsingServer)
+  def apiVersion: Version = stringToVersion(config.getRequiredString(ApiVersion))
+  def requestCompression: Boolean = config.getRequiredBoolean(RequestCompression)
+
+  private def stringToVersion(str: String): Version = str.trim match {
+    case "LATEST" => ProducerApiVersion.SupportedApiRange.Max
+    case s => Version.asSimple(s)
+  }
 }

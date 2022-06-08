@@ -16,10 +16,12 @@
 
 package za.co.absa.spline.harvester.dispatcher
 
+import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.mockito.MockitoSugar
 import scalaj.http._
+import za.co.absa.spline.harvester.dispatcher.httpdispatcher.{HttpLineageDispatcherConfig, ProducerApiVersion}
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest.{RestClient, RestEndpoint}
 import za.co.absa.spline.harvester.exception.SplineInitializationException
 
@@ -30,6 +32,8 @@ class HttpLineageDispatcherSpec extends AnyFlatSpec with MockitoSugar {
   private val restClientMock = mock[RestClient]
   private val httpRequestMock = mock[HttpRequest]
   private val httpResponseMock = mock[HttpResponse[String]]
+  private val httpConfigMock = mock[HttpLineageDispatcherConfig]
+
 
   when(restClientMock.endpoint("status")) thenReturn new RestEndpoint(httpRequestMock)
   when(httpRequestMock.method("HEAD")) thenReturn httpRequestMock
@@ -38,24 +42,45 @@ class HttpLineageDispatcherSpec extends AnyFlatSpec with MockitoSugar {
     when(httpRequestMock.asString) thenReturn httpResponseMock
     when(httpResponseMock.is2xx) thenReturn true
     when(httpResponseMock.headers) thenReturn Map.empty[String, IndexedSeq[String]]
+    when(httpConfigMock.configureUsingServer) thenReturn true
 
-    new HttpLineageDispatcher(restClientMock)
+    new HttpLineageDispatcher(restClientMock, httpConfigMock)
   }
 
   it should "throw when producer is not ready" in {
     when(httpRequestMock.asString) thenReturn httpResponseMock
     when(httpResponseMock.is2xx) thenReturn false
     when(httpResponseMock.is5xx) thenReturn true
+    when(httpConfigMock.configureUsingServer) thenReturn true
 
     assertThrows[SplineInitializationException] {
-      new HttpLineageDispatcher(restClientMock)
+      new HttpLineageDispatcher(restClientMock, httpConfigMock)
     }
   }
 
   it should "throw when connection to producer was not successful" in {
     when(httpRequestMock.asString) thenThrow new RuntimeException
+    when(httpConfigMock.configureUsingServer) thenReturn true
+
     assertThrows[SplineInitializationException] {
-      new HttpLineageDispatcher(restClientMock)
+      new HttpLineageDispatcher(restClientMock, httpConfigMock)
     }
+  }
+
+  it should "not contact server during initialization when configureUsingServer is false" in {
+    val restClientMock = mock[RestClient]
+    val restEndpoint =  mock[RestEndpoint]
+    when(restClientMock.endpoint(anyString())) thenReturn restEndpoint
+
+
+
+    when(httpConfigMock.configureUsingServer) thenReturn false
+    when(httpConfigMock.apiVersion) thenReturn ProducerApiVersion.SupportedApiRange.Max
+    when(httpConfigMock.requestCompression) thenReturn false
+
+
+    new HttpLineageDispatcher(restClientMock, httpConfigMock)
+
+    verifyNoInteractions(restEndpoint)
   }
 }

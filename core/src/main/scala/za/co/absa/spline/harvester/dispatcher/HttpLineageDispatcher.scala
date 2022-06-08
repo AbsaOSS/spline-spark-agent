@@ -36,24 +36,29 @@ import scala.util.control.NonFatal
 /**
  * HttpLineageDispatcher is responsible for sending the lineage data to spline gateway through producer API
  */
-class HttpLineageDispatcher(restClient: RestClient)
+class HttpLineageDispatcher(restClient: RestClient, config: HttpLineageDispatcherConfig)
   extends LineageDispatcher
     with Logging {
 
   import za.co.absa.spline.harvester.dispatcher.HttpLineageDispatcher._
 
-  def this(configuration: Configuration) = this(HttpLineageDispatcher.createDefaultRestClient(configuration))
+  def this(dispatcherConfig: HttpLineageDispatcherConfig) =
+    this(HttpLineageDispatcher.createDefaultRestClient(dispatcherConfig), dispatcherConfig)
+
+  def this(configuration: Configuration) = this(HttpLineageDispatcherConfig(configuration))
 
   private val executionPlansEndpoint = restClient.endpoint(RESTResource.ExecutionPlans)
   private val executionEventsEndpoint = restClient.endpoint(RESTResource.ExecutionEvents)
 
-  private val serverHeaders: Map[String, IndexedSeq[String]] = getServerHeaders(restClient)
-  private val apiVersion: Version = resolveApiVersion(serverHeaders)
-  private val modelMapper = ModelMapper.forApiVersion(apiVersion)
+  private val (apiVersion, requestCompressionSupported) =
+    if(config.configureUsingServer) {
+      val serverHeaders: Map[String, IndexedSeq[String]] = getServerHeaders(restClient)
+      (resolveApiVersion(serverHeaders), resolveRequestCompression(serverHeaders))
+    } else {
+      (config.apiVersion, config.requestCompression)
+    }
 
-  private val requestCompressionSupported: Boolean =
-    serverHeaders(SplineHttpHeaders.AcceptRequestEncoding)
-      .exists(_.toLowerCase == Encoding.GZIP)
+  private val modelMapper = ModelMapper.forApiVersion(apiVersion)
 
   override def send(plan: ExecutionPlan): Unit = {
     val execPlanDTO = modelMapper.toDTO(plan)
@@ -88,8 +93,7 @@ class HttpLineageDispatcher(restClient: RestClient)
 }
 
 object HttpLineageDispatcher extends Logging {
-  private def createDefaultRestClient(c: Configuration): RestClient = {
-    val config = HttpLineageDispatcherConfig(c)
+  private def createDefaultRestClient(config: HttpLineageDispatcherConfig): RestClient = {
     logInfo(s"Producer URL: ${config.producerUrl}")
     RestClient(
       Http,
@@ -124,6 +128,10 @@ object HttpLineageDispatcher extends Logging {
   private def createHttpErrorMessage(msg: String, code: Int, body: String): String = {
     s"$msg. HTTP Response: $code $body"
   }
+
+  private def resolveRequestCompression(serverHeaders: Map[String, IndexedSeq[String]]): Boolean =
+    serverHeaders(SplineHttpHeaders.AcceptRequestEncoding)
+      .exists(_.toLowerCase == Encoding.GZIP)
 
   private def resolveApiVersion(serverHeaders: Map[String, IndexedSeq[String]]): Version = {
     val serverApiVersions =
