@@ -36,29 +36,30 @@ import scala.util.control.NonFatal
 /**
  * HttpLineageDispatcher is responsible for sending the lineage data to spline gateway through producer API
  */
-class HttpLineageDispatcher(restClient: RestClient, config: HttpLineageDispatcherConfig)
+class HttpLineageDispatcher(restClient: RestClient, apiVersionOption: Option[Version], requestCompressionOption: Option[Boolean])
   extends LineageDispatcher
     with Logging {
 
   import za.co.absa.spline.harvester.dispatcher.HttpLineageDispatcher._
 
   def this(dispatcherConfig: HttpLineageDispatcherConfig) =
-    this(HttpLineageDispatcher.createDefaultRestClient(dispatcherConfig), dispatcherConfig)
+    this(
+      HttpLineageDispatcher.createDefaultRestClient(dispatcherConfig),
+      dispatcherConfig.apiVersionOption,
+      dispatcherConfig.requestCompressionOption
+    )
 
   def this(configuration: Configuration) = this(HttpLineageDispatcherConfig(configuration))
 
   private val executionPlansEndpoint = restClient.endpoint(RESTResource.ExecutionPlans)
   private val executionEventsEndpoint = restClient.endpoint(RESTResource.ExecutionEvents)
 
-  private val (apiVersion, requestCompressionSupported) =
-    if(config.configureUsingServer) {
-      val serverHeaders: Map[String, IndexedSeq[String]] = getServerHeaders(restClient)
-      (resolveApiVersion(serverHeaders), resolveRequestCompression(serverHeaders))
-    } else {
-      (config.apiVersion, config.requestCompression)
-    }
-
+  private val serverHeaders: Map[String, IndexedSeq[String]] = getServerHeaders(restClient)
+  private val apiVersion: Version = apiVersionOption.getOrElse(resolveApiVersion(serverHeaders))
   private val modelMapper = ModelMapper.forApiVersion(apiVersion)
+
+  private val requestCompressionSupported: Boolean =
+    requestCompressionOption.getOrElse(resolveRequestCompression(serverHeaders))
 
   override def send(plan: ExecutionPlan): Unit = {
     val execPlanDTO = modelMapper.toDTO(plan)

@@ -27,7 +27,6 @@ object HttpLineageDispatcherConfig {
   val ProducerUrlProperty = "producer.url"
   val ConnectionTimeoutMsKey = "timeout.connection"
   val ReadTimeoutMsKey = "timeout.read"
-  val ConfigureUsingServer = "configureUsingServer"
   val ApiVersion = "api.version"
   val RequestCompression = "requestCompression"
 
@@ -39,9 +38,8 @@ class HttpLineageDispatcherConfig(config: Configuration) {
   val connTimeout: Duration = config.getRequiredLong(ConnectionTimeoutMsKey).millis
   val readTimeout: Duration = config.getRequiredLong(ReadTimeoutMsKey).millis
 
-  val configureUsingServer: Boolean = config.getRequiredBoolean(ConfigureUsingServer)
-  def apiVersion: Version = stringToVersion(config.getRequiredString(ApiVersion))
-  def requestCompression: Boolean = config.getRequiredBoolean(RequestCompression)
+  def apiVersionOption: Option[Version] = config.getOptionalString(ApiVersion).map(stringToVersion)
+  def requestCompressionOption: Option[Boolean] = config.getOptionalBoolean(RequestCompression)
 
   private def stringToVersion(str: String): Version = str.trim match {
     case "LATEST" => ProducerApiVersion.SupportedApiRange.Max
