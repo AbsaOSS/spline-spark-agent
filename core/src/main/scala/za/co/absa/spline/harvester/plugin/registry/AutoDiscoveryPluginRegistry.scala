@@ -54,7 +54,7 @@ class AutoDiscoveryPluginRegistry(injectables: AnyRef*)
 
   override def plugins[A: ClassTag]: Seq[Plugin with A] = {
     val ct = implicitly[ClassTag[A]]
-    allPlugins.collect({ case p: Plugin with A if ct.runtimeClass.isInstance(p) => p })
+    allPlugins.collect({ case p: Plugin if ct.runtimeClass.isInstance(p) => p.asInstanceOf[Plugin with A] })
   }
 
   private def instantiatePlugin(pluginClass: Class[_]): Try[Plugin] = Try {

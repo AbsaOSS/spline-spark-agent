@@ -123,7 +123,7 @@ object ModelMapperV1 extends ModelMapper {
       def convert(x: Any): Any = x match {
         case Some(v) => convert(v)
         case xs: Seq[_] => xs.map(convert)
-        case ys: Map[String, _] => ys.mapValues(convert)
+        case ys: Map[_, _] => ys.mapValues(convert)
         case ref: v1_1.AttrOrExprRef => refToV1Expression(ref)
         case _ => x
       }
