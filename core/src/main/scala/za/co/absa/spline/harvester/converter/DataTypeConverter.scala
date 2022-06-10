@@ -18,12 +18,10 @@ package za.co.absa.spline.harvester.converter
 
 import org.apache.spark.sql.{types => st}
 import za.co.absa.commons.lang.Converter
-import za.co.absa.spline.harvester.IdGenerator
+import za.co.absa.spline.harvester.DataTypeIdGenerator
 import za.co.absa.spline.model.dt._
 
-import java.util.UUID
-
-class DataTypeConverter(idGen: IdGenerator[Any, UUID]) extends Converter {
+class DataTypeConverter(idGen: DataTypeIdGenerator) extends Converter {
   override type From = (st.DataType, Boolean)
   override type To = DataType
 
