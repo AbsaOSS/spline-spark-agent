@@ -27,7 +27,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{Inside, OneInstancePerTest}
 import org.scalatestplus.mockito.MockitoSugar
-import za.co.absa.spline.harvester.IdGenerator
+import za.co.absa.spline.harvester.{IdGenerator, SequentialIdGenerator}
 import za.co.absa.spline.model.dt
 import za.co.absa.spline.producer.model.v1_1.FunctionalExpression
 
@@ -43,12 +43,12 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
 
   private val dtConverterMock = mock[DataTypeConverter]
   private val exprToRefConverterMock = mock[ExprToRefConverter]
-  private val idGeneratorMock = mock[IdGenerator[Any, String]]
+  private val idGeneratorMock = mock[SequentialIdGenerator]
   private val converter = new ExpressionConverter(idGeneratorMock, dtConverterMock, exprToRefConverterMock)
 
   when(dtConverterMock convert NullType -> true) thenReturn nullDataType
   when(dtConverterMock convert StringType -> false) thenReturn stringDataType
-  when(idGeneratorMock.nextId(any())) thenReturn "some_id"
+  when(idGeneratorMock.nextId()) thenReturn "some_id"
 
   it should "support secondary constructor, but only capture params from the primary one" in {
     val expression = new Foo("this parameter should not be captured")
