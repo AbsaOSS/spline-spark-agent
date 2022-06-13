@@ -28,7 +28,7 @@ object HttpLineageDispatcherConfig {
   val ConnectionTimeoutMsKey = "timeout.connection"
   val ReadTimeoutMsKey = "timeout.read"
   val ApiVersion = "api.version"
-  val RequestCompression = "requestCompression"
+  val RequestCompression = "request.compression"
 
   def apply(c: Configuration) = new HttpLineageDispatcherConfig(c)
 }

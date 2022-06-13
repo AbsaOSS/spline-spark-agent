@@ -56,6 +56,9 @@ class HttpLineageDispatcher(restClient: RestClient, apiVersionOption: Option[Ver
 
   private val serverHeaders: Map[String, IndexedSeq[String]] = getServerHeaders(restClient)
   private val apiVersion: Version = apiVersionOption.getOrElse(resolveApiVersion(serverHeaders))
+
+  logInfo(s"Using Producer API version: ${apiVersion.asString}")
+
   private val modelMapper = ModelMapper.forApiVersion(apiVersion)
 
   private val requestCompressionSupported: Boolean =
@@ -156,8 +159,6 @@ object HttpLineageDispatcher extends Logging {
       s"Spline Agent and Server versions don't match. " +
         s"Agent supports API versions ${SupportedApiRange.Min.asString} to ${SupportedApiRange.Max.asString}, " +
         s"but the server only provides: ${serverApiVersions.map(_.asString).mkString(", ")}"))
-
-    logInfo(s"Using Producer API version: ${apiVer.asString}")
 
     apiVer
   }

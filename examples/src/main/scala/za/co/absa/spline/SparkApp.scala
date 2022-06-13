@@ -35,6 +35,8 @@ abstract class SparkApp
 
   sparkBuilder.appName(name)
   sparkBuilder.master(master)
+  sparkBuilder.config("spark.driver.host","localhost")
+
 
   for ((k, v) <- conf) sparkBuilder.config(k, v)
 
