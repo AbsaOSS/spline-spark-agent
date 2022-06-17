@@ -66,6 +66,13 @@ final class HierarchicalObjectFactory(
       compFactory.instantiate[A]()
     }
   }
+
+  def createComponentByKey[A: ClassTag](confKey: String): A = {
+    val compName = configuration.getRequiredString(confKey)
+    logDebug(s"Instantiating component: $compName")
+    val compFactory = parentFactory.child(compName)
+    compFactory.instantiate[A]()
+  }
 }
 
 object HierarchicalObjectFactory {
