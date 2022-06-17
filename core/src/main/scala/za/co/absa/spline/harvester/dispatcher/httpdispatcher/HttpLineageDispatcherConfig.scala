@@ -27,8 +27,8 @@ object HttpLineageDispatcherConfig {
   val ProducerUrlProperty = "producer.url"
   val ConnectionTimeoutMsKey = "timeout.connection"
   val ReadTimeoutMsKey = "timeout.read"
-  val ApiVersion = "api.version"
-  val RequestCompression = "request.compression"
+  val ApiVersion = "apiVersion"
+  val RequestCompression = "requestCompression"
 
   def apply(c: Configuration) = new HttpLineageDispatcherConfig(c)
 }
