@@ -78,7 +78,7 @@ class SequentialIdGenerator(pattern: String) {
 
 class DataTypeIdGenerator(numberTemplate: String, namespace: UUID) {
   val seqIdGen = new SequentialIdGenerator(numberTemplate)
-  val UUIDGen = new UUID5IdGenerator[String](namespace)
+  val uuidGen = new UUID5IdGenerator[String](namespace)
 
-  def nextId(): UUID = UUIDGen.nextId(seqIdGen.nextId())
+  def nextId(): UUID = uuidGen.nextId(seqIdGen.nextId())
 }
