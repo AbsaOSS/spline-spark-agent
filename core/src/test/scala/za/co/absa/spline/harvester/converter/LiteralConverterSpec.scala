@@ -23,7 +23,7 @@ import org.scalatest.OneInstancePerTest
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import za.co.absa.spline.harvester.IdGenerator
+import za.co.absa.spline.harvester.{IdGenerator, SequentialIdGenerator}
 import za.co.absa.spline.model.dt
 
 import java.util.UUID
@@ -35,11 +35,11 @@ class LiteralConverterSpec extends AnyFlatSpec with OneInstancePerTest with Mock
   behavior of "Converting Spark Literals"
 
   private val dtConverterMock = mock[DataTypeConverter]
-  private val idGeneratorMock = mock[IdGenerator[Any, String]]
+  private val idGeneratorMock = mock[SequentialIdGenerator]
 
   private val converter = new LiteralConverter(idGeneratorMock, new DataConverter, dtConverterMock)
 
-  when(idGeneratorMock.nextId(any())).thenReturn("some_id")
+  when(idGeneratorMock.nextId()).thenReturn("some_id")
 
   it should "support array of struct literals" in {
     val testLiteral = Literal.create(Array(

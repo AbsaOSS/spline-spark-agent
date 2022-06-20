@@ -23,7 +23,7 @@ import org.mockito.Mockito.when
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import za.co.absa.spline.harvester.{IdGenerator, IdGeneratorsBundle}
+import za.co.absa.spline.harvester.{IdGenerator, IdGeneratorsBundle, SequentialIdGenerator}
 import za.co.absa.spline.harvester.builder.read.{ReadCommand, ReadNodeBuilder}
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
@@ -38,7 +38,7 @@ class BuilderSpec extends AnyFlatSpec with Matchers with MockitoSugar {
     val dataConverterMock = mock[DataConverter]
 
     val idGeneratorsMock = mock[IdGeneratorsBundle]
-    val operationIdGeneratorMock = mock[IdGenerator[Any, String]]
+    val operationIdGeneratorMock = mock[SequentialIdGenerator]
 
     when(logicalPlanStub.output) thenReturn Seq.empty
     when(postProcessorMock.process(any[ReadOperation]())) thenAnswer returnsFirstArg()

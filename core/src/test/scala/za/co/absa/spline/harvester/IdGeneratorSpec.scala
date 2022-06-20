@@ -30,21 +30,6 @@ class IdGeneratorSpec
     with Matchers
     with MockitoSugar {
 
-  behavior of "ComposableIdGenerator"
-
-  it should "compose ID generators" in {
-    val dummyArg = new Object
-    val gen1Mock = mock[IdGenerator[Any, Int]]
-    val gen2Mock = mock[IdGenerator[Int, String]]
-
-    when(gen1Mock.nextId(dummyArg)) thenReturn 42
-    when(gen2Mock.nextId(42)) thenReturn "foo"
-
-    val compositeIdGenerator = new ComposableIdGenerator(gen1Mock, gen2Mock)
-
-    compositeIdGenerator.nextId(dummyArg) shouldEqual "foo"
-  }
-
   behavior of "SequentialIdGenerator"
 
   it should "generate 0-based number sequence" in {
