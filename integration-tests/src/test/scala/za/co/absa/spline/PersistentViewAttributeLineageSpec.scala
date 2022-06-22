@@ -40,11 +40,13 @@ class PersistentViewAttributeLineageSpec
           withDatabase(databaseName,
             ("path", "(x String) USING hive", Seq("Monika", "Buba"))
           ) {
+
+            withNewSparkSession { innerSpark =>
+              innerSpark.sql(s"DROP VIEW IF EXISTS $databaseName.test_source_vw")
+              innerSpark.sql(s"CREATE VIEW $databaseName.test_source_vw AS SELECT * FROM $databaseName.path")
+            }
+
             for {
-              (_, _) <- captor.lineageOf {
-                spark.sql("""DROP VIEW IF EXISTS test_source_vw""")
-                spark.sql("""CREATE VIEW test_source_vw AS SELECT * FROM path""")
-              }
               (plan, _) <- captor.lineageOf {
                 spark.sql("select * from test_source_vw")
                   .write
