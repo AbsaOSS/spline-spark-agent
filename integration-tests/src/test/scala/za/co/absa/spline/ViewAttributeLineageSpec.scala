@@ -24,7 +24,7 @@ import za.co.absa.spline.test.SplineMatchers._
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 
-class PersistentViewAttributeLineageSpec
+class ViewAttributeLineageSpec
   extends AsyncFlatSpec
     with OneInstancePerTest
     with Matchers
