@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 ABSA Group Limited
+ * Copyright 2022 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,19 +34,9 @@ class ViewAttributeAddingFilter(conf: Configuration) extends AbstractPostProcess
   }
 
   private def addMissingAttributeLinks(plan: ExecutionPlan, views: Seq[DataOperation]): ExecutionPlan = {
-    val newAttributeRefsSeq = views.map { v =>
-      // assume views can have only one child
-      val childId = v.childIds.get.head
-      val child = plan.operations.other.getOrElse(Seq.empty).find(_.id == childId).get
-
-      if(!deepEq(v.output, child.output)) {
-        newAttributeReferences(v.output.get, child.output.get)
-      } else {
-        Map.empty[String, String]
-      }
-    }
-
-    val attributeReferences = newAttributeRefsSeq.reduce(_ ++ _)
+    val attributeReferences = views
+      .map(toAttributeReferencesMap(plan, _))
+      .reduce(_ ++ _)
 
     plan.copy(
       attributes = plan.attributes.map{ attSeq =>
@@ -61,24 +51,20 @@ class ViewAttributeAddingFilter(conf: Configuration) extends AbstractPostProcess
     )
   }
 
-  private def newAttributeReferences(viewOutput: Seq[String], childOutput: Seq[String]): Map[String, String] = {
+  private def toAttributeReferencesMap(plan: ExecutionPlan, view: DataOperation): Map[String, String] = {
+    // assume views can have only one child in Spark
+    val childId = view.childIds.get.head
+    val child = plan.operations.other.getOrElse(Seq.empty).find(_.id == childId).get
+
+    val viewOutput = view.output.get
+    val childOutput = child.output.get
+
+    if (viewOutput.size !=childOutput.size ) {
+      throw new UnsupportedOperationException("Sizes of outputs of view operation and it's child are different!")
+    }
+
     viewOutput.zip(childOutput)
-      .filter{ case (v, ch) => v != ch}
+      .filter{ case (v, ch) => v != ch }
       .toMap
   }
-
-  private def deepEq(left: Option[Seq[String]], right: Option[Seq[String]]): Boolean = (left, right) match {
-    case (None, None) => true
-    case (None, Some(_)) => false
-    case (Some(lSeq), Some(rSeq)) => deepEq(lSeq, rSeq)
-  }
-
-  private def deepEq(left: Seq[String], right: Seq[String]): Boolean = {
-    if(left.size != right.size) {
-      false
-    } else {
-      !left.zip(right).exists { case (l, r) => l != r}
-    }
-  }
-
 }
