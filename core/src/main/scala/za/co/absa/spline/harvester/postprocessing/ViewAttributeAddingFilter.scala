@@ -24,8 +24,9 @@ class ViewAttributeAddingFilter(conf: Configuration) extends AbstractPostProcess
 
   override def processExecutionPlan(plan: ExecutionPlan, ctx: HarvestingContext): ExecutionPlan = {
     val views = plan.operations.other
-      .map(_.filter(_.name.get.startsWith("View")))
       .getOrElse(Seq.empty)
+      .filter(_.name.get.startsWith("View"))
+
 
     if (views.isEmpty)
       plan
@@ -34,15 +35,16 @@ class ViewAttributeAddingFilter(conf: Configuration) extends AbstractPostProcess
   }
 
   private def addMissingAttributeLinks(plan: ExecutionPlan, views: Seq[DataOperation]): ExecutionPlan = {
-    val attributeReferences = views
+    val attributeDependencies = views
       .map(toAttributeReferencesMap(plan, _))
       .reduce(_ ++ _)
 
     plan.copy(
-      attributes = plan.attributes.map{ attSeq =>
-        attSeq.map{ att =>
-          if (attributeReferences.contains(att.id)) {
-            att.copy(childRefs = Some(Seq(AttrOrExprRef(Some(attributeReferences(att.id)), None))))
+      attributes = plan.attributes.map { attSeq =>
+        attSeq.map { att =>
+          val maybeAttrId = attributeDependencies.get(att.id)
+          if (maybeAttrId.nonEmpty) {
+            att.copy(childRefs = Some(Seq(AttrOrExprRef(maybeAttrId, None))))
           } else {
             att
           }
@@ -59,12 +61,12 @@ class ViewAttributeAddingFilter(conf: Configuration) extends AbstractPostProcess
     val viewOutput = view.output.get
     val childOutput = child.output.get
 
-    if (viewOutput.size !=childOutput.size ) {
+    if (viewOutput.size != childOutput.size) {
       throw new UnsupportedOperationException("Sizes of outputs of view operation and it's child are different!")
     }
 
     viewOutput.zip(childOutput)
-      .filter{ case (v, ch) => v != ch }
+      .filter { case (v, ch) => v != ch }
       .toMap
   }
 }

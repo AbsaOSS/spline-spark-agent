@@ -32,7 +32,7 @@ class ViewAttributeLineageSpec
     with SparkDatabaseFixture
     with SplineFixture {
 
-  "persistent view" should "not break attribute dependency" in
+  it should "trace attribute dependencies through persistent view" in
     withRestartingSparkContext {
       withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
         withLineageTracking { captor =>
@@ -71,7 +71,7 @@ class ViewAttributeLineageSpec
       }
     }
 
-  "global temp view" should "not break attribute dependency" in
+  it should "trace attribute dependencies through global temp view" in
     withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
@@ -104,7 +104,7 @@ class ViewAttributeLineageSpec
       }
     }
 
-  "local temp view" should "not break attribute dependency" in
+  it should "trace attribute dependencies through local temp view" in
     withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
