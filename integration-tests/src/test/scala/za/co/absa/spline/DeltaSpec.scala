@@ -36,7 +36,8 @@ class DeltaSpec extends AsyncFlatSpec
 
   private val deltaPath = TempDirectory(prefix = "delta", pathOnly = true).deleteOnExit().path.toFile.getAbsolutePath
 
-  it should "support Delta Lake as a source" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.4.2") in
+  it should "support Delta Lake as a source" taggedAs
+    ignoreIf(ver"$SPARK_VERSION" < ver"2.4.2" || ver"$SPARK_VERSION" >= ver"3.3.0") in
     withNewSparkSession { implicit spark =>
       withLineageTracking { captor =>
         val testData: DataFrame = {
@@ -77,7 +78,8 @@ class DeltaSpec extends AsyncFlatSpec
       }
     }
 
-  it should "support insert into existing Delta Lake table" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.4.2") in
+  it should "support insert into existing Delta Lake table" taggedAs
+    ignoreIf(ver"$SPARK_VERSION" < ver"2.4.2" || ver"$SPARK_VERSION" >= ver"3.3.0") in
     withNewSparkSession { implicit spark =>
       withLineageTracking { lineageCaptor =>
         val testData: DataFrame = {

@@ -299,6 +299,34 @@
                 </dependency>
             </dependencies>
         </profile>
+        <profile>
+            <id>spark-3.3</id>
+            <dependencies>
+                <!-- Iceberg fot Spark 3.3 is not available yet; using 3.2 version -->
+                <dependency>
+                    <groupId>org.apache.iceberg</groupId>
+                    <artifactId>iceberg-spark-runtime-3.2_2.12</artifactId>
+                    <version>0.13.1</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.elasticsearch</groupId>
+                    <artifactId>elasticsearch-spark-30_${scala.binary.version}</artifactId>
+                    <version>8.2.2</version>
+                    <scope>test</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.apache.spark</groupId>
+                            <artifactId>*</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.scala-lang</groupId>
+                            <artifactId>*</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+            </dependencies>
+        </profile>
     </profiles>
 
     <build>

@@ -33,7 +33,8 @@ class DeltaDSV2Spec extends AsyncFlatSpec
   with SplineFixture
   with SparkDatabaseFixture {
 
-  it should "support AppendData V2 command" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
+  it should "support AppendData V2 command" taggedAs
+    ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0" || ver"$SPARK_VERSION" >= ver"3.3.0") in
     withCustomSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
@@ -61,7 +62,8 @@ class DeltaDSV2Spec extends AsyncFlatSpec
       }
     }
 
-  it should "support OverwriteByExpression V2 command without deleteExpression" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
+  it should "support OverwriteByExpression V2 command without deleteExpression" taggedAs
+    ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0" || ver"$SPARK_VERSION" >= ver"3.3.0") in
     withCustomSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
@@ -93,7 +95,8 @@ class DeltaDSV2Spec extends AsyncFlatSpec
       }
     }
 
-  it should "support OverwriteByExpression V2 command with deleteExpression" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
+  it should "support OverwriteByExpression V2 command with deleteExpression" taggedAs
+    ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0" || ver"$SPARK_VERSION" >= ver"3.3.0") in
     withCustomSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
@@ -131,7 +134,8 @@ class DeltaDSV2Spec extends AsyncFlatSpec
     * the spark command generated is OverwriteByExpression.
     * Keeping this test in case the command will be used in future Spark versions.
     */
-  it should "support OverwritePartitionsDynamic V2 command" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
+  it should "support OverwritePartitionsDynamic V2 command" taggedAs
+    ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0" || ver"$SPARK_VERSION" >= ver"3.3.0") in
     withCustomSparkSession(_
       .enableHiveSupport
       .config("hive.exec.dynamic.partition", "true")
@@ -165,7 +169,8 @@ class DeltaDSV2Spec extends AsyncFlatSpec
       }
     }
 
-  it should "support CreateTableAsSelect V2 command" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
+  it should "support CreateTableAsSelect V2 command" taggedAs
+    ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0" || ver"$SPARK_VERSION" >= ver"3.3.0") in
     withCustomSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
@@ -192,7 +197,8 @@ class DeltaDSV2Spec extends AsyncFlatSpec
       }
     }
 
-  it should "support ReplaceTableAsSelect V2 command" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
+  it should "support ReplaceTableAsSelect V2 command" taggedAs
+    ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0" || ver"$SPARK_VERSION" >= ver"3.3.0") in
     withCustomSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")

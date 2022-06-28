@@ -144,7 +144,8 @@ class DataSourceV2Plugin
     case `_: FileTable`(ft) =>
       val format = extractFieldValue[String](ft, "formatName").toLowerCase
       val paths = extractFieldValue[Seq[String]](ft, "paths")
-      SourceIdentifier(Some(format), paths: _*)
+      val pathUris = paths.map(prependFileSchemaIfMissing)
+      SourceIdentifier(Some(format), pathUris: _*)
 
     case `_: TableV2`(tv2) => extractSourceIdFromDeltaTableV2(tv2)
   }
@@ -161,6 +162,13 @@ class DataSourceV2Plugin
     val provider = tableProps.get("provider")
     SourceIdentifier(Some(provider), uri)
   }
+
+  private def prependFileSchemaIfMissing(uri: String): String =
+    if(URI.create(uri).getScheme == null) {
+      s"file:$uri"
+    } else {
+      uri
+    }
 
 }
 
@@ -190,6 +198,9 @@ object DataSourceV2Plugin {
 
   object `_: FileTable` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.execution.datasources.v2.FileTable")
+
+  object `_: JsonTable` extends SafeTypeMatchingExtractor[AnyRef](
+    "org.apache.spark.sql.execution.datasources.v2.json.JsonTable")
 
   object `_: DatabricksDeltaTableV2` extends SafeTypeMatchingExtractor[AnyRef](
     "com.databricks.sql.transaction.tahoe.catalog.DeltaTableV2")
