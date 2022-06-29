@@ -1674,7 +1674,7 @@
                     <dependency>
                         <groupId>org.apache.zookeeper</groupId>
                         <artifactId>zookeeper</artifactId>
-                        <version>3.4.6</version>
+                        <version>3.4.14</version>
                     </dependency>
                 </dependencies>
             </dependencyManagement>
@@ -2817,7 +2817,7 @@
                     <dependency>
                         <groupId>org.apache.zookeeper</groupId>
                         <artifactId>zookeeper</artifactId>
-                        <version>3.4.6</version>
+                        <version>3.4.14</version>
                     </dependency>
                     <dependency>
                         <groupId>com.github.luben</groupId>
@@ -3945,7 +3945,7 @@
                     <dependency>
                         <groupId>org.apache.zookeeper</groupId>
                         <artifactId>zookeeper</artifactId>
-                        <version>3.5.6</version>
+                        <version>3.4.14</version>
                     </dependency>
                 </dependencies>
             </dependencyManagement>
@@ -7694,7 +7694,7 @@
                     <dependency>
                         <groupId>org.apache.zookeeper</groupId>
                         <artifactId>zookeeper</artifactId>
-                        <version>3.6.2</version>
+                        <version>3.4.14</version>
                         <scope>test</scope>
                         <exclusions>
                             <exclusion>
