@@ -92,12 +92,12 @@
         <!-- Spark -->
 
         <spark.version>${spark-24.version}</spark.version>
-        <spark-22.version>2.2.2</spark-22.version>
-        <spark-23.version>2.3.2</spark-23.version>
-        <spark-24.version>2.4.2</spark-24.version>
-        <spark-30.version>3.0.2</spark-30.version>
-        <spark-31.version>3.1.2</spark-31.version>
-        <spark-32.version>3.2.0</spark-32.version>
+        <spark-22.version>2.2.3</spark-22.version>
+        <spark-23.version>2.3.4</spark-23.version>
+        <spark-24.version>2.4.8</spark-24.version>
+        <spark-30.version>3.0.3</spark-30.version>
+        <spark-31.version>3.1.3</spark-31.version>
+        <spark-32.version>3.2.1</spark-32.version>
 
         <!-- Delta -->
 

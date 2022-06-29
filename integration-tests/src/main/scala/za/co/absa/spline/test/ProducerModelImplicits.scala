@@ -44,4 +44,13 @@ object ProducerModelImplicits {
       walker.precedingOps(write)
   }
 
+  implicit class ReadOperationOps(val readOperation: ReadOperation) extends AnyVal {
+
+    def outputAttributes(implicit walker: LineageWalker): Seq[Attribute] = {
+      readOperation.output
+        .getOrElse(Seq.empty)
+        .map(walker.attributeById)
+    }
+  }
+
 }
