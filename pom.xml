@@ -919,7 +919,7 @@
                     <dependency>
                         <groupId>org.apache.derby</groupId>
                         <artifactId>derby</artifactId>
-                        <version>10.12.1.1</version>
+                        <version>10.14.2.0</version>
                     </dependency>
                     <dependency>
                         <groupId>net.hydromatic</groupId>
@@ -1997,7 +1997,7 @@
                     <dependency>
                         <groupId>org.apache.derby</groupId>
                         <artifactId>derby</artifactId>
-                        <version>10.12.1.1</version>
+                        <version>10.14.2.0</version>
                     </dependency>
                     <dependency>
                         <groupId>net.hydromatic</groupId>
@@ -3115,7 +3115,7 @@
                     <dependency>
                         <groupId>org.apache.derby</groupId>
                         <artifactId>derby</artifactId>
-                        <version>10.12.1.1</version>
+                        <version>10.14.2.0</version>
                     </dependency>
                     <dependency>
                         <groupId>net.hydromatic</groupId>
@@ -4228,7 +4228,7 @@
                     <dependency>
                         <groupId>org.apache.derby</groupId>
                         <artifactId>derby</artifactId>
-                        <version>10.12.1.1</version>
+                        <version>10.14.2.0</version>
                     </dependency>
                     <dependency>
                         <groupId>com.github.joshelser</groupId>
@@ -5431,7 +5431,7 @@
                     <dependency>
                         <groupId>org.apache.derby</groupId>
                         <artifactId>derby</artifactId>
-                        <version>10.12.1.1</version>
+                        <version>10.14.2.0</version>
                     </dependency>
                     <dependency>
                         <groupId>dnsjava</groupId>
