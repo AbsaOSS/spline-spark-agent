@@ -115,12 +115,7 @@
             <artifactId>spark-avro_${scala.binary.version}</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.cassandraunit</groupId>
-            <artifactId>cassandra-unit</artifactId>
-            <version>2.1.9.2</version>
-            <scope>test</scope>
-        </dependency>
+
         <dependency>
             <groupId>de.flapdoodle.embed</groupId>
             <artifactId>de.flapdoodle.embed.mongo</artifactId>
@@ -147,6 +142,12 @@
             <groupId>org.testcontainers</groupId>
             <artifactId>elasticsearch</artifactId>
             <version>1.17.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>cassandra</artifactId>
+            <version>1.17.3</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -227,6 +228,13 @@
                     <version>0.13.1</version>
                     <scope>test</scope>
                 </dependency>
+
+                <!-- required for spark-cassandra-connector -->
+                <dependency>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                    <version>16.0.1</version>
+                </dependency>
                 <dependency>
                     <groupId>org.elasticsearch</groupId>
                     <artifactId>elasticsearch-spark-30_${scala.binary.version}</artifactId>
@@ -253,6 +261,13 @@
                     <artifactId>iceberg-spark-runtime-3.1_2.12</artifactId>
                     <version>0.13.1</version>
                     <scope>test</scope>
+                </dependency>
+
+                <!-- required for spark-cassandra-connector -->
+                <dependency>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                    <version>16.0.1</version>
                 </dependency>
                 <dependency>
                     <groupId>org.elasticsearch</groupId>
@@ -281,6 +296,13 @@
                     <version>0.13.1</version>
                     <scope>test</scope>
                 </dependency>
+
+                <!-- required for spark-cassandra-connector -->
+                <dependency>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                    <version>16.0.1</version>
+                </dependency>
                 <dependency>
                     <groupId>org.elasticsearch</groupId>
                     <artifactId>elasticsearch-spark-30_${scala.binary.version}</artifactId>
@@ -308,6 +330,13 @@
                     <artifactId>iceberg-spark-runtime-3.2_2.12</artifactId>
                     <version>0.13.1</version>
                     <scope>test</scope>
+                </dependency>
+
+                <!-- required for spark-cassandra-connector -->
+                <dependency>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                    <version>16.0.1</version>
                 </dependency>
                 <dependency>
                     <groupId>org.elasticsearch</groupId>
