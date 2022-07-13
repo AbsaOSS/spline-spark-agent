@@ -269,9 +269,7 @@ spline.lineageDispatcher.my-dispatcher.prop2=value2
 If you need, you can combine multiple dispatchers into a single one using `CompositeLineageDispatcher` and `FallbackLineageDispatcher` 
 in any combination as you wish.
 
-In the following example the lineage will be first sent to the HTTP endpoint "http://10.20.111.222/lineage-primary",
-then if fails it's redirected to the "http://10.20.111.222/lineage-secondary" endpoint, and if that one fails, 
-lineage is logged to the ERROR logs and the console at the same time.
+In the following example the lineage will be first sent to the HTTP endpoint "http://10.20.111.222/lineage-primary", if that fails it's redirected to the "http://10.20.111.222/lineage-secondary" endpoint, and if that one fails as well, lineage is logged to the ERROR logs and the console at the same time.
 
 ```properties
 spline.lineageDispatcher.http1.className=za.co.absa.spline.harvester.dispatcher.HttpLineageDispatcher
