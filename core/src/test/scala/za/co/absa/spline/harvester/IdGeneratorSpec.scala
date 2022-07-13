@@ -17,7 +17,6 @@
 package za.co.absa.spline.harvester
 
 import com.fasterxml.uuid.Generators
-import org.mockito.Mockito._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
@@ -29,21 +28,6 @@ class IdGeneratorSpec
   extends AnyFlatSpec
     with Matchers
     with MockitoSugar {
-
-  behavior of "ComposableIdGenerator"
-
-  it should "compose ID generators" in {
-    val dummyArg = new Object
-    val gen1Mock = mock[IdGenerator[Any, Int]]
-    val gen2Mock = mock[IdGenerator[Int, String]]
-
-    when(gen1Mock.nextId(dummyArg)) thenReturn 42
-    when(gen2Mock.nextId(42)) thenReturn "foo"
-
-    val compositeIdGenerator = new ComposableIdGenerator(gen1Mock, gen2Mock)
-
-    compositeIdGenerator.nextId(dummyArg) shouldEqual "foo"
-  }
 
   behavior of "SequentialIdGenerator"
 
@@ -78,7 +62,7 @@ class IdGeneratorSpec
   behavior of "UUID4IdGenerator"
 
   it should "generate unique UUID version 4" in {
-    val uuids = 1 to 5 map (_ => new UUID4IdGenerator().nextId())
+    val uuids = 1 to 5 map (_ => new UUID4IdGenerator().nextId(()))
     uuids.distinct.length shouldEqual 5
   }
 

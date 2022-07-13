@@ -61,9 +61,9 @@ class DataSourcePasswordReplacingFilter(
 
   private def filter(a: Any): Any = a match {
     case str: String => filter(str)
-    case seq: Seq[Any] => seq.map(filter)
-    case opt: Some[Any] => opt.map(filter)
-    case map: Map[String, Any] => filter(map)
+    case seq: Seq[_] => seq.map(filter)
+    case opt: Some[_] => opt.map(filter)
+    case map: Map[_, _] => filter(map.asInstanceOf[Map[String, Any]])
     case x => x
   }
 }

@@ -32,12 +32,12 @@ class DataTemplate(val extra: Map[String, Any], val labels: Map[String, Any]) ex
     }
 
   private def evalExtra(bindings: Map[String, Any]): Map[String, Any] =
-    extra.transform((k, v) => evalValue(v, bindings))
+    extra.transform((_, v) => evalValue(v, bindings))
 
   private def evalLabels(bindings: Map[String, Any]): Map[String, Seq[String]] =
     labels
-      .transform((k, v) => toStringSeq(evalValue(v, bindings)))
-      .filter { case (k, v) => v.nonEmpty }
+      .transform((_, v) => toStringSeq(evalValue(v, bindings)))
+      .filter { case (_, v) => v.nonEmpty }
 
   private def toStringSeq(v: Any): Seq[String] = v match {
     case null => Seq.empty
@@ -46,7 +46,7 @@ class DataTemplate(val extra: Map[String, Any], val labels: Map[String, Any]) ex
   }
 
   private def evalValue(value: Any, bindings: Map[String, Any]): Any = value match {
-    case m: Map[String, _] => m.transform((k, v) => evalValue(v, bindings))
+    case m: Map[String, _] => m.transform((_, v) => evalValue(v, bindings))
     case s: Seq[_] => s.map(evalValue(_, bindings))
     case e: Evaluable => e.eval(bindings)
     case v => v
@@ -70,6 +70,7 @@ class EvaluatedTemplate(val extra: Map[String, Any], val labels: Map[String, Seq
     case (Some(v1), Some(v2)) => mergeValues(v1, v2)
     case (None, Some(v2)) => v2
     case (Some(v1), None) => v1
+    case (None, None) => throw new IllegalArgumentException("Cannot merge two optional values that are both None")
   }
 
   private def mergeValues(v1: Any, v2: Any): Any = (v1, v2) match {

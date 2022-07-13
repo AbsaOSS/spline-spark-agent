@@ -23,15 +23,11 @@ import za.co.absa.spline.producer.model.ExecutionPlan
 import java.util.UUID
 
 class IdGeneratorsBundle(execPlanUUIDGeneratorFactory: UUIDGeneratorFactory[UUIDNamespace, ExecutionPlan]) {
-  val execPlanIdGenerator: IdGenerator[ExecutionPlan, UUID] = execPlanUUIDGeneratorFactory(UUIDNamespace.ExecutionPlan)
-  val attributeIdGenerator: IdGenerator[Any, String] = new SequentialIdGenerator(AttributeIdTemplate)
-  val expressionIdGenerator: IdGenerator[Any, String] = new SequentialIdGenerator(ExpressionIdTemplate)
-  val operationIdGenerator: IdGenerator[Any, String] = new SequentialIdGenerator(OperationIdTemplate)
-  val dataTypeIdGenerator: IdGenerator[Any, UUID] =
-    new ComposableIdGenerator(
-      new SequentialIdGenerator(NumberTemplate),
-      new UUID5IdGenerator[String](UUIDNamespace.DataType)
-    )
+  val execPlanIdGenerator: UUIDGenerator[ExecutionPlan] = execPlanUUIDGeneratorFactory(UUIDNamespace.ExecutionPlan)
+  val attributeIdGenerator: SequentialIdGenerator = new SequentialIdGenerator(AttributeIdTemplate)
+  val expressionIdGenerator: SequentialIdGenerator = new SequentialIdGenerator(ExpressionIdTemplate)
+  val operationIdGenerator: SequentialIdGenerator = new SequentialIdGenerator(OperationIdTemplate)
+  val dataTypeIdGenerator: DataTypeIdGenerator = new DataTypeIdGenerator(NumberTemplate, UUIDNamespace.DataType)
 }
 
 object IdGeneratorsBundle {

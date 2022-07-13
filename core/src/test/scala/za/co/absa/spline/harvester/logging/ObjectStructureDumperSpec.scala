@@ -23,6 +23,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.spline.harvester.logging.ObjectStructureDumper.ExtractFieldValueFn
 
 import java.util.concurrent.atomic.AtomicInteger
+import scala.language.existentials
 import scala.util.Random
 
 class ObjectStructureDumperSpec extends AnyFlatSpec with Matchers with MockitoSugar {
@@ -84,7 +85,7 @@ class ObjectStructureDumperSpec extends AnyFlatSpec with Matchers with MockitoSu
 
     val classBoxDump = ObjectStructureDumper.dump(ClassBox(classOf[java.net.URI]))
     classBoxDump should include("java.net.URI")
-    classBoxDump should not include("canonicalName")
+    classBoxDump should not include "canonicalName"
   }
 
   it should "ignore transient fields" in {
@@ -93,8 +94,8 @@ class ObjectStructureDumperSpec extends AnyFlatSpec with Matchers with MockitoSu
     }
 
     val fooDump = ObjectStructureDumper.dump(new Foo)
-    fooDump should not include("bar")
-    fooDump should not include("42")
+    fooDump should not include "bar"
+    fooDump should not include "42"
   }
 
 }

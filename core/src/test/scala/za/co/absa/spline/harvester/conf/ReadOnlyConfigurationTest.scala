@@ -35,7 +35,7 @@ trait ReadOnlyConfigurationTest extends AnyFunSuite with Matchers {
   test("testGetProperty") {
     givenConf getProperty "spline.x.y" shouldEqual "foo"
     givenConf getProperty "spline.w.z" shouldEqual "bar"
-    givenConf getProperty "spline.xs" should be(a[util.List[String]])
+    givenConf getProperty "spline.xs" should be(a[util.List[_]])
     givenConf getProperty "non-existent" shouldBe null
   }
 

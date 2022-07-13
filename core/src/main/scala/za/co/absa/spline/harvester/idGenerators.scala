@@ -24,14 +24,11 @@ import java.text.MessageFormat
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicLong
 
-sealed trait IdGenerator[-A, +B] {
-  def nextId(entity: A): B
-}
 
 object IdGenerator {
   type UUIDVersion = Int
   type UUIDNamespace = UUID
-  type UUIDGeneratorFactory[Seed, -Input <: AnyRef] = Seed => IdGenerator[Input, UUID]
+  type UUIDGeneratorFactory[Seed, -Input <: AnyRef] = Seed => UUIDGenerator[Input]
 
   object UUIDGeneratorFactory {
     def forVersion[Seed, Input <: AnyRef](uuidVersion: UUIDVersion): UUIDGeneratorFactory[Seed, Input] = uuidVersion match {
@@ -48,11 +45,11 @@ object IdGenerator {
   }
 }
 
-class ComposableIdGenerator[-A, B, +C](idGen1: IdGenerator[A, B], idGen2: IdGenerator[B, C]) extends IdGenerator[A, C] {
-  def nextId(a: A): C = (idGen1.nextId _).andThen(idGen2.nextId)(a)
+trait UUIDGenerator[-A] {
+  def nextId(entity: A): UUID
 }
 
-abstract class HashBasedUUIDGenerator[-A <: AnyRef](namespace: UUID, hashAlgorithm: String) extends IdGenerator[A, UUID] {
+abstract class HashBasedUUIDGenerator[-A <: AnyRef](namespace: UUID, hashAlgorithm: String) extends UUIDGenerator[A] {
   private val digest = MessageDigest.getInstance(hashAlgorithm)
   private val generator = Generators.nameBasedGenerator(namespace, digest)
 
@@ -66,15 +63,22 @@ class UUID3IdGenerator[-A <: AnyRef](namespace: UUID) extends HashBasedUUIDGener
 
 class UUID5IdGenerator[-A <: AnyRef](namespace: UUID) extends HashBasedUUIDGenerator[A](namespace, "SHA-1")
 
-class UUID4IdGenerator extends IdGenerator[Any, UUID] {
+class UUID4IdGenerator extends UUIDGenerator[Any] {
   override def nextId(unused: Any): UUID = UUID.randomUUID()
 }
 
-class SequentialIdGenerator(pattern: String) extends IdGenerator[Any, String] {
+class SequentialIdGenerator(pattern: String) {
   private val counter = new AtomicLong(0)
 
-  def nextId(unused: Any): String = {
+  def nextId(): String = {
     val i = counter.getAndIncrement()
     MessageFormat.format(pattern, Long.box(i))
   }
+}
+
+class DataTypeIdGenerator(numberTemplate: String, namespace: UUID) {
+  val seqIdGen = new SequentialIdGenerator(numberTemplate)
+  val uuidGen = new UUID5IdGenerator[String](namespace)
+
+  def nextId(): UUID = uuidGen.nextId(seqIdGen.nextId())
 }

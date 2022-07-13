@@ -37,15 +37,15 @@ object TemplateParser {
     template.get(key).map(_.asInstanceOf[Map[String, Any]]).getOrElse(Map.empty)
 
   private def parseTemplate(template: Map[String, Any], jsEngine: ScriptEngine) =
-    template.transform((k, v) => parseRec(v, jsEngine))
+    template.transform((_, v) => parseRec(v, jsEngine))
 
   private def parseRec(v: Any, jsEngine: ScriptEngine): Any = v match {
-    case m: Map[String, _] => m.toSeq match {
+    case m: Map[_, _] => m.toSeq match {
       case Seq((EvaluableNames.JVMProp, v: String)) => JVMProp(v)
       case Seq((EvaluableNames.EnvVar, v: String)) => EnvVar(v)
       case Seq((EvaluableNames.JsEval, v: String)) => JsEval(jsEngine, v)
-      case s: Seq[(String, _)] =>
-        assert(!s.exists(_._1.startsWith("$")))
+      case s: Seq[(_, _)] =>
+        assert(!s.exists(_._1.toString.startsWith("$")))
         s.map { case (k, v) => k -> parseRec(v, jsEngine) }.toMap
     }
     case s: Seq[_] => s.map(parseRec(_, jsEngine))

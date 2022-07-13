@@ -20,7 +20,7 @@ import org.apache.commons.lang3.StringUtils.substringAfter
 import org.apache.spark.sql.catalyst.expressions.ExprId
 import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.Converter
-import za.co.absa.spline.harvester.IdGenerator
+import za.co.absa.spline.harvester.{IdGenerator, SequentialIdGenerator}
 import za.co.absa.spline.harvester.converter.ReflectiveExtractor.extractProperties
 import za.co.absa.spline.producer.model._
 
@@ -28,7 +28,7 @@ import scala.language.reflectiveCalls
 
 
 class ExpressionConverter(
-  idGen: IdGenerator[Any, String],
+  idGen: SequentialIdGenerator,
   dataTypeConverter: DataTypeConverter,
   exprTpRefConverter: => ExprToRefConverter
 ) extends Converter {

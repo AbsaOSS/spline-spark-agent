@@ -247,11 +247,12 @@ The `LineageDispatcher` trait is responsible for sending out the captured lineag
 By default, the `HttpLineageDispatcher` is used, that sends the lineage data to the Spline REST endpoint (see Spline Producer API).
 
 Available dispatchers:
-- `HttpLineageDispatcher` - sends the lineage via http
-- `KafkaLineageDispatcher` - sends the lineage via kafka
-- `ConsoleLineageDispatcher` - write the lineage to console
-- `LoggingLineageDispatcher` - logs the lineahge using logger
-- `CompositeLineageDispatcher` - allows combining multiple dispatchers
+- `HttpLineageDispatcher` - sends lineage to an HTTP endpoint
+- `KafkaLineageDispatcher` - sends lineage to a Kafka topic
+- `ConsoleLineageDispatcher` - writes lineage to the console
+- `LoggingLineageDispatcher` - logs lineage using the Spark logger
+- `FallbackLineageDispatcher` - sends lineage to a fallback dispatcher if the primary one fails
+- `CompositeLineageDispatcher` - allows to combine multiple dispatchers to send lineage to multiple endpoints
 
 Each dispatcher can have different configuration parameters. 
 To make the configs clearly separated each dispatcher has its own namespace in which all it's parameters are defined. 
@@ -270,6 +271,35 @@ spline.lineageDispatcher.kafka.topic=foo
 spline.lineageDispatcher.kafka.producer.bootstrap.servers=localhost:9092
 ```
 
+#### Using the Fallback Dispatcher
+The `FallbackDispatcher` is a proxy dispatcher that sends lineage to the primary dispatcher first, and then _if_ there is an error
+it calls the fallback one.
+
+In the following example the `HttpLineageDispatcher` will be used as a primary, and the `ConsoleLineageDispatcher` as fallback.
+
+```properties
+spline.lineageDispatcher=fallback
+spline.lineageDispatcher.fallback.primaryDispatcher=http
+spline.lineageDispatcher.fallback.fallbackDispatcher=console
+```
+
+#### Using the Composite Dispatcher
+The `CompositeDispatcher` is a proxy dispatcher that forwards lineage data to multiple dispatchers.
+
+For example, if you want the lineage data to be send to an HTTP endpoint and to be logged to the console at the same time you can do the following:
+
+```properties
+spline.lineageDispatcher=composite
+spline.lineageDispatcher.composite.dispatchers=http,console
+```
+
+By default, if some dispatchers in the list fail, the others are still attempted. If you want the error in any dispatcher to be treated as fatal,
+and be propagated to the main process, you set the `failOnError` property to `true`:
+
+```properties
+spline.lineageDispatcher.composite.failOnErrors=true
+```
+
 #### Creating your own dispatcher
 
 There is also a possibility to create your own dispatcher. It must implement `LineageDispatcher` trait and have a constructor 
@@ -281,6 +311,37 @@ spline.lineageDispatcher=my-dispatcher
 spline.lineageDispatcher.my-dispatcher.className=org.example.spline.MyDispatcherImpl
 spline.lineageDispatcher.my-dispatcher.prop1=value1
 spline.lineageDispatcher.my-dispatcher.prop2=value2
+```
+
+#### Combining dispatchers (complex example)
+
+If you need, you can combine multiple dispatchers into a single one using `CompositeLineageDispatcher` and `FallbackLineageDispatcher` 
+in any combination as you wish.
+
+In the following example the lineage will be first sent to the HTTP endpoint "http://10.20.111.222/lineage-primary", if that fails it's redirected to the "http://10.20.111.222/lineage-secondary" endpoint, and if that one fails as well, lineage is logged to the ERROR logs and the console at the same time.
+
+```properties
+spline.lineageDispatcher.http1.className=za.co.absa.spline.harvester.dispatcher.HttpLineageDispatcher
+spline.lineageDispatcher.http1.producer.url=http://10.20.111.222/lineage-primary
+
+spline.lineageDispatcher.http2.className=za.co.absa.spline.harvester.dispatcher.HttpLineageDispatcher
+spline.lineageDispatcher.http2.producer.url=http://10.20.111.222/lineage-secondary
+
+spline.lineageDispatcher.errorLogs.className=za.co.absa.spline.harvester.dispatcher.LoggingLineageDispatcher
+spline.lineageDispatcher.errorLogs.level=ERROR
+
+spline.lineageDispatcher.disp1.className=za.co.absa.spline.harvester.dispatcher.FallbackLineageDispatcher
+spline.lineageDispatcher.disp1.primaryDispatcher=http1
+spline.lineageDispatcher.disp1.fallbackDispatcher=disp2
+
+spline.lineageDispatcher.disp2.className=za.co.absa.spline.harvester.dispatcher.FallbackLineageDispatcher
+spline.lineageDispatcher.disp2.primaryDispatcher=http2
+spline.lineageDispatcher.disp2.fallbackDispatcher=disp3
+
+spline.lineageDispatcher.disp3.className=za.co.absa.spline.harvester.dispatcher.CompositeLineageDispatcher
+spline.lineageDispatcher.composite.dispatchers=errorLogs,console
+
+spline.lineageDispatcher=disp1
 ```
 
 <a id="filters"></a>

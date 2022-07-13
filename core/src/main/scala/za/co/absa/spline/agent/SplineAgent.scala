@@ -29,7 +29,7 @@ import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.plugin.registry.AutoDiscoveryPluginRegistry
-import za.co.absa.spline.harvester.postprocessing.{AttributeReorderingFilter, OneRowRelationFilter, PostProcessingFilter, PostProcessor}
+import za.co.absa.spline.harvester.postprocessing.{AttributeReorderingFilter, OneRowRelationFilter, PostProcessingFilter, PostProcessor, ViewAttributeAddingFilter}
 import za.co.absa.spline.harvester.qualifier.HDFSPathQualifier
 import za.co.absa.spline.harvester.{HarvestingContext, IdGeneratorsBundle, LineageHarvester}
 import za.co.absa.spline.producer.model.ExecutionPlan
@@ -43,8 +43,9 @@ private[spline] trait SplineAgent {
 
 object SplineAgent extends Logging {
   private val InternalPostProcessingFilters = Seq(
-    new AttributeReorderingFilter(),
-    new OneRowRelationFilter()
+    new AttributeReorderingFilter,
+    new OneRowRelationFilter,
+    new ViewAttributeAddingFilter
   )
 
   def create(

@@ -227,7 +227,7 @@ object ExpressionSpec extends Matchers {
       (Map.empty
         ++ actualPlan.operations.reads.getOrElse(Nil).map(op => op.id -> op.output.get)
         ++ actualPlan.operations.other.getOrElse(Nil).map(op => op.id -> op.output.get)
-        ).toMap
+        )
 
     val actualOutput: Seq[Attribute] =
       outputByOpId(actualPlan.operations.write.childIds.head)
@@ -283,14 +283,15 @@ object ExpressionSpec extends Matchers {
     ) = (actual, expected) match {
       case (None, None) => Seq.empty
       case (Some(al), Some(el)) => al.map(actualIdMap(_)).zip(el.map(expectedIdMap(_)))
+      case _ => throw new IllegalArgumentException(s"actual: $actual, expected: $expected")
     }
 
     Succeeded
   }
 
   private class IdMap(attributes: Seq[Attribute], functions: Seq[FunctionalExpression], literals: Seq[Literal]) {
-    val attMap = attributes.map(a => a.id -> a).toMap
-    val expMap = functions.map(f => f.id -> f).toMap ++ literals.map(l => l.id -> l).toMap
+    private val attMap = attributes.map(a => a.id -> a).toMap
+    private val expMap = functions.map(f => f.id -> f).toMap ++ literals.map(l => l.id -> l).toMap
 
     def getAttribute(id: String): Attribute = attMap(id)
 

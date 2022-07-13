@@ -34,6 +34,7 @@ trait SparkFixture {
   protected val sessionBuilder: SparkSession.Builder = {
     SparkSession.builder
       .master("local")
+      .config("spark.driver.host","localhost")
       .config("spark.sql.warehouse.dir", warehouseDir)
       .config("spark.ui.enabled", "false")
   }

@@ -16,74 +16,127 @@
 
 package za.co.absa.spline
 
-
-import com.datastax.driver.core.Cluster
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode}
-import org.cassandraunit.utils.EmbeddedCassandraServerHelper
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.testcontainers.containers.CassandraContainer
 import za.co.absa.commons.io.TempDirectory
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version.VersionStringInterpolator
-import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
+import za.co.absa.spline.test.fixture.{ReleasableResourceFixture, SparkFixture}
+
+import scala.util.Using
+
 
 class CassandraSpec
   extends AsyncFlatSpec
     with Matchers
     with SparkFixture
-    with SplineFixture {
+    with SplineFixture
+    with ReleasableResourceFixture {
 
-  it should "support Cassandra as a write source" taggedAs ignoreIf(ver"$SPARK_VERSION" >= ver"3.0.0") in {
-    withNewSparkSession { implicit spark =>
-      withLineageTracking { lineageCaptor =>
+  it should "support Cassandra on older Spark versions" taggedAs ignoreIf(ver"$SPARK_VERSION" >= ver"3.0.0") in {
+    usingResource(new CassandraContainer("cassandra:3.11.2") ) { container =>
+      container.start()
 
-        spark.conf.set("spark.cassandra.connection.port", "9142") //non default port for embedded cassandra
+      withNewSparkSession { implicit spark =>
+        withLineageTracking { lineageCaptor =>
+          spark.conf.set("spark.cassandra.connection.host", container.getHost)
+          spark.conf.set("spark.cassandra.connection.port", container.getFirstMappedPort.toString)
 
-        val keyspace = "test_keyspace"
-        val table = "test_table"
+          val keyspace = "test_keyspace"
+          val table = "test_table"
 
-        //Embedded Cassandra setup
-        EmbeddedCassandraServerHelper.startEmbeddedCassandra()
-        val cluster = Cluster.builder().addContactPoint("127.0.0.1").withPort(9142).build()
-        val session = cluster.connect()
-        session.execute(s"CREATE KEYSPACE IF NOT EXISTS $keyspace  WITH replication = {'class':'SimpleStrategy', 'replication_factor':1};")
-        session.execute(s"CREATE TABLE IF NOT EXISTS $keyspace.$table (ID INT, NAME TEXT, PRIMARY KEY (ID))")
-
-        val testData: DataFrame = {
-          val schema = StructType(StructField("id", IntegerType, nullable = false) :: StructField("name", StringType, nullable = false) :: Nil)
-          val rdd = spark.sparkContext.parallelize(Row(1014, "Warsaw") :: Row(1002, "Corte") :: Nil)
-          spark.sqlContext.createDataFrame(rdd, schema)
-        }
-
-        for {
-          (plan1, _) <- lineageCaptor.lineageOf(testData
-            .write
-            .mode(SaveMode.Overwrite)
-            .format("org.apache.spark.sql.cassandra")
-            .options(Map("table" -> table, "keyspace" -> keyspace, "confirm.truncate" -> "true"))
-            .save())
-
-          (plan2, _) <- lineageCaptor.lineageOf {
-            val df = spark
-              .read
-              .format("org.apache.spark.sql.cassandra")
-              .options(Map("table" -> table, "keyspace" -> keyspace))
-              .load()
-
-            df.write.save(TempDirectory(pathOnly = true).deleteOnExit().path.toString)
+          Using.resource(container.getCluster.connect()) { session =>
+            session.execute(s"CREATE KEYSPACE IF NOT EXISTS $keyspace  WITH replication = {'class':'SimpleStrategy', 'replication_factor':1};")
+            session.execute(s"CREATE TABLE IF NOT EXISTS $keyspace.$table (ID INT, NAME TEXT, PRIMARY KEY (ID))")
           }
-        } yield {
-          plan1.operations.write.append shouldBe false
-          plan1.operations.write.extra.get("destinationType") shouldBe Some("cassandra")
-          plan1.operations.write.outputSource shouldBe s"cassandra:$keyspace:$table"
 
-          plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
-          plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("cassandra")
+          val testData: DataFrame = {
+            val schema = StructType(StructField("id", IntegerType, nullable = false) :: StructField("name", StringType, nullable = false) :: Nil)
+            val rdd = spark.sparkContext.parallelize(Row(1014, "Warsaw") :: Row(1002, "Corte") :: Nil)
+            spark.sqlContext.createDataFrame(rdd, schema)
+          }
+
+          for {
+            (plan1, _) <- lineageCaptor.lineageOf(testData
+              .write
+              .mode(SaveMode.Overwrite)
+              .format("org.apache.spark.sql.cassandra")
+              .options(Map("table" -> table, "keyspace" -> keyspace, "confirm.truncate" -> "true"))
+              .save())
+
+            (plan2, _) <- lineageCaptor.lineageOf {
+              val df = spark
+                .read
+                .format("org.apache.spark.sql.cassandra")
+                .options(Map("table" -> table, "keyspace" -> keyspace))
+                .load()
+
+              df.write.save(TempDirectory(pathOnly = true).deleteOnExit().path.toString)
+            }
+          } yield {
+            plan1.operations.write.append shouldBe false
+            plan1.operations.write.extra.get("destinationType") shouldBe Some("cassandra")
+            plan1.operations.write.outputSource shouldBe s"cassandra:$keyspace:$table"
+
+            plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
+            plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("cassandra")
+          }
         }
       }
     }
   }
+
+  it should "support Cassandra on Spark 3.0, 3.1 and 3.2" taggedAs
+    ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0" || ver"$SPARK_VERSION" >= ver"3.3.0") in {
+    usingResource(new CassandraContainer("cassandra:3.11.2") ) { container =>
+      container.start()
+
+      withNewSparkSession { implicit spark =>
+        withLineageTracking { lineageCaptor =>
+          spark.conf.set("spark.sql.catalog.casscat", "com.datastax.spark.connector.datasource.CassandraCatalog")
+          spark.conf.set("spark.sql.catalog.casscat.spark.cassandra.connection.host", container.getHost)
+          spark.conf.set("spark.sql.catalog.casscat.spark.cassandra.connection.port", container.getFirstMappedPort.toString)
+
+          val keyspace = "test_keyspace"
+          val table = "test_table"
+
+          Using.resource(container.getCluster.connect()) { session =>
+            session.execute(s"CREATE KEYSPACE IF NOT EXISTS $keyspace  WITH replication = {'class':'SimpleStrategy', 'replication_factor':1};")
+            session.execute(s"CREATE TABLE IF NOT EXISTS $keyspace.$table (ID INT, NAME TEXT, PRIMARY KEY (ID))")
+          }
+
+          val testData: DataFrame = {
+            val schema = StructType(StructField("id", IntegerType, nullable = false) :: StructField("name", StringType, nullable = false) :: Nil)
+            val rdd = spark.sparkContext.parallelize(Row(1014, "Warsaw") :: Row(1002, "Corte") :: Nil)
+            spark.sqlContext.createDataFrame(rdd, schema)
+          }
+
+          for {
+            (plan1, _) <- lineageCaptor.lineageOf {
+              testData.createOrReplaceTempView("tdview")
+              spark.sql("""INSERT INTO casscat.test_keyspace.test_table TABLE tdview;""")
+            }
+
+            (plan2, _) <- lineageCaptor.lineageOf {
+              val df = spark.sql("SELECT * FROM casscat.test_keyspace.test_table")
+              df.write.save(TempDirectory(pathOnly = true).deleteOnExit().path.toString)
+            }
+          } yield {
+            plan1.operations.write.append shouldBe true
+            plan1.operations.write.extra.get("destinationType") shouldBe Some("cassandra")
+            plan1.operations.write.outputSource shouldBe s"cassandra:$keyspace:$table"
+
+            plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
+            plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("cassandra")
+          }
+        }
+      }
+    }
+  }
+
 }

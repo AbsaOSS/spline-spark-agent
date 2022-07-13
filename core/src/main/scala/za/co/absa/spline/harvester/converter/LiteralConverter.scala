@@ -18,13 +18,13 @@ package za.co.absa.spline.harvester.converter
 
 import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.Converter
-import za.co.absa.spline.harvester.IdGenerator
+import za.co.absa.spline.harvester.SequentialIdGenerator
 import za.co.absa.spline.producer.model._
 
 import scala.language.reflectiveCalls
 
 class LiteralConverter(
-  idGen: IdGenerator[Any, String],
+  idGen: SequentialIdGenerator,
   dataConverter: DataConverter,
   dataTypeConverter: DataTypeConverter
 ) extends Converter {
@@ -46,6 +46,3 @@ class LiteralConverter(
       value = dataConverter.convert((lit.value, lit.dataType))
     )
 }
-
-
-

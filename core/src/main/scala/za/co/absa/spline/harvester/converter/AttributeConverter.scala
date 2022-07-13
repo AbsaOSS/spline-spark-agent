@@ -18,11 +18,11 @@ package za.co.absa.spline.harvester.converter
 
 import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.Converter
-import za.co.absa.spline.harvester.IdGenerator
+import za.co.absa.spline.harvester.SequentialIdGenerator
 import za.co.absa.spline.producer.model.Attribute
 
 class AttributeConverter(
-  idGen: IdGenerator[Any, String],
+  idGen: SequentialIdGenerator,
   dataTypeConverter: DataTypeConverter,
   resolveAttributeChild: sparkExprssions.Attribute => Option[sparkExprssions.Expression],
   outputExprToAttMap: Map[sparkExprssions.ExprId, Attribute],

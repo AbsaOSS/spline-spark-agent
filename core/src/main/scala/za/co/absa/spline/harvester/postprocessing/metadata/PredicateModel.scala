@@ -132,7 +132,6 @@ case class Neq(l: Expr, r: Expr) extends Expr {
 
 case class Comparison(l: Expr, r: Expr, symbol: String) extends Expr {
 
-  import scala.math.Ordering
   import Ordering.Implicits._
 
   override def eval(bindings: Map[String, Any]): Any = {
@@ -141,8 +140,8 @@ case class Comparison(l: Expr, r: Expr, symbol: String) extends Expr {
 
     (left, right) match {
       case (n1: Int, n2: Int) => compare(n1, symbol, n2)
-      case (n1: Int, n2: Long) => compare(n1, symbol, n2)
-      case (n1: Long, n2: Int) => compare(n1, symbol, n2)
+      case (n1: Int, n2: Long) => compare(n1.toLong, symbol, n2)
+      case (n1: Long, n2: Int) => compare(n1, symbol, n2.toLong)
       case (n1: Long, n2: Long) => compare(n1, symbol, n2)
     }
   }

@@ -35,6 +35,8 @@ abstract class SparkApp
 
   sparkBuilder.appName(name)
   sparkBuilder.master(master)
+  sparkBuilder.config("spark.driver.host","localhost")
+
 
   sparkBuilder.config("spark.spline.postProcessingFilter.composite.filters", "userExtraMeta")
   sparkBuilder.config("spark.spline.postProcessingFilter.userExtraMeta.rules",

@@ -282,9 +282,9 @@ object SparkLineageInitializerSpec {
     val promise = Promise[Unit]
 
     session.listenerManager.register(new QueryExecutionListener {
-      override def onSuccess(funcName: String, qe: QueryExecution, durationNs: Long): Unit = promise.success()
+      override def onSuccess(funcName: String, qe: QueryExecution, durationNs: Long): Unit = promise.success(())
 
-      override def onFailure(funcName: String, qe: QueryExecution, exception: Exception): Unit = promise.success()
+      override def onFailure(funcName: String, qe: QueryExecution, exception: Exception): Unit = promise.success(())
     })
 
     import session.implicits._

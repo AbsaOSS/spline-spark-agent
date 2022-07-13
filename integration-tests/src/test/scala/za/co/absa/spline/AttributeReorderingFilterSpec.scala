@@ -32,7 +32,7 @@ class AttributeReorderingFilterSpec extends AsyncFlatSpec
   with SparkDatabaseFixture {
 
   "AttributeOrderEnrichingFilter" should "produce lineage with correct attribute order" taggedAs
-    ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
+    ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0" || ver"$SPARK_VERSION" >= ver"3.3.0") in
     withRestartingSparkContext {
       withCustomSparkSession(_
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")

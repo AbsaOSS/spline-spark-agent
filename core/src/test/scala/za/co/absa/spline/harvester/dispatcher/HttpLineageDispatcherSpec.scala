@@ -16,12 +16,20 @@
 
 package za.co.absa.spline.harvester.dispatcher
 
+import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers.{anyBoolean, anyString}
 import org.mockito.Mockito._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.mockito.MockitoSugar
 import scalaj.http._
+import za.co.absa.commons.version.Version.VersionStringInterpolator
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest.{RestClient, RestEndpoint}
+import za.co.absa.spline.harvester.dispatcher.httpdispatcher.RESTResource
 import za.co.absa.spline.harvester.exception.SplineInitializationException
+import za.co.absa.spline.producer.model.ExecutionEvent
+
+import java.util.UUID
+import javax.ws.rs.core.MediaType
 
 class HttpLineageDispatcherSpec extends AnyFlatSpec with MockitoSugar {
 
@@ -39,7 +47,7 @@ class HttpLineageDispatcherSpec extends AnyFlatSpec with MockitoSugar {
     when(httpResponseMock.is2xx) thenReturn true
     when(httpResponseMock.headers) thenReturn Map.empty[String, IndexedSeq[String]]
 
-    new HttpLineageDispatcher(restClientMock)
+    new HttpLineageDispatcher(restClientMock, None, None)
   }
 
   it should "throw when producer is not ready" in {
@@ -48,14 +56,80 @@ class HttpLineageDispatcherSpec extends AnyFlatSpec with MockitoSugar {
     when(httpResponseMock.is5xx) thenReturn true
 
     assertThrows[SplineInitializationException] {
-      new HttpLineageDispatcher(restClientMock)
+      new HttpLineageDispatcher(restClientMock, None, None)
     }
   }
 
   it should "throw when connection to producer was not successful" in {
     when(httpRequestMock.asString) thenThrow new RuntimeException
+
     assertThrows[SplineInitializationException] {
-      new HttpLineageDispatcher(restClientMock)
+      new HttpLineageDispatcher(restClientMock, None, None)
     }
   }
+
+  it should "use version and compressions local configuration when provided" in {
+    val restClientMock = mock[RestClient]
+
+    val requestMock = mock[HttpRequest]
+    when(requestMock.url) thenReturn "someUrl"
+
+    val statusEndpointMock = mock[RestEndpoint]
+    when(restClientMock.endpoint(RESTResource.Status)) thenReturn statusEndpointMock
+    when(statusEndpointMock.request) thenReturn requestMock
+    val responseHeaders = Map(
+      SplineHeaders.ApiVersion -> IndexedSeq("1.1"),
+      SplineHeaders.AcceptRequestEncoding -> IndexedSeq("gzip")
+    )
+    when(statusEndpointMock.head()) thenReturn HttpResponse("", 200, responseHeaders)
+
+
+    val eventsEndpointMock = mock[RestEndpoint]
+    when(restClientMock.endpoint(RESTResource.ExecutionEvents)) thenReturn eventsEndpointMock
+    when(eventsEndpointMock.request) thenReturn requestMock
+    when(eventsEndpointMock.post(anyString(), anyString(), anyBoolean())) thenReturn HttpResponse("", 200, Map.empty)
+
+    val dispatcher = new HttpLineageDispatcher(restClientMock, Some(ver"1"), Some(false))
+
+    dispatcher.send(ExecutionEvent(UUID.randomUUID(), None, 1L, None, None, None, None))
+
+    verify(eventsEndpointMock).post(
+      anyString(),
+      ArgumentMatchers.eq(MediaType.APPLICATION_JSON),
+      ArgumentMatchers.eq(false)
+    )
+  }
+
+  it should "get version and compressions from server by default" in {
+    val restClientMock = mock[RestClient]
+
+    val requestMock = mock[HttpRequest]
+    when(requestMock.url) thenReturn "someUrl"
+
+    val statusEndpointMock = mock[RestEndpoint]
+    when(restClientMock.endpoint(RESTResource.Status)) thenReturn statusEndpointMock
+    when(statusEndpointMock.request) thenReturn requestMock
+    val responseHeaders = Map(
+      SplineHeaders.ApiVersion -> IndexedSeq("1.1"),
+      SplineHeaders.AcceptRequestEncoding -> IndexedSeq("gzip")
+    )
+    when(statusEndpointMock.head()) thenReturn HttpResponse("", 200, responseHeaders)
+
+
+    val eventsEndpointMock = mock[RestEndpoint]
+    when(restClientMock.endpoint(RESTResource.ExecutionEvents)) thenReturn eventsEndpointMock
+    when(eventsEndpointMock.request) thenReturn requestMock
+    when(eventsEndpointMock.post(anyString(), anyString(), anyBoolean())) thenReturn HttpResponse("", 200, Map.empty)
+
+    val dispatcher = new HttpLineageDispatcher(restClientMock, None, None)
+
+    dispatcher.send(ExecutionEvent(UUID.randomUUID(), None, 1L, None, None, None, None))
+
+    verify(eventsEndpointMock).post(
+      anyString(),
+      ArgumentMatchers.eq("application/vnd.absa.spline.producer.v1.1+json"),
+      ArgumentMatchers.eq(true)
+    )
+  }
+
 }
