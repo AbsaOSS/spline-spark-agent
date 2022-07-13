@@ -223,7 +223,7 @@ spline.lineageDispatcher.kafka.producer.bootstrap.servers=localhost:9092
 ```
 
 #### Using the Fallback Dispatcher
-The `FallbackDispatcher` is a proxy dispatcher that sends to lineage to the primary dispatcher first, and then _if_ there is an error
+The `FallbackDispatcher` is a proxy dispatcher that sends lineage to the primary dispatcher first, and then _if_ there is an error
 it calls the fallback one.
 
 In the following example the `HttpLineageDispatcher` will be used as a primary, and the `ConsoleLineageDispatcher` as fallback.
