@@ -26,7 +26,12 @@ public class JavaExampleJob {
 
     public static void main(String[] args) {
         final SparkSession.Builder builder = SparkSession.builder();
-        final SparkSession session = builder.appName("java example app").master("local[*]").getOrCreate();
+        final SparkSession session = builder
+            .appName("java example app")
+            .master("local[*]")
+            .config("spark.driver.host","localhost")
+            .getOrCreate();
+
 
         // Explicitly enable Spline lineage tracking
         // This step is optional - see https://github.com/AbsaOSS/spline-spark-agent#programmatic-initialization

@@ -28,6 +28,11 @@
     <artifactId>integration-tests_2.11</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <guava.version>14.0.1</guava.version>
+        <elasticsearch.spark.sufix>20</elasticsearch.spark.sufix>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>za.co.absa.spline.agent.spark</groupId>
@@ -149,77 +154,56 @@
             <version>1.17.3</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- required for spark-cassandra-connector -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <scope>test</scope>
+            <version>${guava.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch-spark-${elasticsearch.spark.sufix}_${scala.binary.version}</artifactId>
+            <version>8.2.2</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
     </dependencies>
 
     <profiles>
         <profile>
             <id>spark-2.2</id>
-            <dependencies>
-                <dependency>
-                    <groupId>org.elasticsearch</groupId>
-                    <artifactId>elasticsearch-spark-20_${scala.binary.version}</artifactId>
-                    <version>8.2.2</version>
-                    <scope>test</scope>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>org.apache.spark</groupId>
-                            <artifactId>*</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.scala-lang</groupId>
-                            <artifactId>*</artifactId>
-                        </exclusion>
-                    </exclusions>
-                </dependency>
-            </dependencies>
+            <properties>
+                <elasticsearch.spark.sufix>20</elasticsearch.spark.sufix>
+            </properties>
         </profile>
         <profile>
             <id>spark-2.3</id>
-            <dependencies>
-                <dependency>
-                    <groupId>org.elasticsearch</groupId>
-                    <artifactId>elasticsearch-spark-20_${scala.binary.version}</artifactId>
-                    <version>8.2.2</version>
-                    <scope>test</scope>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>org.apache.spark</groupId>
-                            <artifactId>*</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.scala-lang</groupId>
-                            <artifactId>*</artifactId>
-                        </exclusion>
-                    </exclusions>
-                </dependency>
-            </dependencies>
+            <properties>
+                <elasticsearch.spark.sufix>20</elasticsearch.spark.sufix>
+            </properties>
         </profile>
         <profile>
             <id>spark-2.4</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>org.elasticsearch</groupId>
-                    <artifactId>elasticsearch-spark-20_${scala.binary.version}</artifactId>
-                    <version>8.2.2</version>
-                    <scope>test</scope>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>org.apache.spark</groupId>
-                            <artifactId>*</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.scala-lang</groupId>
-                            <artifactId>*</artifactId>
-                        </exclusion>
-                    </exclusions>
-                </dependency>
-            </dependencies>
+            <!-- empty, since lib versions for Spark 2.4 are used as default-->
         </profile>
         <profile>
             <id>spark-3.0</id>
+            <properties>
+                <guava.version>16.0.1</guava.version>
+                <elasticsearch.spark.sufix>30</elasticsearch.spark.sufix>
+            </properties>
             <dependencies>
                 <dependency>
                     <groupId>org.apache.iceberg</groupId>
@@ -227,33 +211,14 @@
                     <version>0.13.1</version>
                     <scope>test</scope>
                 </dependency>
-
-                <!-- required for spark-cassandra-connector -->
-                <dependency>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                    <version>16.0.1</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.elasticsearch</groupId>
-                    <artifactId>elasticsearch-spark-30_${scala.binary.version}</artifactId>
-                    <version>8.2.2</version>
-                    <scope>test</scope>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>org.apache.spark</groupId>
-                            <artifactId>*</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.scala-lang</groupId>
-                            <artifactId>*</artifactId>
-                        </exclusion>
-                    </exclusions>
-                </dependency>
             </dependencies>
         </profile>
         <profile>
             <id>spark-3.1</id>
+            <properties>
+                <guava.version>16.0.1</guava.version>
+                <elasticsearch.spark.sufix>30</elasticsearch.spark.sufix>
+            </properties>
             <dependencies>
                 <dependency>
                     <groupId>org.apache.iceberg</groupId>
@@ -261,33 +226,14 @@
                     <version>0.13.1</version>
                     <scope>test</scope>
                 </dependency>
-
-                <!-- required for spark-cassandra-connector -->
-                <dependency>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                    <version>16.0.1</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.elasticsearch</groupId>
-                    <artifactId>elasticsearch-spark-30_${scala.binary.version}</artifactId>
-                    <version>8.2.2</version>
-                    <scope>test</scope>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>org.apache.spark</groupId>
-                            <artifactId>*</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.scala-lang</groupId>
-                            <artifactId>*</artifactId>
-                        </exclusion>
-                    </exclusions>
-                </dependency>
             </dependencies>
         </profile>
         <profile>
             <id>spark-3.2</id>
+            <properties>
+                <guava.version>16.0.1</guava.version>
+                <elasticsearch.spark.sufix>30</elasticsearch.spark.sufix>
+            </properties>
             <dependencies>
                 <dependency>
                     <groupId>org.apache.iceberg</groupId>
@@ -295,33 +241,14 @@
                     <version>0.13.1</version>
                     <scope>test</scope>
                 </dependency>
-
-                <!-- required for spark-cassandra-connector -->
-                <dependency>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                    <version>16.0.1</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.elasticsearch</groupId>
-                    <artifactId>elasticsearch-spark-30_${scala.binary.version}</artifactId>
-                    <version>8.2.2</version>
-                    <scope>test</scope>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>org.apache.spark</groupId>
-                            <artifactId>*</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.scala-lang</groupId>
-                            <artifactId>*</artifactId>
-                        </exclusion>
-                    </exclusions>
-                </dependency>
             </dependencies>
         </profile>
         <profile>
             <id>spark-3.3</id>
+            <properties>
+                <guava.version>16.0.1</guava.version>
+                <elasticsearch.spark.sufix>30</elasticsearch.spark.sufix>
+            </properties>
             <dependencies>
                 <!-- Iceberg fot Spark 3.3 is not available yet; using 3.2 version -->
                 <dependency>
@@ -329,29 +256,6 @@
                     <artifactId>iceberg-spark-runtime-3.2_2.12</artifactId>
                     <version>0.13.1</version>
                     <scope>test</scope>
-                </dependency>
-
-                <!-- required for spark-cassandra-connector -->
-                <dependency>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                    <version>16.0.1</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.elasticsearch</groupId>
-                    <artifactId>elasticsearch-spark-30_${scala.binary.version}</artifactId>
-                    <version>8.2.2</version>
-                    <scope>test</scope>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>org.apache.spark</groupId>
-                            <artifactId>*</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.scala-lang</groupId>
-                            <artifactId>*</artifactId>
-                        </exclusion>
-                    </exclusions>
                 </dependency>
             </dependencies>
         </profile>
