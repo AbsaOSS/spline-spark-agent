@@ -83,7 +83,6 @@ class LineageHarvester(
         val planWithoutId = {
           val planExtra = Map[String, Any](
             ExecutionPlanExtra.AppName -> ctx.session.sparkContext.appName,
-            ExecutionPlanExtra.User -> ctx.session.sparkContext.sparkUser,
             ExecutionPlanExtra.DataTypes -> dataTypeConverter.values
           )
 

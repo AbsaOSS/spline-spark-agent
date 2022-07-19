@@ -25,7 +25,6 @@ object ModelConstants {
 
   object ExecutionPlanExtra {
     val AppName = "appName"
-    val User = "user"
     val DataTypes = "dataTypes"
   }
 
