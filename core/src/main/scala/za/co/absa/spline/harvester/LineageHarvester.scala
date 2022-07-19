@@ -119,6 +119,7 @@ class LineageHarvester(
 
           val eventExtra = Map[String, Any](
             ExecutionEventExtra.AppId -> ctx.session.sparkContext.applicationId,
+            ExecutionEventExtra.User -> ctx.session.sparkContext.sparkUser,
             ExecutionEventExtra.ReadMetrics -> readMetrics,
             ExecutionEventExtra.WriteMetrics -> writeMetrics
           )

@@ -30,6 +30,7 @@ object ModelConstants {
 
   object ExecutionEventExtra {
     val AppId = "appId"
+    val User = "user"
     val WriteMetrics = "writeMetrics"
     val ReadMetrics = "readMetrics"
   }
