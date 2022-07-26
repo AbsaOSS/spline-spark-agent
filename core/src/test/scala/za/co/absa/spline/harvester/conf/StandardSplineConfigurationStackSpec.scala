@@ -16,13 +16,21 @@
 
 package za.co.absa.spline.harvester.conf
 
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.commons.spark.SparkTestBase
 import za.co.absa.spline.harvester.conf.StandardSplineConfigurationStackSpec._
 
-class StandardSplineConfigurationStackSpec extends AnyFlatSpec with Matchers with SparkTestBase {
+class StandardSplineConfigurationStackSpec extends AnyFlatSpec with Matchers {
+
+  implicit val spark: SparkSession = SparkSession.builder()
+    .master("local[*]")
+    .config("spark.ui.enabled", "false")
+    .config("spark.driver.bindAddress", "127.0.0.1")
+    .config("spark.driver.host", "127.0.0.1")
+    .getOrCreate()
+
   behavior of "StandardSplineConfigurationStack"
 
   it should "look through the multiple sources for the configuration properties" in {
