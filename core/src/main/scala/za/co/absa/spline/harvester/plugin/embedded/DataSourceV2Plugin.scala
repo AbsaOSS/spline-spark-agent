@@ -16,8 +16,11 @@
 
 package za.co.absa.spline.harvester.plugin.embedded
 
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.catalyst.catalog.CatalogUtils
 import org.apache.spark.sql.catalyst.plans.logical._
+import za.co.absa.commons.reflect.ReflectionUtils
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
@@ -152,7 +155,14 @@ class DataSourceV2Plugin
 
   private def extractSourceIdFromDeltaTableV2(table: AnyRef): SourceIdentifier = {
     val tableProps = extractFieldValue[java.util.Map[String, String]](table, "properties")
-    val location = tableProps.get("location")
+
+    // for org.apache.spark.sql.delta.catalog.DeltaTableV2 delta v 1.2.0+
+    val maybePath = Try(ReflectionUtils.extractFieldValue[Path](table, "path")).toOption
+
+    val location = maybePath
+      .map(p => CatalogUtils.URIToString(p.toUri))
+      .getOrElse(tableProps.get("location"))
+
     val uri =
       if(URI.create(location).getScheme == null) {
         s"file:$location"
@@ -210,6 +220,5 @@ object DataSourceV2Plugin {
 
   object `_: TableV2` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.connector.catalog.Table")
-
 
 }
