@@ -106,7 +106,7 @@
         <delta-03.version>0.3.0</delta-03.version>
         <delta-08.version>0.8.0</delta-08.version>
         <delta-10.version>1.0.0</delta-10.version>
-        <delta-11.version>1.1.0</delta-11.version>
+        <delta-20.version>2.0.0</delta-20.version>
 
         <!-- Cross build properties -->
 
@@ -775,7 +775,7 @@
             <properties>
                 <spark.version>${spark-32.version}</spark.version>
                 <json4s.version>${json4s-37-M11.version}</json4s.version>
-                <delta.version>${delta-11.version}</delta.version>
+                <delta.version>${delta-20.version}</delta.version>
             </properties>
             <dependencyManagement>
                 <dependencies>
@@ -801,7 +801,7 @@
                 <spark.version>${spark-33.version}</spark.version>
                 <json4s.version>${json4s-37-M11.version}</json4s.version>
                 <!-- delta for Spark 3.3 is not yet available, using the latest version -->
-                <delta.version>${delta-11.version}</delta.version>
+                <delta.version>${delta-20.version}</delta.version>
             </properties>
             <dependencyManagement>
                 <dependencies>
