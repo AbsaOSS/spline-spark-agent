@@ -19,14 +19,14 @@ package za.co.absa.spline.harvester.conf
 import org.apache.commons.configuration.MapConfiguration
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.commons.spark.SparkTestBase
 import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer.ConfProperty
 import za.co.absa.spline.harvester.conf.Spline05ConfigurationAdapterTest._
 
 import scala.collection.JavaConverters.{asScalaIteratorConverter, mapAsJavaMapConverter}
 
 
-class Spline05ConfigurationAdapterTest extends AnyFlatSpec with Matchers with SparkTestBase {
+class Spline05ConfigurationAdapterTest extends AnyFlatSpec with Matchers {
+
   behavior of "Spline05ConfigurationAdapter"
 
   it should "be empty if no deprecated keys are present in the underlying config" in {
