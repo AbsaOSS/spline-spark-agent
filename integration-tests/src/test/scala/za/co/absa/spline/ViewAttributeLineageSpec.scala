@@ -57,7 +57,7 @@ class ViewAttributeLineageSpec
             } yield {
               implicit val walker: LineageWalker = LineageWalker(plan)
 
-              val writeOutput = plan.operations.write.precedingOp.outputAttributes
+              val writeOutput = plan.operations.write.precedingDataOp.outputAttributes
               val outAttribute = writeOutput(0)
 
               val reads = plan.operations.reads.get
@@ -91,7 +91,7 @@ class ViewAttributeLineageSpec
           } yield {
             implicit val walker: LineageWalker = LineageWalker(plan)
 
-            val writeOutput = plan.operations.write.precedingOp.outputAttributes
+            val writeOutput = plan.operations.write.precedingDataOp.outputAttributes
             val outAttribute = writeOutput(0)
 
             val reads = plan.operations.reads.get
@@ -124,7 +124,7 @@ class ViewAttributeLineageSpec
           } yield {
             implicit val walker: LineageWalker = LineageWalker(plan)
 
-            val writeOutput = plan.operations.write.precedingOp.outputAttributes
+            val writeOutput = plan.operations.write.precedingDataOp.outputAttributes
             val outAttribute = writeOutput(0)
 
             val reads = plan.operations.reads.get

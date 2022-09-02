@@ -23,10 +23,10 @@ import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 
 class GenerateNodeBuilder
-(override val operation: Generate)
+(override val logicalPlan: Generate)
   (override val idGenerators: IdGeneratorsBundle, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
-  extends GenericNodeBuilder(operation)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
+  extends GenericNodeBuilder(logicalPlan)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
 
   override def resolveAttributeChild(attribute: Attribute): Option[Expression] =
-    Some(operation.generator)
+    Some(logicalPlan.generator)
 }

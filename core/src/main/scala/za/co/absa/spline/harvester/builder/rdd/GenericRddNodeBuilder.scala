@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ABSA Group Limited
+ * Copyright 2022 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,35 +14,32 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.builder
+package za.co.absa.spline.harvester.builder.rdd
 
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.rdd.RDD
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.harvester.IdGeneratorsBundle
-import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter, OperationParamsConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.DataOperation
 
-class GenericNodeBuilder
-  (val logicalPlan: LogicalPlan)
-  (val idGenerators: IdGeneratorsBundle, val dataTypeConverter: DataTypeConverter, val dataConverter: DataConverter, postProcessor: PostProcessor)
-  extends PlanOperationNodeBuilder {
+class GenericRddNodeBuilder
+  (val rdd: RDD[_])
+  (val idGenerators: IdGeneratorsBundle, postProcessor: PostProcessor)
+  extends RddOperationNodeBuilder {
 
   override protected type R = DataOperation
-
-  protected lazy val operationParamsConverter =
-    new OperationParamsConverter(dataConverter, exprToRefConverter)
 
   override def build(): DataOperation = {
     val dop = DataOperation(
       id = operationId,
-      name = logicalPlan.nodeName.asOption,
+      name = operationNameOption,
       childIds = childIds.asOption,
       output = outputAttributes.map(_.id).asOption,
-      params = operationParamsConverter.convert(logicalPlan).asOption,
+      params = None,
       extra = None
     )
 
     postProcessor.process(dop)
   }
+
 }

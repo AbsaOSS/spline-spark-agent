@@ -26,15 +26,15 @@ import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.{AttrOrExprRef, Attribute, FunctionalExpression}
 
 class UnionNodeBuilder
-(override val operation: Union)
+(override val logicalPlan: Union)
   (idGenerators: IdGeneratorsBundle, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
-  extends GenericNodeBuilder(operation)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
+  extends GenericNodeBuilder(logicalPlan)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
 
   private lazy val unionInputs: Seq[Seq[Attribute]] = inputAttributes.transpose
 
   override lazy val functionalExpressions: Seq[FunctionalExpression] =
     unionInputs
-      .zip(operation.output)
+      .zip(logicalPlan.output)
       .map { case (input, output) => constructUnionFunction(input, output) }
 
   override lazy val outputAttributes: Seq[Attribute] =

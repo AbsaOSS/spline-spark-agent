@@ -18,6 +18,8 @@ package za.co.absa.spline.test
 
 import za.co.absa.spline.producer.model._
 
+import scala.annotation.tailrec
+
 object ProducerModelImplicits {
 
   implicit class DataOperationOps(val dataOperation: DataOperation) extends AnyVal {
@@ -28,20 +30,33 @@ object ProducerModelImplicits {
         .map(walker.attributeById)
     }
 
-    def precedingOp(implicit walker: LineageWalker): DataOperation =
-      walker.precedingOp(dataOperation)
+    def precedingDataOp(implicit walker: LineageWalker): DataOperation = {
+      val children = walker.precedingDataOps(dataOperation)
+      assert(children.size == 1)
+      children.head
+    }
 
-    def precedingOps(implicit walker: LineageWalker): Seq[DataOperation] =
-      walker.precedingOps(dataOperation)
+    def precedingDataOps(implicit walker: LineageWalker): Seq[DataOperation] =
+      walker.precedingDataOps(dataOperation)
+
+    def dagLeafs(implicit walker: LineageWalker): (Seq[ReadOperation], Seq[DataOperation]) =
+      findLeaves(dataOperation)
+
   }
 
   implicit class WriteOperationOps(val write: WriteOperation) extends AnyVal {
 
-    def precedingOp(implicit walker: LineageWalker): DataOperation =
-      walker.precedingOp(write)
+    def precedingDataOp(implicit walker: LineageWalker): DataOperation = {
+      val children = walker.precedingDataOps(write)
+      assert(children.size == 1)
+      children.head
+    }
 
-    def precedingOps(implicit walker: LineageWalker): Seq[DataOperation] =
-      walker.precedingOps(write)
+    def precedingDataOps(implicit walker: LineageWalker): Seq[DataOperation] =
+      walker.precedingDataOps(write)
+
+    def dagLeaves(implicit walker: LineageWalker): (Seq[ReadOperation], Seq[DataOperation]) =
+      findLeaves(write)
   }
 
   implicit class ReadOperationOps(val readOperation: ReadOperation) extends AnyVal {
@@ -51,6 +66,36 @@ object ProducerModelImplicits {
         .getOrElse(Seq.empty)
         .map(walker.attributeById)
     }
+  }
+
+  private def findLeaves(operation: Operation)(implicit walker: LineageWalker): (Seq[ReadOperation], Seq[DataOperation]) = {
+
+    @tailrec
+    def findLeavesRec(
+      toVisit: List[Operation],
+      readLeaves: List[ReadOperation],
+      dataLeaves: List[DataOperation]
+    ): (Seq[ReadOperation], Seq[DataOperation]) = toVisit match {
+      case (head: ReadOperation) :: tail =>
+        findLeavesRec(tail, head :: readLeaves, dataLeaves)
+
+      case (head: DataOperation) :: tail =>
+        val children = walker.precedingOps(head)
+        if (children.isEmpty) {
+          findLeavesRec(tail, readLeaves, head :: dataLeaves)
+        } else {
+          findLeavesRec(children.toList ++ tail, readLeaves, dataLeaves)
+        }
+
+      case Nil => (readLeaves, dataLeaves)
+    }
+
+    val initialToVisit = operation match {
+      case write: WriteOperation => walker.precedingOps(write).toList
+      case _ => operation :: Nil
+    }
+
+    findLeavesRec(initialToVisit, Nil, Nil)
   }
 
 }

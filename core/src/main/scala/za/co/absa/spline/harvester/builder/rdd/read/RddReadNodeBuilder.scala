@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ABSA Group Limited
+ * Copyright 2022 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,37 +14,38 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.builder.read
+package za.co.absa.spline.harvester.builder.rdd.read
 
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.rdd.RDD
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.ModelConstants.OperationExtras
-import za.co.absa.spline.harvester.builder.PlanOperationNodeBuilder
-import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter, IOParamsConverter}
+import za.co.absa.spline.harvester.builder.rdd.RddOperationNodeBuilder
+import za.co.absa.spline.harvester.builder.read.ReadCommand
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.ReadOperation
 
-class ReadNodeBuilder
-  (val command: ReadCommand, val logicalPlan: LogicalPlan )
-  (val idGenerators: IdGeneratorsBundle, val dataTypeConverter: DataTypeConverter, val dataConverter: DataConverter, postProcessor: PostProcessor)
-  extends PlanOperationNodeBuilder {
+class RddReadNodeBuilder
+  (val command: ReadCommand, val rdd: RDD[_])
+  (val idGenerators: IdGeneratorsBundle, postProcessor: PostProcessor)
+  extends RddOperationNodeBuilder {
 
   override protected type R = ReadOperation
 
-  protected lazy val ioParamsConverter = new IOParamsConverter(exprToRefConverter)
+  //protected lazy val ioParamsConverter = new IOParamsConverter(exprToRefConverter)
 
   override def build(): ReadOperation = {
     val rop = ReadOperation(
       inputSources = command.sourceIdentifier.uris,
       id = operationId,
-      name = logicalPlan.nodeName.asOption,
-      output = outputAttributes.map(_.id).asOption,
-      params = ioParamsConverter.convert(command.params).asOption,
+      name = operationNameOption,
+      output = None, // TODO maybe? outputAttributes.map(_.id).asOption,
+      params = None, //ioParamsConverter.convert(command.params).asOption,
       extra = Map(
         OperationExtras.SourceType -> command.sourceIdentifier.format
       ).asOption)
 
     postProcessor.process(rop)
   }
+
 }

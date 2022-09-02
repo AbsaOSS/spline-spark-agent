@@ -213,17 +213,17 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           write.params should contain(Map("path" -> tmpPath))
           write.extra should contain(Map("destinationType" -> Some("parquet")))
 
-          val union = write.precedingOp
+          val union = write.precedingDataOp
           union.name should contain("Union")
           union.childIds.get.size should be(2)
 
-          val Seq(filter1, maybeFilter2) = union.precedingOps
+          val Seq(filter1, maybeFilter2) = union.precedingDataOps
           filter1.name should contain("Filter")
           filter1.params.get should contain key "condition"
 
           val filter2 =
             if (maybeFilter2.name.get == "Project") {
-              maybeFilter2.precedingOp // skip additional select (in Spark 3.0 and 3.1 only)
+              maybeFilter2.precedingDataOp // skip additional select (in Spark 3.0 and 3.1 only)
             } else {
               maybeFilter2
             }
@@ -231,10 +231,10 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           filter2.name should contain("Filter")
           filter2.params.get should contain key "condition"
 
-          val localRelation1 = filter1.precedingOp
+          val localRelation1 = filter1.precedingDataOp
           localRelation1.name should contain("LocalRelation")
 
-          val localRelation2 = filter2.precedingOp
+          val localRelation2 = filter2.precedingDataOp
           localRelation2.name should contain("LocalRelation")
 
           inside(union.outputAttributes) { case Seq(i, d, s) =>
@@ -302,11 +302,11 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           write.params should contain(Map("path" -> tmpPath))
           write.extra should contain(Map("destinationType" -> Some("parquet")))
 
-          val join = write.precedingOp
+          val join = write.precedingDataOp
           join.name should contain("Join")
           join.childIds.get.size should be(2)
 
-          val Seq(filter, aggregate) = join.precedingOps
+          val Seq(filter, aggregate) = join.precedingDataOps
           filter.name should contain("Filter")
           filter.params.get should contain key "condition"
 
@@ -314,13 +314,13 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           aggregate.params.get should contain key "groupingExpressions"
           aggregate.params.get should contain key "aggregateExpressions"
 
-          val project = aggregate.precedingOp
+          val project = aggregate.precedingDataOp
           project.name should contain("Project")
 
-          val localRelation1 = filter.precedingOp
+          val localRelation1 = filter.precedingDataOp
           localRelation1.name should contain("LocalRelation")
 
-          val localRelation2 = project.precedingOp
+          val localRelation2 = project.precedingDataOp
           localRelation2.name should contain("LocalRelation")
 
           inside(join.outputAttributes) { case Seq(i, d, s, a, min, max) =>

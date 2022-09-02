@@ -16,8 +16,12 @@
 
 package za.co.absa.spline.harvester.builder
 
-import org.apache.spark.sql.catalyst.plans.logical.{Aggregate, Generate, Join, LogicalPlan, Project, Union, Window}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.catalyst.plans.logical._
 import za.co.absa.spline.harvester.IdGeneratorsBundle
+import za.co.absa.spline.harvester.LineageHarvester.{PlanOrRdd, PlanWrap, RddWrap}
+import za.co.absa.spline.harvester.builder.rdd.GenericRddNodeBuilder
+import za.co.absa.spline.harvester.builder.rdd.read.RddReadNodeBuilder
 import za.co.absa.spline.harvester.builder.read.{ReadCommand, ReadNodeBuilder}
 import za.co.absa.spline.harvester.builder.write.{WriteCommand, WriteNodeBuilder}
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
@@ -32,10 +36,17 @@ class OperationNodeBuilderFactory(
   def writeNodeBuilder(wc: WriteCommand): WriteNodeBuilder =
     new WriteNodeBuilder(wc)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
 
-  def readNodeBuilder(rc: ReadCommand): ReadNodeBuilder =
-    new ReadNodeBuilder(rc)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
+  def readNodeBuilder(rc: ReadCommand, planOrRdd: PlanOrRdd): OperationNodeBuilder = planOrRdd match {
+    case PlanWrap(plan) => new ReadNodeBuilder(rc, plan)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
+    case RddWrap(rdd) => new RddReadNodeBuilder(rc, rdd)(idGenerators, postProcessor)
+  }
 
-  def genericNodeBuilder(lp: LogicalPlan): OperationNodeBuilder = lp match {
+  def genericNodeBuilder(planOrRdd: PlanOrRdd): OperationNodeBuilder = planOrRdd match {
+    case PlanWrap(plan) => genericPlanNodeBuilder(plan)
+    case RddWrap(rdd) => genericRddNodeBuilder(rdd)
+  }
+
+  private def genericPlanNodeBuilder(lp: LogicalPlan): OperationNodeBuilder = lp match {
     case p: Project => new ProjectNodeBuilder(p)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
     case u: Union => new UnionNodeBuilder(u)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
     case a: Aggregate => new AggregateNodeBuilder(a)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
@@ -43,5 +54,9 @@ class OperationNodeBuilderFactory(
     case w: Window => new WindowNodeBuilder(w)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
     case j: Join => new JoinNodeBuilder(j)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
     case _ => new GenericNodeBuilder(lp)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
+  }
+
+  private def genericRddNodeBuilder(rdd: RDD[_]): OperationNodeBuilder = rdd match {
+    case _ => new GenericRddNodeBuilder(rdd)(idGenerators, postProcessor)
   }
 }

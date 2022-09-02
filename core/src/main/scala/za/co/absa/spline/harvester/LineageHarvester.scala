@@ -19,9 +19,10 @@ package za.co.absa.spline.harvester
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.spark
 import org.apache.spark.internal.Logging
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.plans.logical._
-import org.apache.spark.sql.execution.{LeafExecNode, SparkPlan}
+import org.apache.spark.sql.execution.{ExternalRDD, LeafExecNode, LogicalRDD, SparkPlan}
 import za.co.absa.commons.CollectionImplicits._
 import za.co.absa.commons.graph.GraphImplicits._
 import za.co.absa.commons.lang.CachingConverter
@@ -158,8 +159,8 @@ class LineageHarvester(
     @scala.annotation.tailrec
     def traverseAndCollect(
       accBuilders: Seq[OperationNodeBuilder],
-      processedEntries: Map[LogicalPlan, OperationNodeBuilder],
-      enqueuedEntries: Seq[(LogicalPlan, OperationNodeBuilder)]
+      processedEntries: Map[PlanOrRdd, OperationNodeBuilder],
+      enqueuedEntries: Seq[(PlanOrRdd, OperationNodeBuilder)]
     ): Seq[OperationNodeBuilder] = {
       enqueuedEntries match {
         case Nil => accBuilders
@@ -184,28 +185,40 @@ class LineageHarvester(
       }
     }
 
-    val builders = traverseAndCollect(Nil, Map.empty, Seq((rootOp, null)))
+    val builders = traverseAndCollect(Nil, Map.empty, Seq((PlanWrap(rootOp), null)))
     builders.sortedTopologicallyBy(_.operationId, _.childIds, reverse = true)
   }
 
-  private def createOperationBuilder(op: LogicalPlan): OperationNodeBuilder =
-    readCommandExtractor.asReadCommand(op)
-      .map(opNodeBuilderFactory.readNodeBuilder)
-      .getOrElse(opNodeBuilderFactory.genericNodeBuilder(op))
+  private def createOperationBuilder(por: PlanOrRdd): OperationNodeBuilder =
+    readCommandExtractor.asReadCommand(por)
+      .map(rc => opNodeBuilderFactory.readNodeBuilder(rc, por))
+      .getOrElse(opNodeBuilderFactory.genericNodeBuilder(por))
 
-  private def extractChildren(plan: LogicalPlan) = plan match {
-    case AnalysisBarrierExtractor(_) =>
-      // special handling - spark 2.3 sometimes includes AnalysisBarrier in the plan
-      val child = ReflectionUtils.extractFieldValue[LogicalPlan](plan, "child")
-      Seq(child)
-
-    case _ => plan.children
+  private def extractChildren(por: PlanOrRdd): Seq[PlanOrRdd] = por match {
+    case PlanWrap(plan) =>
+      plan match {
+        case AnalysisBarrierExtractor(_) =>
+          // special handling - spark 2.3 sometimes includes AnalysisBarrier in the plan
+          val child = ReflectionUtils.extractValue[LogicalPlan](plan, "child")
+          Seq(PlanWrap(child))
+        case ExternalRDD(outputObjAttr, rdd) =>
+          Seq(RddWrap(rdd))
+        case LogicalRDD(output, rdd, outputPartitioning, outputOrdering, isStreaming) =>
+          Seq(RddWrap(rdd))
+        case _ => plan.children.map(PlanWrap)
+      }
+    case RddWrap(rdd) =>
+      rdd.dependencies.map(dep => RddWrap(dep.rdd))
   }
 }
 
 object LineageHarvester {
 
   import za.co.absa.commons.version.Version
+
+  trait PlanOrRdd
+  case class PlanWrap(plan: LogicalPlan) extends PlanOrRdd
+  case class RddWrap(rdd: RDD[_]) extends PlanOrRdd
 
   val SparkVersionInfo: NameAndVersion = NameAndVersion(
     name = AppMetaInfo.Spark,

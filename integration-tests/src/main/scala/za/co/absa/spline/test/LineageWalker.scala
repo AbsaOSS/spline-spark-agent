@@ -19,6 +19,7 @@ package za.co.absa.spline.test
 import za.co.absa.spline.producer.model._
 
 class LineageWalker(
+  readMap: Map[String, ReadOperation],
   opMap: Map[String, DataOperation],
   funMap: Map[String, FunctionalExpression],
   litMap:  Map[String, Literal],
@@ -27,20 +28,23 @@ class LineageWalker(
 
   def attributeById(attributeId: String): Attribute = attrMap(attributeId)
 
-  def precedingOp(op: DataOperation): DataOperation = {
-    opMap(op.childIds.get.head)
-  }
-
-  def precedingOp(write: WriteOperation): DataOperation = {
-    opMap(write.childIds.head)
-  }
-
-  def precedingOps(op: DataOperation): Seq[DataOperation] = {
+  def precedingDataOps(op: DataOperation): Seq[DataOperation] = {
     op.childIds.getOrElse(Seq.empty).map(opMap)
   }
 
-  def precedingOps(write: WriteOperation): Seq[DataOperation] = {
+  def precedingDataOps(write: WriteOperation): Seq[DataOperation] = {
     write.childIds.map(opMap)
+  }
+
+  def precedingOps(op: DataOperation): Seq[Operation] = {
+    op.childIds
+      .getOrElse(Seq.empty)
+      .map(id => opMap.getOrElse(id, readMap(id)))
+  }
+
+  def precedingOps(write: WriteOperation): Seq[Operation] = {
+    write.childIds
+      .map(id => opMap.getOrElse(id, readMap(id)))
   }
 
   def dependsOn(att: Attribute, onAtt: Attribute): Boolean = {
@@ -67,6 +71,10 @@ class LineageWalker(
 object LineageWalker {
 
   def apply(plan: ExecutionPlan): LineageWalker = {
+    val readMap = plan.operations.reads
+      .map(_.map(op => op.id -> op).toMap)
+      .getOrElse(Map.empty)
+
     val opMap = plan.operations.other
       .map(_.map(op => op.id -> op).toMap)
       .getOrElse(Map.empty)
@@ -85,7 +93,7 @@ object LineageWalker {
       .map(_.map(att => att.id -> att).toMap)
       .getOrElse(Map.empty)
 
-    new LineageWalker(opMap, funMap, litMap, attMap)
+    new LineageWalker(readMap, opMap, funMap, litMap, attMap)
   }
 
 }

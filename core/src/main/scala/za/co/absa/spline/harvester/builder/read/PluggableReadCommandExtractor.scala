@@ -16,11 +16,12 @@
 
 package za.co.absa.spline.harvester.builder.read
 
-import org.apache.spark.sql.catalyst.plans.logical.{Command, LeafNode, LogicalPlan}
+import org.apache.spark.sql.catalyst.plans.logical.{Command, LeafNode}
+import za.co.absa.spline.harvester.LineageHarvester.{PlanOrRdd, PlanWrap, RddWrap}
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.builder.dsformat.DataSourceFormatResolver
-import za.co.absa.spline.harvester.plugin.ReadNodeProcessing
 import za.co.absa.spline.harvester.plugin.registry.PluginRegistry
+import za.co.absa.spline.harvester.plugin.{RddReadNodeProcessing, ReadNodeProcessing}
 
 import scala.PartialFunction.condOpt
 
@@ -29,20 +30,34 @@ class PluggableReadCommandExtractor(
   dataSourceFormatResolver: DataSourceFormatResolver
 ) extends ReadCommandExtractor {
 
-  private val processFn =
+  private val planProcessFn =
     pluginRegistry.plugins[ReadNodeProcessing]
       .map(_.readNodeProcessor)
       .reduce(_ orElse _)
 
-  override def asReadCommand(operation: LogicalPlan): Option[ReadCommand] =
-    condOpt(operation) {
-      case _: LeafNode | _: Command
-        if processFn.isDefinedAt(operation) =>
-        processFn(operation)
-    }.map({
+  private val rddProcessFn =
+    pluginRegistry.plugins[RddReadNodeProcessing]
+      .map(_.rddReadNodeProcessor)
+      .reduce(_ orElse _)
+
+  override def asReadCommand(planOrRdd: PlanOrRdd): Option[ReadCommand] = {
+    val res = planOrRdd match {
+      case PlanWrap(plan) => condOpt(plan) {
+        case _: LeafNode | _: Command if planProcessFn.isDefinedAt(plan) =>
+          planProcessFn(plan)
+      }
+      case RddWrap(rdd) => condOpt(rdd) {
+        case _ if rddProcessFn.isDefinedAt(rdd) =>
+          rddProcessFn(rdd)
+      }
+    }
+
+    res.map({
       case (SourceIdentifier(maybeFormat, uris @ _*), params) =>
         val maybeResolvedFormat = maybeFormat.map(dataSourceFormatResolver.resolve)
         val sourceId = SourceIdentifier(maybeResolvedFormat, uris: _*)
-        ReadCommand(sourceId, operation, params)
+        ReadCommand(sourceId, params)
     })
+  }
+
 }
