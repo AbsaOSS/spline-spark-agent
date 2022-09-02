@@ -272,6 +272,7 @@
                 <artifactId>apache-rat-plugin</artifactId>
                 <configuration>
                     <excludes combine.children="append">
+                        <exclude>data/**</exclude>
                         <exclude>spark-warehouse/**</exclude>
                         <exclude>metastore_db/**</exclude>
                     </excludes>

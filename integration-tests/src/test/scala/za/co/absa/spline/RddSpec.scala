@@ -83,7 +83,7 @@ class RddSpec extends AsyncFlatSpec
             val rddData = spark.read
               .option("header", "true")
               .option("inferSchema", "true")
-              .json("integration-tests/data/cities.jsonl")
+              .json("data/cities.jsonl")
               .rdd
 
             val schema = StructType(Array(StructField("n", StringType), StructField("p", LongType)))
@@ -94,7 +94,7 @@ class RddSpec extends AsyncFlatSpec
           }
         } yield {
           plan2.operations.reads.get(0).inputSources(0) should startWith("file:/")
-          plan2.operations.reads.get(0).inputSources(0) should endWith("integration-tests/data/cities.jsonl")
+          plan2.operations.reads.get(0).inputSources(0) should endWith("data/cities.jsonl")
         }
       }
     }
@@ -109,7 +109,7 @@ class RddSpec extends AsyncFlatSpec
             val rddData = spark.read
               .option("header", "true")
               .schema(schema)
-              .csv("integration-tests/data/cities.csv")
+              .csv("data/cities.csv")
               .rdd
 
             spark.createDataFrame(rddData, schema)
@@ -119,7 +119,7 @@ class RddSpec extends AsyncFlatSpec
           }
         } yield {
           plan2.operations.reads.get(0).inputSources(0) should startWith("file:/")
-          plan2.operations.reads.get(0).inputSources(0) should endWith("integration-tests/data/cities.csv")
+          plan2.operations.reads.get(0).inputSources(0) should endWith("data/cities.csv")
         }
       }
     }
@@ -132,7 +132,7 @@ class RddSpec extends AsyncFlatSpec
         for {
           (plan2, Seq(event2)) <- lineageCaptor.lineageOf {
             val rddData = spark
-              .sparkContext.textFile("integration-tests/data/cities.csv")
+              .sparkContext.textFile("data/cities.csv")
               .map(line => Row.fromSeq(line.split(",").take(2)))
 
             val schema = StructType(Array(StructField("n", StringType), StructField("p", StringType)))
@@ -143,7 +143,7 @@ class RddSpec extends AsyncFlatSpec
           }
         } yield {
           plan2.operations.reads.get(0).inputSources(0) should startWith("file:/")
-          plan2.operations.reads.get(0).inputSources(0) should endWith("integration-tests/data/cities.csv")
+          plan2.operations.reads.get(0).inputSources(0) should endWith("data/cities.csv")
         }
       }
     }
