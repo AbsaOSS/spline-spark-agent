@@ -37,7 +37,8 @@ object RestClient extends Logging {
     baseHttp: BaseHttp,
     baseURL: String,
     connectionTimeout: Duration,
-    readTimeout: Duration): RestClient = {
+    readTimeout: Duration,
+    secHeader: String): RestClient = {
 
     logDebug(s"baseURL = $baseURL")
     logDebug(s"connectionTimeout = $connectionTimeout")
@@ -49,6 +50,7 @@ object RestClient extends Logging {
         baseHttp(s"$baseURL/$resource")
           .timeout(connectionTimeout.toMillis.toInt, readTimeout.toMillis.toInt)
           .header(SplineHeaders.Timeout, readTimeout.toMillis.toString)
+          .header(SplineHeaders.HttpSecurityKey, secHeader)
           .compress(true))
     }
   }
