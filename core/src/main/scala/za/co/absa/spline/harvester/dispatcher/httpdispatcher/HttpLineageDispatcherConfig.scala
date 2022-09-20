@@ -30,6 +30,7 @@ object HttpLineageDispatcherConfig {
   val ReadTimeoutMsKey = "timeout.read"
   val ApiVersion = "apiVersion"
   val RequestCompression = "requestCompression"
+  val securityHeaderKey = "securityHeader.key"
 
   def apply(c: Configuration) = new HttpLineageDispatcherConfig(c)
 }
@@ -38,7 +39,9 @@ class HttpLineageDispatcherConfig(config: Configuration) {
   val producerUrl: String = config.getRequiredString(ProducerUrlProperty)
   val connTimeout: Duration = config.getRequiredLong(ConnectionTimeoutMsKey).millis
   val readTimeout: Duration = config.getRequiredLong(ReadTimeoutMsKey).millis
+  val secHeader: String = config.getRequiredString(securityHeaderKey)
 
+  // def secHeader: Option[String] = config.getOptionalString(securityHeaderKey)
   def apiVersionOption: Option[Version] = config.getOptionalString(ApiVersion).map(stringToVersion)
   def requestCompressionOption: Option[Boolean] = config.getOptionalBoolean(RequestCompression)
 
