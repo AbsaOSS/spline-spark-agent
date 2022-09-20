@@ -201,10 +201,10 @@ class LineageHarvester(
           // special handling - spark 2.3 sometimes includes AnalysisBarrier in the plan
           val child = ReflectionUtils.extractValue[LogicalPlan](plan, "child")
           Seq(PlanWrap(child))
-        case ExternalRDD(outputObjAttr, rdd) =>
-          Seq(RddWrap(rdd))
-        case LogicalRDD(output, rdd, outputPartitioning, outputOrdering, isStreaming) =>
-          Seq(RddWrap(rdd))
+        case erdd: ExternalRDD[_] =>
+          Seq(RddWrap(erdd.rdd))
+        case lrdd: LogicalRDD =>
+          Seq(RddWrap(lrdd.rdd))
         case _ => plan.children.map(PlanWrap)
       }
     case RddWrap(rdd) =>
