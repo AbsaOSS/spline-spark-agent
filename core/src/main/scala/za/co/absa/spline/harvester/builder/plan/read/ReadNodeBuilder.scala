@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.builder.read
+package za.co.absa.spline.harvester.builder.plan.read
 
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.ModelConstants.OperationExtras
-import za.co.absa.spline.harvester.builder.PlanOperationNodeBuilder
+import za.co.absa.spline.harvester.builder.plan.PlanOperationNodeBuilder
+import za.co.absa.spline.harvester.builder.read.ReadCommand
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter, IOParamsConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.ReadOperation

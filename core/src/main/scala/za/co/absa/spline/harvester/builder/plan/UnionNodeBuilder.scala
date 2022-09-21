@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.builder
+package za.co.absa.spline.harvester.builder.plan
 
 import org.apache.spark.sql.catalyst.plans.logical.Union
 import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.harvester.IdGeneratorsBundle
-import za.co.absa.spline.harvester.builder.UnionNodeBuilder._
+import za.co.absa.spline.harvester.builder.plan.UnionNodeBuilder.{ExtraFields, Names}
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.{AttrOrExprRef, Attribute, FunctionalExpression}
@@ -28,7 +28,7 @@ import za.co.absa.spline.producer.model.{AttrOrExprRef, Attribute, FunctionalExp
 class UnionNodeBuilder
 (override val logicalPlan: Union)
   (idGenerators: IdGeneratorsBundle, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
-  extends GenericNodeBuilder(logicalPlan)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
+  extends GenericPlanNodeBuilder(logicalPlan)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
 
   private lazy val unionInputs: Seq[Seq[Attribute]] = inputAttributes.transpose
 

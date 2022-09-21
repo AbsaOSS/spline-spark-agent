@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.builder
+package za.co.absa.spline.harvester.builder.plan
 
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.commons.lang.OptionImplicits._
@@ -23,7 +23,7 @@ import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter, 
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.DataOperation
 
-class GenericNodeBuilder
+class GenericPlanNodeBuilder
   (val logicalPlan: LogicalPlan)
   (val idGenerators: IdGeneratorsBundle, val dataTypeConverter: DataTypeConverter, val dataConverter: DataConverter, postProcessor: PostProcessor)
   extends PlanOperationNodeBuilder {

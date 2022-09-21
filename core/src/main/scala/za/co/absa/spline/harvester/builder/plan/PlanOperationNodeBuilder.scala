@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.builder
+package za.co.absa.spline.harvester.builder.plan
 
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.CachingConverter
 import za.co.absa.spline.harvester.IdGeneratorsBundle
+import za.co.absa.spline.harvester.builder.OperationNodeBuilder
 import za.co.absa.spline.harvester.converter._
 import za.co.absa.spline.producer.model.{Attribute, FunctionalExpression, Literal}
 

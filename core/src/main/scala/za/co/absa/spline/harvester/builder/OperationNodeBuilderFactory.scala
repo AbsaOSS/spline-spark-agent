@@ -20,10 +20,13 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.plans.logical._
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.LineageHarvester.{PlanOrRdd, PlanWrap, RddWrap}
+import za.co.absa.spline.harvester.builder.plan.read.ReadNodeBuilder
+import za.co.absa.spline.harvester.builder.plan.write.WriteNodeBuilder
+import za.co.absa.spline.harvester.builder.plan.{AggregateNodeBuilder, GenerateNodeBuilder, GenericPlanNodeBuilder, JoinNodeBuilder, ProjectNodeBuilder, UnionNodeBuilder, WindowNodeBuilder}
 import za.co.absa.spline.harvester.builder.rdd.GenericRddNodeBuilder
 import za.co.absa.spline.harvester.builder.rdd.read.RddReadNodeBuilder
-import za.co.absa.spline.harvester.builder.read.{ReadCommand, ReadNodeBuilder}
-import za.co.absa.spline.harvester.builder.write.{WriteCommand, WriteNodeBuilder}
+import za.co.absa.spline.harvester.builder.read.ReadCommand
+import za.co.absa.spline.harvester.builder.write.WriteCommand
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 
@@ -53,7 +56,7 @@ class OperationNodeBuilderFactory(
     case g: Generate => new GenerateNodeBuilder(g)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
     case w: Window => new WindowNodeBuilder(w)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
     case j: Join => new JoinNodeBuilder(j)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
-    case _ => new GenericNodeBuilder(lp)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
+    case _ => new GenericPlanNodeBuilder(lp)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
   }
 
   private def genericRddNodeBuilder(rdd: RDD[_]): OperationNodeBuilder = rdd match {

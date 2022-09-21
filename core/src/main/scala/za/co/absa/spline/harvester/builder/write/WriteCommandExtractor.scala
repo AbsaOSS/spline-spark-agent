@@ -19,5 +19,5 @@ package za.co.absa.spline.harvester.builder.write
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 
 trait WriteCommandExtractor {
-  def asWriteCommand(operation: LogicalPlan): Option[WriteCommand]
+  def asWriteCommand(logicalPlan: LogicalPlan): Option[WriteCommand]
 }

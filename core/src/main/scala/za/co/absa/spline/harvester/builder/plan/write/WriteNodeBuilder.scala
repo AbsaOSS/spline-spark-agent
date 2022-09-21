@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.builder.write
+package za.co.absa.spline.harvester.builder.plan.write
 
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.ModelConstants.OperationExtras
-import za.co.absa.spline.harvester.builder.PlanOperationNodeBuilder
+import za.co.absa.spline.harvester.builder.plan.PlanOperationNodeBuilder
+import za.co.absa.spline.harvester.builder.write.WriteCommand
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter, IOParamsConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.{Attribute, WriteOperation}

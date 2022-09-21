@@ -32,15 +32,13 @@ class RddReadNodeBuilder
 
   override protected type R = ReadOperation
 
-  //protected lazy val ioParamsConverter = new IOParamsConverter(exprToRefConverter)
-
   override def build(): ReadOperation = {
     val rop = ReadOperation(
       inputSources = command.sourceIdentifier.uris,
       id = operationId,
       name = operationNameOption,
-      output = None, // TODO maybe? outputAttributes.map(_.id).asOption,
-      params = None, //ioParamsConverter.convert(command.params).asOption,
+      output = None,
+      params = None,
       extra = Map(
         OperationExtras.SourceType -> command.sourceIdentifier.format
       ).asOption)

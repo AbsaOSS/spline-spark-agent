@@ -23,7 +23,8 @@ import org.mockito.Mockito.when
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import za.co.absa.spline.harvester.builder.read.{ReadCommand, ReadNodeBuilder}
+import za.co.absa.spline.harvester.builder.plan.read.ReadNodeBuilder
+import za.co.absa.spline.harvester.builder.read.ReadCommand
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.harvester.{IdGeneratorsBundle, SequentialIdGenerator}
