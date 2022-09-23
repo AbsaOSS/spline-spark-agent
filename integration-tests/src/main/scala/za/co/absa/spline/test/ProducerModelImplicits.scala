@@ -31,9 +31,8 @@ object ProducerModelImplicits {
     }
 
     def precedingDataOp(implicit walker: LineageWalker): DataOperation = {
-      val children = walker.precedingDataOps(dataOperation)
-      assert(children.size == 1)
-      children.head
+      val Seq(child) = walker.precedingDataOps(dataOperation)
+      child
     }
 
     def precedingDataOps(implicit walker: LineageWalker): Seq[DataOperation] =
@@ -47,9 +46,8 @@ object ProducerModelImplicits {
   implicit class WriteOperationOps(val write: WriteOperation) extends AnyVal {
 
     def precedingDataOp(implicit walker: LineageWalker): DataOperation = {
-      val children = walker.precedingDataOps(write)
-      assert(children.size == 1)
-      children.head
+      val Seq(child) = walker.precedingDataOps(write)
+      child
     }
 
     def precedingDataOps(implicit walker: LineageWalker): Seq[DataOperation] =
@@ -72,27 +70,27 @@ object ProducerModelImplicits {
 
     @tailrec
     def findLeavesRec(
-      toVisit: List[Operation],
+      toVisit: Seq[Operation],
       readLeaves: List[ReadOperation],
       dataLeaves: List[DataOperation]
     ): (Seq[ReadOperation], Seq[DataOperation]) = toVisit match {
-      case (head: ReadOperation) :: tail =>
+      case (head: ReadOperation) +: tail =>
         findLeavesRec(tail, head :: readLeaves, dataLeaves)
 
-      case (head: DataOperation) :: tail =>
+      case (head: DataOperation) +: tail =>
         val children = walker.precedingOps(head)
         if (children.isEmpty) {
           findLeavesRec(tail, readLeaves, head :: dataLeaves)
         } else {
-          findLeavesRec(children.toList ++ tail, readLeaves, dataLeaves)
+          findLeavesRec(children ++ tail, readLeaves, dataLeaves)
         }
 
-      case Nil => (readLeaves, dataLeaves)
+      case Seq() => (readLeaves, dataLeaves)
     }
 
     val initialToVisit = operation match {
-      case write: WriteOperation => walker.precedingOps(write).toList
-      case _ => operation :: Nil
+      case write: WriteOperation => walker.precedingOps(write)
+      case _ => Seq(operation)
     }
 
     findLeavesRec(initialToVisit, Nil, Nil)
