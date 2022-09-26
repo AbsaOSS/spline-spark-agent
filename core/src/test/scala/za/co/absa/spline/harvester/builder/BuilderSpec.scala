@@ -23,10 +23,11 @@ import org.mockito.Mockito.when
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import za.co.absa.spline.harvester.{IdGenerator, IdGeneratorsBundle, SequentialIdGenerator}
-import za.co.absa.spline.harvester.builder.read.{ReadCommand, ReadNodeBuilder}
+import za.co.absa.spline.harvester.builder.plan.read.ReadNodeBuilder
+import za.co.absa.spline.harvester.builder.read.ReadCommand
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
+import za.co.absa.spline.harvester.{IdGeneratorsBundle, SequentialIdGenerator}
 import za.co.absa.spline.producer.model.ReadOperation
 
 class BuilderSpec extends AnyFlatSpec with Matchers with MockitoSugar {
@@ -46,12 +47,11 @@ class BuilderSpec extends AnyFlatSpec with Matchers with MockitoSugar {
 
     val command = ReadCommand(
       SourceIdentifier(Some("CSV"), "whaateverpath"),
-      logicalPlanStub,
       Map("caseSensitiveKey" -> "blabla")
     )
 
     val readNode =
-      new ReadNodeBuilder(command)(idGeneratorsMock, dataTypeConverterMock, dataConverterMock, postProcessorMock)
+      new ReadNodeBuilder(command, logicalPlanStub)(idGeneratorsMock, dataTypeConverterMock, dataConverterMock, postProcessorMock)
         .build()
 
     readNode.params.get.keySet should contain("caseSensitiveKey")

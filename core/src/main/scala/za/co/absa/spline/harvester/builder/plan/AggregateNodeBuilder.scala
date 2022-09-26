@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.builder
+package za.co.absa.spline.harvester.builder.plan
 
-import org.apache.spark.sql.catalyst.expressions.{Attribute, Expression}
-import org.apache.spark.sql.catalyst.plans.logical.Generate
+import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, Expression}
+import org.apache.spark.sql.catalyst.plans.logical.Aggregate
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 
-class GenerateNodeBuilder
-(override val operation: Generate)
-  (override val idGenerators: IdGeneratorsBundle, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
-  extends GenericNodeBuilder(operation)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
+class AggregateNodeBuilder
+  (operation: Aggregate)
+  (idGenerators: IdGeneratorsBundle, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
+  extends GenericPlanNodeBuilder(operation)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
 
-  override def resolveAttributeChild(attribute: Attribute): Option[Expression] =
-    Some(operation.generator)
+  override def resolveAttributeChild(attribute: Attribute): Option[Expression] = {
+    operation.aggregateExpressions
+      .find(_.exprId == attribute.exprId)
+      .map(_.asInstanceOf[Alias])
+  }
 }

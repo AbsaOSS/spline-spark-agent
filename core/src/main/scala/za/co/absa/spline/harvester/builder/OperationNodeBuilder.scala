@@ -16,12 +16,9 @@
 
 package za.co.absa.spline.harvester.builder
 
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
-import za.co.absa.commons.lang.CachingConverter
 import za.co.absa.spline.harvester.IdGeneratorsBundle
-import za.co.absa.spline.harvester.builder.OperationNodeBuilder.OperationId
-import za.co.absa.spline.harvester.converter._
+import za.co.absa.spline.harvester.builder.plan.PlanOperationNodeBuilder.OperationId
 import za.co.absa.spline.producer.model.{Attribute, FunctionalExpression, Literal}
 
 trait OperationNodeBuilder {
@@ -30,62 +27,22 @@ trait OperationNodeBuilder {
 
   val operationId: OperationId = idGenerators.operationIdGenerator.nextId()
 
-  private var childBuilders: Seq[OperationNodeBuilder] = Nil
+  protected var childBuilders: Seq[OperationNodeBuilder] = Nil
 
-  def operation: LogicalPlan
   def build(): R
   def +=(childBuilder: OperationNodeBuilder): Unit = childBuilders :+= childBuilder
   protected def resolveAttributeChild(attribute: sparkExprssions.Attribute): Option[sparkExprssions.Expression] = None
 
   protected def inputAttributes: Seq[Seq[Attribute]] = childBuilders.map(_.outputAttributes)
   protected def idGenerators: IdGeneratorsBundle
-  protected def dataTypeConverter: DataTypeConverter
-  protected def dataConverter: DataConverter
 
-  protected lazy val attributeConverter =
-    new AttributeConverter(
-      idGenerators.attributeIdGenerator,
-      dataTypeConverter,
-      resolveAttributeChild,
-      childBuilders.map(_.outputExprToAttMap).reduceOption(_ ++ _).getOrElse(Map.empty),
-      exprToRefConverter
-    ) with CachingConverter
-
-  protected lazy val expressionConverter =
-    new ExpressionConverter(
-      idGenerators.expressionIdGenerator,
-      dataTypeConverter,
-      exprToRefConverter
-    ) with CachingConverter
-
-  protected lazy val literalConverter =
-    new LiteralConverter(
-      idGenerators.expressionIdGenerator,
-      dataConverter,
-      dataTypeConverter
-    ) with CachingConverter
-
-  protected lazy val exprToRefConverter: ExprToRefConverter =
-    new ExprToRefConverter(
-      attributeConverter,
-      expressionConverter,
-      literalConverter
-    )
-
-  lazy val outputAttributes: Seq[Attribute] =
-    operation.output.map(attributeConverter.convert)
-
-  private def outputExprToAttMap: Map[sparkExprssions.ExprId, Attribute] =
-    operation.output.map(_.exprId).zip(outputAttributes).toMap
+  def outputAttributes: Seq[Attribute]
 
   def childIds: Seq[OperationId] = childBuilders.map(_.operationId)
 
-  lazy val functionalExpressions: Seq[FunctionalExpression] = expressionConverter.values
+  def functionalExpressions: Seq[FunctionalExpression]
 
-  lazy val literals: Seq[Literal] = literalConverter.values
-}
+  def literals: Seq[Literal]
 
-object OperationNodeBuilder {
-  type OperationId = String
-  type OutputAttIds = Seq[String]
+  def outputExprToAttMap: Map[sparkExprssions.ExprId, Attribute]
 }

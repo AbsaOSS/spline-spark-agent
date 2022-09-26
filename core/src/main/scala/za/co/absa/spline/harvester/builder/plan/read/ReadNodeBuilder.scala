@@ -14,35 +14,38 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.builder
+package za.co.absa.spline.harvester.builder.plan.read
 
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.harvester.IdGeneratorsBundle
-import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter, OperationParamsConverter}
+import za.co.absa.spline.harvester.ModelConstants.OperationExtras
+import za.co.absa.spline.harvester.builder.plan.PlanOperationNodeBuilder
+import za.co.absa.spline.harvester.builder.read.ReadCommand
+import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter, IOParamsConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
-import za.co.absa.spline.producer.model.DataOperation
+import za.co.absa.spline.producer.model.ReadOperation
 
-class GenericNodeBuilder
-  (val operation: LogicalPlan)
+class ReadNodeBuilder
+  (val command: ReadCommand, val logicalPlan: LogicalPlan )
   (val idGenerators: IdGeneratorsBundle, val dataTypeConverter: DataTypeConverter, val dataConverter: DataConverter, postProcessor: PostProcessor)
-  extends OperationNodeBuilder {
+  extends PlanOperationNodeBuilder {
 
-  override protected type R = DataOperation
+  override protected type R = ReadOperation
 
-  protected lazy val operationParamsConverter =
-    new OperationParamsConverter(dataConverter, exprToRefConverter)
+  protected lazy val ioParamsConverter = new IOParamsConverter(exprToRefConverter)
 
-  override def build(): DataOperation = {
-    val dop = DataOperation(
+  override def build(): ReadOperation = {
+    val rop = ReadOperation(
+      inputSources = command.sourceIdentifier.uris,
       id = operationId,
-      name = operation.nodeName.asOption,
-      childIds = childIds.asOption,
+      name = logicalPlan.nodeName.asOption,
       output = outputAttributes.map(_.id).asOption,
-      params = operationParamsConverter.convert(operation).asOption,
-      extra = None
-    )
+      params = ioParamsConverter.convert(command.params).asOption,
+      extra = Map(
+        OperationExtras.SourceType -> command.sourceIdentifier.format
+      ).asOption)
 
-    postProcessor.process(dop)
+    postProcessor.process(rop)
   }
 }

@@ -23,4 +23,4 @@ case class ReadOperation (
   output: Option[Seq[String]],
   params: Option[Map[String, Any]],
   extra: Option[Map[String, Any]]
-)
+) extends Operation

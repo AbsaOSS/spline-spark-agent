@@ -16,6 +16,7 @@
 
 package za.co.absa.spline.harvester.plugin
 
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.sources.{BaseRelation, CreatableRelationProvider}
@@ -40,6 +41,15 @@ trait DataSourceFormatNameResolving {
 trait ReadNodeProcessing {
   self: Plugin =>
   def readNodeProcessor: PartialFunction[LogicalPlan, ReadNodeInfo]
+}
+
+/**
+ * Matches on RDDs [[org.apache.spark.rdd.RDD]]
+ * capturing ones that represent `read`-operations.
+ */
+trait RddReadNodeProcessing {
+  self: Plugin =>
+  def rddReadNodeProcessor: PartialFunction[RDD[_], ReadNodeInfo]
 }
 
 /**

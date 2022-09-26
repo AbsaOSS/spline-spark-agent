@@ -39,16 +39,16 @@ class PluggableWriteCommandExtractor(
       .reduce(_ orElse _)
       .lift
 
-  def asWriteCommand(operation: LogicalPlan): Option[WriteCommand] = {
-    val maybeCapturedResult = processFn(operation)
+  def asWriteCommand(logicalPlan: LogicalPlan): Option[WriteCommand] = {
+    val maybeCapturedResult = processFn(logicalPlan)
 
-    if (maybeCapturedResult.isEmpty) warnIfUnimplementedCommand(operation)
+    if (maybeCapturedResult.isEmpty) warnIfUnimplementedCommand(logicalPlan)
 
     maybeCapturedResult.map({
       case (SourceIdentifier(maybeFormat, uris @ _*), mode, plan, params) =>
         val maybeResolvedFormat = maybeFormat.map(dataSourceFormatResolver.resolve)
         val sourceId = SourceIdentifier(maybeResolvedFormat, uris: _*)
-        WriteCommand(operation.nodeName, sourceId, mode, plan, params)
+        WriteCommand(logicalPlan.nodeName, sourceId, mode, plan, params)
     })
   }
 

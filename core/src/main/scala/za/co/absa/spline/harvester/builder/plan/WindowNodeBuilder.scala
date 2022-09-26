@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.builder
+package za.co.absa.spline.harvester.builder.plan
 
 import org.apache.spark.sql.catalyst.expressions.{Attribute, Expression, NamedExpression}
 import org.apache.spark.sql.catalyst.plans.logical.Window
@@ -26,7 +26,7 @@ import za.co.absa.spline.harvester.postprocessing.PostProcessor
 class WindowNodeBuilder
   (operation: Window)
   (idGenerators: IdGeneratorsBundle, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
-  extends GenericNodeBuilder(operation)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
+  extends GenericPlanNodeBuilder(operation)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
 
   override def resolveAttributeChild(attribute: Attribute): Option[Expression] = {
     WindowNodeBuilder.extractExpressions(operation)

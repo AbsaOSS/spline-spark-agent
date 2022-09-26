@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 ABSA Group Limited
+ * Copyright 2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,22 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.builder
+package za.co.absa.spline.harvester.builder.plan
 
-import org.apache.spark.internal.Logging
-import org.apache.spark.sql.catalyst.plans.logical.Join
+import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, Expression}
+import org.apache.spark.sql.catalyst.plans.logical.Project
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
-import za.co.absa.spline.producer.model.DataOperation
 
-class JoinNodeBuilder
-  (operation: Join)
+class ProjectNodeBuilder
+  (operation: Project)
   (idGenerators: IdGeneratorsBundle, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
-  extends GenericNodeBuilder(operation)(idGenerators, dataTypeConverter, dataConverter, postProcessor) with Logging {
+  extends GenericPlanNodeBuilder(operation)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
 
-  override def build(): DataOperation = {
-
-    val duplicates = operation.output.groupBy(_.exprId).collect { case (exprId, attrs) if attrs.length > 1 => exprId }
-    if (duplicates.nonEmpty) {
-      logWarning(s"Duplicated attributes found in Join operation output, ExprIds of duplicates: $duplicates")
-    }
-
-    super.build()
+  override def resolveAttributeChild(attribute: Attribute): Option[Expression] = {
+    operation.projectList
+      .find(_.exprId == attribute.exprId)
+      .map(_.asInstanceOf[Alias])
   }
-
 }

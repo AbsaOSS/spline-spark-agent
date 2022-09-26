@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.builder
+package za.co.absa.spline.harvester.builder.plan
 
-import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, Expression}
-import org.apache.spark.sql.catalyst.plans.logical.Project
+import org.apache.spark.sql.catalyst.expressions.{Attribute, Expression}
+import org.apache.spark.sql.catalyst.plans.logical.Generate
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 
-class ProjectNodeBuilder
-  (operation: Project)
-  (idGenerators: IdGeneratorsBundle, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
-  extends GenericNodeBuilder(operation)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
+class GenerateNodeBuilder
+(override val logicalPlan: Generate)
+  (override val idGenerators: IdGeneratorsBundle, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
+  extends GenericPlanNodeBuilder(logicalPlan)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
 
-  override def resolveAttributeChild(attribute: Attribute): Option[Expression] = {
-    operation.projectList
-      .find(_.exprId == attribute.exprId)
-      .map(_.asInstanceOf[Alias])
-  }
+  override def resolveAttributeChild(attribute: Attribute): Option[Expression] =
+    Some(logicalPlan.generator)
 }
