@@ -21,6 +21,7 @@ import za.co.absa.commons.config.ConfigurationImplicits._
 import za.co.absa.commons.version.Version
 import za.co.absa.spline.harvester.dispatcher.ProducerApiVersion
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.HttpLineageDispatcherConfig._
+import scala.collection.JavaConverters._
 
 import scala.concurrent.duration._
 
@@ -30,7 +31,7 @@ object HttpLineageDispatcherConfig {
   val ReadTimeoutMsKey = "timeout.read"
   val ApiVersion = "apiVersion"
   val RequestCompression = "requestCompression"
-  val securityHeaderKey = "securityHeader.key"
+  val Header = "header"
 
   def apply(c: Configuration) = new HttpLineageDispatcherConfig(c)
 }
@@ -39,9 +40,8 @@ class HttpLineageDispatcherConfig(config: Configuration) {
   val producerUrl: String = config.getRequiredString(ProducerUrlProperty)
   val connTimeout: Duration = config.getRequiredLong(ConnectionTimeoutMsKey).millis
   val readTimeout: Duration = config.getRequiredLong(ReadTimeoutMsKey).millis
-  val secHeader: String = config.getRequiredString(securityHeaderKey)
+  val headers: Map[String, String] = configToMap(config.subset(Header))
 
-  // def secHeader: Option[String] = config.getOptionalString(securityHeaderKey)
   def apiVersionOption: Option[Version] = config.getOptionalString(ApiVersion).map(stringToVersion)
   def requestCompressionOption: Option[Boolean] = config.getOptionalBoolean(RequestCompression)
 
@@ -49,4 +49,10 @@ class HttpLineageDispatcherConfig(config: Configuration) {
     case "LATEST" => ProducerApiVersion.SupportedApiRange.Max
     case s => Version.asSimple(s)
   }
+
+  private def configToMap(config: Configuration): Map[String, String] = {
+    val keys = config.getKeys.asScala.map(_.asInstanceOf[String])
+    keys.map(k => k -> config.getRequiredString(k)).toMap
+  }
+
 }
