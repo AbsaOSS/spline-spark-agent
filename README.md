@@ -271,6 +271,28 @@ spline.lineageDispatcher.kafka.topic=foo
 spline.lineageDispatcher.kafka.producer.bootstrap.servers=localhost:9092
 ```
 
+#### Using the Http Dispatcher
+This dispatcher is used by default. The only mandatory configuration is url of the producer API rest endpoint 
+(`spline.lineageDispatcher.http.producer.url`).
+Additionally, timeouts, apiVersion and multiple custom headers can be set.
+
+```properties
+spline.lineageDispatcher.http.producer.url=
+spline.lineageDispatcher.http.timeout.connection=2000
+spline.lineageDispatcher.http.timeout.read=120000
+spline.lineageDispatcher.http.apiVersion=LATEST
+spline.lineageDispatcher.http.header.X-CUSTOM-HEADER=custom-header-value
+```
+Example: Azure HTTP trigger template API key header can be set like this:
+```properties
+spline.lineageDispatcher.azure-functions.header.X-FUNCTIONS-KEY=USER_API_KEY
+```
+
+Example: AWS Rest API key header can be set like this:
+```properties
+spline.lineageDispatcher.azure-functions.header.X-API-Key=USER_API_KEY
+```
+
 #### Using the Fallback Dispatcher
 The `FallbackDispatcher` is a proxy dispatcher that sends lineage to the primary dispatcher first, and then _if_ there is an error
 it calls the fallback one.

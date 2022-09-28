@@ -44,6 +44,7 @@ object RestClient extends Logging {
     logDebug(s"baseURL = $baseURL")
     logDebug(s"connectionTimeout = $connectionTimeout")
     logDebug(s"readTimeout = $readTimeout")
+    logDebug(s"headers = $headers")
 
     //noinspection ConvertExpressionToSAM
     new RestClient {
