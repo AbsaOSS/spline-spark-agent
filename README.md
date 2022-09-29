@@ -285,12 +285,12 @@ spline.lineageDispatcher.http.header.X-CUSTOM-HEADER=custom-header-value
 ```
 Example: Azure HTTP trigger template API key header can be set like this:
 ```properties
-spline.lineageDispatcher.azure-functions.header.X-FUNCTIONS-KEY=USER_API_KEY
+spline.lineageDispatcher.http.header.X-FUNCTIONS-KEY=USER_API_KEY
 ```
 
 Example: AWS Rest API key header can be set like this:
 ```properties
-spline.lineageDispatcher.azure-functions.header.X-API-Key=USER_API_KEY
+spline.lineageDispatcher.http.header.X-API-Key=USER_API_KEY
 ```
 
 #### Using the Fallback Dispatcher
