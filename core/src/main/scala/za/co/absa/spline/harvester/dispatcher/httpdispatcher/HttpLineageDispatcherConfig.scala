@@ -21,7 +21,6 @@ import za.co.absa.commons.config.ConfigurationImplicits._
 import za.co.absa.commons.version.Version
 import za.co.absa.spline.harvester.dispatcher.ProducerApiVersion
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.HttpLineageDispatcherConfig._
-import scala.collection.JavaConverters._
 
 import scala.concurrent.duration._
 
@@ -40,7 +39,7 @@ class HttpLineageDispatcherConfig(config: Configuration) {
   val producerUrl: String = config.getRequiredString(ProducerUrlProperty)
   val connTimeout: Duration = config.getRequiredLong(ConnectionTimeoutMsKey).millis
   val readTimeout: Duration = config.getRequiredLong(ReadTimeoutMsKey).millis
-  val headers: Map[String, String] = configToMap(config.subset(Header))
+  val headers: Map[String, String] = config.subset(Header).toMap[String]
 
   def apiVersionOption: Option[Version] = config.getOptionalString(ApiVersion).map(stringToVersion)
   def requestCompressionOption: Option[Boolean] = config.getOptionalBoolean(RequestCompression)
@@ -48,11 +47,6 @@ class HttpLineageDispatcherConfig(config: Configuration) {
   private def stringToVersion(str: String): Version = str.trim match {
     case "LATEST" => ProducerApiVersion.SupportedApiRange.Max
     case s => Version.asSimple(s)
-  }
-
-  private def configToMap(config: Configuration): Map[String, String] = {
-    val keys = config.getKeys.asScala.map(_.asInstanceOf[String])
-    keys.map(k => k -> config.getRequiredString(k)).toMap
   }
 
 }

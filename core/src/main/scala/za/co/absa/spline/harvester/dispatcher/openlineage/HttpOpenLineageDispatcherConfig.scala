@@ -17,8 +17,9 @@
 package za.co.absa.spline.harvester.dispatcher.openlineage
 
 import org.apache.commons.configuration.Configuration
-import za.co.absa.commons.config.ConfigurationImplicits.{ConfigurationOptionalWrapper, ConfigurationRequiredWrapper}
+import za.co.absa.commons.config.ConfigurationImplicits.{ConfigurationMapWrapper, ConfigurationOptionalWrapper, ConfigurationRequiredWrapper}
 import za.co.absa.commons.version.Version
+import za.co.absa.spline.harvester.dispatcher.httpdispatcher.HttpLineageDispatcherConfig.Header
 import za.co.absa.spline.harvester.dispatcher.openlineage.HttpOpenLineageDispatcherConfig._
 
 import scala.concurrent.duration.{Duration, DurationInt, DurationLong}
@@ -29,6 +30,7 @@ object HttpOpenLineageDispatcherConfig {
   val ReadTimeoutMsKey = "timeout.read"
   val ApiVersion = "apiVersion"
   val Namespace = "namespace"
+  val Header = "header"
 
 
   val DefaultConnectionTimeout: Duration = 1.second
@@ -56,4 +58,7 @@ class HttpOpenLineageDispatcherConfig(config: Configuration) {
   val namespace: String = config
     .getOptionalString(Namespace)
     .getOrElse(DefaultNamespace)
+
+  val headers: Map[String, String] = config.subset(Header).toMap[String]
+
 }
