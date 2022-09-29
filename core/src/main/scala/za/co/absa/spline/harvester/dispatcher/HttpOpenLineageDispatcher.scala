@@ -94,7 +94,8 @@ object HttpOpenLineageDispatcher extends Logging {
       Http,
       config.apiUrl,
       config.connTimeout,
-      config.readTimeout
+      config.readTimeout,
+      config.headers
     )
   }
 

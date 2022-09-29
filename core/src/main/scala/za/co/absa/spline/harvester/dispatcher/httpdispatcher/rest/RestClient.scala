@@ -37,11 +37,14 @@ object RestClient extends Logging {
     baseHttp: BaseHttp,
     baseURL: String,
     connectionTimeout: Duration,
-    readTimeout: Duration): RestClient = {
+    readTimeout: Duration,
+    headers: Map[String, String]
+  ): RestClient = {
 
     logDebug(s"baseURL = $baseURL")
     logDebug(s"connectionTimeout = $connectionTimeout")
     logDebug(s"readTimeout = $readTimeout")
+    logDebug(s"headers = $headers")
 
     //noinspection ConvertExpressionToSAM
     new RestClient {
@@ -49,6 +52,7 @@ object RestClient extends Logging {
         baseHttp(s"$baseURL/$resource")
           .timeout(connectionTimeout.toMillis.toInt, readTimeout.toMillis.toInt)
           .header(SplineHeaders.Timeout, readTimeout.toMillis.toString)
+          .headers(headers)
           .compress(true))
     }
   }
