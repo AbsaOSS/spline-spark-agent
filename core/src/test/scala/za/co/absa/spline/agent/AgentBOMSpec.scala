@@ -59,7 +59,7 @@ class AgentBOMSpec
 
   it should "for non-composable components, return the first found value from the config with the highest precedence" in {
     val bom = createBOM(new SimpleConfig(), Seq(
-      new SimpleConfig(ConfProperty.Mode -> "BEST_EFFORT", ConfProperty.ExecPlanUUIDVersion -> "17"),
+      new SimpleConfig(ConfProperty.Mode -> "ENABLED", ConfProperty.ExecPlanUUIDVersion -> "17"),
       new SimpleConfig(ConfProperty.Mode -> "DISABLED", ConfProperty.SQLFailureCaptureMode -> "ALL")
     ))
     bom.splineMode shouldBe SplineMode.ENABLED
