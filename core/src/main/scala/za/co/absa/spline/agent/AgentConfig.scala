@@ -89,7 +89,7 @@ object AgentConfig {
   object ConfProperty {
 
     /**
-     * How Spline should behave.
+     * ENABLED or DISABLED
      *
      * @see [[SplineMode]]
      */

@@ -216,14 +216,7 @@ the whole piece of configuration for a given component.
 
 #### `spline.mode`
 
-- `REQUIRED` [default]
-  
-    If Spline fails to initialize itself (e.g., wrong configuration, no db connection) the Spark application aborts with an error. 
-  (**Note**: it only concerns Spline initialization routine. 
-  If the error happens during lineage capturing, or in the Spline dispatcher, then the target Spark job have already been finished by that time, 
-  and the resulted data have been persisted, regardless of the `spline.mode` settings. The Spline agent doesn't do any automated rollbacks).
-
-- `BEST_EFFORT`
+- `ENABLED` [default]
   
     Spline will try to initialize itself, but if it fails it switches to DISABLED mode 
   allowing the Spark application to proceed normally without Lineage tracking.
@@ -231,8 +224,6 @@ the whole piece of configuration for a given component.
 - `DISABLED`
   
   Lineage tracking is completely disabled and Spline is unhooked from Spark.
-
-**Note**: The default value for `spline.mode` has changed in Spline 1.0.0. It used to be `BEST_EFFORT` for Spline 0.x version series.
 
 #### `spline.lineageDispatcher`
 The logical name of the root lineage dispatcher. See [Lineage Dispatchers](#dispatchers) chapter.

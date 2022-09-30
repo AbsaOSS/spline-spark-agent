@@ -93,7 +93,7 @@ class SparkLineageInitializerSpec
   }
 
   it should "allow user to start again after error" in {
-    sys.props += ConfProperty.Mode -> SplineMode.BEST_EFFORT.toString
+    sys.props += ConfProperty.Mode -> SplineMode.ENABLED.toString
 
     withSparkSession { sparkSession =>
       for {
@@ -131,7 +131,7 @@ class SparkLineageInitializerSpec
   behavior of "Spline modes"
 
   it should "disable Spline and proceed after dispatcher init failure, when mode == BEST_EFFORT" in {
-    sys.props += ConfProperty.Mode -> SplineMode.BEST_EFFORT.toString
+    sys.props += ConfProperty.Mode -> SplineMode.ENABLED.toString
 
     withNewSparkSession { sparkSession =>
       MockLineageDispatcher.onConstructionThrow(new SplineInitializationException("boom"))
@@ -140,25 +140,6 @@ class SparkLineageInitializerSpec
         MockLineageDispatcher.verifyNoLineageCaptured()
       }
     }
-  }
-
-  it should "abort application on Java exception, when mode == REQUIRED" in {
-    sys.props += ConfProperty.Mode -> SplineMode.REQUIRED.toString
-    sys.props += ConfProperty.RootLineageDispatcher -> "wrong"
-    sys.props += ConfProperty.dispatcherClassName("wrong") -> "wrong.dispatcher.class"
-
-    the[ClassNotFoundException] thrownBy {
-      withSparkSession(_.enableLineageTracking())
-    } should have message "wrong.dispatcher.class"
-  }
-
-  it should "abort application on Spline exception, when mode == REQUIRED" in {
-    sys.props += ConfProperty.Mode -> SplineMode.REQUIRED.toString
-
-    the[SplineInitializationException] thrownBy {
-      MockLineageDispatcher.onConstructionThrow(new SplineInitializationException("boom"))
-      withNewSparkSession(_.enableLineageTracking())
-    } should have message "boom"
   }
 
   it should "not react on agent init failure, when mode == DISABLED" in {

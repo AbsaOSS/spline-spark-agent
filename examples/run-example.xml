@@ -27,7 +27,7 @@
 
         <condition property="spline.mode"
                    value="${spline.mode}"
-                   else="REQUIRED">
+                   else="ENABLED">
             <isset property="spline.mode"/>
         </condition>
 

@@ -63,7 +63,7 @@ mvn test -P examples -D spline.producer.url=http://localhost:8888/producer
 
 To change the Spline Mode
 ```shell script
-mvn test -P examples -D spline.mode=BEST_EFFORT
+mvn test -P examples -D spline.mode=ENABLED
 ```
 
 
