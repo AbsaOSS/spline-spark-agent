@@ -91,13 +91,13 @@ class AgentConfigSpec
   it should "add enums" in {
     val config = AgentConfig
       .builder()
-      .splineMode(SplineMode.BEST_EFFORT)
+      .splineMode(SplineMode.ENABLED)
       .sqlFailureCaptureMode(SQLFailureCaptureMode.ALL)
       .build()
 
     config should not be empty
     config.getKeys.asScala should have length 2
-    config.getProperty(ConfProperty.Mode) should equal(SplineMode.BEST_EFFORT.name)
+    config.getProperty(ConfProperty.Mode) should equal(SplineMode.ENABLED.name)
     config.getProperty(ConfProperty.SQLFailureCaptureMode) should equal(SQLFailureCaptureMode.ALL.name)
   }
 

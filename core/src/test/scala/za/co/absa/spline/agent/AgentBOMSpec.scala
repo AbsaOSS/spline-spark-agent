@@ -62,7 +62,7 @@ class AgentBOMSpec
       new SimpleConfig(ConfProperty.Mode -> "BEST_EFFORT", ConfProperty.ExecPlanUUIDVersion -> "17"),
       new SimpleConfig(ConfProperty.Mode -> "DISABLED", ConfProperty.SQLFailureCaptureMode -> "ALL")
     ))
-    bom.splineMode shouldBe SplineMode.BEST_EFFORT
+    bom.splineMode shouldBe SplineMode.ENABLED
     bom.sqlFailureCaptureMode shouldBe SQLFailureCaptureMode.ALL
     bom.execPlanUUIDVersion shouldBe 17
   }

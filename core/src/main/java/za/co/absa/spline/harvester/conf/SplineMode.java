@@ -18,9 +18,10 @@ package za.co.absa.spline.harvester.conf;
 
 public enum SplineMode {
 
-    // Spline is disabled completely
-    DISABLED,
+    // Spline is enabled. If Spline initialization fails then disable Spline and continue without lineage tracking
+    ENABLED,
 
-    // If Spline initialization fails then disable Spline and continue without lineage tracking
-    BEST_EFFORT,
+    // Spline is disabled completely
+    DISABLED
+
 }

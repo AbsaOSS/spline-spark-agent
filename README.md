@@ -216,7 +216,7 @@ the whole piece of configuration for a given component.
 
 #### `spline.mode`
 
-- `BEST_EFFORT` [default]
+- `ENABLED` [default]
   
     Spline will try to initialize itself, but if it fails it switches to DISABLED mode 
   allowing the Spark application to proceed normally without Lineage tracking.

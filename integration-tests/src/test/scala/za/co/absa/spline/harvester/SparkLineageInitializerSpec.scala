@@ -93,7 +93,7 @@ class SparkLineageInitializerSpec
   }
 
   it should "allow user to start again after error" in {
-    sys.props += ConfProperty.Mode -> SplineMode.BEST_EFFORT.toString
+    sys.props += ConfProperty.Mode -> SplineMode.ENABLED.toString
 
     withSparkSession { sparkSession =>
       for {
@@ -131,7 +131,7 @@ class SparkLineageInitializerSpec
   behavior of "Spline modes"
 
   it should "disable Spline and proceed after dispatcher init failure, when mode == BEST_EFFORT" in {
-    sys.props += ConfProperty.Mode -> SplineMode.BEST_EFFORT.toString
+    sys.props += ConfProperty.Mode -> SplineMode.ENABLED.toString
 
     withNewSparkSession { sparkSession =>
       MockLineageDispatcher.onConstructionThrow(new SplineInitializationException("boom"))

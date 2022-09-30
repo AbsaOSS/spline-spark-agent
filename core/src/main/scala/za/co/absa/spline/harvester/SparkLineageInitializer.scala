@@ -134,7 +134,7 @@ private[spline] class SparkLineageInitializer(sparkSession: SparkSession) extend
       logInfo("initialization aborted")
       None
     }
-    else withErrorHandling(bom.splineMode) {
+    else withErrorHandling {
       if (isCodelessInit)
         Some(createListener(bom))
       else
@@ -169,7 +169,7 @@ private[spline] class SparkLineageInitializer(sparkSession: SparkSession) extend
     }
   }
 
-  private def withErrorHandling(splineMode: SplineMode)(body: => Option[QueryExecutionListener]) = {
+  private def withErrorHandling(body: => Option[QueryExecutionListener]) = {
     try {
       body
     } catch {
