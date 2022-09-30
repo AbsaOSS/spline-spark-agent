@@ -20,7 +20,6 @@ import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
 import za.co.absa.spline.agent.AgentConfig;
 import za.co.absa.spline.harvester.SparkLineageInitializer;
-import za.co.absa.spline.harvester.conf.SplineMode;
 
 public class JavaExampleJob {
 
@@ -35,10 +34,7 @@ public class JavaExampleJob {
 
         // Explicitly enable Spline lineage tracking
         // This step is optional - see https://github.com/AbsaOSS/spline-spark-agent#programmatic-initialization
-        final AgentConfig splineConfig =
-            AgentConfig.builder()
-                .splineMode(SplineMode.REQUIRED)
-                .build();
+        final AgentConfig splineConfig = AgentConfig.builder().build();
 
         SparkLineageInitializer.enableLineageTracking(session, splineConfig);
 

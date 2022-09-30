@@ -173,7 +173,7 @@ private[spline] class SparkLineageInitializer(sparkSession: SparkSession) extend
     try {
       body
     } catch {
-      case NonFatal(e) if splineMode == SplineMode.BEST_EFFORT =>
+      case NonFatal(e) =>
         logError(s"Spline initialization failed! Spark Lineage tracking is DISABLED.", e)
         None
     }
