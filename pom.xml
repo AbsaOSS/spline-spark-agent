@@ -107,6 +107,7 @@
         <delta-08.version>0.8.0</delta-08.version>
         <delta-10.version>1.0.0</delta-10.version>
         <delta-20.version>2.0.0</delta-20.version>
+        <delta-21.version>2.1.0</delta-21.version>
 
         <!-- Cross build properties -->
 
@@ -800,8 +801,7 @@
             <properties>
                 <spark.version>${spark-33.version}</spark.version>
                 <json4s.version>${json4s-37-M11.version}</json4s.version>
-                <!-- delta for Spark 3.3 is not yet available, using the latest version -->
-                <delta.version>${delta-20.version}</delta.version>
+                <delta.version>${delta-21.version}</delta.version>
             </properties>
             <dependencyManagement>
                 <dependencies>
