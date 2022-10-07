@@ -104,7 +104,7 @@ class DataSourceV2Plugin
     ctc: AnyRef,
     commandSpecificProp: (String, _)
   ) : (SourceIdentifier, SaveMode, LogicalPlan, Params) = {
-    val catalog = extractFieldValue[AnyRef](ctc, "catalog")
+    val catalog = extractCatalog(ctc)
     val identifier = extractFieldValue[AnyRef](ctc, "tableName")
     val loadTableMethods = catalog.getClass.getMethods.filter(_.getName == "loadTable")
     val table = loadTableMethods.flatMap(m => Try(m.invoke(catalog, identifier)).toOption).head
@@ -113,7 +113,7 @@ class DataSourceV2Plugin
     val query = extractFieldValue[LogicalPlan](ctc, "query")
 
     val partitioning = extractFieldValue[AnyRef](ctc, "partitioning")
-    val properties = extractFieldValue[Map[String, String]](ctc, "properties")
+    val properties = Try(extractFieldValue[Map[String, String]](ctc, "properties")).getOrElse(Map.empty)
     val writeOptions = extractFieldValue[Map[String, String]](ctc, "writeOptions")
     val props = Map(
       "table" -> Map("identifier" -> identifier.toString),
@@ -123,6 +123,18 @@ class DataSourceV2Plugin
 
     (sourceId, SaveMode.Overwrite, query, props + commandSpecificProp)
   }
+
+  private def extractCatalog(ctc: AnyRef): AnyRef = {
+    Try {
+      // Spark up to 3.2
+      extractFieldValue[AnyRef](ctc, "catalog")
+    } getOrElse {
+      // Spark 3.3+
+      val name = extractFieldValue[AnyRef](ctc, "name")
+      extractFieldValue[AnyRef](name, "catalog")
+    }
+  }
+
 
   /**
     * @param namedRelation org.apache.spark.sql.catalyst.analysis.NamedRelation
