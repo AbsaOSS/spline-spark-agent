@@ -35,6 +35,7 @@ class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matc
   private val logicalPlan = mock[LogicalPlan]
   private val sparkSession = SparkSession.builder
     .master("local")
+    .config("spark.driver.host", "localhost")
     .config("spark.ui.enabled", "false")
     .config("k", "nice")
     .getOrCreate()
