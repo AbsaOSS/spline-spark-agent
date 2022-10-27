@@ -208,8 +208,8 @@
             <dependencies>
                 <dependency>
                     <groupId>org.apache.iceberg</groupId>
-                    <artifactId>iceberg-spark3-runtime</artifactId>
-                    <version>0.13.1</version>
+                    <artifactId>iceberg-spark-runtime-3.0_${scala.binary.version}</artifactId>
+                    <version>1.0.0</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -223,8 +223,8 @@
             <dependencies>
                 <dependency>
                     <groupId>org.apache.iceberg</groupId>
-                    <artifactId>iceberg-spark-runtime-3.1_2.12</artifactId>
-                    <version>0.13.1</version>
+                    <artifactId>iceberg-spark-runtime-3.1_${scala.binary.version}</artifactId>
+                    <version>1.0.0</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -238,8 +238,8 @@
             <dependencies>
                 <dependency>
                     <groupId>org.apache.iceberg</groupId>
-                    <artifactId>iceberg-spark-runtime-3.2_2.12</artifactId>
-                    <version>0.13.1</version>
+                    <artifactId>iceberg-spark-runtime-3.2_${scala.binary.version}</artifactId>
+                    <version>1.0.0</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -251,11 +251,10 @@
                 <elasticsearch.spark.sufix>30</elasticsearch.spark.sufix>
             </properties>
             <dependencies>
-                <!-- Iceberg fot Spark 3.3 is not available yet; using 3.2 version -->
                 <dependency>
                     <groupId>org.apache.iceberg</groupId>
-                    <artifactId>iceberg-spark-runtime-3.2_2.12</artifactId>
-                    <version>0.13.1</version>
+                    <artifactId>iceberg-spark-runtime-3.3_${scala.binary.version}</artifactId>
+                    <version>1.0.0</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
