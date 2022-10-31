@@ -54,7 +54,7 @@ class HttpLineageDispatcher(restClient: RestClient, apiVersionOption: Option[Ver
   private val executionPlansEndpoint = restClient.endpoint(RESTResource.ExecutionPlans)
   private val executionEventsEndpoint = restClient.endpoint(RESTResource.ExecutionEvents)
 
-  private val serverHeaders: Map[String, IndexedSeq[String]] = getServerHeaders(restClient)
+  private lazy val serverHeaders: Map[String, IndexedSeq[String]] = getServerHeaders(restClient)
   private val apiVersion: Version = apiVersionOption.getOrElse(resolveApiVersion(serverHeaders))
 
   logInfo(s"Using Producer API version: ${apiVersion.asString}")

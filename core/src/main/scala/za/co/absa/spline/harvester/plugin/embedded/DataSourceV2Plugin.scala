@@ -16,8 +16,11 @@
 
 package za.co.absa.spline.harvester.plugin.embedded
 
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.catalyst.catalog.CatalogUtils
 import org.apache.spark.sql.catalyst.plans.logical._
+import za.co.absa.commons.reflect.ReflectionUtils
 import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
@@ -101,7 +104,7 @@ class DataSourceV2Plugin
     ctc: AnyRef,
     commandSpecificProp: (String, _)
   ) : (SourceIdentifier, SaveMode, LogicalPlan, Params) = {
-    val catalog = extractFieldValue[AnyRef](ctc, "catalog")
+    val catalog = extractCatalog(ctc)
     val identifier = extractFieldValue[AnyRef](ctc, "tableName")
     val loadTableMethods = catalog.getClass.getMethods.filter(_.getName == "loadTable")
     val table = loadTableMethods.flatMap(m => Try(m.invoke(catalog, identifier)).toOption).head
@@ -110,7 +113,7 @@ class DataSourceV2Plugin
     val query = extractFieldValue[LogicalPlan](ctc, "query")
 
     val partitioning = extractFieldValue[AnyRef](ctc, "partitioning")
-    val properties = extractFieldValue[Map[String, String]](ctc, "properties")
+    val properties = Try(extractFieldValue[Map[String, String]](ctc, "properties")).getOrElse(Map.empty)
     val writeOptions = extractFieldValue[Map[String, String]](ctc, "writeOptions")
     val props = Map(
       "table" -> Map("identifier" -> identifier.toString),
@@ -120,6 +123,18 @@ class DataSourceV2Plugin
 
     (sourceId, SaveMode.Overwrite, query, props + commandSpecificProp)
   }
+
+  private def extractCatalog(ctc: AnyRef): AnyRef = {
+    Try {
+      // Spark up to 3.2
+      extractFieldValue[AnyRef](ctc, "catalog")
+    } getOrElse {
+      // Spark 3.3+
+      val name = extractFieldValue[AnyRef](ctc, "name")
+      extractFieldValue[AnyRef](name, "catalog")
+    }
+  }
+
 
   /**
     * @param namedRelation org.apache.spark.sql.catalyst.analysis.NamedRelation
@@ -152,7 +167,14 @@ class DataSourceV2Plugin
 
   private def extractSourceIdFromDeltaTableV2(table: AnyRef): SourceIdentifier = {
     val tableProps = extractFieldValue[java.util.Map[String, String]](table, "properties")
-    val location = tableProps.get("location")
+
+    // for org.apache.spark.sql.delta.catalog.DeltaTableV2 delta v 1.2.0+
+    val maybePath = Try(ReflectionUtils.extractFieldValue[Path](table, "path")).toOption
+
+    val location = maybePath
+      .map(p => CatalogUtils.URIToString(p.toUri))
+      .getOrElse(tableProps.get("location"))
+
     val uri =
       if(URI.create(location).getScheme == null) {
         s"file:$location"
@@ -210,6 +232,5 @@ object DataSourceV2Plugin {
 
   object `_: TableV2` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.connector.catalog.Table")
-
 
 }
