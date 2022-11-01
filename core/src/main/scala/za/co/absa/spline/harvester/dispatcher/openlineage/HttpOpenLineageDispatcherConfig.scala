@@ -17,48 +17,30 @@
 package za.co.absa.spline.harvester.dispatcher.openlineage
 
 import org.apache.commons.configuration.Configuration
-import za.co.absa.commons.config.ConfigurationImplicits.{ConfigurationMapWrapper, ConfigurationOptionalWrapper, ConfigurationRequiredWrapper}
+import za.co.absa.commons.config.ConfigurationImplicits._
 import za.co.absa.commons.version.Version
-import za.co.absa.spline.harvester.dispatcher.httpdispatcher.HttpLineageDispatcherConfig.Header
 import za.co.absa.spline.harvester.dispatcher.openlineage.HttpOpenLineageDispatcherConfig._
 
-import scala.concurrent.duration.{Duration, DurationInt, DurationLong}
+import scala.concurrent.duration._
 
 object HttpOpenLineageDispatcherConfig {
   val apiUrlProperty = "api.url"
   val ConnectionTimeoutMsKey = "timeout.connection"
   val ReadTimeoutMsKey = "timeout.read"
+  val DisableSslValidation = "disableSslValidation"
   val ApiVersion = "apiVersion"
   val Namespace = "namespace"
   val Header = "header"
-
-
-  val DefaultConnectionTimeout: Duration = 1.second
-  val DefaultReadTimeout: Duration = 20.second
-  val DefaultNamespace = "default"
 
   def apply(c: Configuration) = new HttpOpenLineageDispatcherConfig(c)
 }
 
 class HttpOpenLineageDispatcherConfig(config: Configuration) {
   val apiUrl: String = config.getRequiredString(apiUrlProperty)
-
-  val connTimeout: Duration = config
-    .getOptionalLong(ConnectionTimeoutMsKey)
-    .map(_.millis)
-    .getOrElse(DefaultConnectionTimeout)
-
-  val readTimeout: Duration = config
-    .getOptionalLong(ReadTimeoutMsKey)
-    .map(_.millis)
-    .getOrElse(DefaultReadTimeout)
-
+  val connTimeout: Duration = config.getRequiredLong(ConnectionTimeoutMsKey).millis
+  val readTimeout: Duration = config.getRequiredLong(ReadTimeoutMsKey).millis
+  val disableSslValidation: Boolean = config.getRequiredBoolean(DisableSslValidation)
   val apiVersion: Version = Version.asSimple(config.getRequiredString(ApiVersion))
-
-  val namespace: String = config
-    .getOptionalString(Namespace)
-    .getOrElse(DefaultNamespace)
-
+  val namespace: String = config.getRequiredString(Namespace)
   val headers: Map[String, String] = config.subset(Header).toMap[String]
-
 }

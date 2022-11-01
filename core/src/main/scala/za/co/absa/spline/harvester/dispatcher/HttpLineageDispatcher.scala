@@ -18,7 +18,7 @@ package za.co.absa.spline.harvester.dispatcher
 import org.apache.commons.configuration.Configuration
 import org.apache.spark.internal.Logging
 import scalaj.http.{Http, HttpStatusException}
-import za.co.absa.commons.lang.OptionImplicits._
+import za.co.absa.commons.lang.extensions.TraversableExtension._
 import za.co.absa.commons.version.Version
 import za.co.absa.spline.harvester.dispatcher.ProducerApiVersion.SupportedApiRange
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.HttpConstants.Encoding
@@ -108,6 +108,7 @@ object HttpLineageDispatcher extends Logging {
       config.producerUrl,
       config.connTimeout,
       config.readTimeout,
+      config.disableSslValidation,
       config.headers
     )
   }
