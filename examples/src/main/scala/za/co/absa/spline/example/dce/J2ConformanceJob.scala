@@ -18,7 +18,11 @@ package za.co.absa.spline.example.dce
 
 import za.co.absa.spline.SparkApp
 
-object J2ConformanceJob extends SparkApp("My Conformance") {
+object J2ConformanceJob
+  extends SparkApp(
+    name = "My Conformance",
+    tags = Seq("dce")
+  ) {
 
   import za.co.absa.spline.harvester.SparkLineageInitializer._
 
@@ -51,7 +55,7 @@ object J2ConformanceJob extends SparkApp("My Conformance") {
     .withColumnRenamed("mdr_code", "ConformedCurrency")
 
     .join(currencyRateMapping, $"ConformedCurrency" === $"mdr_cur_code")
-    .withColumn("ConformedAmountCZK", $"amount"*$"mdr_rate")
+    .withColumn("ConformedAmountCZK", $"amount" * $"mdr_rate")
     .drop("mdr_cur_code")
     .drop("mdr_rate")
 

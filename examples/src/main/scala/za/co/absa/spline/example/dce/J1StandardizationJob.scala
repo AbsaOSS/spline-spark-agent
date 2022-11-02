@@ -18,7 +18,11 @@ package za.co.absa.spline.example.dce
 
 import za.co.absa.spline.SparkApp
 
-object J1StandardizationJob extends SparkApp("My Standardization") {
+object J1StandardizationJob
+  extends SparkApp(
+    name = "My Standardization",
+    tags = Seq("dce")
+  ) {
 
   import org.apache.spark.sql.functions._
   import za.co.absa.spline.harvester.SparkLineageInitializer._

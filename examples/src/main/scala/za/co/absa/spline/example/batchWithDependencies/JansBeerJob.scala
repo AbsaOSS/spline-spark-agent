@@ -18,7 +18,12 @@ package za.co.absa.spline.example.batchWithDependencies
 
 import za.co.absa.spline.SparkApp
 
-object JansBeerJob extends SparkApp("Jan's Beer Job", conf = Seq("spark.sql.shuffle.partitions" -> "4")) {
+object JansBeerJob
+  extends SparkApp(
+    name = "Jan's Beer Job",
+    conf = Seq("spark.sql.shuffle.partitions" -> "4"),
+    tags = Seq("beer")
+  ) {
 
   import org.apache.spark.sql._
   import org.apache.spark.sql.functions._
