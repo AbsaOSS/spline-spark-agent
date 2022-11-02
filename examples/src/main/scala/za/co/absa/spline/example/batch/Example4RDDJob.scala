@@ -19,7 +19,7 @@ package za.co.absa.spline.example.batch
 import org.apache.spark.sql.functions.col
 import za.co.absa.spline.SparkApp
 
-object ExampleRDDJob extends SparkApp("Example 1 (successful)") {
+object Example4RDDJob extends SparkApp("Example 1 (successful)") {
 
   import org.apache.spark.sql._
   import za.co.absa.spline.harvester.SparkLineageInitializer._
@@ -32,8 +32,8 @@ object ExampleRDDJob extends SparkApp("Example 1 (successful)") {
   val rddData = spark.read
     .option("header", "true")
     .option("inferSchema", "true")
-    .parquet("data/output/batch/union_job_results")
-    .select(col("_1").cast("int"))
+    .parquet("data/output/batch/job2_stage2_results")
+    .select(col("count").cast("int"))
     .rdd
 
   val rddRes = rddData.map(row => row.getInt(0) * 2)
