@@ -92,6 +92,8 @@ Available environment variables:
 | HTTP_PROXY_PORT        | (see [Java Networking and Proxies](https://docs.oracle.com/javase/8/docs/technotes/guides/net/proxies.html)) |
 | HTTP_NON_PROXY_HOSTS   | (see [Java Networking and Proxies](https://docs.oracle.com/javase/8/docs/technotes/guides/net/proxies.html)) |
 
+(The default values can be seen in the respective [Dockerfile](../Dockerfile))
+
 ---
 
     Copyright 2019 ABSA Group Limited
