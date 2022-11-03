@@ -27,7 +27,8 @@ LABEL \
 COPY . /opt/spline-spark-agent
 
 ENV SPLINE_PRODUCER_URL=http://host.docker.internal:8080/producer
-ENV SPLINE_MODE=REQUIRED
+ENV SPLINE_MODE=ENABLED
+ENV DISABLE_SSL_VALIDATION=false
 
 ENV HTTP_PROXY_HOST=
 ENV HTTP_PROXY_PORT=
@@ -44,7 +45,9 @@ ENV WORKDIR=/opt/spline-spark-agent/examples
 WORKDIR $WORKDIR
 
 CMD exec mvn test -P examples \
-    -D spline.producer.url=$SPLINE_PRODUCER_URL \
+    -D spline.lineageDispatcher=http \
+    -D spline.lineageDispatcher.http.producer.url=$SPLINE_PRODUCER_URL \
+    -D spline.lineageDispatcher.http.disableSslValidation=$DISABLE_SSL_VALIDATION \
     -D spline.mode=$SPLINE_MODE \
     -D http.proxyHost=$HTTP_PROXY_HOST \
     -D http.proxyPort=$HTTP_PROXY_PORT \
