@@ -20,7 +20,12 @@ import za.co.absa.spline.SparkApp
 
 import scala.language.postfixOps
 
-object MareksJob extends SparkApp("Marek's Job", conf = Seq("spark.sql.shuffle.partitions" -> "4")) {
+object MareksJob
+  extends SparkApp(
+    name = "Marek's Job",
+    conf = Seq("spark.sql.shuffle.partitions" -> "4"),
+    tags = Seq("beer")
+  ) {
 
   // Initializing library to hook up to Apache Spark
   import za.co.absa.spline.harvester.SparkLineageInitializer._
