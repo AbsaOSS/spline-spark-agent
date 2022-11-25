@@ -482,6 +482,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
       withLineageTracking { captor =>
         import spark.implicits._
         val dest = tmpDest
+        val destUri = new File(dest).toURI.toString
         val df = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
         for {
           _ <- captor.lineageOf(df.write.save(dest))
@@ -493,7 +494,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           plan should not be null
           event.durationNs should be(empty)
           event.error should not be empty
-          event.error.get.toString should include(s"path file:$dest already exists")
+          event.error.get.toString should include(s"path $destUri already exists")
         }
       }
     }
