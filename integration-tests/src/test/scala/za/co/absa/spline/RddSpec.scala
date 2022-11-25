@@ -37,6 +37,7 @@ class RddSpec extends AsyncFlatSpec
   with JDBCFixture {
 
   private val inputPath = TempDirectory().deleteOnExit().path
+  private val inputUri = inputPath.toUri.toString
   private val tempPath = TempDirectory().deleteOnExit().path
 
   it should "support parquet read" in
@@ -69,7 +70,7 @@ class RddSpec extends AsyncFlatSpec
               .parquet(tempPath.toString)
           }
         } yield {
-          plan2.operations.reads.get(0).inputSources(0) should startWith(s"file://$inputPath")
+          plan2.operations.reads.get(0).inputSources(0) should startWith(s"$inputUri")
           plan2.operations.write.extra.get("destinationType") shouldBe Some("parquet")
         }
       }

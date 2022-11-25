@@ -29,7 +29,9 @@ import scala.util.Try
 trait SparkFixture {
   this: AsyncTestSuite =>
 
-  val warehouseDir: String = TempDirectory("SparkFixture", "UnitTest", pathOnly = true).deleteOnExit().path.toString.stripSuffix("/")
+  val baseDir: TempDirectory = TempDirectory("SparkFixture", "UnitTest", pathOnly = true).deleteOnExit()
+  val warehouseDir: String = baseDir.path.toAbsolutePath.toString.stripSuffix("/")
+  val warehouseUri: String = new File(warehouseDir).toURI.toString
 
   protected val sessionBuilder: SparkSession.Builder = {
     SparkSession.builder

@@ -58,9 +58,9 @@ class SQLCommandsSpec extends AsyncFlatSpec
                   | WHERE id > 1""".stripMargin))
 
           } yield {
-            plan1.operations.write.outputSource should equalToUri(s"file:$warehouseDir/sourcetable")
+            plan1.operations.write.outputSource should equalToUri(s"file:/$warehouseDir/sourcetable")
             plan2.operations.reads.get.head.inputSources.head should equalToUri(plan1.operations.write.outputSource)
-            plan2.operations.write.outputSource should equalToUri(s"file:$warehouseDir/targettable")
+            plan2.operations.write.outputSource should equalToUri(s"file:/$warehouseDir/targettable")
           }
         }
       }

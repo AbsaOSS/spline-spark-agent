@@ -29,15 +29,21 @@ import za.co.absa.commons.version.Version._
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 
+import java.io.File
+
 class FileFormatSpec extends AsyncFlatSpec
   with Matchers
   with SparkFixture
   with SplineFixture {
 
   private val avroPath = TempDirectory(prefix = "avro", pathOnly = true).deleteOnExit().path.toFile.getAbsolutePath
+  private val avroUri = new File(avroPath).toURI.toString
   private val jsonPath = TempDirectory(prefix = "json", pathOnly = true).deleteOnExit().path.toFile.getAbsolutePath
+  private val jsonUri = new File(jsonPath).toURI.toString
   private val orcPath = TempDirectory(prefix = "orc", pathOnly = true).deleteOnExit().path.toFile.getAbsolutePath
+  private val orcUri = new File(orcPath).toURI.toString
   private val csvPath = TempDirectory(prefix = "csv", pathOnly = true).deleteOnExit().path.toFile.getAbsolutePath
+  private val csvUri = new File(csvPath).toURI.toString
 
   //Spark supports avro out of the box in 2.4 and beyond
   it should "support built in avro as a source" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.4.0") in
@@ -62,7 +68,7 @@ class FileFormatSpec extends AsyncFlatSpec
         } yield {
           plan1.operations.write.append shouldBe false
           plan1.operations.write.extra.get("destinationType") shouldBe Some("avro")
-          plan1.operations.write.outputSource shouldBe s"file:$avroPath"
+          plan1.operations.write.outputSource shouldBe s"$avroUri"
           plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
           plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("avro")
         }
@@ -92,7 +98,7 @@ class FileFormatSpec extends AsyncFlatSpec
         } yield {
           plan1.operations.write.append shouldBe false
           plan1.operations.write.extra.get("destinationType") shouldBe Some("avro")
-          plan1.operations.write.outputSource shouldBe s"file:$avroPath"
+          plan1.operations.write.outputSource shouldBe s"$avroUri"
           plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
           plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("avro")
         }
@@ -124,7 +130,7 @@ class FileFormatSpec extends AsyncFlatSpec
         } yield {
           plan1.operations.write.append shouldBe false
           plan1.operations.write.extra.get("destinationType").asInstanceOf[Some[String]].get.toString.toUpperCase() shouldBe "JSON"
-          plan1.operations.write.outputSource shouldBe s"file:$jsonPath"
+          plan1.operations.write.outputSource shouldBe s"$jsonUri"
           plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
           plan2.operations.reads.get.head.extra.get("sourceType").asInstanceOf[Some[String]].get.toString.toUpperCase() shouldBe "JSON"
         }
@@ -156,7 +162,7 @@ class FileFormatSpec extends AsyncFlatSpec
         } yield {
           plan1.operations.write.append shouldBe false
           plan1.operations.write.extra.get("destinationType").asInstanceOf[Some[String]].get.toString.toUpperCase() shouldBe "ORC"
-          plan1.operations.write.outputSource shouldBe s"file:$orcPath"
+          plan1.operations.write.outputSource shouldBe s"$orcUri"
           plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
           plan2.operations.reads.get.head.extra.get("sourceType").asInstanceOf[Some[String]].get.toString.toUpperCase() shouldBe "ORC"
         }
@@ -187,7 +193,7 @@ class FileFormatSpec extends AsyncFlatSpec
         } yield {
           plan1.operations.write.append shouldBe false
           plan1.operations.write.extra.get("destinationType").asInstanceOf[Some[String]].get.toString.toUpperCase() shouldBe "CSV"
-          plan1.operations.write.outputSource shouldBe s"file:$csvPath"
+          plan1.operations.write.outputSource shouldBe s"$csvUri"
           plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
           plan2.operations.reads.get.head.extra.get("sourceType").asInstanceOf[Some[String]].get.toString.toUpperCase() shouldBe "CSV"
         }

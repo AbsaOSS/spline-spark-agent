@@ -35,6 +35,7 @@ import za.co.absa.spline.test.SplineMatchers.dependOn
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 
+import java.io.File
 import java.util.UUID
 import scala.language.reflectiveCalls
 import scala.util.Try
@@ -97,6 +98,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
       withLineageTracking { captor =>
         import spark.implicits._
         val tmpPath = tmpDest
+        val tmpUri = new File(tmpPath).toURI.toString
 
         val df = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
 
@@ -107,7 +109,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           write.id shouldBe "op-0"
           write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
           write.childIds should be(Seq("op-1"))
-          write.outputSource should be(s"file:$tmpPath")
+          write.outputSource should be(s"$tmpUri")
           write.params should contain(Map("path" -> tmpPath))
           write.extra should contain(Map("destinationType" -> Some("parquet")))
 
@@ -135,6 +137,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
       withLineageTracking { captor =>
         import spark.implicits._
         val tmpPath = tmpDest
+        val tmpUri = new File(tmpPath).toURI.toString
 
         val df = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
           .withColumnRenamed("i", "A")
@@ -147,7 +150,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           write.id shouldBe "op-0"
           write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
           write.childIds should be(Seq("op-1"))
-          write.outputSource should be(s"file:$tmpPath")
+          write.outputSource should be(s"$tmpUri")
           write.append should be(false)
           write.params should contain(Map("path" -> tmpPath))
           write.extra should contain(Map("destinationType" -> Some("parquet")))
@@ -195,6 +198,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
       withLineageTracking { captor =>
         import spark.implicits._
         val tmpPath = tmpDest
+        val tmpUri = new File(tmpPath).toURI.toString
 
         val initialDF = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
         val filteredDF1 = initialDF.filter($"i".notEqual(5))
@@ -208,7 +212,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
 
           val write = plan.operations.write
           write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
-          write.outputSource should be(s"file:$tmpPath")
+          write.outputSource should be(s"$tmpUri")
           write.append should be(false)
           write.params should contain(Map("path" -> tmpPath))
           write.extra should contain(Map("destinationType" -> Some("parquet")))
@@ -276,6 +280,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
         import org.apache.spark.sql.functions._
         import spark.implicits._
         val tmpPath = tmpDest
+        val tmpUri = new File(tmpPath).toURI.toString
 
         val initialDF = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
         val filteredDF = initialDF
@@ -297,7 +302,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
 
           val write = plan.operations.write
           write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
-          write.outputSource should be(s"file:$tmpPath")
+          write.outputSource should be(s"$tmpUri")
           write.append should be(false)
           write.params should contain(Map("path" -> tmpPath))
           write.extra should contain(Map("destinationType" -> Some("parquet")))
