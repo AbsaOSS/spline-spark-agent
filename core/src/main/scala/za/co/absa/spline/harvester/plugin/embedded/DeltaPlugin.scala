@@ -98,7 +98,12 @@ class DeltaPlugin(
 
 object DeltaPlugin {
 
-  case class SyntheticDeltaRead(output: Seq[Attribute], sourceId: SourceIdentifier, writeParams: Map[String, Any], logicalPlan: LogicalPlan) extends LeafNode
+  case class SyntheticDeltaRead(
+    output: Seq[Attribute],
+    sourceId: SourceIdentifier,
+    writeParams: Map[String, Any],
+    logicalPlan: LogicalPlan
+  ) extends LeafNode
 
   case class SyntheticDeltaMerge(
     output: Seq[Attribute],
@@ -109,7 +114,7 @@ object DeltaPlugin {
     notMatchedClauses: Seq[String]
   ) extends BinaryNode {
 
-    override protected def withNewChildrenInternal(newLeft: LogicalPlan, newRight: LogicalPlan): LogicalPlan =
+    protected def withNewChildrenInternal(newLeft: LogicalPlan, newRight: LogicalPlan): LogicalPlan =
       throw new UnsupportedOperationException()
   }
 
