@@ -64,7 +64,7 @@ class LineageHarvester(
       val writeOpBuilder = opNodeBuilderFactory.writeNodeBuilder(writeCommand)
       val restOpBuilders = createOperationBuildersRecursively(writeCommand.query)
 
-      restOpBuilders.lastOption.foreach(writeOpBuilder.+=)
+      restOpBuilders.lastOption.foreach(writeOpBuilder.addChild)
       val builders = restOpBuilders :+ writeOpBuilder
 
       val restOps = restOpBuilders.map(_.build())
@@ -168,7 +168,7 @@ class LineageHarvester(
           val maybeExistingBuilder = processedEntries.get(curOpNode)
           val curBuilder = maybeExistingBuilder.getOrElse(createOperationBuilder(curOpNode))
 
-          if (parentBuilder != null) parentBuilder += curBuilder
+          if (parentBuilder != null) parentBuilder.addChild(curBuilder)
 
           if (maybeExistingBuilder.isEmpty) {
 

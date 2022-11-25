@@ -23,7 +23,10 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version.VersionStringInterpolator
-import za.co.absa.spline.producer.model.AttrOrExprRef
+import za.co.absa.spline.producer.model.{AttrOrExprRef, ReadOperation}
+import za.co.absa.spline.test.LineageWalker
+import za.co.absa.spline.test.ProducerModelImplicits._
+import za.co.absa.spline.test.SplineMatchers._
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 
@@ -221,6 +224,138 @@ class DeltaDSV2Spec extends AsyncFlatSpec
             plan1.operations.write.append shouldBe false
             plan1.operations.write.extra.get("destinationType") shouldBe Some("delta")
             plan1.operations.write.outputSource shouldBe s"file:$warehouseDir/testdb.db/foo"
+          }
+        }
+      }
+    }
+
+  it should "support DELETE table command" taggedAs
+    ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
+    withCustomSparkSession(_
+      .enableHiveSupport
+      .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+      .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+    ) { implicit spark =>
+      withLineageTracking { lineageCaptor =>
+        withDatabase("testDB") {
+          val testData = {
+            import spark.implicits._
+            Seq((1014, "Warsaw"), (1002, "Corte")).toDF("ID", "NAME")
+          }
+
+          for {
+            (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
+              testData.write.format("delta").saveAsTable("foo")
+            }
+            (plan2, Seq(event2)) <- lineageCaptor.lineageOf {
+              spark.sql(s"DELETE FROM foo WHERE ID == 1014")
+            }
+          } yield {
+            plan2.id.get shouldEqual event2.planId
+            plan2.operations.write.append shouldBe false
+            plan2.operations.write.extra.get("destinationType") shouldBe Some("delta")
+            plan2.operations.write.outputSource shouldBe s"file:$warehouseDir/testdb.db/foo"
+            plan2.operations.write.params.get("condition").asInstanceOf[String] should include ("1014")
+            plan2.operations.reads.get.head.output.get.size shouldBe(2)
+          }
+        }
+      }
+    }
+
+  it should "support UPDATE table command" taggedAs
+    ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
+    withCustomSparkSession(_
+      .enableHiveSupport
+      .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+      .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+    ) { implicit spark =>
+      withLineageTracking { lineageCaptor =>
+        withDatabase("testDB") {
+          val testData = {
+            import spark.implicits._
+            Seq((1014, "Warsaw"), (1002, "Corte")).toDF("ID", "NAME")
+          }
+
+          for {
+            (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
+              testData.write.format("delta").saveAsTable("foo")
+            }
+            (plan2, Seq(event2)) <- lineageCaptor.lineageOf {
+              spark.sql(s"UPDATE foo SET NAME = 'Korok' WHERE ID == 1002")
+            }
+          } yield {
+            plan2.id.get shouldEqual event2.planId
+            plan2.operations.write.append shouldBe false
+            plan2.operations.write.extra.get("destinationType") shouldBe Some("delta")
+            plan2.operations.write.outputSource shouldBe s"file:$warehouseDir/testdb.db/foo"
+            plan2.operations.write.params.get("condition").asInstanceOf[String] should include ("1002")
+            plan2.operations.write.params.get("updateExpressions").asInstanceOf[Seq[String]] should contain ("Korok")
+            plan2.operations.reads.get.head.output.get.size shouldBe(2)
+          }
+        }
+      }
+    }
+
+  it should "support MERGE INTO table command" taggedAs
+    ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
+    withCustomSparkSession(_
+      .enableHiveSupport
+      .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+      .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+    ) { implicit spark =>
+      withLineageTracking { lineageCaptor =>
+        withDatabase("testDB") {
+          val testData = {
+            import spark.implicits._
+            Seq((1014, "Warsaw"), (1002, "Corte")).toDF("ID", "NAME")
+          }
+          val updateData = {
+            import spark.implicits._
+            Seq((1014, "Lodz"), (1003, "Prague")).toDF("ID", "NAME")
+          }
+
+          for {
+            (_, _) <- lineageCaptor.lineageOf {
+              testData.write.format("delta").saveAsTable("foo")
+            }
+            (_, _) <- lineageCaptor.lineageOf {
+              updateData.write.format("delta").saveAsTable("fooUpdate")
+            }
+            (plan, Seq(event)) <- lineageCaptor.lineageOf {
+              spark.sql(
+                """
+                  | MERGE INTO foo
+                  | USING fooUpdate
+                  | ON foo.ID = fooUpdate.ID
+                  | WHEN MATCHED THEN
+                  |   UPDATE SET
+                  |     NAME = fooUpdate.NAME
+                  | WHEN NOT MATCHED
+                  |  THEN INSERT (ID, NAME)
+                  |  VALUES (fooUpdate.ID, fooUpdate.NAME)
+                  |""".stripMargin
+                )
+            }
+          } yield {
+            implicit val walker = LineageWalker(plan)
+
+            plan.id.get shouldEqual event.planId
+            plan.operations.write.append shouldBe false
+            plan.operations.write.extra.get("destinationType") shouldBe Some("delta")
+            plan.operations.write.outputSource shouldBe s"file:$warehouseDir/testdb.db/foo"
+            plan.operations.write.params.get("condition").asInstanceOf[String] should include("ID")
+
+            val mergeOp = plan.operations.write.precedingDataOp
+            val reads = walker.precedingOps(mergeOp).map(_.asInstanceOf[ReadOperation])
+
+            val mergeOutput = mergeOp.outputAttributes
+            val read0Output = reads(0).outputAttributes
+            val read1Output = reads(1).outputAttributes
+
+            mergeOutput(0) should dependOn(read0Output(0))
+            mergeOutput(1) should dependOn(read0Output(1))
+            mergeOutput(0) should dependOn(read1Output(0))
+            mergeOutput(1) should dependOn(read1Output(1))
           }
         }
       }
