@@ -34,10 +34,10 @@ import scala.language.reflectiveCalls
 @Priority(Precedence.Normal)
 class DeltaPlugin(
   pathQualifier: PathQualifier,
-  session: SparkSession)
-  extends Plugin
+  session: SparkSession
+) extends Plugin
     with WriteNodeProcessing
-    with ReadNodeProcessing{
+    with ReadNodeProcessing {
 
   override val writeNodeProcessor: PartialFunction[LogicalPlan, WriteNodeInfo] = {
     case `_: DeleteCommand`(command) =>
@@ -75,7 +75,7 @@ class DeltaPlugin(
       val syntheticSourceRead = SyntheticDeltaRead(sourceRelation.output, sourceId, Map.empty[String, Any], sourceRelation)
       val params = Map.empty[String, Any]
 
-      val condition = extractValue[Option[Expression]](command, "condition").toString
+      val condition = extractValue[Expression](command, "condition").toString
       val matchedClauses = extractValue[Seq[Any]](command, "matchedClauses").map(_.toString)
       val notMatchedClauses = extractValue[Seq[Any]](command, "notMatchedClauses").map(_.toString)
 
