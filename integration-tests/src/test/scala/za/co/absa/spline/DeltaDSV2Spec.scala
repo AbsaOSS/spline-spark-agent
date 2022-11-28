@@ -345,7 +345,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
             plan.operations.write.outputSource shouldBe s"file:$warehouseDir/testdb.db/foo"
 
             val mergeOp = plan.operations.write.precedingDataOp
-            mergeOp.params.get("condition").asInstanceOf[String] should include("ID")
+            mergeOp.params.get("condition").asInstanceOf[Option[String]].get should include("ID")
 
             val reads = walker.precedingOps(mergeOp).map(_.asInstanceOf[ReadOperation])
 

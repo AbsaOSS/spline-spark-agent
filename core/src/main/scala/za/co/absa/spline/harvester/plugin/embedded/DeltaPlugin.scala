@@ -75,7 +75,7 @@ class DeltaPlugin(
       val syntheticSourceRead = SyntheticDeltaRead(sourceRelation.output, sourceId, Map.empty[String, Any], sourceRelation)
       val params = Map.empty[String, Any]
 
-      val condition = extractValue[Expression](command, "condition").toString
+      val condition = extractValue[Option[Expression]](command, "condition").toString
       val matchedClauses = extractValue[Seq[Any]](command, "matchedClauses").map(_.toString)
       val notMatchedClauses = extractValue[Seq[Any]](command, "notMatchedClauses").map(_.toString)
 
