@@ -30,7 +30,7 @@ trait OperationNodeBuilder {
   protected var childBuilders: Seq[OperationNodeBuilder] = Nil
 
   def build(): R
-  def +=(childBuilder: OperationNodeBuilder): Unit = childBuilders :+= childBuilder
+  def addChild(childBuilder: OperationNodeBuilder): Unit = childBuilders :+= childBuilder
   protected def resolveAttributeChild(attribute: sparkExprssions.Attribute): Option[sparkExprssions.Expression] = None
 
   protected def inputAttributes: Seq[Seq[Attribute]] = childBuilders.map(_.outputAttributes)
