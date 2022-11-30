@@ -36,9 +36,8 @@ class RddSpec extends AsyncFlatSpec
   with SparkDatabaseFixture
   with JDBCFixture {
 
-  private val inputPath = TempDirectory().deleteOnExit().path
-  private val inputUri = inputPath.toUri.toString
-  private val tempPath = TempDirectory().deleteOnExit().path
+  private val inputPath = TempDirectory().deleteOnExit().asString
+  private val tempPath = TempDirectory().deleteOnExit().asString
 
   it should "support parquet read" in
     withNewSparkSession { implicit spark =>
@@ -51,13 +50,13 @@ class RddSpec extends AsyncFlatSpec
 
         for {
           (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
-            testData.write.format("parquet").mode("overwrite").save(inputPath.toString)
+            testData.write.format("parquet").mode("overwrite").save(inputPath)
           }
           (plan2, Seq(event2)) <- lineageCaptor.lineageOf {
             val rddData = spark.read
               .option("header", "true")
               .option("inferSchema", "true")
-              .parquet(inputPath.toString)
+              .parquet(inputPath)
               .select(col("ID").cast("int"))
               .rdd
 
@@ -67,10 +66,10 @@ class RddSpec extends AsyncFlatSpec
               .toDF("foo")
               .write
               .mode(SaveMode.Overwrite)
-              .parquet(tempPath.toString)
+              .parquet(tempPath)
           }
         } yield {
-          plan2.operations.reads.get(0).inputSources(0) should startWith(s"$inputUri")
+          plan2.operations.reads.get(0).inputSources(0) should startWith(s"file:///$inputPath")
           plan2.operations.write.extra.get("destinationType") shouldBe Some("parquet")
         }
       }
@@ -91,7 +90,7 @@ class RddSpec extends AsyncFlatSpec
             spark.createDataFrame(rddData, schema)
               .write
               .mode(SaveMode.Overwrite)
-              .parquet(tempPath.toString)
+              .parquet(tempPath)
           }
         } yield {
           plan2.operations.reads.get(0).inputSources(0) should startWith("file:/")
@@ -116,7 +115,7 @@ class RddSpec extends AsyncFlatSpec
             spark.createDataFrame(rddData, schema)
               .write
               .mode(SaveMode.Overwrite)
-              .parquet(tempPath.toString)
+              .parquet(tempPath)
           }
         } yield {
           plan2.operations.reads.get(0).inputSources(0) should startWith("file:/")
