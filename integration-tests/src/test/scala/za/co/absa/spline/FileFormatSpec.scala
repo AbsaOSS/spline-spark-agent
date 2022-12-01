@@ -34,10 +34,10 @@ class FileFormatSpec extends AsyncFlatSpec
   with SparkFixture
   with SplineFixture {
 
-  private val avroPath = TempDirectory(prefix = "avro", pathOnly = true).deleteOnExit().asURI.toString
-  private val jsonPath = TempDirectory(prefix = "json", pathOnly = true).deleteOnExit().asURI.toString
-  private val orcPath = TempDirectory(prefix = "orc", pathOnly = true).deleteOnExit().asURI.toString
-  private val csvPath = TempDirectory(prefix = "csv", pathOnly = true).deleteOnExit().asURI.toString
+  private val avroPath = TempDirectory(prefix = "avro", pathOnly = true).deleteOnExit().toURI.toString
+  private val jsonPath = TempDirectory(prefix = "json", pathOnly = true).deleteOnExit().toURI.toString
+  private val orcPath = TempDirectory(prefix = "orc", pathOnly = true).deleteOnExit().toURI.toString
+  private val csvPath = TempDirectory(prefix = "csv", pathOnly = true).deleteOnExit().toURI.toString
 
   //Spark supports avro out of the box in 2.4 and beyond
   it should "support built in avro as a source" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.4.0") in

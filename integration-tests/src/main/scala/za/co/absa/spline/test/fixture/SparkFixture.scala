@@ -32,7 +32,7 @@ trait SparkFixture {
 
   val baseDir: TempDirectory = TempDirectory("SparkFixture", "UnitTest", pathOnly = true).deleteOnExit()
   val warehouseDir: String = baseDir.asString.stripSuffix("/")
-  val warehouseUri: URI = baseDir.asURI
+  val warehouseUri: URI = baseDir.toURI
   val metastoreDir: String = TempDirectory("Metastore", "debug", pathOnly = true).deleteOnExit().asString
 
   protected val sessionBuilder: SparkSession.Builder = {

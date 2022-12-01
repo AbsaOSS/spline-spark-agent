@@ -32,7 +32,7 @@ class XmlSpec extends AsyncFlatSpec
 
   private val baseFile = TempFile("file1", ".xml", false).deleteOnExit()
   private val filePath = baseFile.asString
-  private val fileUri = baseFile.asURI
+  private val fileUri = baseFile.toURI
 
   it should "support Xml files as a source" in
     withNewSparkSession { implicit spark =>

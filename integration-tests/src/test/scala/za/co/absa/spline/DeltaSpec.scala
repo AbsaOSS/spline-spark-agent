@@ -34,7 +34,7 @@ class DeltaSpec extends AsyncFlatSpec
   with SparkFixture
   with SplineFixture {
 
-  private val deltaPath = TempDirectory(prefix = "delta", pathOnly = true).deleteOnExit().asURI.toString
+  private val deltaPath = TempDirectory(prefix = "delta", pathOnly = true).deleteOnExit().toURI.toString
 
   it should "support Delta Lake as a source" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"2.4.2" || ver"$SPARK_VERSION" >= ver"3.3.0") in

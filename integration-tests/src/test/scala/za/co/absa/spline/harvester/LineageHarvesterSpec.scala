@@ -109,7 +109,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           write.id shouldBe "op-0"
           write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
           write.childIds should be(Seq("op-1"))
-          write.outputSource should be(tmpLocal.asURI.toString.stripSuffix("/"))
+          write.outputSource should be(tmpLocal.toURI.toString.stripSuffix("/"))
           write.params should contain(Map("path" -> tmpPath))
           write.extra should contain(Map("destinationType" -> Some("parquet")))
 
@@ -150,7 +150,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           write.id shouldBe "op-0"
           write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
           write.childIds should be(Seq("op-1"))
-          write.outputSource should be(tmpLocal.asURI.toString.stripSuffix("/"))
+          write.outputSource should be(tmpLocal.toURI.toString.stripSuffix("/"))
           write.append should be(false)
           write.params should contain(Map("path" -> tmpPath))
           write.extra should contain(Map("destinationType" -> Some("parquet")))
@@ -212,7 +212,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
 
           val write = plan.operations.write
           write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
-          write.outputSource should be(tmpLocal.asURI.toString.stripSuffix("/"))
+          write.outputSource should be(tmpLocal.toURI.toString.stripSuffix("/"))
           write.append should be(false)
           write.params should contain(Map("path" -> tmpPath))
           write.extra should contain(Map("destinationType" -> Some("parquet")))
@@ -302,7 +302,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
 
           val write = plan.operations.write
           write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
-          write.outputSource should be(tmpLocal.asURI.toString.stripSuffix("/"))
+          write.outputSource should be(tmpLocal.toURI.toString.stripSuffix("/"))
           write.append should be(false)
           write.params should contain(Map("path" -> tmpPath))
           write.extra should contain(Map("destinationType" -> Some("parquet")))
@@ -495,7 +495,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           plan should not be null
           event.durationNs should be(empty)
           event.error should not be empty
-          event.error.get.toString should include(s"path ${tmpLocal.asURI.toString.stripSuffix("/")} already exists")
+          event.error.get.toString should include(s"path ${tmpLocal.toURI.toString.stripSuffix("/")} already exists")
         }
       }
     }
