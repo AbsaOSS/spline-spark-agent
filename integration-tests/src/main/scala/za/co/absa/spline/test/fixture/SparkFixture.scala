@@ -34,6 +34,7 @@ trait SparkFixture {
   val warehouseDir: String = baseDir.asString.stripSuffix("/")
   val warehouseUri: URI = baseDir.toURI
   val metastoreDir: String = TempDirectory("Metastore", "debug", pathOnly = true).deleteOnExit().asString
+  val metastoreConnectURL = s"jdbc:derby:$metastoreDir/metastore_db;create=true"
 
   protected val sessionBuilder: SparkSession.Builder = {
     SparkSession.builder
@@ -41,7 +42,8 @@ trait SparkFixture {
       .config("spark.driver.host","localhost")
       .config("spark.sql.warehouse.dir", warehouseDir)
       .config("spark.ui.enabled", "false")
-      .config("javax.jdo.option.ConnectionURL", s"jdbc:derby:$metastoreDir/metastore_db;create=true")
+      .config("javax.jdo.option.ConnectionURL", metastoreConnectURL)
+      .config("hive.metastore.warehouse.dir", metastoreConnectURL) // required by Spark 2.3
   }
 
   def withSparkSession[T](testBody: SparkSession => T): T = {
