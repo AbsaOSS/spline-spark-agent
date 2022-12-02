@@ -34,10 +34,10 @@ class FileFormatSpec extends AsyncFlatSpec
   with SparkFixture
   with SplineFixture {
 
-  private val avroPath = TempDirectory(prefix = "avro", pathOnly = true).deleteOnExit().path.toFile.getAbsolutePath
-  private val jsonPath = TempDirectory(prefix = "json", pathOnly = true).deleteOnExit().path.toFile.getAbsolutePath
-  private val orcPath = TempDirectory(prefix = "orc", pathOnly = true).deleteOnExit().path.toFile.getAbsolutePath
-  private val csvPath = TempDirectory(prefix = "csv", pathOnly = true).deleteOnExit().path.toFile.getAbsolutePath
+  private val avroPath = TempDirectory(prefix = "avro", pathOnly = true).deleteOnExit().toURI.toString
+  private val jsonPath = TempDirectory(prefix = "json", pathOnly = true).deleteOnExit().toURI.toString
+  private val orcPath = TempDirectory(prefix = "orc", pathOnly = true).deleteOnExit().toURI.toString
+  private val csvPath = TempDirectory(prefix = "csv", pathOnly = true).deleteOnExit().toURI.toString
 
   //Spark supports avro out of the box in 2.4 and beyond
   it should "support built in avro as a source" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.4.0") in
@@ -57,12 +57,12 @@ class FileFormatSpec extends AsyncFlatSpec
           (plan2, _) <- captor.lineageOf(
             spark
               .read.format("avro").load(avroPath)
-              .write.mode(Overwrite).save(TempFile(pathOnly = true).deleteOnExit().path.toString)
+              .write.mode(Overwrite).save(TempFile(pathOnly = true).deleteOnExit().asString)
           )
         } yield {
           plan1.operations.write.append shouldBe false
           plan1.operations.write.extra.get("destinationType") shouldBe Some("avro")
-          plan1.operations.write.outputSource shouldBe s"file:$avroPath"
+          plan1.operations.write.outputSource shouldBe avroPath
           plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
           plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("avro")
         }
@@ -86,13 +86,13 @@ class FileFormatSpec extends AsyncFlatSpec
           (plan2, _) <- captor.lineageOf(
             spark
               .read.format("com.databricks.spark.avro").load(avroPath)
-              .write.mode(Overwrite).save(TempFile(pathOnly = true).deleteOnExit().path.toString)
+              .write.mode(Overwrite).save(TempFile(pathOnly = true).deleteOnExit().asString)
 
           )
         } yield {
           plan1.operations.write.append shouldBe false
           plan1.operations.write.extra.get("destinationType") shouldBe Some("avro")
-          plan1.operations.write.outputSource shouldBe s"file:$avroPath"
+          plan1.operations.write.outputSource shouldBe avroPath
           plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
           plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("avro")
         }
@@ -118,13 +118,13 @@ class FileFormatSpec extends AsyncFlatSpec
           (plan2, _) <- captor.lineageOf(
             spark
               .read.format("json").load(jsonPath)
-              .write.mode(Overwrite).save(TempFile(pathOnly = true).deleteOnExit().path.toString)
+              .write.mode(Overwrite).save(TempFile(pathOnly = true).deleteOnExit().asString)
 
           )
         } yield {
           plan1.operations.write.append shouldBe false
           plan1.operations.write.extra.get("destinationType").asInstanceOf[Some[String]].get.toString.toUpperCase() shouldBe "JSON"
-          plan1.operations.write.outputSource shouldBe s"file:$jsonPath"
+          plan1.operations.write.outputSource shouldBe jsonPath
           plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
           plan2.operations.reads.get.head.extra.get("sourceType").asInstanceOf[Some[String]].get.toString.toUpperCase() shouldBe "JSON"
         }
@@ -150,13 +150,13 @@ class FileFormatSpec extends AsyncFlatSpec
           (plan2, _) <- captor.lineageOf(
             spark
               .read.format("orc").load(orcPath)
-              .write.mode(Overwrite).save(TempFile(pathOnly = true).deleteOnExit().path.toString)
+              .write.mode(Overwrite).save(TempFile(pathOnly = true).deleteOnExit().asString)
 
           )
         } yield {
           plan1.operations.write.append shouldBe false
           plan1.operations.write.extra.get("destinationType").asInstanceOf[Some[String]].get.toString.toUpperCase() shouldBe "ORC"
-          plan1.operations.write.outputSource shouldBe s"file:$orcPath"
+          plan1.operations.write.outputSource shouldBe orcPath
           plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
           plan2.operations.reads.get.head.extra.get("sourceType").asInstanceOf[Some[String]].get.toString.toUpperCase() shouldBe "ORC"
         }
@@ -182,12 +182,12 @@ class FileFormatSpec extends AsyncFlatSpec
           (plan2, _) <- captor.lineageOf(
             spark
               .read.format("csv").load(csvPath)
-              .write.mode(Overwrite).save(TempFile(pathOnly = true).deleteOnExit().path.toString)
+              .write.mode(Overwrite).save(TempFile(pathOnly = true).deleteOnExit().asString)
           )
         } yield {
           plan1.operations.write.append shouldBe false
           plan1.operations.write.extra.get("destinationType").asInstanceOf[Some[String]].get.toString.toUpperCase() shouldBe "CSV"
-          plan1.operations.write.outputSource shouldBe s"file:$csvPath"
+          plan1.operations.write.outputSource shouldBe csvPath
           plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
           plan2.operations.reads.get.head.extra.get("sourceType").asInstanceOf[Some[String]].get.toString.toUpperCase() shouldBe "CSV"
         }

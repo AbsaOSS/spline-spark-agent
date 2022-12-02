@@ -60,7 +60,7 @@ class InsertIntoHiveTest
               }
             } yield {
               plan1.operations.write.append should be(true)
-              plan1.operations.write.outputSource should be(s"file:$warehouseDir/${databaseName.toLowerCase}.db/path_archive")
+              plan1.operations.write.outputSource should be(s"$warehouseUri/${databaseName.toLowerCase}.db/path_archive")
               plan2.operations.reads.get.head.inputSources.head shouldEqual plan1.operations.write.outputSource
             }
           }

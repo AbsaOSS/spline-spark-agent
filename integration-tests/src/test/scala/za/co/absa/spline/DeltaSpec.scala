@@ -34,7 +34,7 @@ class DeltaSpec extends AsyncFlatSpec
   with SparkFixture
   with SplineFixture {
 
-  private val deltaPath = TempDirectory(prefix = "delta", pathOnly = true).deleteOnExit().path.toFile.getAbsolutePath
+  private val deltaPath = TempDirectory(prefix = "delta", pathOnly = true).deleteOnExit().toURI.toString
 
   it should "support Delta Lake as a source" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"2.4.2" || ver"$SPARK_VERSION" >= ver"3.3.0") in
@@ -71,7 +71,7 @@ class DeltaSpec extends AsyncFlatSpec
 
           plan1.operations.write.append shouldBe false
           plan1.operations.write.extra.get("destinationType") shouldBe Some("delta")
-          plan1.operations.write.outputSource shouldBe s"file:$deltaPath"
+          plan1.operations.write.outputSource shouldBe deltaPath
           plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
           plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("parquet")
         }
@@ -101,7 +101,7 @@ class DeltaSpec extends AsyncFlatSpec
           plan1.id.get shouldEqual event1.planId
           plan1.operations.write.append shouldBe false
           plan1.operations.write.extra.get("destinationType") shouldBe Some("delta")
-          plan1.operations.write.outputSource shouldBe s"file:$deltaPath"
+          plan1.operations.write.outputSource shouldBe deltaPath
         }
       }
     }

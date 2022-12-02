@@ -19,6 +19,7 @@ package za.co.absa.spline
 
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SaveMode.Overwrite
+import org.scalatest.OneInstancePerTest
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.TempDirectory
@@ -29,6 +30,7 @@ import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 
 class SQLCommandsSpec extends AsyncFlatSpec
+  with OneInstancePerTest
   with Matchers
   with SparkFixture
   with SplineFixture {
@@ -58,9 +60,9 @@ class SQLCommandsSpec extends AsyncFlatSpec
                   | WHERE id > 1""".stripMargin))
 
           } yield {
-            plan1.operations.write.outputSource should equalToUri(s"file:$warehouseDir/sourcetable")
+            plan1.operations.write.outputSource should equalToUri(s"$warehouseUri/sourcetable")
             plan2.operations.reads.get.head.inputSources.head should equalToUri(plan1.operations.write.outputSource)
-            plan2.operations.write.outputSource should equalToUri(s"file:$warehouseDir/targettable")
+            plan2.operations.write.outputSource should equalToUri(s"$warehouseUri/targettable")
           }
         }
       }
@@ -90,7 +92,7 @@ class SQLCommandsSpec extends AsyncFlatSpec
                    | FROM sourceTable
                    | WHERE id > 1""".stripMargin))
           } yield {
-            plan.operations.reads.get.head.inputSources.head should equalToUri(s"file:$warehouseDir/sourcetable")
+            plan.operations.reads.get.head.inputSources.head should equalToUri(s"$warehouseUri/sourcetable")
             plan.operations.write.outputSource should equalToUri(dir.toUri.toString.stripSuffix("/"))
           }
         }
@@ -125,7 +127,7 @@ class SQLCommandsSpec extends AsyncFlatSpec
                    | WHERE id > 1""".stripMargin)
             )
           } yield {
-            plan.operations.reads.get.head.inputSources.head should equalToUri(s"file:$warehouseDir/sourcetable")
+            plan.operations.reads.get.head.inputSources.head should equalToUri(s"$warehouseUri/sourcetable")
             plan.operations.write.outputSource should equalToUri(csvFile.toUri.toString.stripSuffix("/"))
           }
         }

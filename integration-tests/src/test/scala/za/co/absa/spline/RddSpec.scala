@@ -36,8 +36,10 @@ class RddSpec extends AsyncFlatSpec
   with SparkDatabaseFixture
   with JDBCFixture {
 
-  private val inputPath = TempDirectory().deleteOnExit().path
-  private val tempPath = TempDirectory().deleteOnExit().path
+  private val baseTempDir = TempDirectory().deleteOnExit()
+  private val inputPath = baseTempDir.asString
+  private val inputPathURI = baseTempDir.path.toUri
+  private val tempPath = TempDirectory().deleteOnExit().asString
 
   it should "support parquet read" in
     withNewSparkSession { implicit spark =>
@@ -50,13 +52,13 @@ class RddSpec extends AsyncFlatSpec
 
         for {
           (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
-            testData.write.format("parquet").mode("overwrite").save(inputPath.toString)
+            testData.write.format("parquet").mode("overwrite").save(inputPath)
           }
           (plan2, Seq(event2)) <- lineageCaptor.lineageOf {
             val rddData = spark.read
               .option("header", "true")
               .option("inferSchema", "true")
-              .parquet(inputPath.toString)
+              .parquet(inputPath)
               .select(col("ID").cast("int"))
               .rdd
 
@@ -66,10 +68,10 @@ class RddSpec extends AsyncFlatSpec
               .toDF("foo")
               .write
               .mode(SaveMode.Overwrite)
-              .parquet(tempPath.toString)
+              .parquet(tempPath)
           }
         } yield {
-          plan2.operations.reads.get(0).inputSources(0) should startWith(s"file://$inputPath")
+          plan2.operations.reads.get.head.inputSources.head should startWith(inputPathURI.toString)
           plan2.operations.write.extra.get("destinationType") shouldBe Some("parquet")
         }
       }
@@ -90,11 +92,11 @@ class RddSpec extends AsyncFlatSpec
             spark.createDataFrame(rddData, schema)
               .write
               .mode(SaveMode.Overwrite)
-              .parquet(tempPath.toString)
+              .parquet(tempPath)
           }
         } yield {
-          plan2.operations.reads.get(0).inputSources(0) should startWith("file:/")
-          plan2.operations.reads.get(0).inputSources(0) should endWith("data/cities.jsonl")
+          plan2.operations.reads.get.head.inputSources.head should startWith("file:/")
+          plan2.operations.reads.get.head.inputSources.head should endWith("data/cities.jsonl")
         }
       }
     }
@@ -115,11 +117,11 @@ class RddSpec extends AsyncFlatSpec
             spark.createDataFrame(rddData, schema)
               .write
               .mode(SaveMode.Overwrite)
-              .parquet(tempPath.toString)
+              .parquet(tempPath)
           }
         } yield {
-          plan2.operations.reads.get(0).inputSources(0) should startWith("file:/")
-          plan2.operations.reads.get(0).inputSources(0) should endWith("data/cities.csv")
+          plan2.operations.reads.get.head.inputSources.head should startWith("file:/")
+          plan2.operations.reads.get.head.inputSources.head should endWith("data/cities.csv")
         }
       }
     }
@@ -139,11 +141,11 @@ class RddSpec extends AsyncFlatSpec
             spark.createDataFrame(rddData, schema)
               .write
               .mode(SaveMode.Overwrite)
-              .parquet(tempPath.toString)
+              .parquet(tempPath)
           }
         } yield {
-          plan2.operations.reads.get(0).inputSources(0) should startWith("file:/")
-          plan2.operations.reads.get(0).inputSources(0) should endWith("data/cities.csv")
+          plan2.operations.reads.get.head.inputSources.head should startWith("file:/")
+          plan2.operations.reads.get.head.inputSources.head should endWith("data/cities.csv")
         }
       }
     }
@@ -161,11 +163,11 @@ class RddSpec extends AsyncFlatSpec
             spark.createDataFrame(rddData, schema)
               .write
               .mode(SaveMode.Overwrite)
-              .parquet(tempPath.toString)
+              .parquet(tempPath)
           }
         } yield {
           import za.co.absa.spline.test.ProducerModelImplicits._
-          implicit val lineageWalker = LineageWalker(plan2)
+          implicit val lineageWalker: LineageWalker = LineageWalker(plan2)
 
           plan2.operations.reads should be(None)
 
@@ -204,7 +206,7 @@ class RddSpec extends AsyncFlatSpec
             spark.createDataFrame(rddData, schema)
               .write
               .mode(SaveMode.Overwrite)
-              .parquet(tempPath.toString)
+              .parquet(tempPath)
           }
         } yield {
           plan2.operations.reads.get.head.inputSources.head shouldBe s"$jdbcConnectionString:$tableName"

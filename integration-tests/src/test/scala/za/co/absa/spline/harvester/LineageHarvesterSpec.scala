@@ -20,6 +20,7 @@ import org.apache.commons.io.FileUtils
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SaveMode
 import org.scalatest.Inside._
+import org.scalatest.OneInstancePerTest
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
@@ -40,6 +41,7 @@ import scala.language.reflectiveCalls
 import scala.util.Try
 
 class LineageHarvesterSpec extends AsyncFlatSpec
+  with OneInstancePerTest
   with Matchers
   with SparkFixture
   with SplineFixture
@@ -52,7 +54,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
       withLineageTracking { captor =>
         import spark.implicits._
 
-        val testDest = tmpDest
+        val testDest = TempDirectory(pathOnly = true).deleteOnExit().asString
 
         def testJob(): Unit = spark
           .createDataset(Seq(TestRow(1, 2.3, "text")))
@@ -77,8 +79,10 @@ class LineageHarvesterSpec extends AsyncFlatSpec
       withLineageTracking { captor =>
         import spark.implicits._
 
+        val testDest = TempDirectory(pathOnly = true).deleteOnExit().asString
+
         for {
-          (plan, _) <- captor.lineageOf(spark.emptyDataset[TestRow].write.save(tmpDest))
+          (plan, _) <- captor.lineageOf(spark.emptyDataset[TestRow].write.save(testDest))
         } yield {
           inside(plan) {
             case ExecutionPlan(_, _, _, _, Operations(_, None, Some(Seq(op))), _, _, _, _, _) =>
@@ -96,7 +100,8 @@ class LineageHarvesterSpec extends AsyncFlatSpec
     withNewSparkSession { implicit spark =>
       withLineageTracking { captor =>
         import spark.implicits._
-        val tmpPath = tmpDest
+        val tmpLocal = TempDirectory(pathOnly = true).deleteOnExit()
+        val tmpPath = tmpLocal.asString
 
         val df = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
 
@@ -107,7 +112,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           write.id shouldBe "op-0"
           write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
           write.childIds should be(Seq("op-1"))
-          write.outputSource should be(s"file:$tmpPath")
+          write.outputSource should be(tmpLocal.toURI.toString.stripSuffix("/"))
           write.params should contain(Map("path" -> tmpPath))
           write.extra should contain(Map("destinationType" -> Some("parquet")))
 
@@ -134,7 +139,8 @@ class LineageHarvesterSpec extends AsyncFlatSpec
     withNewSparkSession { implicit spark =>
       withLineageTracking { captor =>
         import spark.implicits._
-        val tmpPath = tmpDest
+        val tmpLocal = TempDirectory(pathOnly = true).deleteOnExit()
+        val tmpPath = tmpLocal.asString
 
         val df = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
           .withColumnRenamed("i", "A")
@@ -147,7 +153,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           write.id shouldBe "op-0"
           write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
           write.childIds should be(Seq("op-1"))
-          write.outputSource should be(s"file:$tmpPath")
+          write.outputSource should be(tmpLocal.toURI.toString.stripSuffix("/"))
           write.append should be(false)
           write.params should contain(Map("path" -> tmpPath))
           write.extra should contain(Map("destinationType" -> Some("parquet")))
@@ -194,7 +200,8 @@ class LineageHarvesterSpec extends AsyncFlatSpec
     withNewSparkSession { implicit spark =>
       withLineageTracking { captor =>
         import spark.implicits._
-        val tmpPath = tmpDest
+        val tmpLocal = TempDirectory(pathOnly = true).deleteOnExit()
+        val tmpPath = tmpLocal.asString
 
         val initialDF = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
         val filteredDF1 = initialDF.filter($"i".notEqual(5))
@@ -208,7 +215,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
 
           val write = plan.operations.write
           write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
-          write.outputSource should be(s"file:$tmpPath")
+          write.outputSource should be(tmpLocal.toURI.toString.stripSuffix("/"))
           write.append should be(false)
           write.params should contain(Map("path" -> tmpPath))
           write.extra should contain(Map("destinationType" -> Some("parquet")))
@@ -275,7 +282,8 @@ class LineageHarvesterSpec extends AsyncFlatSpec
       withLineageTracking { captor =>
         import org.apache.spark.sql.functions._
         import spark.implicits._
-        val tmpPath = tmpDest
+        val tmpLocal = TempDirectory(pathOnly = true).deleteOnExit()
+        val tmpPath = tmpLocal.asString
 
         val initialDF = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
         val filteredDF = initialDF
@@ -297,7 +305,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
 
           val write = plan.operations.write
           write.name should contain oneOf("InsertIntoHadoopFsRelationCommand", "SaveIntoDataSourceCommand")
-          write.outputSource should be(s"file:$tmpPath")
+          write.outputSource should be(tmpLocal.toURI.toString.stripSuffix("/"))
           write.append should be(false)
           write.params should contain(Map("path" -> tmpPath))
           write.extra should contain(Map("destinationType" -> Some("parquet")))
@@ -428,6 +436,8 @@ class LineageHarvesterSpec extends AsyncFlatSpec
       withLineageTracking { captor =>
         import spark.implicits._
 
+        val testDest = TempDirectory(pathOnly = true).deleteOnExit().asString
+
         val dummyCSVFile = TempFile(prefix = "spline-test", suffix = ".csv").deleteOnExit().path
         FileUtils.write(dummyCSVFile.toFile, "1,2,3", "UTF-8")
 
@@ -436,7 +446,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
             spark
               .read.csv(dummyCSVFile.toString)
               .filter($"_c0" =!= 42)
-              .write.save(tmpDest)
+              .write.save(testDest)
           }
         } yield {
           inside(plan.operations) {
@@ -457,10 +467,12 @@ class LineageHarvesterSpec extends AsyncFlatSpec
     withNewSparkSession { implicit spark =>
       withLineageTracking { captor =>
         import spark.implicits._
-        val dest = tmpDest
+
+        val testDest = TempDirectory(pathOnly = true).deleteOnExit().asString
+
         for {
           (plan, Seq(event)) <- captor.lineageOf {
-            spark.createDataset(Seq(TestRow(1, 2.3, "text"))).write.save(dest)
+            spark.createDataset(Seq(TestRow(1, 2.3, "text"))).write.save(testDest)
           }
         } yield {
           plan should not be null
@@ -476,19 +488,21 @@ class LineageHarvesterSpec extends AsyncFlatSpec
     withNewSparkSession { implicit spark =>
       withLineageTracking { captor =>
         import spark.implicits._
-        val dest = tmpDest
+        val tmpLocal = TempDirectory(pathOnly = true).deleteOnExit()
+        val tmpPath = tmpLocal.asString
+
         val df = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
         for {
-          _ <- captor.lineageOf(df.write.save(dest))
+          _ <- captor.lineageOf(df.write.save(tmpPath))
           (plan, Seq(event)) <- captor.lineageOf {
             // simulate error during execution
-            Try(df.write.mode(SaveMode.ErrorIfExists).save(dest))
+            Try(df.write.mode(SaveMode.ErrorIfExists).save(tmpPath))
           }
         } yield {
           plan should not be null
           event.durationNs should be(empty)
           event.error should not be empty
-          event.error.get.toString should include(s"path file:$dest already exists")
+          event.error.get.toString should include(s"path ${tmpLocal.toURI.toString.stripSuffix("/")} already exists")
         }
       }
     }
@@ -500,9 +514,11 @@ class LineageHarvesterSpec extends AsyncFlatSpec
       withLineageTracking { captor =>
         import spark.implicits._
 
+        val testDest = TempDirectory(pathOnly = true).deleteOnExit().asString
+
         for {
           (plan, _) <- captor.lineageOf {
-            spark.createDataset(Seq(TestRow(1, 2.3, "text"))).write.save(tmpDest)
+            spark.createDataset(Seq(TestRow(1, 2.3, "text"))).write.save(testDest)
           }
         } yield {
 
@@ -520,9 +536,11 @@ class LineageHarvesterSpec extends AsyncFlatSpec
       withLineageTracking { captor =>
         import spark.implicits._
 
+        val testDest = TempDirectory(pathOnly = true).deleteOnExit().asString
+
         for {
           (plan, _) <- captor.lineageOf {
-            spark.createDataset(Seq(TestRow(1, 2.3, "text"))).map(_.copy(i = 2)).write.save(tmpDest)
+            spark.createDataset(Seq(TestRow(1, 2.3, "text"))).map(_.copy(i = 2)).write.save(testDest)
           }
         } yield {
           plan.operations.other.get should have size 4 // LocalRelation, DeserializeToObject, Map, SerializeFromObject
@@ -535,8 +553,6 @@ class LineageHarvesterSpec extends AsyncFlatSpec
 object LineageHarvesterSpec extends Matchers with MockitoSugar {
 
   case class TestRow(i: Int, d: Double, s: String)
-
-  private def tmpDest: String = TempDirectory(pathOnly = true).deleteOnExit().path.toString
 
   private val integerType = dt.Simple(UUID.fromString("e63adadc-648a-56a0-9424-3289858cf0bb"), "int", nullable = false)
   private val doubleType = dt.Simple(UUID.fromString("75fe27b9-9a00-5c7d-966f-33ba32333133"), "double", nullable = false)

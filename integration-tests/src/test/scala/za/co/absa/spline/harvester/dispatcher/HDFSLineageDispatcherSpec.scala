@@ -46,12 +46,12 @@ class HDFSLineageDispatcherSpec
       withLineageTracking { captor =>
         import spark.implicits._
         val dummyDF = Seq((1, 2)).toDF
-        val destPath = TempDirectory("spline_", ".parquet", pathOnly = true).deleteOnExit().path
+        val destPath = TempDirectory("spline_", ".parquet", pathOnly = true).deleteOnExit()
 
         for {
-          (_, _) <- captor.lineageOf(dummyDF.write.save(destPath.toString))
+          (_, _) <- captor.lineageOf(dummyDF.write.save(destPath.asString))
         } yield {
-          val lineageFile = new File(destPath.toFile, "_LINEAGE")
+          val lineageFile = new File(destPath.asString, "_LINEAGE")
           lineageFile.exists should be(true)
           lineageFile.length should be > 0L
 

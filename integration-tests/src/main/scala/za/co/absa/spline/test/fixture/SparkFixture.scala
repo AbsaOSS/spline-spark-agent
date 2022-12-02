@@ -22,6 +22,7 @@ import org.scalatest.{Assertion, AsyncTestSuite, BeforeAndAfterEach}
 import za.co.absa.commons.io.TempDirectory
 
 import java.io.File
+import java.net.URI
 import java.sql.DriverManager
 import scala.concurrent.Future
 import scala.util.Try
@@ -29,7 +30,11 @@ import scala.util.Try
 trait SparkFixture {
   this: AsyncTestSuite =>
 
-  val warehouseDir: String = TempDirectory("SparkFixture", "UnitTest", pathOnly = true).deleteOnExit().path.toString.stripSuffix("/")
+  val baseDir: TempDirectory = TempDirectory("SparkFixture", "UnitTest", pathOnly = true).deleteOnExit()
+  val warehouseDir: String = baseDir.asString.stripSuffix("/")
+  val warehouseUri: URI = baseDir.toURI
+  val metastoreDir: String = TempDirectory("Metastore", "debug", pathOnly = true).deleteOnExit().asString
+  val metastoreConnectURL = s"jdbc:derby:$metastoreDir/metastore_db;create=true"
 
   protected val sessionBuilder: SparkSession.Builder = {
     SparkSession.builder
@@ -37,6 +42,7 @@ trait SparkFixture {
       .config("spark.driver.host","localhost")
       .config("spark.sql.warehouse.dir", warehouseDir)
       .config("spark.ui.enabled", "false")
+      .config("javax.jdo.option.ConnectionURL", metastoreConnectURL)
   }
 
   def withSparkSession[T](testBody: SparkSession => T): T = {

@@ -25,12 +25,14 @@ import za.co.absa.commons.io.{TempDirectory, TempFile}
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 
+import java.io.File
+
 class ExcelSpec extends AsyncFlatSpec
   with Matchers
   with SparkFixture
   with SplineFixture {
 
-  private val filePath = TempFile("file1", ".xlsx", false).deleteOnExit().path.toAbsolutePath.toString
+  private val filePath = TempFile("file1", ".xlsx", false).deleteOnExit().toURI.toString
 
   it should "support Excel files as a source" in
     withNewSparkSession { implicit spark =>
@@ -58,12 +60,12 @@ class ExcelSpec extends AsyncFlatSpec
               .option("header", "true")
               .load(filePath)
 
-            df.write.save(TempDirectory(pathOnly = true).deleteOnExit().path.toString)
+            df.write.save(TempDirectory(pathOnly = true).deleteOnExit().asString)
           }
         } yield {
           plan1.operations.write.append shouldBe false
           plan1.operations.write.extra.get("destinationType") shouldBe Some("excel")
-          plan1.operations.write.outputSource shouldBe s"file:$filePath"
+          plan1.operations.write.outputSource shouldBe filePath
 
           plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
           plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("excel")
