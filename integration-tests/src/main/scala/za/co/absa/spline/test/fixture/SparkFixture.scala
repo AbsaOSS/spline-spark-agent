@@ -43,7 +43,6 @@ trait SparkFixture {
       .config("spark.sql.warehouse.dir", warehouseDir)
       .config("spark.ui.enabled", "false")
       .config("javax.jdo.option.ConnectionURL", metastoreConnectURL)
-      .config("hive.metastore.warehouse.dir", metastoreConnectURL) // required by Spark 2.3
   }
 
   def withSparkSession[T](testBody: SparkSession => T): T = {
