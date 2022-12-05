@@ -56,10 +56,11 @@ class ViewAttributeAddingFilter(conf: Configuration) extends AbstractPostProcess
   private def toAttributeReferencesMap(plan: ExecutionPlan, view: DataOperation): Map[String, String] = {
     // assume views can have only one child in Spark
     val childId = view.childIds.get.head
-    val child = plan.operations.other.getOrElse(Seq.empty).find(_.id == childId).get
+    val maybeChildOp = plan.operations.other.flatMap(_.find(_.id == childId))
+    val maybeChildRead = plan.operations.reads.flatMap(_.find(_.id == childId))
 
     val viewOutput = view.output.get
-    val childOutput = child.output.get
+    val childOutput = maybeChildOp.flatMap(_.output).orElse(maybeChildRead.flatMap(_.output)).get
 
     if (viewOutput.size != childOutput.size) {
       throw new UnsupportedOperationException("Sizes of outputs of view operation and it's child are different!")
