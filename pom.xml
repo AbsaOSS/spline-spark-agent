@@ -19,7 +19,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>za.co.absa.spline.agent.spark</groupId>
-    <artifactId>spline-spark-agent_2.11</artifactId>
+    <artifactId>spline-spark-agent_2.12</artifactId>
     <name>Spline Spark Agent</name>
     <description>Spline Agent for Apache Spark</description>
     <version>1.0.0-SNAPSHOT</version>
@@ -123,15 +123,15 @@
 
         <!-- Cross build properties -->
 
-        <default.scala.binary.version>2.11</default.scala.binary.version>
-        <default.scala.version>${scala_2.11.version}</default.scala.version>
+        <default.scala.binary.version>2.12</default.scala.binary.version>
+        <default.scala.version>${scala_2.12.version}</default.scala.version>
 
         <scala_2.11.version>2.11.12</scala_2.11.version>
-        <scala_2.12.version>2.12.15</scala_2.12.version>
+        <scala_2.12.version>2.12.17</scala_2.12.version>
 
         <!-- Controlled by `scala-cross-build` plugin -->
-        <scala.version>2.11.12</scala.version>
-        <scala.binary.version>2.11</scala.binary.version>
+        <scala.version>2.12.17</scala.version>
+        <scala.binary.version>2.12</scala.binary.version>
     </properties>
 
     <scm>

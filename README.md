@@ -593,16 +593,16 @@ Java version: 1.8.0_302, vendor: Red Hat, Inc., runtime: /usr/lib/jvm/java-1.8.0
 ```
 
 There are several maven profiles that makes it easy to build the project with different versions of Spark and Scala.
-- Scala profiles: `scala-2.11`, `scala-2.12`
-- Spark profiles: `spark-2.2`, `spark-2.3`, `spark-2.4`, `spark-3.0`, `spark-3.1`
+- Scala profiles: `scala-2.11`, `scala-2.12` (default)
+- Spark profiles: `spark-2.2`, `spark-2.3`, `spark-2.4` (default), `spark-3.0`, `spark-3.1`, `spark-3.2`, `spark-3.3`
 
-For example, to build an agent for Spark 2.4 and Scala 2.12: 
+For example, to build an agent for Spark 2.4 and Scala 2.11: 
 ```shell
 # Change Scala version in pom.xml.
-mvn scala-cross-build:change-version -Pscala-2.12
+mvn scala-cross-build:change-version -Pscala-2.11
 
-# now you can build for Scala 2.12
-mvn clean install -Pscala-2.12,spark-2.4
+# now you can build for Scala 2.11
+mvn clean install -Pscala-2.11,spark-2.4
 ```
 
 ### Build docker image
