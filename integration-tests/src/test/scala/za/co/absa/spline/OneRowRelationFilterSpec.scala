@@ -47,7 +47,7 @@ class OneRowRelationFilterSpec extends AsyncFlatSpec
               val Seq(op) = plan.operations.other.get
 
               op.name.get should be("Project")
-              op.childIds should be(None)
+              op.childIds should be(Some(Seq.empty))
               op.output.get.size should be(2)
             }
           }
