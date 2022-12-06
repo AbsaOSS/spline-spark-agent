@@ -17,6 +17,7 @@ package za.co.absa.spline
 
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
+import za.co.absa.commons.io.TempFile
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 import za.co.absa.spline.test.harvester.dispatcher.NoOpLineageDispatcher
@@ -27,7 +28,7 @@ class OneRowRelationFilterSpec extends AsyncFlatSpec
   with SplineFixture
   with SparkDatabaseFixture {
 
-  "OneRowRelationFilter" should "produce lineage without OneRowRelation operation" in
+  it should "produce lineage without OneRowRelation operation" in
     withRestartingSparkContext {
       withCustomSparkSession(_
         .config("spark.spline.lineageDispatcher", "noOp")
@@ -50,6 +51,21 @@ class OneRowRelationFilterSpec extends AsyncFlatSpec
               op.output.get.size should be(2)
             }
           }
+        }
+      }
+    }
+
+  it should "handle operations without children" in
+    withNewSparkSession { implicit spark =>
+      withLineageTracking { lineageCaptor =>
+        for {
+          (plan, _) <- lineageCaptor.lineageOf {
+            spark
+              .sql("with sub as (SELECT 1.0 AS a) select a FROM sub")
+              .write.csv(TempFile(pathOnly = true).deleteOnExit().asString)
+          }
+        } yield {
+          plan.operations.other.get.exists(_.name.get.startsWith("OneRowRelation")) should be(false)
         }
       }
     }

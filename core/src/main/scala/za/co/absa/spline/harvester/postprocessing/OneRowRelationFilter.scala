@@ -40,8 +40,9 @@ class OneRowRelationFilter(conf: Configuration) extends AbstractPostProcessingFi
       case op if relIds.contains(op.id) =>
         None
 
-      case op if op.childIds.get.exists(relIds.contains(_)) =>
-        Some(op.copy(childIds = None))
+      case op if op.childIds.exists(_.exists(relIds.contains(_))) =>
+        val newChildIds = op.childIds.filterNot(relIds.contains)
+        Some(op.copy(childIds = newChildIds))
 
       case op =>
         Some(op)
