@@ -55,7 +55,7 @@ class LiteralConverterSpec extends AnyFlatSpec with OneInstancePerTest with Mock
     literal.id shouldEqual "some_id"
     literal.value shouldEqual Seq(Seq("a1", "b1"), Seq("a2", "b2"))
     literal.dataType shouldEqual Some(dummyType.id)
-    literal.extra.get should contain("_typeHint" -> "expr.Literal")
+    literal.extra should contain("_typeHint" -> "expr.Literal")
   }
 
   it should "support array of struct of array of struct literals" in {

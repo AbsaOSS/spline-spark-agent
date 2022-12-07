@@ -18,6 +18,9 @@ package za.co.absa.spline.producer.model
 
 case class Operations (
   write: WriteOperation,
-  reads: Option[Seq[ReadOperation]],
-  other: Option[Seq[DataOperation]]
-)
+  reads: Seq[ReadOperation],
+  other: Seq[DataOperation]
+) {
+  def all: Seq[Operation] =
+    reads ++ other :+ write
+}

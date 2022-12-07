@@ -22,7 +22,7 @@ import za.co.absa.spline.harvester.builder.plan.UnionNodeBuilder.ExtraFields
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.plugin.embedded.DeltaPlugin
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
-import za.co.absa.spline.producer.model.{AttrOrExprRef, Attribute, FunctionalExpression}
+import za.co.absa.spline.producer.model.{AttrOrExprRef, AttrRef, Attribute, FunctionalExpression}
 
 class MergeIntoNodeBuilder
 (override val logicalPlan: DeltaPlugin.SyntheticDeltaMerge)
@@ -38,12 +38,12 @@ class MergeIntoNodeBuilder
 
   private def constructMergeAttribute(attributes: Seq[Attribute]) = {
     val attr1 = attributes.head
-    val idRefs = attributes.map(a => AttrOrExprRef(Some(a.id), None))
+    val idRefs = attributes.map(a => AttrRef(a.id))
     Attribute(
       id = idGenerators.attributeIdGenerator.nextId(),
       dataType = attr1.dataType,
-      childRefs = idRefs.asOption,
-      extra = Map(ExtraFields.Synthetic -> true).asOption,
+      childRefs = idRefs,
+      extra = Map(ExtraFields.Synthetic -> true),
       name = attr1.name
     )
   }

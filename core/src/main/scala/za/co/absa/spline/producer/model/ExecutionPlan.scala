@@ -20,13 +20,13 @@ import java.util.UUID
 
 case class ExecutionPlan (
   id: Option[UUID],
-  name: Option[String],
+  name: String,
   discriminator: Option[String],
-  labels: Option[Map[String, Seq[String]]],
+  labels: Map[String, Seq[String]],
   operations: Operations,
-  attributes: Option[Seq[Attribute]],
-  expressions: Option[Expressions],
+  attributes: Seq[Attribute],
+  expressions: Expressions,
   systemInfo: NameAndVersion,
-  agentInfo: Option[NameAndVersion],
-  extraInfo: Option[Map[String, Any]]
+  agentInfo: NameAndVersion,
+  extraInfo: Map[String, Any]
 )

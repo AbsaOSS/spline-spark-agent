@@ -32,7 +32,7 @@ class AttributeReorderingFilter extends AbstractInternalPostProcessingFilter {
   override def processExecutionPlan(plan: ExecutionPlan, ctx: HarvestingContext): ExecutionPlan = {
     val isByName = plan
       .operations.write.params
-      .flatMap(_.get(IsByName))
+      .get(IsByName)
       .exists(_.asInstanceOf[Boolean])
 
     if (isByName)
@@ -53,17 +53,17 @@ class AttributeReorderingFilter extends AbstractInternalPostProcessingFilter {
 
     val syntheticProjection = DataOperation(
       id = ctx.idGenerators.operationIdGenerator.nextId(),
-      name = Some("Project"),
-      childIds = Some(writeOp.childIds),
-      output = Some(reorderedOutput),
-      params = None,
-      extra = Some(Map(ExtraFields.Synthetic -> true))
+      name = "Project",
+      childIds = writeOp.childIds,
+      output = reorderedOutput,
+      params = Map.empty,
+      extra = Map(ExtraFields.Synthetic -> true)
     )
 
     plan.copy(
       operations = plan.operations.copy(
         write = writeOp.copy(childIds = Seq(syntheticProjection.id)),
-        other = Some(plan.operations.other.getOrElse(Seq.empty) :+ syntheticProjection)
+        other = plan.operations.other :+ syntheticProjection
       )
     )
   }
@@ -78,7 +78,6 @@ class AttributeReorderingFilter extends AbstractInternalPostProcessingFilter {
   }
 
   private def getWriteChildOutput(plan: ExecutionPlan, writeOp: WriteOperation): Seq[String] = {
-    import za.co.absa.commons.ProducerApiAdapters._
 
     val Seq(writeChildId) = writeOp.childIds
 

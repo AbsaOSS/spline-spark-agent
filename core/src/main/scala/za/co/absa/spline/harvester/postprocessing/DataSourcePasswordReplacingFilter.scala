@@ -40,13 +40,13 @@ class DataSourcePasswordReplacingFilter(
   override def processReadOperation(op: ReadOperation, ctx: HarvestingContext): ReadOperation =
     op.copy(
       inputSources = op.inputSources.map(filter),
-      params = op.params.map(filter)
+      params = filter(op.params)
     )
 
   override def processWriteOperation(op: WriteOperation, ctx: HarvestingContext): WriteOperation =
     op.copy(
       outputSource = filter(op.outputSource),
-      params = op.params.map(filter)
+      params = filter(op.params)
     )
 
   private val valueReplacer = new CaptureGroupReplacer(replacement)

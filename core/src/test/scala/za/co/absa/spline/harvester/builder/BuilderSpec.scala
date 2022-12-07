@@ -54,10 +54,10 @@ class BuilderSpec extends AnyFlatSpec with Matchers with MockitoSugar {
       new ReadNodeBuilder(command, logicalPlanStub)(idGeneratorsMock, dataTypeConverterMock, dataConverterMock, postProcessorMock)
         .build()
 
-    readNode.params.get.keySet should contain("caseSensitiveKey")
-    readNode.extra.get.keySet should contain("sourceType")
-    readNode.params.get.keySet shouldNot contain("casesensitivekey")
-    readNode.extra.get.keySet shouldNot contain("sourcetype")
+    readNode.params.keySet should contain("caseSensitiveKey")
+    readNode.extra.keySet should contain("sourceType")
+    readNode.params.keySet shouldNot contain("casesensitivekey")
+    readNode.extra.keySet shouldNot contain("sourcetype")
   }
 
 }

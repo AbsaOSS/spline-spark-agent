@@ -36,11 +36,11 @@ class GenericPlanNodeBuilder
   override def build(): DataOperation = {
     val dop = DataOperation(
       id = operationId,
-      name = logicalPlan.nodeName.asOption,
-      childIds = childIds.asOption,
-      output = outputAttributes.map(_.id).asOption,
-      params = operationParamsConverter.convert(logicalPlan).asOption,
-      extra = None
+      name = logicalPlan.nodeName,
+      childIds = childIds,
+      output = outputAttributes.map(_.id),
+      params = operationParamsConverter.convert(logicalPlan),
+      extra = Map.empty
     )
 
     postProcessor.process(dop)

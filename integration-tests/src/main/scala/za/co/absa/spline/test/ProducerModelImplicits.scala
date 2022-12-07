@@ -22,48 +22,25 @@ import scala.annotation.tailrec
 
 object ProducerModelImplicits {
 
-  implicit class DataOperationOps(val dataOperation: DataOperation) extends AnyVal {
+  implicit class OperationOps(val operation: Operation) extends AnyVal {
 
     def outputAttributes(implicit walker: LineageWalker): Seq[Attribute] = {
-      dataOperation.output
-        .getOrElse(Seq.empty)
-        .map(walker.attributeById)
+      operation.output.map(walker.attributeById)
     }
 
-    def precedingDataOp(implicit walker: LineageWalker): DataOperation = {
-      val Seq(child) = walker.precedingDataOps(dataOperation)
+    def childOperations(implicit walker: LineageWalker): Seq[Operation] = {
+      operation.childIds.map(walker.operationById)
+    }
+
+    def childOperation(implicit walker: LineageWalker): Operation = {
+      val Seq(child) = childOperations(walker)
       child
     }
-
-    def precedingDataOps(implicit walker: LineageWalker): Seq[DataOperation] =
-      walker.precedingDataOps(dataOperation)
-
-    def dagLeafs(implicit walker: LineageWalker): (Seq[ReadOperation], Seq[DataOperation]) =
-      findLeaves(dataOperation)
-
-  }
-
-  implicit class WriteOperationOps(val write: WriteOperation) extends AnyVal {
-
-    def precedingDataOp(implicit walker: LineageWalker): DataOperation = {
-      val Seq(child) = walker.precedingDataOps(write)
-      child
-    }
-
-    def precedingDataOps(implicit walker: LineageWalker): Seq[DataOperation] =
-      walker.precedingDataOps(write)
 
     def dagLeaves(implicit walker: LineageWalker): (Seq[ReadOperation], Seq[DataOperation]) =
-      findLeaves(write)
-  }
+      findLeaves(operation)
 
-  implicit class ReadOperationOps(val readOperation: ReadOperation) extends AnyVal {
 
-    def outputAttributes(implicit walker: LineageWalker): Seq[Attribute] = {
-      readOperation.output
-        .getOrElse(Seq.empty)
-        .map(walker.attributeById)
-    }
   }
 
   private def findLeaves(operation: Operation)(implicit walker: LineageWalker): (Seq[ReadOperation], Seq[DataOperation]) = {
@@ -78,7 +55,7 @@ object ProducerModelImplicits {
         findLeavesRec(tail, head :: readLeaves, dataLeaves)
 
       case (head: DataOperation) +: tail =>
-        val children = walker.precedingOps(head)
+        val children = head.childOperations
         if (children.isEmpty) {
           findLeavesRec(tail, readLeaves, head :: dataLeaves)
         } else {
@@ -89,7 +66,7 @@ object ProducerModelImplicits {
     }
 
     val initialToVisit = operation match {
-      case write: WriteOperation => walker.precedingOps(write)
+      case write: WriteOperation => write.childOperations
       case _ => Seq(operation)
     }
 

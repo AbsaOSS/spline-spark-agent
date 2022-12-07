@@ -43,12 +43,17 @@ class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matc
   private val idGenerators = mock[IdGeneratorsBundle]
   private val harvestingContext = new HarvestingContext(logicalPlan, None, sparkSession, idGenerators)
 
-  private val wop = WriteOperation("foo", append = false, "42", None, Seq.empty, None, None)
-  private val nav = NameAndVersion("foo", "bar")
-  private val defaultExtra = Some(Map("ttt" -> 777))
-  private val ep = ExecutionPlan(None, Some("pn"), None, None, Operations(wop, None, None), None, None, nav, None, defaultExtra)
-  private val ee = ExecutionEvent(UUID.randomUUID(), None, 66L, None, None, None, Some(
-    Map("foo" -> "a", "bar" -> false, "baz" -> Seq(1, 2, 3))))
+  private val wop = WriteOperation("foo", append = false, "42", "", Seq.empty, Map.empty, Map.empty)
+  private val systemInfo = NameAndVersion("foo", "bar")
+  private val agentInfo = NameAndVersion("test", "0.0.0")
+  private val emptyExpressions = Expressions(Seq.empty, Seq.empty)
+  private val defaultExtra = Map("ttt" -> 777)
+  private val ops = Operations(wop, Seq.empty, Seq.empty)
+  private val ep =
+    ExecutionPlan(None, "pn", None, Map.empty, ops , Seq.empty, emptyExpressions, systemInfo, agentInfo, defaultExtra)
+
+  private val eventExtra = Map("foo" -> "a", "bar" -> false, "baz" -> Seq(1, 2, 3))
+  private val ee = ExecutionEvent(UUID.randomUUID(), Map.empty, 66L, None, None, None, eventExtra)
 
   behavior of "ExtraMetadataCollectingFilter"
 
@@ -80,11 +85,11 @@ class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matc
 
     val processedPlan = filter.processExecutionPlan(ep, harvestingContext)
 
-    val extra = processedPlan.extraInfo.get
+    val extra = processedPlan.extraInfo
     extra("ttt") shouldBe 777
     extra("qux") shouldBe 42
     extra("seq") shouldBe Seq("aaa", "bbb", "ccc")
-    extra("foo") shouldBe Some("pn")
+    extra("foo") shouldBe "pn"
     extra("bar") shouldBe "rabbit"
     extra("baz") shouldBe "123"
     extra("daz") shouldBe "nice"
@@ -127,18 +132,18 @@ class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matc
     val processedPlan = filter.processExecutionPlan(ep, harvestingContext)
     val processedEvent = filter.processExecutionEvent(ee, harvestingContext)
 
-    processedPlan.labels shouldEqual Some(Map(
+    processedPlan.labels shouldEqual Map(
       "qux" -> Seq("42"),
       "tags" -> Seq("aaa", "bbb", "ccc"),
       "notFlat" -> Seq("a", "b", "c"),
       "bar" -> Seq("rabbit"),
       "baz" -> Seq("123"),
       "daz" -> Seq("nice")
-    ))
+    )
 
-    processedEvent.labels shouldEqual Some(Map(
+    processedEvent.labels shouldEqual Map(
       "qux" -> Seq("42")
-    ))
+    )
   }
 
   it should "handle missing JSON property" in {
@@ -171,7 +176,7 @@ class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matc
 
     val processedEvent = filter.processExecutionEvent(ee, harvestingContext)
 
-    val extra = processedEvent.extra.get
+    val extra = processedEvent.extra
     val tux = extra("tux").asInstanceOf[Map[String, Any]]
     tux("qux") shouldBe 42
 
@@ -210,7 +215,7 @@ class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matc
 
     val processedEvent = filter.processExecutionEvent(ee, harvestingContext)
 
-    val extra = processedEvent.extra.get
+    val extra = processedEvent.extra
     val tux = extra("tux").asInstanceOf[Map[String, Any]]
     tux("qux") shouldBe 42
     tux("qax") shouldBe Seq("ta", "pa", "da")
@@ -247,7 +252,7 @@ class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matc
 
     val processedEvent = filter.processExecutionEvent(ee, harvestingContext)
 
-    val extra = processedEvent.extra.get
+    val extra = processedEvent.extra
     extra("tux") shouldBe 1
     extra.get("bux") shouldBe None
     extra("dux") shouldBe 3
@@ -273,7 +278,7 @@ class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matc
 
     val processedEvent = filter.processExecutionEvent(ee, harvestingContext)
 
-    val extra = processedEvent.extra.get
+    val extra = processedEvent.extra
     extra("tux") shouldBe 1
   }
 

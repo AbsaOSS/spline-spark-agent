@@ -39,12 +39,11 @@ class ReadNodeBuilder
     val rop = ReadOperation(
       inputSources = command.sourceIdentifier.uris,
       id = operationId,
-      name = logicalPlan.nodeName.asOption,
-      output = outputAttributes.map(_.id).asOption,
-      params = ioParamsConverter.convert(command.params).asOption,
-      extra = Map(
-        OperationExtras.SourceType -> command.sourceIdentifier.format
-      ).asOption)
+      name = logicalPlan.nodeName,
+      output = outputAttributes.map(_.id),
+      params = ioParamsConverter.convert(command.params),
+      extra = Map(OperationExtras.SourceType -> command.sourceIdentifier.format)
+    )
 
     postProcessor.process(rop)
   }

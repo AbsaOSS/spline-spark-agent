@@ -34,18 +34,20 @@ class ConsoleLineageDispatcherSpec
   private val uuid1 = UUID.fromString("12345678-90ab-cdef-1234-567890abcdef")
 
   it should "send lineage to the stdout" in {
-    assertingStdOut(include("""["event",{"planId":"12345678-90ab-cdef-1234-567890abcdef","timestamp":999}]""")) {
+    assertingStdOut(include(
+    """["event",{"planId":"12345678-90ab-cdef-1234-567890abcdef","labels":{},"timestamp":999,"extra":{}}]""")) {
       new ConsoleLineageDispatcher(new BaseConfiguration {
         addProperty("stream", "OUT")
-      }).send(ExecutionEvent(uuid1, None, 999, None, None, None, None))
+      }).send(ExecutionEvent(uuid1, Map.empty, 999, None, None, None, Map.empty))
     }
   }
 
   it should "send lineage to the stderr" in {
-    assertingStdErr(include("""["event",{"planId":"12345678-90ab-cdef-1234-567890abcdef","timestamp":999}]""")) {
+    assertingStdErr(include(
+    """["event",{"planId":"12345678-90ab-cdef-1234-567890abcdef","labels":{},"timestamp":999,"extra":{}}]""")) {
       new ConsoleLineageDispatcher(new BaseConfiguration {
         addProperty("stream", "ERR")
-      }).send(ExecutionEvent(uuid1, None, 999, None, None, None, None))
+      }).send(ExecutionEvent(uuid1, Map.empty, 999, None, None, None, Map.empty))
     }
   }
 

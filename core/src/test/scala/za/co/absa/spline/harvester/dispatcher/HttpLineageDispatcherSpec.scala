@@ -91,7 +91,7 @@ class HttpLineageDispatcherSpec extends AnyFlatSpec with MockitoSugar {
 
     val dispatcher = new HttpLineageDispatcher(restClientMock, Some(ver"1"), Some(false))
 
-    dispatcher.send(ExecutionEvent(UUID.randomUUID(), None, 1L, None, None, None, None))
+    dispatcher.send(ExecutionEvent(UUID.randomUUID(), Map.empty, 1L, None, None, None, Map.empty))
 
     verify(eventsEndpointMock).post(
       anyString(),
@@ -123,7 +123,7 @@ class HttpLineageDispatcherSpec extends AnyFlatSpec with MockitoSugar {
 
     val dispatcher = new HttpLineageDispatcher(restClientMock, None, None)
 
-    dispatcher.send(ExecutionEvent(UUID.randomUUID(), None, 1L, None, None, None, None))
+    dispatcher.send(ExecutionEvent(UUID.randomUUID(), Map.empty, 1L, None, None, None, Map.empty))
 
     verify(eventsEndpointMock).post(
       anyString(),

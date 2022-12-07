@@ -37,7 +37,7 @@ trait RddOperationNodeBuilder extends OperationNodeBuilder {
 
   lazy val literals: Seq[Literal] = Seq.empty
 
-  protected def operationNameOption: Option[String] = {
-    rdd.name.asOption.orElse(rdd.getClass.getSimpleName.asOption)
+  protected def operationName: String = {
+    Option(rdd.name).getOrElse(rdd.getClass.getSimpleName)
   }
 }

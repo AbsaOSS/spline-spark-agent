@@ -40,82 +40,82 @@ class ModelMapperV10Spec
 
     val planEntity = ExecutionPlan(
       id = Some(UUID.fromString("00000000-0000-0000-0000-000000000000")),
-      name = Some("Foo Plan"),
+      name = "Foo Plan",
       discriminator = None,
-      labels = Some(Map("lbl1" -> Seq("a", "b"))),
+      labels = Map("lbl1" -> Seq("a", "b")),
       operations = Operations(
         write = WriteOperation(
           outputSource = "aaa",
           append = true,
           id = "op-0",
-          name = Some("Write Operation"),
+          name = "Write Operation",
           childIds = Seq("op-1"),
-          params = Some(Map("param1" -> 42)),
-          extra = Some(Map("extra1" -> 42))
+          params = Map("param1" -> 42),
+          extra = Map("extra1" -> 42)
         ),
-        reads = Some(Seq(ReadOperation(
+        reads = Seq(ReadOperation(
           inputSources = Seq("bbb"),
           id = "op-2",
-          name = Some("Read Operation"),
-          output = Some(Seq("attr-1", "attr-2")),
-          params = Some(Map("param2" -> 42)),
-          extra = Some(Map("extra2" -> 42))
-        ))),
-        other = Some(Seq(DataOperation(
+          name = "Read Operation",
+          output = Seq("attr-1", "attr-2"),
+          params = Map("param2" -> 42),
+          extra = Map("extra2" -> 42)
+        )),
+        other = Seq(DataOperation(
           id = "op-1",
-          name = Some("Data Operation"),
-          childIds = Some(Seq("op-2")),
-          output = Some(Seq("attr-3")),
-          params = Some(Map("param3" -> 42)),
-          extra = Some(Map("extra3" -> 42))
-        )))
+          name = "Data Operation",
+          childIds = Seq("op-2"),
+          output = Seq("attr-3"),
+          params = Map("param3" -> 42),
+          extra = Map("extra3" -> 42)
+        ))
       ),
-      attributes = Some(Seq(
+      attributes = Seq(
         Attribute(
           id = "attr-1",
           dataType = Some(dummyDataType),
-          childRefs = None,
-          extra = None,
+          childRefs = Seq.empty,
+          extra = Map.empty,
           name = "A"
         ),
         Attribute(
           id = "attr-2",
           dataType = Some(dummyDataType),
-          childRefs = None,
-          extra = None,
+          childRefs = Seq.empty,
+          extra = Map.empty,
           name = "B"
         ),
         Attribute(
           id = "attr-3",
           dataType = Some(dummyDataType),
-          childRefs = None,
-          extra = None,
+          childRefs = Seq.empty,
+          extra = Map.empty,
           name = "C"
         )
-      )),
-      expressions = Some(Expressions(
-        functions = Some(Seq(
+      ),
+      expressions = Expressions(
+        functions = Seq(
           FunctionalExpression(
             id = "e1",
             dataType = Some(dummyDataType),
-            childRefs = Some(Seq(AttrOrExprRef(Some("a1"), None))),
-            extra = Some(Map("extra_e1" -> 777)),
+            childRefs = Seq(AttrRef("a1")),
+            extra = Map("extra_e1" -> 777),
             name = "Expr1",
-            params = None
+            params = Map.empty
           )
-        )),
-        constants = Some(Seq(
+        ),
+        constants = Seq(
           Literal(
             id = "c1",
             dataType = None,
-            extra = None,
+            extra = Map.empty,
             value = "forty two"
           )
-        ))
-      )),
+        )
+      ),
       systemInfo = NameAndVersion("xxx", "777"),
-      agentInfo = Some(NameAndVersion("yyy", "777")),
-      extraInfo = Some(Map("extra42" -> 42))
+      agentInfo = NameAndVersion("yyy", "777"),
+      extraInfo = Map("extra42" -> 42)
     )
 
     val planDTO = v1_0.ExecutionPlan(
@@ -174,11 +174,11 @@ class ModelMapperV10Spec
     val eventEntity = ExecutionEvent(
       planId = UUID.fromString("00000000-0000-0000-0000-000000000000"),
       discriminator = Some("foo"),
-      labels = Some(Map("lbl1" -> Seq("a", "b"))),
+      labels = Map("lbl1" -> Seq("a", "b")),
       timestamp = 123456789,
       durationNs = Some(555),
       error = None,
-      extra = Some(Map("extra1" -> 42))
+      extra = Map("extra1" -> 42)
     )
 
     val eventDTO = v1_0.ExecutionEvent(

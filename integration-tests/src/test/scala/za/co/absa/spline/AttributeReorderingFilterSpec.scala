@@ -16,6 +16,7 @@
 package za.co.absa.spline
 
 import org.apache.spark.SPARK_VERSION
+import org.scalatest.OptionValues.convertOptionToValuable
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
@@ -56,12 +57,12 @@ class AttributeReorderingFilterSpec extends AsyncFlatSpec
               val write = plan.operations.write
               val writeChild = getOtherOpById(plan, write.childIds.head)
 
-              getAttributeById(plan, writeChild.output.get(0)).name should be("i")
-              getAttributeById(plan, writeChild.output.get(1)).name should be("j")
+              getAttributeById(plan, writeChild.output(0)).name should be("i")
+              getAttributeById(plan, writeChild.output(1)).name should be("j")
 
-              val writeChild2 = getOtherOpById(plan, writeChild.childIds.get.head)
-              val writeChild3 = getOtherOpById(plan, writeChild2.childIds.get.head)
-              writeChild3.name.get should be("LocalRelation")
+              val writeChild2 = getOtherOpById(plan, writeChild.childIds.head)
+              val writeChild3 = getOtherOpById(plan, writeChild2.childIds.head)
+              writeChild3.name should be("LocalRelation")
             }
           }
         }
@@ -72,8 +73,8 @@ class AttributeReorderingFilterSpec extends AsyncFlatSpec
 
 object AttributeReorderingFilterSpec {
   def getOtherOpById(plan: ExecutionPlan, opId :String): DataOperation =
-    plan.operations.other.flatMap(_.find(_.id == opId)).get
+    plan.operations.other.find(_.id == opId).value
 
   def getAttributeById(plan: ExecutionPlan, attId :String): Attribute =
-    plan.attributes.flatMap(_.find(_.id == attId)).get
+    plan.attributes.find(_.id == attId).value
 }

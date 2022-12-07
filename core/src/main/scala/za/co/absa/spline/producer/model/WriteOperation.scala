@@ -20,8 +20,10 @@ case class WriteOperation (
   outputSource: String,
   append: Boolean,
   id: String,
-  name: Option[String],
+  name: String,
   childIds: Seq[String],
-  params: Option[Map[String, Any]],
-  extra: Option[Map[String, Any]]
-) extends Operation
+  params: Map[String, Any],
+  extra: Map[String, Any]
+) extends Operation {
+  override def output: Seq[String] = Seq.empty
+}

@@ -52,8 +52,8 @@ class DataSourcePasswordReplacingFilterSpec extends AnyFlatSpec with Matchers wi
       ";hostNameInCertificate=*.database.windows.net" +
       ";loginTimeout=30:"
 
-    val rop = ReadOperation(Seq(originalURL), "", None, None, None, None)
-    val wop = WriteOperation(originalURL, append = false, "", None, Nil, None, None)
+    val rop = ReadOperation(Seq(originalURL), "", "", Seq.empty, Map.empty, Map.empty)
+    val wop = WriteOperation(originalURL, append = false, "", "", Seq.empty, Map.empty, Map.empty)
 
     val filter = new DataSourcePasswordReplacingFilter(defaultProperties)
 
@@ -62,8 +62,8 @@ class DataSourcePasswordReplacingFilterSpec extends AnyFlatSpec with Matchers wi
   }
 
   it should "mask secret in URL userinfo as `user:*****@host`" in {
-    val rop = ReadOperation(Seq("mongodb://bob:super_secret@mongodb.host.example.org:27017?authSource=admin"), "", None, None, None, None) //NOSONAR
-    val wop = WriteOperation("mongodb://bob:@mongodb.host.example.org:27017?authSource=admin", append = false, "", None, Nil, None, None) //NOSONAR
+    val rop = ReadOperation(Seq("mongodb://bob:super_secret@mongodb.host.example.org:27017?authSource=admin"), "", "", Seq.empty, Map.empty, Map.empty) //NOSONAR
+    val wop = WriteOperation("mongodb://bob:@mongodb.host.example.org:27017?authSource=admin", append = false, "", "", Seq.empty, Map.empty, Map.empty) //NOSONAR
 
     val filter = new DataSourcePasswordReplacingFilter(defaultProperties)
 
@@ -105,13 +105,13 @@ class DataSourcePasswordReplacingFilterSpec extends AnyFlatSpec with Matchers wi
       "password" -> "*****" // NOSONAR
     )
 
-    val rop = ReadOperation(Nil, "", None, None, params = Some(originalParams), None)
-    val wop = WriteOperation("", append = false, "", None, Nil, params = Some(originalParams), None)
+    val rop = ReadOperation(Nil, "", "", Seq.empty, params = originalParams, Map.empty)
+    val wop = WriteOperation("", append = false, "", "", Seq.empty, params = originalParams, Map.empty)
 
     val filter = new DataSourcePasswordReplacingFilter(defaultProperties)
 
-    filter.processReadOperation(rop, dummyContext).params shouldEqual Some(sanitizedParams)
-    filter.processWriteOperation(wop, dummyContext).params shouldEqual Some(sanitizedParams)
+    filter.processReadOperation(rop, dummyContext).params shouldEqual sanitizedParams
+    filter.processWriteOperation(wop, dummyContext).params shouldEqual sanitizedParams
   }
 
 }

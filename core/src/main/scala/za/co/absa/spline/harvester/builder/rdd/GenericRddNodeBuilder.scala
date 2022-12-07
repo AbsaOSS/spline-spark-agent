@@ -32,11 +32,11 @@ class GenericRddNodeBuilder
   override def build(): DataOperation = {
     val dop = DataOperation(
       id = operationId,
-      name = operationNameOption,
-      childIds = childIds.asOption,
-      output = outputAttributes.map(_.id).asOption,
-      params = None,
-      extra = None
+      name = operationName,
+      childIds = childIds,
+      output = outputAttributes.map(_.id),
+      params = Map.empty,
+      extra = Map.empty
     )
 
     postProcessor.process(dop)

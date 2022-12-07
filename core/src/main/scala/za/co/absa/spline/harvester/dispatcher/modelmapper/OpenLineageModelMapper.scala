@@ -31,7 +31,7 @@ class OpenLineageModelMapper(splineModelMapper: ModelMapper[_, _], apiVersion: V
 
   def toDtos(plan: ExecutionPlan, event: ExecutionEvent): Seq[RunEvent] = {
     val runId = UUID.randomUUID()
-    val job = Job(namespace = namespace, name = plan.name.getOrElse("no name"), facets = None)
+    val job = Job(namespace = namespace, name = plan.name, facets = None)
 
     val completeTime = Instant.ofEpochMilli(event.timestamp)
     val duration = Duration.ofNanos(event.durationNs.getOrElse(0))
@@ -57,7 +57,6 @@ class OpenLineageModelMapper(splineModelMapper: ModelMapper[_, _], apiVersion: V
       ))),
       job = job,
       inputs = plan.operations.reads
-        .getOrElse(Seq.empty)
         .flatMap(ro => ro.inputSources.map(createInputDataset))
         .asOption,
       outputs = Some(Seq(createOutputDataset(plan.operations.write.outputSource))),

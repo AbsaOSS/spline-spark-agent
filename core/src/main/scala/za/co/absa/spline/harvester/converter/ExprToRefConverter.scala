@@ -18,7 +18,7 @@ package za.co.absa.spline.harvester.converter
 
 import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.Converter
-import za.co.absa.spline.producer.model.AttrOrExprRef
+import za.co.absa.spline.producer.model.{AttrOrExprRef, AttrRef, ExprRef}
 
 class ExprToRefConverter(
   attributeConverter: AttributeConverter,
@@ -32,14 +32,14 @@ class ExprToRefConverter(
   override def convert(arg: sparkExprssions.Expression): AttrOrExprRef = arg match {
     case sa: sparkExprssions.Attribute =>
       val attr = attributeConverter.convert(sa)
-      AttrOrExprRef(Some(attr.id), None)
+      AttrRef(attr.id)
 
     case l: sparkExprssions.Literal =>
       val literal = literalConverter.convert(l)
-      AttrOrExprRef(None, Some(literal.id))
+      ExprRef(literal.id)
 
     case _ =>
       val expr = expressionConverter.convert(arg)
-      AttrOrExprRef(None, Some(expr.id))
+      ExprRef(expr.id)
   }
 }

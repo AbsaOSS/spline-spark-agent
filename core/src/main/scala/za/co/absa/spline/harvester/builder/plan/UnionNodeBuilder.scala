@@ -23,7 +23,7 @@ import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.builder.plan.UnionNodeBuilder.{ExtraFields, Names}
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
-import za.co.absa.spline.producer.model.{AttrOrExprRef, Attribute, FunctionalExpression}
+import za.co.absa.spline.producer.model.{AttrOrExprRef, AttrRef, Attribute, ExprRef, FunctionalExpression}
 
 class UnionNodeBuilder
 (override val logicalPlan: Union)
@@ -50,10 +50,10 @@ class UnionNodeBuilder
       id = idGenerators.expressionIdGenerator.nextId(),
       dataType = dataTypeConverter
         .convert(outputSparkAttribute.dataType, outputSparkAttribute.nullable).id.asOption,
-      childRefs = inputSplineAttributes.map(att => AttrOrExprRef(Some(att.id), None)).asOption,
-      extra = Map(ExtraFields.Synthetic -> true).asOption,
+      childRefs = inputSplineAttributes.map(att => AttrRef(att.id)),
+      extra = Map(ExtraFields.Synthetic -> true),
       name = Names.Union,
-      params = None
+      params = Map.empty
     )
 
   private def constructUnionAttribute(attributes: Seq[Attribute], function: FunctionalExpression) = {
@@ -61,8 +61,8 @@ class UnionNodeBuilder
     Attribute(
       id = idGenerators.attributeIdGenerator.nextId(),
       dataType = function.dataType,
-      childRefs = List(AttrOrExprRef(None, Some(function.id))).asOption,
-      extra = Map(ExtraFields.Synthetic -> true).asOption,
+      childRefs = List(ExprRef(function.id)),
+      extra = Map(ExtraFields.Synthetic -> true),
       name = attr1.name
     )
   }

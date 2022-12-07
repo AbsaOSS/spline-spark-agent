@@ -19,7 +19,7 @@ package za.co.absa.spline.producer.model
 case class Attribute (
   id: String,
   dataType: Option[Any],
-  childRefs: Option[Seq[AttrOrExprRef]],
-  extra: Option[Map[String, Any]],
+  childRefs: Seq[AttrOrExprRef],
+  extra: Map[String, Any],
   name: String
 )

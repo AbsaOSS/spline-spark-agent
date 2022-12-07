@@ -41,8 +41,8 @@ class AttributeConverter(
         id = idGen.nextId(),
         dataType = Some(dataTypeConverter.convert(attr.dataType, attr.nullable).id),
         childRefs = resolveAttributeChild(attr)
-          .map(expr => Seq(exprToRefConverter.convert(expr))),
-        extra = None,
+          .map(expr => Seq(exprToRefConverter.convert(expr))).getOrElse(Seq.empty),
+        extra = Map.empty,
         name = attr.name
       )
   }

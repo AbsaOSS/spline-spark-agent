@@ -42,7 +42,7 @@ class LiteralConverter(
         .convert(lit.dataType, lit.nullable)
         .asOption
         .map(_.id),
-      extra = createExtra(lit, "expr.Literal").asOption,
+      extra = createExtra(lit, "expr.Literal"),
       value = dataConverter.convert((lit.value, lit.dataType))
     )
 }
