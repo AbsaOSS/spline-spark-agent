@@ -16,14 +16,4 @@
 
 package za.co.absa.spline.producer.model
 
-import java.util.UUID
-
-case class ExecutionEvent (
-  planId: UUID,
-  labels: Map[String, Seq[String]],
-  timestamp: Long,
-  durationNs: Option[Long],
-  discriminator: Option[String],
-  error: Option[Any],
-  extra: Map[String, Any]
-)
+case class ExprRef(id: String) extends AttrOrExprRef

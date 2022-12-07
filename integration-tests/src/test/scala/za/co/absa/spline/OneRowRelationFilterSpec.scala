@@ -39,11 +39,11 @@ class OneRowRelationFilterSpec extends AsyncFlatSpec
                   .saveAsTable("t1")
               }
             } yield {
-              val Seq(op) = plan.operations.other.get
+              val Seq(op) = plan.operations.other
 
-              op.name.get should be("Project")
-              op.childIds should be(None)
-              op.output.get.size should be(2)
+              op.name should be("Project")
+              op.childIds should be(Seq.empty)
+              op.output.size should be(2)
             }
           }
         }

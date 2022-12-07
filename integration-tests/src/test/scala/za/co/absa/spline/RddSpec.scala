@@ -71,8 +71,8 @@ class RddSpec extends AsyncFlatSpec
               .parquet(tempPath)
           }
         } yield {
-          plan2.operations.reads.get.head.inputSources.head should startWith(inputPathURI.toString)
-          plan2.operations.write.extra.get("destinationType") shouldBe Some("parquet")
+          plan2.operations.reads.head.inputSources.head should startWith(inputPathURI.toString)
+          plan2.operations.write.extra("destinationType") shouldBe Some("parquet")
         }
       }
     }
@@ -95,8 +95,8 @@ class RddSpec extends AsyncFlatSpec
               .parquet(tempPath)
           }
         } yield {
-          plan2.operations.reads.get.head.inputSources.head should startWith("file:/")
-          plan2.operations.reads.get.head.inputSources.head should endWith("data/cities.jsonl")
+          plan2.operations.reads.head.inputSources.head should startWith("file:/")
+          plan2.operations.reads.head.inputSources.head should endWith("data/cities.jsonl")
         }
       }
     }
@@ -120,8 +120,8 @@ class RddSpec extends AsyncFlatSpec
               .parquet(tempPath)
           }
         } yield {
-          plan2.operations.reads.get.head.inputSources.head should startWith("file:/")
-          plan2.operations.reads.get.head.inputSources.head should endWith("data/cities.csv")
+          plan2.operations.reads.head.inputSources.head should startWith("file:/")
+          plan2.operations.reads.head.inputSources.head should endWith("data/cities.csv")
         }
       }
     }
@@ -144,8 +144,8 @@ class RddSpec extends AsyncFlatSpec
               .parquet(tempPath)
           }
         } yield {
-          plan2.operations.reads.get.head.inputSources.head should startWith("file:/")
-          plan2.operations.reads.get.head.inputSources.head should endWith("data/cities.csv")
+          plan2.operations.reads.head.inputSources.head should startWith("file:/")
+          plan2.operations.reads.head.inputSources.head should endWith("data/cities.csv")
         }
       }
     }
@@ -169,7 +169,7 @@ class RddSpec extends AsyncFlatSpec
           import za.co.absa.spline.test.ProducerModelImplicits._
           implicit val lineageWalker: LineageWalker = LineageWalker(plan2)
 
-          plan2.operations.reads should be(None)
+          plan2.operations.reads should be(Seq.empty)
 
           val write = plan2.operations.write
           val (readLeaves, dataLeaves) = write.dagLeaves
@@ -177,7 +177,7 @@ class RddSpec extends AsyncFlatSpec
           readLeaves.size should be(0)
           dataLeaves.size should be(1)
 
-          dataLeaves.head.name.get should be("ParallelCollectionRDD")
+          dataLeaves.head.name should be("ParallelCollectionRDD")
         }
       }
     }
@@ -209,8 +209,8 @@ class RddSpec extends AsyncFlatSpec
               .parquet(tempPath)
           }
         } yield {
-          plan2.operations.reads.get.head.inputSources.head shouldBe s"$jdbcConnectionString:$tableName"
-          plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("jdbc")
+          plan2.operations.reads.head.inputSources.head shouldBe s"$jdbcConnectionString:$tableName"
+          plan2.operations.reads.head.extra("sourceType") shouldBe Some("jdbc")
         }
       }
     }

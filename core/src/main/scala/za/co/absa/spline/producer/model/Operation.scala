@@ -16,4 +16,11 @@
 
 package za.co.absa.spline.producer.model
 
-trait Operation
+trait Operation {
+  def id: String
+  def name: String
+  def childIds: Seq[String]
+  def output: Seq[String]
+  def params: Map[String, Any]
+  def extra: Map[String, Any]
+}

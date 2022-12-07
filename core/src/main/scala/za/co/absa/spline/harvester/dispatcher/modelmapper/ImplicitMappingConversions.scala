@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 ABSA Group Limited
+ * Copyright 2022 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,23 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.producer.model
+package za.co.absa.spline.harvester.dispatcher.modelmapper
 
-import java.util.UUID
+object ImplicitMappingConversions {
+  implicit def stringToOption(str: String): Option[String] = Option(str)
 
-case class ExecutionEvent (
-  planId: UUID,
-  labels: Map[String, Seq[String]],
-  timestamp: Long,
-  durationNs: Option[Long],
-  discriminator: Option[String],
-  error: Option[Any],
-  extra: Map[String, Any]
-)
+  implicit def seqToOption[T](seq: Seq[T]): Option[Seq[T]] = {
+    if (seq.isEmpty) {
+      None
+    } else {
+      Some(seq)
+    }
+  }
+
+  implicit def mapToOption[K, V](map: Map[K, V]): Option[Map[K, V]] =
+    if (map.isEmpty) {
+      None
+    } else {
+      Some(map)
+    }
+}

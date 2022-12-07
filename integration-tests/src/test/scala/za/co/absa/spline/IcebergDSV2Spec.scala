@@ -49,7 +49,7 @@ class IcebergDSV2Spec extends AsyncFlatSpec
           } yield {
             plan1.id.get shouldEqual event1.planId
             plan1.operations.write.append shouldBe true
-            plan1.operations.write.extra.get("destinationType") shouldBe Some("iceberg")
+            plan1.operations.write.extra("destinationType") shouldBe Some("iceberg")
             plan1.operations.write.outputSource shouldBe s"file:$warehouseDir/foo"
           }
         }
@@ -77,8 +77,8 @@ class IcebergDSV2Spec extends AsyncFlatSpec
             }
           } yield {
             plan2.id.get shouldEqual event2.planId
-            plan2.operations.reads.get(0).extra.get("sourceType") shouldBe Some("iceberg")
-            plan2.operations.reads.get(0).inputSources(0) shouldBe s"file:$warehouseDir/bar"
+            plan2.operations.reads(0).extra("sourceType") shouldBe Some("iceberg")
+            plan2.operations.reads(0).inputSources(0) shouldBe s"file:$warehouseDir/bar"
           }
         }
       }

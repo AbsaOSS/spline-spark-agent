@@ -43,12 +43,10 @@ class WriteNodeBuilder
       outputSource = uri,
       append = command.mode == SaveMode.Append,
       id = operationId,
-      name = command.name.asOption,
+      name = command.name,
       childIds = childIds,
-      params = ioParamsConverter.convert(command.params).asOption,
-      extra = Map(
-        OperationExtras.DestinationType -> command.sourceIdentifier.format
-      ).asOption
+      params = ioParamsConverter.convert(command.params),
+      extra = Map(OperationExtras.DestinationType -> command.sourceIdentifier.format)
     )
 
     postProcessor.process(wop)

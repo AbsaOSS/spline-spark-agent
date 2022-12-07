@@ -92,21 +92,21 @@ class LineageHarvester(
             .distinct
 
           val expressions = Expressions(
-            constants = builders.map(_.literals).reduce(_ ++ _).asOption,
-            functions = builders.map(_.functionalExpressions).reduce(_ ++ _).asOption
+            constants = builders.map(_.literals).reduce(_ ++ _),
+            functions = builders.map(_.functionalExpressions).reduce(_ ++ _)
           )
 
           val p = ExecutionPlan(
             id = None,
             discriminator = None,
-            labels = None,
-            name = ctx.session.sparkContext.appName.asOption, // `appName` for now, but could be different (user defined) in the future
-            operations = Operations(writeOp, opReads.asOption, opOthers.asOption),
-            attributes = attributes.asOption,
-            expressions = expressions.asOption,
+            labels = Map.empty,
+            name = ctx.session.sparkContext.appName, // `appName` for now, but could be different (user defined) in the future
+            operations = Operations(writeOp, opReads, opOthers),
+            attributes = attributes,
+            expressions = expressions,
             systemInfo = SparkVersionInfo,
-            agentInfo = SplineVersionInfo.asOption,
-            extraInfo = planExtra.asOption
+            agentInfo = SplineVersionInfo,
+            extraInfo = planExtra
           )
           postProcessor.process(p)
         }
@@ -128,11 +128,11 @@ class LineageHarvester(
           val ev = ExecutionEvent(
             planId = planId,
             discriminator = None,
-            labels = None,
+            labels = Map.empty,
             timestamp = System.currentTimeMillis,
             durationNs = maybeDurationNs,
             error = maybeErrorString,
-            extra = eventExtra.asOption)
+            extra = eventExtra)
 
           postProcessor.process(ev)
         }

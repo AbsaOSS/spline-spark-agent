@@ -19,6 +19,7 @@ package za.co.absa.spline
 
 import org.apache.spark.sql.functions
 import org.apache.spark.sql.functions.{col, explode}
+import org.scalatest.OptionValues.convertOptionToValuable
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{Assertion, Succeeded}
@@ -190,18 +191,18 @@ object ExpressionSpec extends Matchers {
   type Expr = Any // Literal | Attribute | FunctionalExpression
 
   def attribute(name: String, childIds: Seq[String]): Attribute =
-    Attribute(name, None, childIds.map(idToAttrOrExprRef).asOption, None, name)
+    Attribute(name, None, childIds.map(idToAttrOrExprRef), Map.empty, name)
 
   def function(name: String, childIds: Seq[String]): FunctionalExpression =
-    FunctionalExpression(name, None, childIds.map(idToAttrOrExprRef).asOption, None, name, None)
+    FunctionalExpression(name, None, childIds.map(idToAttrOrExprRef), Map.empty, name, Map.empty)
 
   def literal(name: String, value: Any): Literal =
-    Literal(name, None, None, value)
+    Literal(name, None, Map.empty, value)
 
   private def idToAttrOrExprRef(id: String) = id match {
-    case i: String if i.startsWith("f-") => AttrOrExprRef(None, Some(i))
-    case i: String if i.startsWith("l-") => AttrOrExprRef(None, Some(i))
-    case i: String => AttrOrExprRef(Some(i), None)
+    case i: String if i.startsWith("f-") => ExprRef(i)
+    case i: String if i.startsWith("l-") => ExprRef(i)
+    case i: String => AttrRef(i)
   }
 
   def assertStructuralEquivalence(
@@ -212,9 +213,9 @@ object ExpressionSpec extends Matchers {
     expectedLiterals: Seq[Literal],
     expectedOutput: Seq[Attribute]
   ): Assertion = {
-    val actualAttributes: Seq[Attribute] = actualPlan.attributes.get
-    val actualFunctions: Seq[FunctionalExpression] = actualPlan.expressions.flatMap(_.functions).getOrElse(Seq.empty)
-    val actualLiterals: Seq[Literal] = actualPlan.expressions.flatMap(_.constants).getOrElse(Seq.empty)
+    val actualAttributes: Seq[Attribute] = actualPlan.attributes
+    val actualFunctions: Seq[FunctionalExpression] = actualPlan.expressions.functions
+    val actualLiterals: Seq[Literal] = actualPlan.expressions.constants
 
     actualAttributes.size shouldBe expectedAttributes.size + expectedOutput.size
     actualFunctions.size shouldBe actualFunctions.size
@@ -225,8 +226,8 @@ object ExpressionSpec extends Matchers {
 
     val outputByOpId =
       (Map.empty
-        ++ actualPlan.operations.reads.getOrElse(Nil).map(op => op.id -> op.output.get)
-        ++ actualPlan.operations.other.getOrElse(Nil).map(op => op.id -> op.output.get)
+        ++ actualPlan.operations.reads.map(op => op.id -> op.output)
+        ++ actualPlan.operations.other.map(op => op.id -> op.output)
         )
 
     val actualOutput: Seq[Attribute] =
@@ -263,9 +264,9 @@ object ExpressionSpec extends Matchers {
       case (al: Literal, el: Literal) =>
         al.value shouldBe el.value
       case (aa: Attribute, ea: Attribute) =>
-        aa.childRefs.map(_.size).getOrElse(0) shouldBe ea.childRefs.map(_.size).getOrElse(0)
+        aa.childRefs.size shouldBe ea.childRefs.size
       case (af: FunctionalExpression, ef: FunctionalExpression) =>
-        af.childRefs.map(_.size).getOrElse(0) shouldBe ef.childRefs.map(_.size).getOrElse(0)
+        af.childRefs.size shouldBe ef.childRefs.size
     }
 
     def getChildrenPairs(actual: Expr, expected: Expr): Seq[(Expr, Expr)] = (actual, expected) match {
@@ -277,14 +278,8 @@ object ExpressionSpec extends Matchers {
         zipChildren(af.childRefs, ef.childRefs)
     }
 
-    def zipChildren(
-      actual: Option[Seq[AttrOrExprRef]],
-      expected: Option[Seq[AttrOrExprRef]]
-    ) = (actual, expected) match {
-      case (None, None) => Seq.empty
-      case (Some(al), Some(el)) => al.map(actualIdMap(_)).zip(el.map(expectedIdMap(_)))
-      case _ => throw new IllegalArgumentException(s"actual: $actual, expected: $expected")
-    }
+    def zipChildren(actual: Seq[AttrOrExprRef], expected: Seq[AttrOrExprRef]) =
+      actual.map(actualIdMap(_)).zip(expected.map(expectedIdMap(_)))
 
     Succeeded
   }
@@ -296,8 +291,8 @@ object ExpressionSpec extends Matchers {
     def getAttribute(id: String): Attribute = attMap(id)
 
     def apply(ref: AttrOrExprRef): Expr = ref match {
-      case AttrOrExprRef(Some(attrId), None) => attMap(attrId)
-      case AttrOrExprRef(None, Some(exprId)) => expMap(exprId)
+      case AttrRef(attrId) => attMap(attrId)
+      case ExprRef(exprId) => expMap(exprId)
     }
   }
 

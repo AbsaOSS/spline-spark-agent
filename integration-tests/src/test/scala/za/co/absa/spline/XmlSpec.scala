@@ -65,11 +65,11 @@ class XmlSpec extends AsyncFlatSpec
           }
         } yield {
           plan1.operations.write.append shouldBe false
-          plan1.operations.write.extra.get("destinationType") shouldBe Some("xml")
+          plan1.operations.write.extra("destinationType") shouldBe Some("xml")
           plan1.operations.write.outputSource shouldBe fileUri.toString
 
-          plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
-          plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("xml")
+          plan2.operations.reads.head.inputSources.head shouldBe plan1.operations.write.outputSource
+          plan2.operations.reads.head.extra("sourceType") shouldBe Some("xml")
         }
       }
     }

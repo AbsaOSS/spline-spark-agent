@@ -48,8 +48,8 @@ class BasicIntegrationTests extends AsyncFlatSpec
             df.write.saveAsTable("someTable")
           }
         } yield {
-          plan.operations.reads should be(None)
-          plan.operations.other.get should have length 2
+          plan.operations.reads should be(Seq.empty)
+          plan.operations.other should have length 2
           plan.operations.write should not be null
         }
       }
@@ -67,8 +67,8 @@ class BasicIntegrationTests extends AsyncFlatSpec
             df.write.save(path)
           }
         } yield {
-          plan.operations.reads should be(None)
-          plan.operations.other.get should have length 2
+          plan.operations.reads should be(Seq.empty)
+          plan.operations.other should have length 2
           plan.operations.write should not be null
         }
       }
@@ -125,7 +125,7 @@ class BasicIntegrationTests extends AsyncFlatSpec
         } yield {
           println("yield")
           val writeUri = plan1.operations.write.outputSource
-          val readUri = plan2.operations.reads.get.head.inputSources.head
+          val readUri = plan2.operations.reads.head.inputSources.head
 
           writeUri shouldEqual readUri
         }

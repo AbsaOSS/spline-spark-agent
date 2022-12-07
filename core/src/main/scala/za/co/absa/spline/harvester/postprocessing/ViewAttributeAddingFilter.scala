@@ -17,14 +17,13 @@
 package za.co.absa.spline.harvester.postprocessing
 
 import za.co.absa.spline.harvester.HarvestingContext
-import za.co.absa.spline.producer.model.{AttrOrExprRef, DataOperation, ExecutionPlan}
+import za.co.absa.spline.producer.model.{AttrOrExprRef, AttrRef, DataOperation, ExecutionPlan}
 
 class ViewAttributeAddingFilter extends AbstractInternalPostProcessingFilter {
 
   override def processExecutionPlan(plan: ExecutionPlan, ctx: HarvestingContext): ExecutionPlan = {
     val views = plan.operations.other
-      .getOrElse(Seq.empty)
-      .filter(_.name.get.startsWith("View"))
+      .filter(_.name.startsWith("View"))
 
 
     if (views.isEmpty)
@@ -39,26 +38,21 @@ class ViewAttributeAddingFilter extends AbstractInternalPostProcessingFilter {
       .reduce(_ ++ _)
 
     plan.copy(
-      attributes = plan.attributes.map { attSeq =>
-        attSeq.map { att =>
-          val maybeAttrId = attributeDependencies.get(att.id)
-          if (maybeAttrId.nonEmpty) {
-            att.copy(childRefs = Some(Seq(AttrOrExprRef(maybeAttrId, None))))
-          } else {
-            att
-          }
-        }
+      attributes = plan.attributes.map { att =>
+        attributeDependencies.get(att.id)
+          .map(attId => att.copy(childRefs = Seq(AttrRef(attId))))
+          .getOrElse(att)
       }
     )
   }
 
   private def toAttributeReferencesMap(plan: ExecutionPlan, view: DataOperation): Map[String, String] = {
     // assume views can have only one child in Spark
-    val childId = view.childIds.get.head
-    val child = plan.operations.other.getOrElse(Seq.empty).find(_.id == childId).get
+    val childId = view.childIds.head
+    val child = plan.operations.other.find(_.id == childId).get
 
-    val viewOutput = view.output.get
-    val childOutput = child.output.get
+    val viewOutput = view.output
+    val childOutput = child.output
 
     if (viewOutput.size != childOutput.size) {
       throw new UnsupportedOperationException("Sizes of outputs of view operation and it's child are different!")

@@ -36,12 +36,11 @@ class RddReadNodeBuilder
     val rop = ReadOperation(
       inputSources = command.sourceIdentifier.uris,
       id = operationId,
-      name = operationNameOption,
-      output = None,
-      params = None,
-      extra = Map(
-        OperationExtras.SourceType -> command.sourceIdentifier.format
-      ).asOption)
+      name = operationName,
+      output = Seq.empty,
+      params = Map.empty,
+      extra = Map(OperationExtras.SourceType -> command.sourceIdentifier.format)
+    )
 
     postProcessor.process(rop)
   }

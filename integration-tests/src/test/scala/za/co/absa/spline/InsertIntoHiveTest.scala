@@ -61,7 +61,7 @@ class InsertIntoHiveTest
             } yield {
               plan1.operations.write.append should be(true)
               plan1.operations.write.outputSource should be(s"$warehouseUri/${databaseName.toLowerCase}.db/path_archive")
-              plan2.operations.reads.get.head.inputSources.head shouldEqual plan1.operations.write.outputSource
+              plan2.operations.reads.head.inputSources.head shouldEqual plan1.operations.write.outputSource
             }
           }
         }
@@ -96,7 +96,7 @@ class InsertIntoHiveTest
               plan.operations.write.outputSource should include("path_archive")
               plan.operations.write.append should be(false)
               val writeTable = extractTableIdentifier(plan.operations.write.params)
-              val readTable = extractTableIdentifier(plan.operations.reads.get.head.params)
+              val readTable = extractTableIdentifier(plan.operations.reads.head.params)
               writeTable("table") should be("path_archive_csvserde")
               writeTable("database") should be(Some("test"))
               readTable("table") should be("path_csvserde")
@@ -133,7 +133,7 @@ class InsertIntoHiveTest
               plan.operations.write.outputSource should include("path_archive")
               plan.operations.write.append should be(false)
               val writeTable = extractTableIdentifier(plan.operations.write.params)
-              val readTable = extractTableIdentifier(plan.operations.reads.get.head.params)
+              val readTable = extractTableIdentifier(plan.operations.reads.head.params)
               writeTable("table") should be("path_archive_parquetserde")
               writeTable("database") should be(Some("test"))
               readTable("table") should be("path_parquetserde")
@@ -171,7 +171,7 @@ class InsertIntoHiveTest
               plan.operations.write.append should be(false)
 
               val writeTable = extractTableIdentifier(plan.operations.write.params)
-              val readTable = extractTableIdentifier(plan.operations.reads.get.head.params)
+              val readTable = extractTableIdentifier(plan.operations.reads.head.params)
               writeTable("table") should be("path_archive_orcserde")
               writeTable("database") should be(Some("test"))
               readTable("table") should be("path_orcserde")

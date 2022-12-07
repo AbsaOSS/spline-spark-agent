@@ -58,11 +58,11 @@ class DuplicatedExprIdsSpec extends AsyncFlatSpec
               .json(tempPath)
           }
         } yield {
-          val attributes = plan1.attributes.get
+          val attributes = plan1.attributes
           attributes.size shouldEqual attributes.distinctBy(_.id).size
 
           val Seq(commission1, commission2) = attributes.filter(_.name == "commission")
-          commission1.childRefs.get.head shouldNot equal(commission2.childRefs.get.head)
+          commission1.childRefs.head shouldNot equal(commission2.childRefs.head)
         }
       }
     }

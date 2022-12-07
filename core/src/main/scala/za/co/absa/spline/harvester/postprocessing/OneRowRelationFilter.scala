@@ -23,8 +23,7 @@ class OneRowRelationFilter extends AbstractInternalPostProcessingFilter {
 
   override def processExecutionPlan(plan: ExecutionPlan, ctx: HarvestingContext): ExecutionPlan = {
     val oneRowRelations = plan.operations.other
-      .map(_.filter(_.name.get.startsWith("OneRowRelation")))
-      .getOrElse(Seq.empty)
+      .filter(_.name.startsWith("OneRowRelation"))
 
     if (oneRowRelations.isEmpty)
       plan
@@ -35,12 +34,12 @@ class OneRowRelationFilter extends AbstractInternalPostProcessingFilter {
   private def removeOneRowRelations(plan: ExecutionPlan, oneRowRelations: Seq[DataOperation]): ExecutionPlan = {
     val relIds = oneRowRelations.map(_.id)
 
-    val filteredOps = plan.operations.other.get.flatMap {
+    val filteredOps = plan.operations.other.flatMap {
       case op if relIds.contains(op.id) =>
         None
 
-      case op if op.childIds.get.exists(relIds.contains(_)) =>
-        Some(op.copy(childIds = None))
+      case op if op.childIds.exists(relIds.contains(_)) =>
+        Some(op.copy(childIds = Seq.empty))
 
       case op =>
         Some(op)
@@ -48,7 +47,7 @@ class OneRowRelationFilter extends AbstractInternalPostProcessingFilter {
 
     plan.copy(
       operations = plan.operations.copy(
-        other = Some(filteredOps)
+        other = filteredOps
       )
     )
   }

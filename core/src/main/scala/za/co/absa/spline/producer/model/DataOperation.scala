@@ -18,9 +18,9 @@ package za.co.absa.spline.producer.model
 
 case class DataOperation (
   id: String,
-  name: Option[String],
-  childIds: Option[Seq[String]],
-  output: Option[Seq[String]],
-  params: Option[Map[String, Any]],
-  extra: Option[Map[String, Any]]
+  name: String,
+  childIds: Seq[String],
+  output: Seq[String],
+  params: Map[String, Any],
+  extra: Map[String, Any]
 ) extends Operation

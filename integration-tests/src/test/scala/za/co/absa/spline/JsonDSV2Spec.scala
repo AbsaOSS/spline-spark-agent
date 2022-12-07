@@ -59,10 +59,10 @@ class JsonDSV2Spec extends AsyncFlatSpec
         } yield {
           plan1.id.get shouldEqual event1.planId
           plan1.operations.write.append shouldBe false
-          plan1.operations.write.extra.get("destinationType") shouldBe Some("json")
+          plan1.operations.write.extra("destinationType") shouldBe Some("json")
           plan1.operations.write.outputSource shouldBe s"file:$jsonDir/jsonV2"
 
-          plan2.operations.reads.get(0).inputSources.head shouldBe s"file:$jsonDir/jsonV2"
+          plan2.operations.reads(0).inputSources.head shouldBe s"file:$jsonDir/jsonV2"
         }
       }
     }

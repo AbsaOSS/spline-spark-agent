@@ -16,7 +16,6 @@
 
 package za.co.absa.spline.producer.model
 
-case class AttrOrExprRef (
-  __attrId: Option[String],
-  __exprId: Option[String]
-)
+trait AttrOrExprRef {
+  def id: String
+}

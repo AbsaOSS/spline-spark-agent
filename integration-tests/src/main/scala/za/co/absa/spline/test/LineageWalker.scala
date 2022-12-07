@@ -19,8 +19,7 @@ package za.co.absa.spline.test
 import za.co.absa.spline.producer.model._
 
 class LineageWalker(
-  readMap: Map[String, ReadOperation],
-  opMap: Map[String, DataOperation],
+  allOpMap: Map[String, Operation],
   funMap: Map[String, FunctionalExpression],
   litMap:  Map[String, Literal],
   attrMap: Map[String, Attribute]
@@ -28,37 +27,20 @@ class LineageWalker(
 
   def attributeById(attributeId: String): Attribute = attrMap(attributeId)
 
-  def precedingDataOps(op: DataOperation): Seq[DataOperation] = {
-    op.childIds.getOrElse(Seq.empty).map(opMap)
-  }
-
-  def precedingDataOps(write: WriteOperation): Seq[DataOperation] = {
-    write.childIds.map(opMap)
-  }
-
-  def precedingOps(op: DataOperation): Seq[Operation] = {
-    op.childIds
-      .getOrElse(Seq.empty)
-      .map(id => opMap.getOrElse(id, readMap(id)))
-  }
-
-  def precedingOps(write: WriteOperation): Seq[Operation] = {
-    write.childIds
-      .map(id => opMap.getOrElse(id, readMap(id)))
-  }
+  def operationById(operationId: String): Operation = allOpMap(operationId)
 
   def dependsOn(att: Attribute, onAtt: Attribute): Boolean = {
-    dependsOnRec(AttrOrExprRef(Some(att.id), None), onAtt.id)
+    dependsOnRec(AttrRef(att.id), onAtt.id)
   }
 
-  private def dependsOnRec(maybeRefs: Option[Seq[AttrOrExprRef]], id: String): Boolean =
-    maybeRefs.exists(_.exists(dependsOnRec(_, id)))
+  private def dependsOnRec(refs: Seq[AttrOrExprRef], id: String): Boolean =
+    refs.exists(dependsOnRec(_, id))
 
   private def dependsOnRec(ref: AttrOrExprRef, id: String): Boolean = ref match {
-    case AttrOrExprRef(Some(attrIfd), _) =>
+    case AttrRef(attrIfd) =>
       if(attrIfd == id) true
       else dependsOnRec(attrMap(attrIfd).childRefs, id)
-    case AttrOrExprRef(_, Some(exprId)) =>
+    case ExprRef(exprId) =>
       if(exprId == id) true
       else {
         if (litMap.contains("exprId")) false
@@ -71,29 +53,22 @@ class LineageWalker(
 object LineageWalker {
 
   def apply(plan: ExecutionPlan): LineageWalker = {
-    val readMap = plan.operations.reads
-      .map(_.map(op => op.id -> op).toMap)
-      .getOrElse(Map.empty)
-
-    val opMap = plan.operations.other
-      .map(_.map(op => op.id -> op).toMap)
-      .getOrElse(Map.empty)
+    val allOpMap = plan.operations.all
+      .map(op => op.id -> op)
+      .toMap
 
     val funMap = plan.expressions
-      .flatMap(_.functions)
-      .map(_.map(fun => fun.id -> fun).toMap)
-      .getOrElse(Map.empty)
+      .functions
+      .map(fun => fun.id -> fun).toMap
 
     val litMap =  plan.expressions
-      .flatMap(_.constants)
-      .map(_.map(lit => lit.id -> lit).toMap)
-      .getOrElse(Map.empty)
+      .constants
+      .map(lit => lit.id -> lit).toMap
 
     val attMap = plan.attributes
-      .map(_.map(att => att.id -> att).toMap)
-      .getOrElse(Map.empty)
+      .map(att => att.id -> att).toMap
 
-    new LineageWalker(readMap, opMap, funMap, litMap, attMap)
+    new LineageWalker(allOpMap, funMap, litMap, attMap)
   }
 
 }

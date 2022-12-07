@@ -49,8 +49,8 @@ class CobolSpec extends AsyncFlatSpec
           }
         } yield {
           plan.operations.write.append shouldBe false
-          plan.operations.reads.get.head.inputSources.head shouldBe copybookPath
-          plan.operations.reads.get.head.extra.get("sourceType") shouldBe Some("cobol")
+          plan.operations.reads.head.inputSources.head shouldBe copybookPath
+          plan.operations.reads.head.extra("sourceType") shouldBe Some("cobol")
         }
       }
     })

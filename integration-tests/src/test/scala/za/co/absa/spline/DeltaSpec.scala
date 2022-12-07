@@ -70,10 +70,10 @@ class DeltaSpec extends AsyncFlatSpec
           plan2.id.get shouldEqual event2.planId
 
           plan1.operations.write.append shouldBe false
-          plan1.operations.write.extra.get("destinationType") shouldBe Some("delta")
+          plan1.operations.write.extra("destinationType") shouldBe Some("delta")
           plan1.operations.write.outputSource shouldBe deltaPath
-          plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
-          plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("parquet")
+          plan2.operations.reads.head.inputSources.head shouldBe plan1.operations.write.outputSource
+          plan2.operations.reads.head.extra("sourceType") shouldBe Some("parquet")
         }
       }
     }
@@ -100,7 +100,7 @@ class DeltaSpec extends AsyncFlatSpec
         } yield {
           plan1.id.get shouldEqual event1.planId
           plan1.operations.write.append shouldBe false
-          plan1.operations.write.extra.get("destinationType") shouldBe Some("delta")
+          plan1.operations.write.extra("destinationType") shouldBe Some("delta")
           plan1.operations.write.outputSource shouldBe deltaPath
         }
       }

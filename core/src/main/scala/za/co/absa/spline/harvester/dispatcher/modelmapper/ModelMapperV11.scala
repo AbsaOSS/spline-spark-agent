@@ -22,23 +22,45 @@ import za.co.absa.spline.producer.model._
 
 import scala.language.implicitConversions
 
+/**
+ * This class is using bfil automapper, unfortunately some parts of the mappings must be explicitly defined to
+ * work around this bug: https://github.com/bfil/scala-automapper/issues/16
+ */
 object ModelMapperV11 extends ModelMapper[v1_1.ExecutionPlan, v1_1.ExecutionEvent] {
 
-  override def toDTO(plan: ExecutionPlan): Option[v1_1.ExecutionPlan] = Some(automap(plan).to[v1_1.ExecutionPlan])
+  import ImplicitMappingConversions._
+
+  override def toDTO(plan: ExecutionPlan): Option[v1_1.ExecutionPlan] = Some(v1_1.ExecutionPlan(
+    id = plan.id,
+    name = plan.name,
+    discriminator = plan.discriminator,
+    operations = toOperations(plan.operations),
+    attributes = plan.attributes.map(automap(_).to[v1_1.Attribute]),
+    expressions = Some(toExpressions(plan.expressions)),
+    systemInfo = automap(plan.systemInfo).to[v1_1.NameAndVersion],
+    agentInfo = Some(automap(plan.agentInfo).to[v1_1.NameAndVersion]),
+    extraInfo = plan.extraInfo
+  ))
+
+  def toOperations(operations: Operations): v1_1.Operations = v1_1.Operations(
+    write = automap(operations.write).to[v1_1.WriteOperation],
+    reads = operations.reads.map(automap(_).to[v1_1.ReadOperation]),
+    other = operations.other.map(automap(_).to[v1_1.DataOperation])
+  )
+
+  def toExpressions(expressions: Expressions): v1_1.Expressions = v1_1.Expressions(
+    functions = expressions.functions.map(automap(_).to[v1_1.FunctionalExpression]),
+    constants = expressions.constants.map(automap(_).to[v1_1.Literal])
+  )
 
   override def toDTO(event: ExecutionEvent): Option[v1_1.ExecutionEvent] = PartialFunction.condOpt(event) {
     case e if e.error.isEmpty => automap(e).to[v1_1.ExecutionEvent]
   }
 
-  implicit def map1(o: Option[Seq[ReadOperation]]): Option[Seq[v1_1.ReadOperation]] = o.map(_.map(automap(_).to[v1_1.ReadOperation]))
+  implicit def toAttrOrExprRef(o: Seq[AttrOrExprRef]): Option[Seq[v1_1.AttrOrExprRef]] = o.map {
+    case AttrRef(attrId) => v1_1.AttrOrExprRef(Some(attrId), None)
+    case ExprRef(exprId) => v1_1.AttrOrExprRef(None, Some(exprId))
+  }
 
-  implicit def map2(o: Option[Seq[DataOperation]]): Option[Seq[v1_1.DataOperation]] = o.map(_.map(automap(_).to[v1_1.DataOperation]))
 
-  implicit def map3(o: Option[Seq[AttrOrExprRef]]): Option[Seq[v1_1.AttrOrExprRef]] = o.map(_.map(automap(_).to[v1_1.AttrOrExprRef]))
-
-  implicit def map4(o: Option[Seq[Attribute]]): Option[Seq[v1_1.Attribute]] = o.map(_.map(automap(_).to[v1_1.Attribute]))
-
-  implicit def map5(o: Option[Seq[Literal]]): Option[Seq[v1_1.Literal]] = o.map(_.map(automap(_).to[v1_1.Literal]))
-
-  implicit def map6(o: Option[Seq[FunctionalExpression]]): Option[Seq[v1_1.FunctionalExpression]] = o.map(_.map(automap(_).to[v1_1.FunctionalExpression]))
 }
