@@ -34,14 +34,15 @@ class OneRowRelationFilter(conf: Configuration) extends AbstractPostProcessingFi
   }
 
   private def removeOneRowRelations(plan: ExecutionPlan, oneRowRelations: Seq[DataOperation]): ExecutionPlan = {
-    val relIds = oneRowRelations.map(_.id)
+    val relIdSet = oneRowRelations.map(_.id).toSet
 
     val filteredOps = plan.operations.other.get.flatMap {
-      case op if relIds.contains(op.id) =>
+      case op if relIdSet(op.id) =>
         None
 
-      case op if op.childIds.get.exists(relIds.contains(_)) =>
-        Some(op.copy(childIds = None))
+      case op if op.childIds.exists(idSeq => idSeq.exists(relIdSet)) =>
+        val newChildIds = op.childIds.map(_.filterNot(relIdSet))
+        Some(op.copy(childIds = newChildIds))
 
       case op =>
         Some(op)
