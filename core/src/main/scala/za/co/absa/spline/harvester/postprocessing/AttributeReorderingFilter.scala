@@ -70,9 +70,9 @@ class AttributeReorderingFilter extends AbstractInternalPostProcessingFilter {
 
   private def newOrder(ctx: HarvestingContext): Seq[Int] = ctx.logicalPlan match {
     case `_: V2WriteCommand`(writeCommand) =>
-      val namedRelation = extractFieldValue[AnyRef](writeCommand, "table")
-      val finalOutput = extractFieldValue[Seq[Attribute]](namedRelation, "output")
-      val query = extractFieldValue[LogicalPlan](writeCommand, "query")
+      val namedRelation = extractValue[AnyRef](writeCommand, "table")
+      val finalOutput = extractValue[Seq[Attribute]](namedRelation, "output")
+      val query = extractValue[LogicalPlan](writeCommand, "query")
 
       query.output.map(att => finalOutput.indexWhere(_.name == att.name))
   }

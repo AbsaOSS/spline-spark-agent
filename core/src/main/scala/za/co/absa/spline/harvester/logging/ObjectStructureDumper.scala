@@ -33,7 +33,7 @@ object ObjectStructureDumper {
   type DumpFn = Any => DumpResult
   type ExtractFieldValueFn = (AnyRef, FieldName) => AnyRef
 
-  def dump(obj: Any, extractFieldValueFn: ExtractFieldValueFn = ReflectionUtils.extractFieldValue[AnyRef]): DumpResult = {
+  def dump(obj: Any, extractFieldValueFn: ExtractFieldValueFn = ReflectionUtils.extractValue[AnyRef]): DumpResult = {
     val value = obj.asInstanceOf[AnyRef]
 
     val initialValue = ObjectBox(value, "", value.getClass.getName, 0)

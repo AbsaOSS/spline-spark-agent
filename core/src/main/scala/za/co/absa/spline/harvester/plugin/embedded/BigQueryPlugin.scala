@@ -23,7 +23,7 @@ import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoData
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.sources.BaseRelation
 import org.apache.spark.sql.types.StructType
-import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
+import za.co.absa.commons.reflect.ReflectionUtils.extractValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo, WriteNodeInfo}
@@ -50,10 +50,10 @@ class BigQueryPlugin(spark: SparkSession)
   override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: DirectBigQueryRelation`(bq), _) =>
 
-      val tableId = extractFieldValue[AnyRef](bq, "tableId")
-      val project = extractFieldValue[String](tableId, "project")
-      val dataset = extractFieldValue[String](tableId, "dataset")
-      val table = extractFieldValue[String](tableId, "table")
+      val tableId = extractValue[AnyRef](bq, "tableId")
+      val project = extractValue[String](tableId, "project")
+      val dataset = extractValue[String](tableId, "dataset")
+      val table = extractValue[String](tableId, "table")
 
       (asSourceId(project, dataset, table), Map.empty)
 
