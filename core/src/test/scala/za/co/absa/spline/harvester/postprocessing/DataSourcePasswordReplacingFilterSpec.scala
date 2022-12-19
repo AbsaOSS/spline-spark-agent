@@ -16,17 +16,17 @@
 
 package za.co.absa.spline.harvester.postprocessing
 
-import org.apache.commons.configuration.PropertiesConfiguration
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.spline.harvester.HarvestingContext
+import za.co.absa.spline.harvester.conf.YAMLConfiguration
 import za.co.absa.spline.producer.model.{ReadOperation, WriteOperation}
 
 class DataSourcePasswordReplacingFilterSpec extends AnyFlatSpec with Matchers with MockitoSugar {
 
   private val defaultProperties =
-    new PropertiesConfiguration(getClass.getResource("/spline.default.properties"))
+    new YAMLConfiguration(getClass.getResource("/spline.default.yaml"))
       .subset("spline.postProcessingFilter.dsPasswordReplace")
 
   private val dummyContext = mock[HarvestingContext]

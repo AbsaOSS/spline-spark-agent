@@ -15,7 +15,7 @@
 #
 #
 # ===========================================================================
-#        THIS FILE OVERRIDES VALUES FROM spline.default.properties
+#        THIS FILE OVERRIDES VALUES FROM spline.default.yaml
 # ===========================================================================
 # You can override these properties further in the following config sources,
 # that would take precedence (in the corresponding order) over this file:
@@ -23,7 +23,25 @@
 # -  Spark config (must be prefixed with 'spark.')
 # -  JVM options
 # ===========================================================================
-#
-#
-# spline.mode=ENABLED|DISABLED
-# spline.producer.url=http://localhost:8080/spline/producer
+
+spline:
+    postProcessingFilter:
+        ~: composite
+        composite:
+            filters:
+                - userExtraMeta
+                - default
+        userExtraMeta:
+            rules: >
+                {
+                    "executionPlan": {
+                        "labels": {
+                            "tags": [
+                                "example",
+                                { "$js": "session.conf().get('spline.example.tags').split(',')" }
+                            ],
+                            "appName": { "$js": "session.conf().get('spark.app.name')" },
+                            "user": { "$jvm": "user.name" }
+                        }
+                    }
+                }

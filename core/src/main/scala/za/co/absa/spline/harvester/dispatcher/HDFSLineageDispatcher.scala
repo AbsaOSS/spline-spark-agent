@@ -49,7 +49,7 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
 
   def this(conf: Configuration) = this(
     filename = conf.getRequiredString(FileNameKey),
-    permission = new FsPermission(conf.getRequiredString(FilePermissionsKey)),
+    permission = new FsPermission(conf.getRequiredObject(FilePermissionsKey).toString),
     bufferSize = conf.getRequiredInt(BufferSizeKey)
   )
 

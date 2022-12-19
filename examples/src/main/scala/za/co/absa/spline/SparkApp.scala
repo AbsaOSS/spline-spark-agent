@@ -37,21 +37,7 @@ abstract class SparkApp
   sparkBuilder.appName(name)
   sparkBuilder.master(master)
   sparkBuilder.config("spark.driver.host","localhost")
-
-
-  sparkBuilder.config("spark.spline.postProcessingFilter", "composite")
-  sparkBuilder.config("spark.spline.postProcessingFilter.composite.filters", "userExtraMeta, default")
-  sparkBuilder.config("spark.spline.postProcessingFilter.userExtraMeta.rules",
-    s"""
-      |{
-      |  "executionPlan": {
-      |    "labels": {
-      |      "tags": [ ${("example" +: tags).mkString("\"", "\"\\, \"", "\"")} ] \\,
-      |      "appName": { "$$js": "session.conf().get('spark.app.name')" } \\,
-      |      "user": { "$$jvm": "user.name" }
-      |    }
-      |  }
-      |}""".stripMargin)
+  sparkBuilder.config("spline.example.tags", tags.mkString(","))
 
   for ((k, v) <- conf) sparkBuilder.config(k, v)
 

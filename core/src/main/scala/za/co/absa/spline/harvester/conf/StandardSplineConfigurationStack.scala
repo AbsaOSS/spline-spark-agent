@@ -37,10 +37,11 @@ import scala.util.Try
  *
  */
 object StandardSplineConfigurationStack {
-  private val PropertiesFileName = "spline.properties"
-  private val DefaultPropertiesFileName = "spline.default.properties"
+  private val PropertiesFileName = "/spline.properties"
+  private val YamlFileName = "/spline.yaml"
+  private val DefaultPropertiesFileName = "/spline.default.yaml"
 
-  def defaultConfig: Configuration = new PropertiesConfiguration(StandardSplineConfigurationStack.DefaultPropertiesFileName)
+  def defaultConfig: Configuration = new YAMLConfiguration(getClass.getResource(DefaultPropertiesFileName))
 
   def configStack(sparkSession: SparkSession, userConfig: Configuration = null): Seq[Configuration] = {
     Seq(
@@ -48,6 +49,7 @@ object StandardSplineConfigurationStack {
       Some(new SparkConfiguration(sparkSession.sparkContext.getConf)),
       Some(new SystemConfiguration),
       Try(new PropertiesConfiguration(PropertiesFileName)).toOption,
+      Try(new YAMLConfiguration(getClass.getResource(YamlFileName))).toOption,
       Option(userConfig)
     ).flatten
       .map(withBackwardCompatibility)

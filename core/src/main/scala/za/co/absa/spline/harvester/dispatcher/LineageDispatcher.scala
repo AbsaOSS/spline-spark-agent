@@ -32,7 +32,7 @@ import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
  * <br>
  * <p>
  * A custom lineage dispatcher can be registered via the configuration properties.
- * First you define name and then class for that dispatcher same way as it's done in spline.default.properties
+ * First you define name and then class for that dispatcher same way as it's done in spline.default.yaml
  * for the default http dispatcher.
  *
  * <br>

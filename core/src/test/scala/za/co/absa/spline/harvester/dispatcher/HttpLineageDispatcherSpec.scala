@@ -132,4 +132,25 @@ class HttpLineageDispatcherSpec extends AnyFlatSpec with MockitoSugar {
     )
   }
 
+  it should "use API version and compression from the properties if they provided, and do not contact server" in {
+    val restClientMock = mock[RestClient]
+
+    val requestMock = mock[HttpRequest]
+    when(requestMock.url) thenReturn "someUrl"
+
+    val eventsEndpointMock = mock[RestEndpoint]
+    when(restClientMock.endpoint(RESTResource.ExecutionEvents)) thenReturn eventsEndpointMock
+    when(eventsEndpointMock.request) thenReturn requestMock
+    when(eventsEndpointMock.post(anyString(), anyString(), anyBoolean())) thenReturn HttpResponse("", 200, Map.empty)
+
+    val dispatcher = new HttpLineageDispatcher(restClientMock, Some(ProducerApiVersion.V1_1), Some(true))
+
+    dispatcher.send(ExecutionEvent(UUID.randomUUID(), Map.empty, 1L, None, None, None, Map.empty))
+
+    verify(eventsEndpointMock).post(
+      anyString(),
+      ArgumentMatchers.eq("application/vnd.absa.spline.producer.v1.1+json"),
+      ArgumentMatchers.eq(true)
+    )
+  }
 }

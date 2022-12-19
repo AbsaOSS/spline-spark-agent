@@ -62,7 +62,10 @@ object AgentBOM {
     }
 
     override lazy val postProcessingFilter: Option[PostProcessingFilter] = {
-      val nonDefaultRefs = configs.flatMap(_.getOptionalObject[AnyRef](ConfProperty.RootPostProcessingFilter))
+      val nonDefaultRefs = configs
+        .flatMap(_.getOptionalObject[AnyRef](ConfProperty.RootPostProcessingFilter))
+        .distinct
+
       val refs =
         if (nonDefaultRefs.nonEmpty) {
           nonDefaultRefs

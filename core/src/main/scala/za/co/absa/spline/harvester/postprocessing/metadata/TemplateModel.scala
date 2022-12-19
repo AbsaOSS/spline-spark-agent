@@ -17,6 +17,8 @@
 package za.co.absa.spline.harvester.postprocessing.metadata
 
 import org.apache.spark.internal.Logging
+import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
+import za.co.absa.spline.harvester.postprocessing.metadata.EvaluableNames._
 
 import javax.script.ScriptEngine
 import scala.util.{Failure, Success, Try}
@@ -80,7 +82,7 @@ class EvaluatedTemplate(val extra: Map[String, Any], val labels: Map[String, Seq
   }
 }
 
-object EvaluatedTemplate{
+object EvaluatedTemplate {
   val empty = new EvaluatedTemplate(Map.empty, Map.empty)
 }
 
@@ -103,7 +105,11 @@ case class JsEval(jsEngine: ScriptEngine, js: String) extends Evaluable {
     val jsBindings = jsEngine.createBindings
     bindings.foreach { case (k, v) => jsBindings.put(k, v) }
 
-    jsEngine.eval(js, jsBindings)
+    jsEngine.eval(js, jsBindings) match {
+      case `_: ScriptObjectMirror`(som) if som.isArray => som.to(classOf[Array[Any]]).toSeq
+      case som: Array[_] => som.toSeq
+      case v => v
+    }
   }
 }
 
@@ -111,4 +117,6 @@ object EvaluableNames {
   val JVMProp = "$jvm"
   val EnvVar = "$env"
   val JsEval = "$js"
+
+  object `_: ScriptObjectMirror` extends SafeTypeMatchingExtractor(classOf[jdk.nashorn.api.scripting.ScriptObjectMirror])
 }

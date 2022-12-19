@@ -172,7 +172,7 @@ sparkSession.enableLineageTracking(config)
 ```
 
 **Note**: `AgentConfig` object doesn't override the standard configuration stack. Instead, it serves as an additional configuration mean
-with the precedence set between the `spline.properties` and `spline.default.properties` files (see below). 
+with the precedence set between the `spline.yaml` and `spline.default.yaml` files (see below). 
 
 <a id="configuration"></a>
 ## Configuration
@@ -182,10 +182,11 @@ The agent looks for configuration in the following sources (listed in order of p
 - Spark configuration
 - JVM system properties
 - `spline.properties` file on classpath
+- `spline.yaml` file on classpath
 - `AgentConfig` object
-- `spline.default.properties` file on classpath
+- `spline.default.yaml` file on classpath
 
-The file [spline.default.properties](core/src/main/resources/spline.default.properties) contains default values 
+The file [spline.default.yaml](core/src/main/resources/spline.default.yaml) contains default values 
 for all Spline properties along with additional documentation.
 It's a good idea to look in the file to see what properties are available.
 
@@ -256,7 +257,7 @@ spline.lineageDispatcher=kafka
 Once you defined the dispatcher all other parameters will have a namespace `spline.lineageDispatcher.{{dipatcher-name}}.` as a prefix. 
 In this case it is `spline.lineageDispatcher.kafka.`.
 
-To find out which parameters you can use look into `spline.default.properties`. For kafka I would have to define at least these two properties:
+To find out which parameters you can use look into `spline.default.yaml`. For kafka I would have to define at least these two properties:
 ```properties
 spline.lineageDispatcher.kafka.topic=foo
 spline.lineageDispatcher.kafka.producer.bootstrap.servers=localhost:9092
@@ -380,7 +381,7 @@ spline.postProcessingFilter=composite
 spline.postProcessingFilter.composite.filters=myFilter1,myFilter2
 ```
 
-(see `spline.default.properties` for details and examples)
+(see `spline.default.yaml` for details and examples)
 
 <a id="spark-coverage"></a>
 ## Spark features coverage
