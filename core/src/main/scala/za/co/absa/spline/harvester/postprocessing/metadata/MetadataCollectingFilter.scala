@@ -32,7 +32,9 @@ import scala.util.Try
 
 class MetadataCollectingFilter(rulesMap: Map[BaseNodeName.Type, Seq[RuleDef]]) extends PostProcessingFilter {
 
-  def this(conf: Configuration) = this(createRuleDefs(conf))
+  def this(conf: Configuration) = this(createRuleDefs(conf.getRequiredString(MetadataCollectingFilter.InjectRulesKey)))
+
+  def this(rulesJson: String) = this(createRuleDefs(rulesJson))
 
   override def name = "Metadata collecting"
 
@@ -73,9 +75,7 @@ object MetadataCollectingFilter extends Logging {
 
   case class RuleDef(nodeName: BaseNodeName.Type, predicate: Predicate, template: DataTemplate)
 
-  private def createRuleDefs(conf: Configuration): Map[BaseNodeName.Type, Seq[RuleDef]] = {
-    val rulesJsonOrUrl: String = conf.getRequiredString(InjectRulesKey)
-
+  private def createRuleDefs(rulesJsonOrUrl: String): Map[BaseNodeName.Type, Seq[RuleDef]] = {
     val rulesJson =
       Try(new URL(rulesJsonOrUrl))
         .toOption
