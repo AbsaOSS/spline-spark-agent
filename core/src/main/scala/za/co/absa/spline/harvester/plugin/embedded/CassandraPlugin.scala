@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.plugin.embedded
 import javax.annotation.Priority
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.sources.BaseRelation
-import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
+import za.co.absa.commons.reflect.ReflectionUtils.extractValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo, WriteNodeInfo}
@@ -37,9 +37,9 @@ class CassandraPlugin
 
   override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: CassandraSourceRelation`(casr), _) =>
-      val tableRef = extractFieldValue[AnyRef](casr, "tableRef")
-      val table = extractFieldValue[String](tableRef, "table")
-      val keyspace = extractFieldValue[String](tableRef, "keyspace")
+      val tableRef = extractValue[AnyRef](casr, "tableRef")
+      val table = extractValue[String](tableRef, "table")
+      val keyspace = extractValue[String](tableRef, "keyspace")
       (asSourceId(keyspace, table), Map.empty)
   }
 

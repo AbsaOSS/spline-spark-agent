@@ -95,10 +95,10 @@ sealed trait PathSegment {
 
 case class PropertyPS(name: String) extends PathSegment {
   override def resolve(obj: Any): Any = obj match {
-    case m: Map[String, _] => m(name)
+    case m: Map[_, _] => m.asInstanceOf[Map[String, Any]](name)
     case rc: RuntimeConfig => rc.get(name)
     case sc: SparkConf => sc.get(name)
-    case ar: AnyRef => ReflectionUtils.extractFieldValue[Any](ar, name)
+    case ar: AnyRef => ReflectionUtils.extractValue[Any](ar, name)
   }
 }
 
@@ -111,7 +111,7 @@ case class ArrayPS(index: Int) extends PathSegment {
 
 case class MapPS(key: String) extends PathSegment {
   override def resolve(obj: Any): Any = obj match {
-    case m: Map[String, _] => m(key)
+    case m: Map[_, _] => m.asInstanceOf[Map[String, Any]](key)
     case rc: RuntimeConfig => rc.get(key)
     case sc: SparkConf => sc.get(key)
   }

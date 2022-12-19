@@ -16,6 +16,8 @@
 
 package za.co.absa.spline.harvester.dispatcher.modelmapper
 
+import scala.language.implicitConversions
+
 object ImplicitMappingConversions {
   implicit def stringToOption(str: String): Option[String] = Option(str)
 

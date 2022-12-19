@@ -20,7 +20,7 @@ import javax.annotation.Priority
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.sources.BaseRelation
 import org.elasticsearch.spark.cfg.SparkSettings
-import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
+import za.co.absa.commons.reflect.ReflectionUtils.extractValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo, WriteNodeInfo}
@@ -38,7 +38,7 @@ class ElasticSearchPlugin
 
   override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: ElasticsearchRelation`(esr), _) =>
-      val parameters = extractFieldValue[SparkSettings](esr, "cfg")
+      val parameters = extractValue[SparkSettings](esr, "cfg")
       val server = parameters.getProperty("es.nodes")
       val indexDocType = parameters.getProperty("es.resource")
       (asSourceId(server, indexDocType), Map.empty)

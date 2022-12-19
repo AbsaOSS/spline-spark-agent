@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.plugin.embedded
 import javax.annotation.Priority
 import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.sources.BaseRelation
-import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
+import za.co.absa.commons.reflect.ReflectionUtils.extractValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo}
@@ -32,8 +32,8 @@ class XMLPlugin(pathQualifier: PathQualifier) extends Plugin with BaseRelationPr
 
   override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: XmlRelation`(xr), _) =>
-      val parameters = extractFieldValue[Map[String, String]](xr, "parameters")
-      val location = extractFieldValue[Option[String]](xr, "location")
+      val parameters = extractValue[Map[String, String]](xr, "parameters")
+      val location = extractValue[Option[String]](xr, "location")
       val qualifiedPaths = location.toSeq.map(pathQualifier.qualify)
       (asSourceId(qualifiedPaths), parameters)
   }

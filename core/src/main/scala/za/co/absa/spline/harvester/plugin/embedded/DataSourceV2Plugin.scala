@@ -21,7 +21,7 @@ import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.catalog.CatalogUtils
 import org.apache.spark.sql.catalyst.plans.logical._
 import za.co.absa.commons.reflect.ReflectionUtils
-import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
+import za.co.absa.commons.reflect.ReflectionUtils.extractValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Params, Precedence, ReadNodeInfo, WriteNodeInfo}
@@ -41,10 +41,10 @@ class DataSourceV2Plugin
 
   override val readNodeProcessor: PartialFunction[LogicalPlan, ReadNodeInfo] = {
     case `_: DataSourceV2Relation`(relation) =>
-      val table = extractFieldValue[AnyRef](relation, "table")
-      val tableName = extractFieldValue[String](table, "name")
-      val identifier = extractFieldValue[AnyRef](relation, "identifier")
-      val options =  extractFieldValue[AnyRef](relation, "options")
+      val table = extractValue[AnyRef](relation, "table")
+      val tableName = extractValue[String](table, "name")
+      val identifier = extractValue[AnyRef](relation, "identifier")
+      val options =  extractValue[AnyRef](relation, "options")
       val props = Map(
         "table" -> Map("identifier" -> tableName),
         "identifier" -> identifier,
@@ -54,13 +54,13 @@ class DataSourceV2Plugin
 
   override val writeNodeProcessor: PartialFunction[LogicalPlan, WriteNodeInfo] = {
     case `_: V2WriteCommand`(writeCommand) =>
-      val namedRelation = extractFieldValue[AnyRef](writeCommand, "table")
-      val query = extractFieldValue[LogicalPlan](writeCommand, "query")
+      val namedRelation = extractValue[AnyRef](writeCommand, "table")
+      val query = extractValue[LogicalPlan](writeCommand, "query")
 
-      val tableName = extractFieldValue[AnyRef](namedRelation, "name")
-      val output = extractFieldValue[AnyRef](namedRelation, "output")
-      val writeOptions = extractFieldValue[Map[String, String]](writeCommand, "writeOptions")
-      val isByName = extractFieldValue[Boolean](writeCommand, IsByName)
+      val tableName = extractValue[AnyRef](namedRelation, "name")
+      val output = extractValue[AnyRef](namedRelation, "output")
+      val writeOptions = extractValue[Map[String, String]](writeCommand, "writeOptions")
+      val isByName = extractValue[Boolean](writeCommand, IsByName)
 
       val props = Map(
         "table" -> Map("identifier" -> tableName, "output" -> output),
@@ -72,11 +72,11 @@ class DataSourceV2Plugin
       processV2WriteCommand(writeCommand, sourceId, query, props)
 
     case `_: CreateTableAsSelect`(ctc) =>
-      val prop = "ignoreIfExists" -> extractFieldValue[Boolean](ctc, "ignoreIfExists")
+      val prop = "ignoreIfExists" -> extractValue[Boolean](ctc, "ignoreIfExists")
       processV2CreateTableCommand(ctc,prop)
 
     case `_: ReplaceTableAsSelect`(ctc) =>
-      val prop = "orCreate" -> extractFieldValue[Boolean](ctc, "orCreate")
+      val prop = "orCreate" -> extractValue[Boolean](ctc, "orCreate")
       processV2CreateTableCommand(ctc, prop)
   }
 
@@ -93,7 +93,7 @@ class DataSourceV2Plugin
       (sourceId, SaveMode.Append, query, props)
 
     case `_: OverwriteByExpression`(obe) =>
-      val deleteExpr = extractFieldValue[AnyRef](obe, "deleteExpr")
+      val deleteExpr = extractValue[AnyRef](obe, "deleteExpr")
       (sourceId, SaveMode.Overwrite, query, props + ("deleteExpr" -> deleteExpr))
 
     case `_: OverwritePartitionsDynamic`(_) =>
@@ -105,16 +105,16 @@ class DataSourceV2Plugin
     commandSpecificProp: (String, _)
   ) : (SourceIdentifier, SaveMode, LogicalPlan, Params) = {
     val catalog = extractCatalog(ctc)
-    val identifier = extractFieldValue[AnyRef](ctc, "tableName")
+    val identifier = extractValue[AnyRef](ctc, "tableName")
     val loadTableMethods = catalog.getClass.getMethods.filter(_.getName == "loadTable")
     val table = loadTableMethods.flatMap(m => Try(m.invoke(catalog, identifier)).toOption).head
     val sourceId = extractSourceIdFromTable(table)
 
-    val query = extractFieldValue[LogicalPlan](ctc, "query")
+    val query = extractValue[LogicalPlan](ctc, "query")
 
-    val partitioning = extractFieldValue[AnyRef](ctc, "partitioning")
-    val properties = Try(extractFieldValue[Map[String, String]](ctc, "properties")).getOrElse(Map.empty)
-    val writeOptions = extractFieldValue[Map[String, String]](ctc, "writeOptions")
+    val partitioning = extractValue[AnyRef](ctc, "partitioning")
+    val properties = Try(extractValue[Map[String, String]](ctc, "properties")).getOrElse(Map.empty)
+    val writeOptions = extractValue[Map[String, String]](ctc, "writeOptions")
     val props = Map(
       "table" -> Map("identifier" -> identifier.toString),
       "partitioning" -> partitioning,
@@ -127,11 +127,11 @@ class DataSourceV2Plugin
   private def extractCatalog(ctc: AnyRef): AnyRef = {
     Try {
       // Spark up to 3.2
-      extractFieldValue[AnyRef](ctc, "catalog")
+      extractValue[AnyRef](ctc, "catalog")
     } getOrElse {
       // Spark 3.3+
-      val name = extractFieldValue[AnyRef](ctc, "name")
-      extractFieldValue[AnyRef](name, "catalog")
+      val name = extractValue[AnyRef](ctc, "name")
+      extractValue[AnyRef](name, "catalog")
     }
   }
 
@@ -140,7 +140,7 @@ class DataSourceV2Plugin
     * @param namedRelation org.apache.spark.sql.catalyst.analysis.NamedRelation
     */
   private def extractSourceIdFromRelation(namedRelation: AnyRef): SourceIdentifier = {
-    val table = extractFieldValue[AnyRef](namedRelation, "table")
+    val table = extractValue[AnyRef](namedRelation, "table")
     extractSourceIdFromTable(table)
   }
 
@@ -149,16 +149,16 @@ class DataSourceV2Plugin
     */
   private def extractSourceIdFromTable(table: AnyRef): SourceIdentifier = table match {
     case `_: CassandraTable`(ct) =>
-      val metadata = extractFieldValue[AnyRef](ct, "metadata")
-      val keyspace = extractFieldValue[AnyRef](metadata, "keyspace")
-      val name = extractFieldValue[AnyRef](metadata, "name")
+      val metadata = extractValue[AnyRef](ct, "metadata")
+      val keyspace = extractValue[AnyRef](metadata, "keyspace")
+      val name = extractValue[AnyRef](metadata, "name")
       SourceIdentifier(Some("cassandra"), s"cassandra:$keyspace:$name")
 
     case `_: DatabricksDeltaTableV2`(dt) => extractSourceIdFromDeltaTableV2(dt)
 
     case `_: FileTable`(ft) =>
-      val format = extractFieldValue[String](ft, "formatName").toLowerCase
-      val paths = extractFieldValue[Seq[String]](ft, "paths")
+      val format = extractValue[String](ft, "formatName").toLowerCase
+      val paths = extractValue[Seq[String]](ft, "paths")
       val pathUris = paths.map(prependFileSchemaIfMissing)
       SourceIdentifier(Some(format), pathUris: _*)
 
@@ -166,10 +166,10 @@ class DataSourceV2Plugin
   }
 
   private def extractSourceIdFromDeltaTableV2(table: AnyRef): SourceIdentifier = {
-    val tableProps = extractFieldValue[java.util.Map[String, String]](table, "properties")
+    val tableProps = extractValue[java.util.Map[String, String]](table, "properties")
 
     // for org.apache.spark.sql.delta.catalog.DeltaTableV2 delta v 1.2.0+
-    val maybePath = Try(ReflectionUtils.extractFieldValue[Path](table, "path")).toOption
+    val maybePath = Try(ReflectionUtils.extractValue[Path](table, "path")).toOption
 
     val location = maybePath
       .map(p => CatalogUtils.URIToString(p.toUri))

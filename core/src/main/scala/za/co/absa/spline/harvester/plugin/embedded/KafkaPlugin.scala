@@ -23,7 +23,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.TopicPartition
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.sources.BaseRelation
-import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
+import za.co.absa.commons.reflect.ReflectionUtils.extractValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo, WriteNodeInfo}
@@ -41,19 +41,19 @@ class KafkaPlugin
 
   override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: KafkaRelation`(kr), _) =>
-      val options = extractFieldValue[Map[String, String]](kr, "sourceOptions")
+      val options = extractValue[Map[String, String]](kr, "sourceOptions")
       // org.apache.spark.sql.kafka010.ConsumerStrategy - private classes cannot be used directly
-      val consumerStrategy = extractFieldValue[AnyRef](kr, "strategy")
+      val consumerStrategy = extractValue[AnyRef](kr, "strategy")
 
       def tryAssignStrategy: Try[Seq[String]] =
-        Try(extractFieldValue[Array[TopicPartition]](consumerStrategy, "partitions"))
+        Try(extractValue[Array[TopicPartition]](consumerStrategy, "partitions"))
           .map(partitions => partitions.map(_.topic()))
 
       def trySubscribeStrategy: Try[Seq[String]] =
-        Try(extractFieldValue[Seq[String]](consumerStrategy, "topics"))
+        Try(extractValue[Seq[String]](consumerStrategy, "topics"))
 
       def trySubscribePatternStrategy: Try[Seq[String]] =
-        Try(extractFieldValue[String](consumerStrategy, "topicPattern"))
+        Try(extractValue[String](consumerStrategy, "topicPattern"))
           .map(pattern => kafkaTopics(options("kafka.bootstrap.servers")).filter(_.matches(pattern)))
 
       val topics: Seq[String] =
@@ -64,8 +64,8 @@ class KafkaPlugin
 
       val sourceId = SourceIdentifier(Some("kafka"), topics.map(asURI): _*)
       (sourceId, options ++ Map(
-        "startingOffsets" -> extractFieldValue[AnyRef](kr, "startingOffsets"),
-        "endingOffsets" -> extractFieldValue[AnyRef](kr, "endingOffsets")
+        "startingOffsets" -> extractValue[AnyRef](kr, "startingOffsets"),
+        "endingOffsets" -> extractValue[AnyRef](kr, "endingOffsets")
       ))
   }
 
