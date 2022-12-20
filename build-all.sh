@@ -20,6 +20,7 @@
 # Build Spline Agent artifacts for all supported Scala versions and install them to local maven repository.
 #
 
+DEFAULT_SCALA_VERSION=2.12
 SCALA_VERSIONS=(2.11 2.12)
 
 BASE_DIR=$(dirname "$0")
@@ -54,7 +55,7 @@ for v in "${SCALA_VERSIONS[@]}"; do
 done
 
 print_title "Restoring POM-files"
-$MVN_EXEC scala-cross-build:change-version -Pscala-"${SCALA_VERSIONS[0]}"
+$MVN_EXEC scala-cross-build:change-version -Pscala-"${DEFAULT_SCALA_VERSION}"
 
 # remove backup files
 for dir in $MODULE_DIRS; do
