@@ -37,7 +37,7 @@ import scala.util.Try
  *
  */
 object StandardSplineConfigurationStack {
-  private val PropertiesFileName = "/spline.properties"
+  private val PropertiesFileName = "spline.properties"
   private val YamlFileName = "/spline.yaml"
   private val DefaultPropertiesFileName = "/spline.default.yaml"
 
