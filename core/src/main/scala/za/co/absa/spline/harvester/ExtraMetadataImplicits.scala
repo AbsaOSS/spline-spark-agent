@@ -21,8 +21,6 @@ import za.co.absa.spline.producer.model._
 
 object ExtraMetadataImplicits {
 
-  import za.co.absa.commons.lang.OptionImplicits._
-
   implicit class Ops[A: ExtraAdder](entity: A) {
     def withAddedExtra(moreExtra: Map[String, Any]): A =
       if (moreExtra.isEmpty) entity

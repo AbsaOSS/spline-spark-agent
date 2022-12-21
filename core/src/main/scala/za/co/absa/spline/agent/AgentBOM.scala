@@ -43,7 +43,7 @@ object AgentBOM {
 
   import za.co.absa.commons.ConfigurationImplicits._
   import za.co.absa.commons.config.ConfigurationImplicits._
-  import za.co.absa.commons.lang.OptionImplicits._
+  import za.co.absa.commons.lang.extensions.TraversableExtension._
 
   def createFrom(defaultConfig: Configuration, configs: Seq[Configuration], sparkSession: SparkSession): AgentBOM = new AgentBOM {
     private val mergedConfig = new CompositeConfiguration((configs :+ defaultConfig).asJava)

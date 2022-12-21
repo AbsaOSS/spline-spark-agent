@@ -26,7 +26,6 @@ import org.apache.spark.sql.execution.{ExternalRDD, LeafExecNode, LogicalRDD, Sp
 import za.co.absa.commons.CollectionImplicits._
 import za.co.absa.commons.graph.GraphImplicits._
 import za.co.absa.commons.lang.CachingConverter
-import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.reflect.ReflectionUtils
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.LineageHarvester._

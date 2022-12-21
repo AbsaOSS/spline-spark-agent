@@ -18,7 +18,6 @@ package za.co.absa.spline.harvester.builder.plan.write
 
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.ModelConstants.OperationExtras
 import za.co.absa.spline.harvester.builder.plan.PlanOperationNodeBuilder

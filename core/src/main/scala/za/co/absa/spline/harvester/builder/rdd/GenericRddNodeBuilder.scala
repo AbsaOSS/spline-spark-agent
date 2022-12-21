@@ -17,7 +17,6 @@
 package za.co.absa.spline.harvester.builder.rdd
 
 import org.apache.spark.rdd.RDD
-import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.DataOperation

@@ -25,7 +25,6 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.commons.io.{TempDirectory, TempFile}
-import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version._
 import za.co.absa.spline.model.dt

@@ -18,12 +18,12 @@ package za.co.absa.spline.harvester.builder.plan
 
 import org.apache.spark.sql.catalyst.plans.logical.Union
 import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
-import za.co.absa.commons.lang.OptionImplicits._
+import za.co.absa.commons.lang.extensions.NonOptionExtension._
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.builder.plan.UnionNodeBuilder.{ExtraFields, Names}
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
-import za.co.absa.spline.producer.model.{AttrOrExprRef, AttrRef, Attribute, ExprRef, FunctionalExpression}
+import za.co.absa.spline.producer.model.{AttrRef, Attribute, ExprRef, FunctionalExpression}
 
 class UnionNodeBuilder
 (override val logicalPlan: Union)

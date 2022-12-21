@@ -24,7 +24,7 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{Assertion, Succeeded}
 import za.co.absa.commons.io.TempFile
-import za.co.absa.commons.lang.OptionImplicits._
+import za.co.absa.commons.lang.extensions.NonOptionExtension._
 import za.co.absa.spline.producer.model._
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
