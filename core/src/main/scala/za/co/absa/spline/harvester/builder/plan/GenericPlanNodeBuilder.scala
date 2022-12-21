@@ -17,7 +17,6 @@
 package za.co.absa.spline.harvester.builder.plan
 
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import za.co.absa.commons.lang.OptionImplicits._
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter, OperationParamsConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor

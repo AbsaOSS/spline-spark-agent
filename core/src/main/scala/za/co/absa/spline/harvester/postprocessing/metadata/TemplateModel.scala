@@ -48,7 +48,7 @@ class DataTemplate(val extra: Map[String, Any], val labels: Map[String, Any]) ex
   }
 
   private def evalValue(value: Any, bindings: Map[String, Any]): Any = value match {
-    case m: Map[String, _] => m.transform((_, v) => evalValue(v, bindings))
+    case m: Map[_, _] => m.transform((_, v) => evalValue(v, bindings))
     case s: Seq[_] => s.map(evalValue(_, bindings))
     case e: Evaluable => e.eval(bindings)
     case v => v
@@ -76,7 +76,8 @@ class EvaluatedTemplate(val extra: Map[String, Any], val labels: Map[String, Seq
   }
 
   private def mergeValues(v1: Any, v2: Any): Any = (v1, v2) match {
-    case (v1: Map[String, _], v2: Map[String, _]) => deepMergeMaps(v1, v2)
+    case (v1: Map[_, _], v2: Map[_, _]) =>
+      deepMergeMaps(v1.asInstanceOf[Map[String, Any]], v2.asInstanceOf[Map[String, Any]])
     case (v1: Seq[Any], v2: Seq[Any]) => (v1 ++ v2).distinct
     case (_, v2) => v2
   }

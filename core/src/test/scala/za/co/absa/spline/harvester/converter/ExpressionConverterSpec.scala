@@ -21,13 +21,12 @@ import org.apache.spark.sql.catalyst.expressions.codegen.{CodegenContext, ExprCo
 import org.apache.spark.sql.catalyst.expressions.{CaseWhen, Expression, Literal}
 import org.apache.spark.sql.types.DataTypes.NullType
 import org.apache.spark.sql.types._
-import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{Inside, OneInstancePerTest}
 import org.scalatestplus.mockito.MockitoSugar
-import za.co.absa.spline.harvester.{IdGenerator, SequentialIdGenerator}
+import za.co.absa.spline.harvester.SequentialIdGenerator
 import za.co.absa.spline.model.dt
 import za.co.absa.spline.producer.model.FunctionalExpression
 

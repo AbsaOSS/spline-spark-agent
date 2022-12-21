@@ -20,7 +20,7 @@ import org.apache.commons.lang3.StringUtils.substringAfter
 import org.apache.spark.sql.catalyst.expressions.ExprId
 import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.Converter
-import za.co.absa.spline.harvester.{IdGenerator, SequentialIdGenerator}
+import za.co.absa.spline.harvester.SequentialIdGenerator
 import za.co.absa.spline.harvester.converter.ReflectiveExtractor.extractProperties
 import za.co.absa.spline.producer.model._
 
@@ -34,7 +34,6 @@ class ExpressionConverter(
 ) extends Converter {
 
   import ExpressionConverter._
-  import za.co.absa.commons.lang.OptionImplicits._
 
   override type From = sparkExprssions.Expression
   override type To = FunctionalExpression
@@ -144,7 +143,7 @@ object ExpressionConverter {
     if (simpleName.nonEmpty) simpleName else fullName
   }
 
-  def createExtra(expr: sparkExprssions.Expression, typeHint: String) = Map(
+  def createExtra(expr: sparkExprssions.Expression, typeHint: String): Map[String, String] = Map(
     ExprExtra.SimpleClassName -> getExpressionSimpleClassName(expr),
     ExprV1.TypeHint -> typeHint
   )

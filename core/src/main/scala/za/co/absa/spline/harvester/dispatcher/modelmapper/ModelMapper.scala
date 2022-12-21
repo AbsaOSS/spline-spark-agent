@@ -31,5 +31,6 @@ object ModelMapper {
     case ProducerApiVersion.V1_2 => ModelMapperV12
     case ProducerApiVersion.V1_1 => ModelMapperV11
     case ProducerApiVersion.V1 => ModelMapperV10
+    case _ => throw new UnsupportedOperationException(s"API Version:'$version' is not supported!")
   }
 }

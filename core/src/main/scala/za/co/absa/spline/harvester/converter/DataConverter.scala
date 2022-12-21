@@ -20,7 +20,7 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.{ArrayData, MapData}
 import org.apache.spark.sql.types.{ArrayType, DataType, MapType, StructType}
 import za.co.absa.commons.lang.Converter
-import za.co.absa.commons.lang.OptionImplicits._
+import za.co.absa.commons.lang.extensions.TraversableExtension._
 
 class DataConverter
   extends Converter {
@@ -66,6 +66,3 @@ class DataConverter
     case (v, t) => renderer.decompose(v, t).orNull
   }
 }
-
-
-
