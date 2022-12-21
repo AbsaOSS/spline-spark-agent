@@ -19,8 +19,10 @@ package za.co.absa.spline.harvester
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.SparkPlan
+import za.co.absa.spline.agent.SplineAgent.FuncName
 
 class HarvestingContext(
+  val funcName: FuncName,
   val logicalPlan: LogicalPlan,
   val executedPlanOpt: Option[SparkPlan],
   val session: SparkSession,

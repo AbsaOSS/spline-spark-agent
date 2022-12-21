@@ -20,6 +20,7 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.execution.QueryExecution
 import za.co.absa.commons.lang.CachingConverter
+import za.co.absa.spline.agent.SplineAgent.FuncName
 import za.co.absa.spline.harvester.IdGenerator.{UUIDGeneratorFactory, UUIDNamespace}
 import za.co.absa.spline.harvester.builder.OperationNodeBuilderFactory
 import za.co.absa.spline.harvester.builder.dsformat.PluggableDataSourceFormatResolver
@@ -29,7 +30,7 @@ import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.plugin.registry.AutoDiscoveryPluginRegistry
-import za.co.absa.spline.harvester.postprocessing.{AttributeReorderingFilter, OneRowRelationFilter, PostProcessingFilter, PostProcessor, ViewAttributeAddingFilter}
+import za.co.absa.spline.harvester.postprocessing._
 import za.co.absa.spline.harvester.qualifier.HDFSPathQualifier
 import za.co.absa.spline.harvester.{HarvestingContext, IdGeneratorsBundle, LineageHarvester}
 import za.co.absa.spline.producer.model.ExecutionPlan
@@ -38,10 +39,13 @@ import scala.concurrent.duration.Duration
 import scala.util.control.NonFatal
 
 private[spline] trait SplineAgent {
-  def handle(qe: QueryExecution, result: Either[Throwable, Duration]): Unit
+  def handle(funcName: FuncName, qe: QueryExecution, result: Either[Throwable, Duration]): Unit
 }
 
 object SplineAgent extends Logging {
+
+  type FuncName = String
+
   private val InternalPostProcessingFilters = Seq(
     new AttributeReorderingFilter,
     new OneRowRelationFilter,
@@ -63,9 +67,9 @@ object SplineAgent extends Logging {
     val readCommandExtractor = new PluggableReadCommandExtractor(pluginRegistry, dataSourceFormatResolver)
 
     new SplineAgent {
-      def handle(qe: QueryExecution, result: Either[Throwable, Duration]): Unit = withErrorHandling {
+      def handle(funcName: FuncName, qe: QueryExecution, result: Either[Throwable, Duration]): Unit = withErrorHandling {
         val idGenerators = new IdGeneratorsBundle(execPlanUUIDGeneratorFactory)
-        val harvestingContext = new HarvestingContext(qe.analyzed, Some(qe.executedPlan), session, idGenerators)
+        val harvestingContext = new HarvestingContext(funcName, qe.analyzed, Some(qe.executedPlan), session, idGenerators)
         val postProcessor = new PostProcessor(filters, harvestingContext)
         val dataTypeConverter = new DataTypeConverter(idGenerators.dataTypeIdGenerator) with CachingConverter
         val dataConverter = new DataConverter
