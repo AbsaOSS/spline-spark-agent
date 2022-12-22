@@ -44,7 +44,7 @@ class MongoPlugin
       val database = readConfig.databaseName
       val collection = readConfig.collectionName
       val connectionUrl = readConfig.connectionString.getOrElse(sys.error("Unable to extract MongoDB connection URL"))
-      (asSourceId(connectionUrl, database, collection), Map.empty)
+      ReadNodeInfo(asSourceId(connectionUrl, database, collection), Map.empty)
   }
 
   override def relationProviderProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
@@ -52,7 +52,7 @@ class MongoPlugin
       val database = cmd.options("database")
       val collection = cmd.options("collection")
       val uri = cmd.options("uri")
-      (asSourceId(uri, database, collection), cmd.mode, cmd.query, cmd.options)
+      WriteNodeInfo(asSourceId(uri, database, collection), cmd.mode, cmd.query, cmd.options)
   }
 }
 

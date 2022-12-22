@@ -52,7 +52,7 @@ class SaveIntoDataSourceCommandPlugin(
         val opts = cmd.options
         val uri = opts.get("path").map(pathQualifier.qualify)
           .getOrElse(sys.error(s"Cannot extract source URI from the options: ${opts.keySet mkString ","}"))
-        (SourceIdentifier(maybeProvider, uri), cmd.mode, cmd.query, opts)
+        WriteNodeInfo(SourceIdentifier(maybeProvider, uri), cmd.mode, cmd.query, opts)
     }
   }
 }

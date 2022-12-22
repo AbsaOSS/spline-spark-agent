@@ -22,7 +22,7 @@ import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.catalog.{CatalogStorageFormat, CatalogTable}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.spline.harvester.builder.SourceIdentifier
-import za.co.absa.spline.harvester.plugin.Plugin.{Params, WriteNodeInfo}
+import za.co.absa.spline.harvester.plugin.Plugin.{Params, ReadNodeInfo, WriteNodeInfo}
 import za.co.absa.spline.harvester.qualifier.PathQualifier
 
 class CatalogTableExtractor(catalog: Catalog, pathQualifier: PathQualifier) {
@@ -41,23 +41,23 @@ class CatalogTableExtractor(catalog: Catalog, pathQualifier: PathQualifier) {
     SourceIdentifier(table.provider, pathQualifier.qualify(uri))
   }
 
-  def asTableRead(ct: CatalogTable): (SourceIdentifier, Map[String, Any]) = {
+  def asTableRead(ct: CatalogTable): ReadNodeInfo = {
     val sourceId = asTableSourceId(ct)
     val params = Map(
       "table" -> Map(
         "identifier" -> ct.identifier,
         "storage" -> ct.storage))
-    (sourceId, params)
+    ReadNodeInfo(sourceId, params)
   }
 
   def asTableWrite(table: CatalogTable, mode: SaveMode, query: LogicalPlan): WriteNodeInfo = {
     val sourceIdentifier = asTableSourceId(table)
-    (sourceIdentifier, mode, query, Map("table" -> Map("identifier" -> table.identifier, "storage" -> table.storage)))
+    WriteNodeInfo(sourceIdentifier, mode, query, Map("table" -> Map("identifier" -> table.identifier, "storage" -> table.storage)))
   }
 
   def asDirWrite(storage: CatalogStorageFormat, provider: String, overwrite: Boolean, query: LogicalPlan): WriteNodeInfo = {
     val uri = storage.locationUri.getOrElse(sys.error(s"Cannot determine the data source location: $storage"))
     val mode = if (overwrite) Overwrite else Append
-    (SourceIdentifier(Some(provider), uri.toString), mode, query, Map.empty: Params)
+    WriteNodeInfo(SourceIdentifier(Some(provider), uri.toString), mode, query, Map.empty: Params)
   }
 }

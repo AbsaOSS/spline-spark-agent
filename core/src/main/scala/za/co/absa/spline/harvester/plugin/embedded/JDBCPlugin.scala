@@ -54,14 +54,14 @@ class JDBCPlugin
     val url = extractValue[String](jdbcOptions, "url")
     val params = extractValue[Map[String, String]](jdbcOptions, "parameters")
     val TableOrQueryFromJDBCOptionsExtractor(toq) = jdbcOptions
-    (asSourceId(url, toq), params)
+    ReadNodeInfo(asSourceId(url, toq), params)
   }
 
   override def relationProviderProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
     case (rp, cmd) if rp == "jdbc" || rp.isInstanceOf[JdbcRelationProvider] =>
       val jdbcConnectionString = cmd.options("url")
       val tableName = cmd.options("dbtable")
-      (asSourceId(jdbcConnectionString, tableName), cmd.mode, cmd.query, Map.empty)
+      WriteNodeInfo(asSourceId(jdbcConnectionString, tableName), cmd.mode, cmd.query, Map.empty)
   }
 }
 

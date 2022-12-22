@@ -16,6 +16,7 @@
 
 package za.co.absa.spline.harvester.builder.write
 
+import org.apache.commons.lang3.StringUtils
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.command._
@@ -46,10 +47,11 @@ class PluggableWriteCommandExtractor(
     if (maybeCapturedResult.isEmpty) warnIfUnimplementedCommand(logicalPlan)
 
     maybeCapturedResult.map({
-      case (SourceIdentifier(maybeFormat, uris @ _*), mode, plan, params) =>
+      case WriteNodeInfo(SourceIdentifier(maybeFormat, uris @ _*), mode, plan, params, extras, name) =>
         val maybeResolvedFormat = maybeFormat.map(dataSourceFormatResolver.resolve)
         val sourceId = SourceIdentifier(maybeResolvedFormat, uris: _*)
-        WriteCommand(logicalPlan.nodeName, sourceId, mode, plan, params)
+        val cmdName = StringUtils.defaultIfBlank(name, logicalPlan.nodeName)
+        WriteCommand(cmdName, sourceId, mode, plan, params, extras)
     })
   }
 

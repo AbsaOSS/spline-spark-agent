@@ -50,7 +50,7 @@ class DataSourceV2Plugin
         "table" -> Map("identifier" -> tableName),
         "identifier" -> identifier,
         "options" -> options)
-      (extractSourceIdFromTable(table), props)
+      ReadNodeInfo(extractSourceIdFromTable(table), props)
   }
 
   override val writeNodeProcessor: PartialFunction[(FuncName, LogicalPlan), WriteNodeInfo] = {
@@ -89,22 +89,22 @@ class DataSourceV2Plugin
     sourceId: SourceIdentifier,
     query: LogicalPlan,
     props: Params
-  ): (SourceIdentifier, SaveMode, LogicalPlan, Params) = v2WriteCommand match {
+  ): WriteNodeInfo = v2WriteCommand match {
     case `_: AppendData`(_) =>
-      (sourceId, SaveMode.Append, query, props)
+      WriteNodeInfo(sourceId, SaveMode.Append, query, props)
 
     case `_: OverwriteByExpression`(obe) =>
       val deleteExpr = extractValue[AnyRef](obe, "deleteExpr")
-      (sourceId, SaveMode.Overwrite, query, props + ("deleteExpr" -> deleteExpr))
+      WriteNodeInfo(sourceId, SaveMode.Overwrite, query, props + ("deleteExpr" -> deleteExpr))
 
     case `_: OverwritePartitionsDynamic`(_) =>
-      (sourceId, SaveMode.Overwrite, query, props)
+      WriteNodeInfo(sourceId, SaveMode.Overwrite, query, props)
   }
 
   private def processV2CreateTableCommand(
     ctc: AnyRef,
     commandSpecificProp: (String, _)
-  ) : (SourceIdentifier, SaveMode, LogicalPlan, Params) = {
+  ) : WriteNodeInfo = {
     val catalog = extractCatalog(ctc)
     val identifier = extractValue[AnyRef](ctc, "tableName")
     val loadTableMethods = catalog.getClass.getMethods.filter(_.getName == "loadTable")
@@ -122,7 +122,7 @@ class DataSourceV2Plugin
       "properties" -> properties,
       "writeOptions" -> writeOptions)
 
-    (sourceId, SaveMode.Overwrite, query, props + commandSpecificProp)
+    WriteNodeInfo(sourceId, SaveMode.Overwrite, query, props + commandSpecificProp)
   }
 
   private def extractCatalog(ctc: AnyRef): AnyRef = {

@@ -16,9 +16,6 @@
 
 package za.co.absa.spline.harvester.plugin.embedded
 
-import java.util.Properties
-
-import javax.annotation.Priority
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.TopicPartition
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
@@ -30,6 +27,8 @@ import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo, Writ
 import za.co.absa.spline.harvester.plugin.embedded.KafkaPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, Plugin, RelationProviderProcessing}
 
+import java.util.Properties
+import javax.annotation.Priority
 import scala.collection.JavaConverters._
 import scala.util.Try
 
@@ -63,16 +62,18 @@ class KafkaPlugin
           .get
 
       val sourceId = SourceIdentifier(Some("kafka"), topics.map(asURI): _*)
-      (sourceId, options ++ Map(
-        "startingOffsets" -> extractValue[AnyRef](kr, "startingOffsets"),
-        "endingOffsets" -> extractValue[AnyRef](kr, "endingOffsets")
-      ))
+      ReadNodeInfo(
+        sourceId,
+        options ++ Map(
+          "startingOffsets" -> extractValue[AnyRef](kr, "startingOffsets"),
+          "endingOffsets" -> extractValue[AnyRef](kr, "endingOffsets")
+        ))
   }
 
   override def relationProviderProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
     case (rp, cmd) if cmd.options.contains("kafka.bootstrap.servers") =>
       val uri = asURI(cmd.options("topic"))
-      (SourceIdentifier(Option(rp), uri), cmd.mode, cmd.query, cmd.options)
+      WriteNodeInfo(SourceIdentifier(Option(rp), uri), cmd.mode, cmd.query, cmd.options)
   }
 }
 

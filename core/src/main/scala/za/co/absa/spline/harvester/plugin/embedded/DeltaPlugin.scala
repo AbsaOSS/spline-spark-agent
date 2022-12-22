@@ -49,7 +49,7 @@ class DeltaPlugin(
 
       val sourceId = SourceIdentifier(Some("delta"), uri)
       val params = Map("condition" -> condition.map(_.toString))
-      (sourceId, SaveMode.Overwrite, SyntheticDeltaRead(logicalRelation.output, sourceId, params, logicalRelation), params)
+      WriteNodeInfo(sourceId, SaveMode.Overwrite, SyntheticDeltaRead(logicalRelation.output, sourceId, params, logicalRelation), params)
 
     case (_, `_: UpdateCommand`(command)) =>
       val logicalRelation = extractLogicalRelation(command, "target")
@@ -60,7 +60,7 @@ class DeltaPlugin(
 
       val sourceId = SourceIdentifier(Some("delta"), uri)
       val params = Map("condition" -> condition.map(_.toString), "updateExpressions" -> updateExpressions.map(_.toString()))
-      (sourceId, SaveMode.Overwrite, SyntheticDeltaRead(logicalRelation.output, sourceId, params, logicalRelation), params)
+      WriteNodeInfo(sourceId, SaveMode.Overwrite, SyntheticDeltaRead(logicalRelation.output, sourceId, params, logicalRelation), params)
 
     case (_, `_: MergeIntoCommand`(command)) =>
       val targetRelation = extractLogicalRelation(command, "target")
@@ -82,7 +82,7 @@ class DeltaPlugin(
 
       val merge = SyntheticDeltaMerge(targetRelation.output, syntheticSourceRead, syntheticTargetRead, condition, matchedClauses, notMatchedClauses)
 
-      (targetId, SaveMode.Overwrite, merge, params)
+      WriteNodeInfo(targetId, SaveMode.Overwrite, merge, params)
   }
 
   private def extractLogicalRelation(o: AnyRef, fieldName: String): LogicalRelation = {
@@ -93,7 +93,7 @@ class DeltaPlugin(
   override val readNodeProcessor: PartialFunction[LogicalPlan, ReadNodeInfo] = {
     case SyntheticDeltaRead(output, sourceId, writeParams, logicalPlan) =>
       val readParams = Map.empty[String, Any]
-      (sourceId, readParams)
+      ReadNodeInfo(sourceId, readParams)
   }
 }
 

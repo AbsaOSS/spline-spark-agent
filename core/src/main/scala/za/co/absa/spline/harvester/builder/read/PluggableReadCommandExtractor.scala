@@ -20,6 +20,7 @@ import org.apache.spark.sql.catalyst.plans.logical.{Command, LeafNode}
 import za.co.absa.spline.harvester.LineageHarvester.{PlanOrRdd, PlanWrap, RddWrap}
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.builder.dsformat.DataSourceFormatResolver
+import za.co.absa.spline.harvester.plugin.Plugin.ReadNodeInfo
 import za.co.absa.spline.harvester.plugin.registry.PluginRegistry
 import za.co.absa.spline.harvester.plugin.{RddReadNodeProcessing, ReadNodeProcessing}
 
@@ -53,10 +54,10 @@ class PluggableReadCommandExtractor(
     }
 
     res.map({
-      case (SourceIdentifier(maybeFormat, uris @ _*), params) =>
+      case ReadNodeInfo(SourceIdentifier(maybeFormat, uris @ _*), params, extras) =>
         val maybeResolvedFormat = maybeFormat.map(dataSourceFormatResolver.resolve)
         val sourceId = SourceIdentifier(maybeResolvedFormat, uris: _*)
-        ReadCommand(sourceId, params)
+        ReadCommand(sourceId, params, extras)
     })
   }
 

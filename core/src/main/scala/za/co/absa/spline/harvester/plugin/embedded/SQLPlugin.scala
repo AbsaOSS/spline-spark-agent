@@ -56,7 +56,7 @@ class SQLPlugin(
         .getOrElse {
           val uris = hr.location.rootPaths.map(path => pathQualifier.qualify(path.toString))
           val fileFormat = hr.fileFormat
-          (SourceIdentifier(Option(fileFormat), uris: _*), hr.options)
+          ReadNodeInfo(SourceIdentifier(Option(fileFormat), uris: _*), hr.options)
         }
   }
 
@@ -71,7 +71,7 @@ class SQLPlugin(
       val path = cmd.outputPath.toString
       val qPath = pathQualifier.qualify(path)
       val format = cmd.fileFormat
-      (SourceIdentifier(Option(format), qPath), cmd.mode, cmd.query, cmd.options)
+      WriteNodeInfo(SourceIdentifier(Option(format), qPath), cmd.mode, cmd.query, cmd.options)
 
     case (_, cmd: InsertIntoDataSourceCommand) =>
       val catalogTable = cmd.logicalRelation.catalogTable
@@ -81,7 +81,7 @@ class SQLPlugin(
         .getOrElse(sys.error(s"Cannot extract format from InsertIntoDataSourceCommand"))
       val qPath = pathQualifier.qualify(path)
       val mode = if (cmd.overwrite) SaveMode.Overwrite else SaveMode.Append
-      (SourceIdentifier(Some(format), qPath), mode, cmd.query, Map.empty)
+      WriteNodeInfo(SourceIdentifier(Some(format), qPath), mode, cmd.query, Map.empty)
 
     case (_, `_: InsertIntoDataSourceDirCommand`(cmd)) =>
       extractor.asDirWrite(cmd.storage, cmd.provider, cmd.overwrite, cmd.query)
@@ -95,7 +95,7 @@ class SQLPlugin(
 
     case (_, `_: CreateHiveTableAsSelectCommand`(cmd)) =>
       val sourceId = extractor.asTableSourceId(cmd.tableDesc)
-      (sourceId, cmd.mode, cmd.query, Map.empty)
+      WriteNodeInfo(sourceId, cmd.mode, cmd.query, Map.empty)
 
     case (_, cmd: CreateDataSourceTableAsSelectCommand) =>
       extractor.asTableWrite(cmd.table, cmd.mode, cmd.query)
@@ -103,11 +103,11 @@ class SQLPlugin(
     case (_, dtc: DropTableCommand) =>
       val uri = extractor.asTableURI(dtc.tableName)
       val sourceId = SourceIdentifier(None, pathQualifier.qualify(uri))
-      (sourceId, Overwrite, dtc, Map.empty)
+      WriteNodeInfo(sourceId, Overwrite, dtc, Map.empty)
 
     case (_, ctc: CreateTableCommand) =>
       val sourceId = extractor.asTableSourceId(ctc.table)
-      (sourceId, Overwrite, ctc, Map.empty)
+      WriteNodeInfo(sourceId, Overwrite, ctc, Map.empty)
   }
 }
 

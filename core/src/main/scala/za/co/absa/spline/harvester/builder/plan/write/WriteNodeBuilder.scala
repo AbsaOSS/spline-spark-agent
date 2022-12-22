@@ -45,7 +45,7 @@ class WriteNodeBuilder
       name = command.name,
       childIds = childIds,
       params = ioParamsConverter.convert(command.params),
-      extra = Map(OperationExtras.DestinationType -> command.sourceIdentifier.format)
+      extra = command.extras ++ Map(OperationExtras.DestinationType -> command.sourceIdentifier.format)
     )
 
     postProcessor.process(wop)

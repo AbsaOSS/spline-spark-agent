@@ -55,7 +55,7 @@ class BigQueryPlugin(spark: SparkSession)
       val dataset = extractValue[String](tableId, "dataset")
       val table = extractValue[String](tableId, "table")
 
-      (asSourceId(project, dataset, table), Map.empty)
+      ReadNodeInfo(asSourceId(project, dataset, table), Map.empty)
 
   }
 
@@ -98,7 +98,7 @@ class BigQueryPlugin(spark: SparkSession)
           .orElse(Option(bigQueryConfig.getParentProjectId))
           .getOrElse(sys.error(s"Cannot find project info in the table ID ($tableIdStr) or in the command. Options available: $cmdOptionKeysStr"))
 
-      (asSourceId(project, dataset, table), cmd.mode, cmd.query, cmd.options)
+      WriteNodeInfo(asSourceId(project, dataset, table), cmd.mode, cmd.query, cmd.options)
   }
 }
 

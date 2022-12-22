@@ -41,7 +41,7 @@ class ReadNodeBuilder
       name = logicalPlan.nodeName,
       output = outputAttributes.map(_.id),
       params = ioParamsConverter.convert(command.params),
-      extra = Map(OperationExtras.SourceType -> command.sourceIdentifier.format)
+      extra = command.extras ++ Map(OperationExtras.SourceType -> command.sourceIdentifier.format)
     )
 
     postProcessor.process(rop)
