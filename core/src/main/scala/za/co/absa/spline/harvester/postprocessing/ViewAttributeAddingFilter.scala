@@ -17,7 +17,7 @@
 package za.co.absa.spline.harvester.postprocessing
 
 import za.co.absa.spline.harvester.HarvestingContext
-import za.co.absa.spline.producer.model.{AttrOrExprRef, AttrRef, DataOperation, ExecutionPlan}
+import za.co.absa.spline.producer.model.{AttrRef, DataOperation, ExecutionPlan}
 
 class ViewAttributeAddingFilter extends AbstractInternalPostProcessingFilter {
 
@@ -49,10 +49,11 @@ class ViewAttributeAddingFilter extends AbstractInternalPostProcessingFilter {
   private def toAttributeReferencesMap(plan: ExecutionPlan, view: DataOperation): Map[String, String] = {
     // assume views can have only one child in Spark
     val childId = view.childIds.head
-    val child = plan.operations.other.find(_.id == childId).get
+    val maybeChildOp = plan.operations.other.find(_.id == childId)
+    val maybeChildRead = plan.operations.reads.find(_.id == childId)
 
     val viewOutput = view.output
-    val childOutput = child.output
+    val childOutput = maybeChildOp.map(_.output).orElse(maybeChildRead.map(_.output)).get
 
     if (viewOutput.size != childOutput.size) {
       throw new UnsupportedOperationException("Sizes of outputs of view operation and it's child are different!")
