@@ -395,8 +395,12 @@ _SQL_ dialect is mostly supported.
 
 _DDL_ operations are not supported, excepts for `CREATE TABLE ... AS SELECT ...` which is supported.
 
-**Note**: the lineage is only captured on persistent (write) actions.
-In-memory only actions like `collect()` or `printSchema()` are ignored.
+**Note**: By default, the lineage is only captured on persistent (write) actions.
+To capture in-memory actions like `collect()`, `show()` etc the corresponding plugin needs to be activated:
+```properties
+spline.plugins.za.co.absa.spline.harvester.plugin.embedded.NonPersistentActionsCapturePlugin.enabled=true
+```
+(See [spline.default.yaml](core/src/main/resources/spline.default.yaml#L230) for more information)
 
 The following data formats and providers are supported out of the box:
 - Avro
