@@ -41,14 +41,14 @@ class ElasticSearchPlugin
       val parameters = extractValue[SparkSettings](esr, "cfg")
       val server = parameters.getProperty("es.nodes")
       val indexDocType = parameters.getProperty("es.resource")
-      (asSourceId(server, indexDocType), Map.empty)
+      ReadNodeInfo(asSourceId(server, indexDocType), Map.empty)
   }
 
   override def relationProviderProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
     case (rp, cmd) if rp == "es" || ElasticSearchSourceExtractor.matches(rp) =>
       val indexDocType = cmd.options("path")
       val server = cmd.options("es.nodes")
-      (asSourceId(server, indexDocType), cmd.mode, cmd.query, cmd.options)
+      WriteNodeInfo(asSourceId(server, indexDocType), cmd.mode, cmd.query, cmd.options)
   }
 }
 

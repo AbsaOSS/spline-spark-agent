@@ -16,9 +16,11 @@
 
 package za.co.absa.spline.harvester.builder.write
 
+import org.apache.commons.lang3.StringUtils
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.command._
+import za.co.absa.spline.agent.SplineAgent.FuncName
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.builder.dsformat.DataSourceFormatResolver
 import za.co.absa.spline.harvester.builder.write.PluggableWriteCommandExtractor.warnIfUnimplementedCommand
@@ -33,22 +35,23 @@ class PluggableWriteCommandExtractor(
   dataSourceFormatResolver: DataSourceFormatResolver
 ) extends WriteCommandExtractor {
 
-  private val processFn: LogicalPlan => Option[WriteNodeInfo] =
+  private val processFn: ((FuncName, LogicalPlan)) => Option[WriteNodeInfo] =
     pluginRegistry.plugins[WriteNodeProcessing]
       .map(_.writeNodeProcessor)
       .reduce(_ orElse _)
       .lift
 
-  def asWriteCommand(logicalPlan: LogicalPlan): Option[WriteCommand] = {
-    val maybeCapturedResult = processFn(logicalPlan)
+  def asWriteCommand(funcName: FuncName, logicalPlan: LogicalPlan): Option[WriteCommand] = {
+    val maybeCapturedResult = processFn(funcName, logicalPlan)
 
     if (maybeCapturedResult.isEmpty) warnIfUnimplementedCommand(logicalPlan)
 
     maybeCapturedResult.map({
-      case (SourceIdentifier(maybeFormat, uris @ _*), mode, plan, params) =>
+      case WriteNodeInfo(SourceIdentifier(maybeFormat, uris @ _*), mode, plan, params, extras, name) =>
         val maybeResolvedFormat = maybeFormat.map(dataSourceFormatResolver.resolve)
         val sourceId = SourceIdentifier(maybeResolvedFormat, uris: _*)
-        WriteCommand(logicalPlan.nodeName, sourceId, mode, plan, params)
+        val cmdName = StringUtils.defaultIfBlank(name, logicalPlan.nodeName)
+        WriteCommand(cmdName, sourceId, mode, plan, params, extras)
     })
   }
 

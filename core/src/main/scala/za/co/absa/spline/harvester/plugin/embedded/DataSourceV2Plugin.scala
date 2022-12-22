@@ -23,6 +23,7 @@ import org.apache.spark.sql.catalyst.plans.logical._
 import za.co.absa.commons.reflect.ReflectionUtils
 import za.co.absa.commons.reflect.ReflectionUtils.extractValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
+import za.co.absa.spline.agent.SplineAgent.FuncName
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Params, Precedence, ReadNodeInfo, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.embedded.DataSourceV2Plugin._
@@ -49,11 +50,11 @@ class DataSourceV2Plugin
         "table" -> Map("identifier" -> tableName),
         "identifier" -> identifier,
         "options" -> options)
-      (extractSourceIdFromTable(table), props)
+      ReadNodeInfo(extractSourceIdFromTable(table), props)
   }
 
-  override val writeNodeProcessor: PartialFunction[LogicalPlan, WriteNodeInfo] = {
-    case `_: V2WriteCommand`(writeCommand) =>
+  override val writeNodeProcessor: PartialFunction[(FuncName, LogicalPlan), WriteNodeInfo] = {
+    case (_, `_: V2WriteCommand`(writeCommand)) =>
       val namedRelation = extractValue[AnyRef](writeCommand, "table")
       val query = extractValue[LogicalPlan](writeCommand, "query")
 
@@ -71,11 +72,11 @@ class DataSourceV2Plugin
 
       processV2WriteCommand(writeCommand, sourceId, query, props)
 
-    case `_: CreateTableAsSelect`(ctc) =>
+    case (_, `_: CreateTableAsSelect`(ctc)) =>
       val prop = "ignoreIfExists" -> extractValue[Boolean](ctc, "ignoreIfExists")
       processV2CreateTableCommand(ctc,prop)
 
-    case `_: ReplaceTableAsSelect`(ctc) =>
+    case (_, `_: ReplaceTableAsSelect`(ctc)) =>
       val prop = "orCreate" -> extractValue[Boolean](ctc, "orCreate")
       processV2CreateTableCommand(ctc, prop)
   }
@@ -88,22 +89,22 @@ class DataSourceV2Plugin
     sourceId: SourceIdentifier,
     query: LogicalPlan,
     props: Params
-  ): (SourceIdentifier, SaveMode, LogicalPlan, Params) = v2WriteCommand match {
+  ): WriteNodeInfo = v2WriteCommand match {
     case `_: AppendData`(_) =>
-      (sourceId, SaveMode.Append, query, props)
+      WriteNodeInfo(sourceId, SaveMode.Append, query, props)
 
     case `_: OverwriteByExpression`(obe) =>
       val deleteExpr = extractValue[AnyRef](obe, "deleteExpr")
-      (sourceId, SaveMode.Overwrite, query, props + ("deleteExpr" -> deleteExpr))
+      WriteNodeInfo(sourceId, SaveMode.Overwrite, query, props + ("deleteExpr" -> deleteExpr))
 
     case `_: OverwritePartitionsDynamic`(_) =>
-      (sourceId, SaveMode.Overwrite, query, props)
+      WriteNodeInfo(sourceId, SaveMode.Overwrite, query, props)
   }
 
   private def processV2CreateTableCommand(
     ctc: AnyRef,
     commandSpecificProp: (String, _)
-  ) : (SourceIdentifier, SaveMode, LogicalPlan, Params) = {
+  ) : WriteNodeInfo = {
     val catalog = extractCatalog(ctc)
     val identifier = extractValue[AnyRef](ctc, "tableName")
     val loadTableMethods = catalog.getClass.getMethods.filter(_.getName == "loadTable")
@@ -121,7 +122,7 @@ class DataSourceV2Plugin
       "properties" -> properties,
       "writeOptions" -> writeOptions)
 
-    (sourceId, SaveMode.Overwrite, query, props + commandSpecificProp)
+    WriteNodeInfo(sourceId, SaveMode.Overwrite, query, props + commandSpecificProp)
   }
 
   private def extractCatalog(ctc: AnyRef): AnyRef = {

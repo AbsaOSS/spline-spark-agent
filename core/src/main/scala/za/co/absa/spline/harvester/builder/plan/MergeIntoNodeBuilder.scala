@@ -16,13 +16,12 @@
 
 package za.co.absa.spline.harvester.builder.plan
 
-import za.co.absa.commons.lang.extensions.NonOptionExtension._
 import za.co.absa.spline.harvester.IdGeneratorsBundle
-import za.co.absa.spline.harvester.builder.plan.UnionNodeBuilder.ExtraFields
+import za.co.absa.spline.harvester.ModelConstants.CommonExtras
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.plugin.embedded.DeltaPlugin
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
-import za.co.absa.spline.producer.model.{AttrOrExprRef, AttrRef, Attribute, FunctionalExpression}
+import za.co.absa.spline.producer.model.{AttrRef, Attribute, FunctionalExpression}
 
 class MergeIntoNodeBuilder
 (override val logicalPlan: DeltaPlugin.SyntheticDeltaMerge)
@@ -43,16 +42,8 @@ class MergeIntoNodeBuilder
       id = idGenerators.attributeIdGenerator.nextId(),
       dataType = attr1.dataType,
       childRefs = idRefs,
-      extra = Map(ExtraFields.Synthetic -> true),
+      extra = Map(CommonExtras.Synthetic -> true),
       name = attr1.name
     )
   }
-}
-
-object MergeIntoNodeBuilder {
-
-  object ExtraFields {
-    val Synthetic = "synthetic"
-  }
-
 }

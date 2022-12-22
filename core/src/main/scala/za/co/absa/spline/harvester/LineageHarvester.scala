@@ -28,6 +28,7 @@ import za.co.absa.commons.graph.GraphImplicits._
 import za.co.absa.commons.lang.CachingConverter
 import za.co.absa.commons.reflect.ReflectionUtils
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
+import za.co.absa.spline.agent.SplineAgent.FuncName
 import za.co.absa.spline.harvester.LineageHarvester._
 import za.co.absa.spline.harvester.ModelConstants.{AppMetaInfo, ExecutionEventExtra, ExecutionPlanExtra}
 import za.co.absa.spline.harvester.builder._
@@ -59,7 +60,7 @@ class LineageHarvester(
       map(getExecutedReadWriteMetrics).
       getOrElse((Map.empty, Map.empty))
 
-    tryExtractWriteCommand(ctx.logicalPlan).flatMap(writeCommand => {
+    tryExtractWriteCommand(ctx.funcName, ctx.logicalPlan).flatMap(writeCommand => {
       val writeOpBuilder = opNodeBuilderFactory.writeNodeBuilder(writeCommand)
       val restOpBuilders = createOperationBuildersRecursively(writeCommand.query)
 
@@ -142,8 +143,8 @@ class LineageHarvester(
     })
   }
 
-  private def tryExtractWriteCommand(plan: LogicalPlan): Option[WriteCommand] =
-    Try(writeCommandExtractor.asWriteCommand(plan)) match {
+  private def tryExtractWriteCommand(funcName: FuncName, plan: LogicalPlan): Option[WriteCommand] =
+    Try(writeCommandExtractor.asWriteCommand(funcName, plan)) match {
       case Success(Some(write)) => Some(write)
       case Success(None) =>
         logDebug(s"${plan.getClass} was not recognized as a write-command. Skipping.")

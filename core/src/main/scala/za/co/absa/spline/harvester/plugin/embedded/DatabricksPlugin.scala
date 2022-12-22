@@ -22,6 +22,7 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.{SaveMode, SparkSession}
 import za.co.absa.commons.reflect.ReflectionUtils.extractValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
+import za.co.absa.spline.agent.SplineAgent.FuncName
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.embedded.DatabricksPlugin.`_: DataBricksCreateDeltaTableCommand`
 import za.co.absa.spline.harvester.plugin.extractor.CatalogTableExtractor
@@ -39,8 +40,8 @@ class DatabricksPlugin(
 
   private val extractor = new CatalogTableExtractor(session.catalog, pathQualifier)
 
-  override val writeNodeProcessor: PartialFunction[LogicalPlan, WriteNodeInfo] = {
-    case `_: DataBricksCreateDeltaTableCommand`(command) =>
+  override val writeNodeProcessor: PartialFunction[(FuncName, LogicalPlan), WriteNodeInfo] = {
+    case (_, `_: DataBricksCreateDeltaTableCommand`(command)) =>
       val table = extractValue[CatalogTable](command, "table")
       val saveMode = extractValue[SaveMode](command, "mode")
       val query = extractValue[Option[LogicalPlan]](command, "query").get

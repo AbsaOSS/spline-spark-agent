@@ -20,7 +20,8 @@ import org.apache.spark.sql.catalyst.plans.logical.Union
 import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.extensions.NonOptionExtension._
 import za.co.absa.spline.harvester.IdGeneratorsBundle
-import za.co.absa.spline.harvester.builder.plan.UnionNodeBuilder.{ExtraFields, Names}
+import za.co.absa.spline.harvester.ModelConstants.CommonExtras
+import za.co.absa.spline.harvester.builder.plan.UnionNodeBuilder.Names
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.{AttrRef, Attribute, ExprRef, FunctionalExpression}
@@ -51,7 +52,7 @@ class UnionNodeBuilder
       dataType = dataTypeConverter
         .convert(outputSparkAttribute.dataType, outputSparkAttribute.nullable).id.asOption,
       childRefs = inputSplineAttributes.map(att => AttrRef(att.id)),
-      extra = Map(ExtraFields.Synthetic -> true),
+      extra = Map(CommonExtras.Synthetic -> true),
       name = Names.Union,
       params = Map.empty
     )
@@ -62,7 +63,7 @@ class UnionNodeBuilder
       id = idGenerators.attributeIdGenerator.nextId(),
       dataType = function.dataType,
       childRefs = List(ExprRef(function.id)),
-      extra = Map(ExtraFields.Synthetic -> true),
+      extra = Map(CommonExtras.Synthetic -> true),
       name = attr1.name
     )
   }
@@ -73,10 +74,6 @@ object UnionNodeBuilder {
 
   object Names {
     val Union = "union"
-  }
-
-  object ExtraFields {
-    val Synthetic = "synthetic"
   }
 
 }

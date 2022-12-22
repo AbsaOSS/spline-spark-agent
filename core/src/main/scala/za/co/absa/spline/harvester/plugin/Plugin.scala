@@ -24,8 +24,22 @@ trait Plugin
 
 object Plugin {
   type Params = Map[String, Any]
-  type ReadNodeInfo = (SourceIdentifier, Params)
-  type WriteNodeInfo = (SourceIdentifier, SaveMode, LogicalPlan, Params)
+  type Extras = Map[String, Any]
+
+  case class ReadNodeInfo(
+    srcId: SourceIdentifier,
+    params: Params = Map.empty,
+    extras: Extras = Map.empty
+  )
+
+  case class WriteNodeInfo(
+    srcId: SourceIdentifier,
+    saveMode: SaveMode,
+    logicalPlan: LogicalPlan,
+    params: Params = Map.empty,
+    extras: Extras = Map.empty,
+    name: String = "" // will be auto-detected by default
+  )
 
   object Precedence {
     final val Highest = 0

@@ -20,6 +20,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.sources.{BaseRelation, CreatableRelationProvider}
+import za.co.absa.spline.agent.SplineAgent.FuncName
 import za.co.absa.spline.harvester.plugin.Plugin._
 
 /**
@@ -58,7 +59,7 @@ trait RddReadNodeProcessing {
  */
 trait WriteNodeProcessing {
   self: Plugin =>
-  def writeNodeProcessor: PartialFunction[LogicalPlan, WriteNodeInfo]
+  def writeNodeProcessor: PartialFunction[(FuncName, LogicalPlan), WriteNodeInfo]
 }
 
 /**

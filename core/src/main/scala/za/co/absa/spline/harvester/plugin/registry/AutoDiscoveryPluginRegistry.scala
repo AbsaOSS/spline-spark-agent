@@ -17,7 +17,7 @@
 package za.co.absa.spline.harvester.plugin.registry
 
 import io.github.classgraph.ClassGraph
-import javax.annotation.Priority
+import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.ClassUtils.{getAllInterfaces, getAllSuperclasses}
 import org.apache.spark.internal.Logging
 import za.co.absa.commons.lang.ARM
@@ -25,14 +25,17 @@ import za.co.absa.spline.harvester.plugin.Plugin
 import za.co.absa.spline.harvester.plugin.Plugin.Precedence
 import za.co.absa.spline.harvester.plugin.registry.AutoDiscoveryPluginRegistry.{PluginClasses, getOnlyOrThrow}
 
+import javax.annotation.Priority
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.util.Try
 import scala.util.control.NonFatal
 
-class AutoDiscoveryPluginRegistry(injectables: AnyRef*)
-  extends PluginRegistry
-    with Logging {
+class AutoDiscoveryPluginRegistry(
+  conf: Configuration,
+  injectables: AnyRef*
+) extends PluginRegistry
+  with Logging {
 
   private val injectablesByType: Map[Class[_], Seq[_ <: AnyRef]] = {
     val typedInjectables =
@@ -60,10 +63,13 @@ class AutoDiscoveryPluginRegistry(injectables: AnyRef*)
   private def instantiatePlugin(pluginClass: Class[_]): Try[Plugin] = Try {
     val constrs = pluginClass.getConstructors
     val constr = getOnlyOrThrow(constrs, s"Cannot instantiate plugin with multiple constructors: ${constrs.mkString(", ")}")
-    val args = constr.getParameterTypes.map(pt => {
-      val candidates = injectablesByType.getOrElse(pt, sys.error(s"Cannot bind $pt. No value found"))
-      getOnlyOrThrow(candidates, s"Ambiguous constructor parameter binding. Multiple values found for $pt: ${candidates.length}")
-    })
+    val args = constr.getParameterTypes.map {
+      case ct if classOf[Configuration].isAssignableFrom(ct) =>
+        conf.subset(pluginClass.getName)
+      case pt =>
+        val candidates = injectablesByType.getOrElse(pt, sys.error(s"Cannot bind $pt. No value found"))
+        getOnlyOrThrow(candidates, s"Ambiguous constructor parameter binding. Multiple values found for $pt: ${candidates.length}")
+    }
     constr.newInstance(args: _*).asInstanceOf[Plugin]
   }
 

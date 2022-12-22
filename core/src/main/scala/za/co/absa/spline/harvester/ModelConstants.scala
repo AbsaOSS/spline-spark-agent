@@ -67,4 +67,7 @@ object ModelConstants {
     val RawString = "rawString"
   }
 
+  object CommonExtras {
+    val Synthetic = "synthetic"
+  }
 }

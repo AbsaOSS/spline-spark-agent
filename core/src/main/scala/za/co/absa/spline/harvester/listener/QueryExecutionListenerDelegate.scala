@@ -25,10 +25,10 @@ import scala.language.postfixOps
 class QueryExecutionListenerDelegate(agent: SplineAgent) extends QueryExecutionListener {
 
   override def onSuccess(funcName: String, qe: QueryExecution, durationNs: Long): Unit = {
-    agent.handle(qe, Right(durationNs.nanos))
+    agent.handle(funcName, qe, Right(durationNs.nanos))
   }
 
   override def onFailure(funcName: String, qe: QueryExecution, exception: Exception): Unit = {
-    agent.handle(qe, Left(exception))
+    agent.handle(funcName, qe, Left(exception))
   }
 }

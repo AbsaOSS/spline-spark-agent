@@ -20,6 +20,7 @@ import javax.annotation.Priority
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources.SaveIntoDataSourceCommand
 import za.co.absa.commons.reflect.extractors.AccessorMethodValueExtractor
+import za.co.absa.spline.agent.SplineAgent.FuncName
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.composite.SaveIntoDataSourceCommandPlugin._
@@ -40,8 +41,8 @@ class SaveIntoDataSourceCommandPlugin(
       .reduce(_ orElse _)
 
 
-  override def writeNodeProcessor: PartialFunction[LogicalPlan, WriteNodeInfo] = {
-    case cmd: SaveIntoDataSourceCommand => cmd match {
+  override def writeNodeProcessor: PartialFunction[(FuncName, LogicalPlan), WriteNodeInfo] = {
+    case (_, cmd: SaveIntoDataSourceCommand) => cmd match {
       case RelationProviderExtractor(rp)
         if rpProcessor.isDefinedAt((rp, cmd)) =>
         rpProcessor((rp, cmd))
@@ -51,7 +52,7 @@ class SaveIntoDataSourceCommandPlugin(
         val opts = cmd.options
         val uri = opts.get("path").map(pathQualifier.qualify)
           .getOrElse(sys.error(s"Cannot extract source URI from the options: ${opts.keySet mkString ","}"))
-        (SourceIdentifier(maybeProvider, uri), cmd.mode, cmd.query, opts)
+        WriteNodeInfo(SourceIdentifier(maybeProvider, uri), cmd.mode, cmd.query, opts)
     }
   }
 }

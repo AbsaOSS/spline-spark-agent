@@ -151,8 +151,10 @@ private[spline] class SparkLineageInitializer(sparkSession: SparkSession) extend
     val userPostProcessingFilter = bom.postProcessingFilter
     val iwdStrategy = bom.iwdStrategy
     val execPlanUUIDGeneratorFactory = UUIDGeneratorFactory.forVersion[UUIDNamespace, ExecutionPlan](bom.execPlanUUIDVersion)
+    val pluginsConfig = bom.pluginsConfig
 
     val agent = SplineAgent.create(
+      pluginsConfig,
       sparkSession,
       lineageDispatcher,
       userPostProcessingFilter,

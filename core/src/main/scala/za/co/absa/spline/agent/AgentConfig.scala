@@ -123,6 +123,8 @@ object AgentConfig {
      */
     val IgnoreWriteDetectionStrategy = "spline.IWDStrategy"
 
+    val PluginsConfigNamespace = "spline.plugins"
+
     def dispatcherClassName(logicalName: String): String = s"$RootLineageDispatcher.$logicalName.${HierarchicalObjectFactory.ClassName}"
 
     def filterClassName(logicalName: String): String = s"$RootPostProcessingFilter.$logicalName.${HierarchicalObjectFactory.ClassName}"

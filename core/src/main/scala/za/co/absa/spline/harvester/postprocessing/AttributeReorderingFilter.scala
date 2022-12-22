@@ -21,7 +21,7 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.commons.reflect.ReflectionUtils._
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.HarvestingContext
-import za.co.absa.spline.harvester.builder.plan.UnionNodeBuilder.ExtraFields
+import za.co.absa.spline.harvester.ModelConstants.CommonExtras
 import za.co.absa.spline.harvester.plugin.embedded.DataSourceV2Plugin.{IsByName, `_: V2WriteCommand`}
 import za.co.absa.spline.producer.model.{DataOperation, ExecutionPlan, WriteOperation}
 
@@ -57,7 +57,7 @@ class AttributeReorderingFilter extends AbstractInternalPostProcessingFilter {
       childIds = writeOp.childIds,
       output = reorderedOutput,
       params = Map.empty,
-      extra = Map(ExtraFields.Synthetic -> true)
+      extra = Map(CommonExtras.Synthetic -> true)
     )
 
     plan.copy(

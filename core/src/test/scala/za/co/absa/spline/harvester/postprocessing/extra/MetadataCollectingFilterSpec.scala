@@ -41,7 +41,7 @@ class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matc
     .getOrCreate()
 
   private val idGenerators = mock[IdGeneratorsBundle]
-  private val harvestingContext = new HarvestingContext(logicalPlan, None, sparkSession, idGenerators)
+  private val harvestingContext = new HarvestingContext("", logicalPlan, None, sparkSession, idGenerators)
 
   private val wop = WriteOperation("foo", append = false, "42", "", Seq.empty, Map.empty, Map.empty)
   private val systemInfo = NameAndVersion("foo", "bar")

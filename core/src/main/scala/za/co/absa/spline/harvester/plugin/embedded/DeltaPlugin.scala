@@ -22,6 +22,7 @@ import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.{SaveMode, SparkSession}
 import za.co.absa.commons.reflect.ReflectionUtils.extractValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
+import za.co.absa.spline.agent.SplineAgent.FuncName
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.embedded.DeltaPlugin._
@@ -39,8 +40,8 @@ class DeltaPlugin(
     with WriteNodeProcessing
     with ReadNodeProcessing {
 
-  override val writeNodeProcessor: PartialFunction[LogicalPlan, WriteNodeInfo] = {
-    case `_: DeleteCommand`(command) =>
+  override val writeNodeProcessor: PartialFunction[(FuncName, LogicalPlan), WriteNodeInfo] = {
+    case (_, `_: DeleteCommand`(command)) =>
       val logicalRelation = extractLogicalRelation(command, "target")
       val condition = extractValue[Option[Expression]](command, "condition")
       val catalogTable = logicalRelation.catalogTable.get
@@ -48,9 +49,9 @@ class DeltaPlugin(
 
       val sourceId = SourceIdentifier(Some("delta"), uri)
       val params = Map("condition" -> condition.map(_.toString))
-      (sourceId, SaveMode.Overwrite, SyntheticDeltaRead(logicalRelation.output, sourceId, params, logicalRelation), params)
+      WriteNodeInfo(sourceId, SaveMode.Overwrite, SyntheticDeltaRead(logicalRelation.output, sourceId, params, logicalRelation), params)
 
-    case `_: UpdateCommand`(command) =>
+    case (_, `_: UpdateCommand`(command)) =>
       val logicalRelation = extractLogicalRelation(command, "target")
       val condition = extractValue[Option[Expression]](command, "condition")
       val updateExpressions = extractValue[Seq[Expression]](command, "updateExpressions")
@@ -59,9 +60,9 @@ class DeltaPlugin(
 
       val sourceId = SourceIdentifier(Some("delta"), uri)
       val params = Map("condition" -> condition.map(_.toString), "updateExpressions" -> updateExpressions.map(_.toString()))
-      (sourceId, SaveMode.Overwrite, SyntheticDeltaRead(logicalRelation.output, sourceId, params, logicalRelation), params)
+      WriteNodeInfo(sourceId, SaveMode.Overwrite, SyntheticDeltaRead(logicalRelation.output, sourceId, params, logicalRelation), params)
 
-    case `_: MergeIntoCommand`(command) =>
+    case (_, `_: MergeIntoCommand`(command)) =>
       val targetRelation = extractLogicalRelation(command, "target")
       val targetCatalogTable = targetRelation.catalogTable.get
       val targetUri = targetCatalogTable.location.toString
@@ -81,7 +82,7 @@ class DeltaPlugin(
 
       val merge = SyntheticDeltaMerge(targetRelation.output, syntheticSourceRead, syntheticTargetRead, condition, matchedClauses, notMatchedClauses)
 
-      (targetId, SaveMode.Overwrite, merge, params)
+      WriteNodeInfo(targetId, SaveMode.Overwrite, merge, params)
   }
 
   private def extractLogicalRelation(o: AnyRef, fieldName: String): LogicalRelation = {
@@ -92,7 +93,7 @@ class DeltaPlugin(
   override val readNodeProcessor: PartialFunction[LogicalPlan, ReadNodeInfo] = {
     case SyntheticDeltaRead(output, sourceId, writeParams, logicalPlan) =>
       val readParams = Map.empty[String, Any]
-      (sourceId, readParams)
+      ReadNodeInfo(sourceId, readParams)
   }
 }
 

@@ -40,14 +40,14 @@ class CassandraPlugin
       val tableRef = extractValue[AnyRef](casr, "tableRef")
       val table = extractValue[String](tableRef, "table")
       val keyspace = extractValue[String](tableRef, "keyspace")
-      (asSourceId(keyspace, table), Map.empty)
+      ReadNodeInfo(asSourceId(keyspace, table), Map.empty)
   }
 
   override def relationProviderProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
     case (rp, cmd) if rp == "org.apache.spark.sql.cassandra" || CassandraSourceExtractor.matches(rp) =>
       val keyspace = cmd.options("keyspace")
       val table = cmd.options("table")
-      (asSourceId(keyspace, table), cmd.mode, cmd.query, cmd.options)
+      WriteNodeInfo(asSourceId(keyspace, table), cmd.mode, cmd.query, cmd.options)
   }
 }
 

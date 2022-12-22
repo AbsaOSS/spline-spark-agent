@@ -19,7 +19,7 @@ package za.co.absa.spline.example.batch
 import org.apache.spark.sql.functions.col
 import za.co.absa.spline.SparkApp
 
-object Example4RDDJob extends SparkApp("Example 1 (successful)") {
+object Example4RDDJob extends SparkApp("Read from RDD") {
 
   import org.apache.spark.sql._
   import za.co.absa.spline.harvester.SparkLineageInitializer._

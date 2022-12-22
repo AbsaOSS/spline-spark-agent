@@ -216,4 +216,22 @@ spline:
         userExtraMeta:
             className: za.co.absa.spline.harvester.postprocessing.metadata.MetadataCollectingFilter
             # rules are defined in a JSON format
-            rules: {}
+            rules: { }
+
+    # Plugins configuration.
+    # The `key` is the fully specified plugin class name.
+    # For example:
+    # ---
+    #     plugins:
+    #         com.example.MyPlugin:
+    #             prop1: foo
+    #             prop2: bar
+    plugins:
+        za.co.absa.spline.harvester.plugin.embedded.NonPersistentActionsCapturePlugin:
+            enabled: false
+            funcNames:
+                - head
+                - count
+                - collect
+                - collectAsList
+                - toLocalIterator

@@ -16,7 +16,6 @@
 
 package za.co.absa.spline.harvester.plugin.embedded
 
-import javax.annotation.Priority
 import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.commons.reflect.ReflectionUtils.extractValue
@@ -26,6 +25,8 @@ import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo}
 import za.co.absa.spline.harvester.plugin.embedded.CobrixPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, Plugin}
 
+import javax.annotation.Priority
+
 
 @Priority(Precedence.Normal)
 class CobrixPlugin extends Plugin with BaseRelationProcessing {
@@ -33,7 +34,7 @@ class CobrixPlugin extends Plugin with BaseRelationProcessing {
   override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: CobolRelation`(cr), _) =>
       val sourceDir = extractValue[String](cr, "sourceDir")
-      (asSourceId(sourceDir), Map.empty)
+      ReadNodeInfo(asSourceId(sourceDir), Map.empty)
   }
 }
 
