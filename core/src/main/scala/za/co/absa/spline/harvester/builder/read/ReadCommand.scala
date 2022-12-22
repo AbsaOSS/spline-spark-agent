@@ -21,5 +21,5 @@ import za.co.absa.spline.harvester.builder.SourceIdentifier
 case class ReadCommand(
   sourceIdentifier: SourceIdentifier,
   params: Map[String, Any] = Map.empty,
-  extras: Map[String, Any] = Map.empty,
+  extras: Map[String, Any] = Map.empty
 )
