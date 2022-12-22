@@ -396,7 +396,8 @@ _SQL_ dialect is mostly supported.
 _DDL_ operations are not supported, excepts for `CREATE TABLE ... AS SELECT ...` which is supported.
 
 **Note**: By default, the lineage is only captured on persistent (write) actions.
-To capture in-memory actions like `collect()`, `show()` etc the corresponding plugin needs to be activated:
+To capture in-memory actions like `collect()`, `show()` etc the corresponding plugin needs to be activated
+by setting up the following configuration property:
 ```properties
 spline.plugins.za.co.absa.spline.harvester.plugin.embedded.NonPersistentActionsCapturePlugin.enabled=true
 ```
