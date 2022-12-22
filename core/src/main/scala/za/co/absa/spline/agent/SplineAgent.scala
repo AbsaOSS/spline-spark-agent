@@ -16,6 +16,7 @@
 
 package za.co.absa.spline.agent
 
+import org.apache.commons.configuration.Configuration
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.execution.QueryExecution
@@ -53,6 +54,7 @@ object SplineAgent extends Logging {
   )
 
   def create(
+    pluginsConfig: Configuration,
     session: SparkSession,
     lineageDispatcher: LineageDispatcher,
     userPostProcessingFilter: Option[PostProcessingFilter],
@@ -61,7 +63,7 @@ object SplineAgent extends Logging {
 
     val filters = InternalPostProcessingFilters ++ userPostProcessingFilter
     val pathQualifier = new HDFSPathQualifier(session.sparkContext.hadoopConfiguration)
-    val pluginRegistry = new AutoDiscoveryPluginRegistry(pathQualifier, session)
+    val pluginRegistry = new AutoDiscoveryPluginRegistry(pluginsConfig, pathQualifier, session)
     val dataSourceFormatResolver = new PluggableDataSourceFormatResolver(pluginRegistry)
     val writeCommandExtractor = new PluggableWriteCommandExtractor(pluginRegistry, dataSourceFormatResolver)
     val readCommandExtractor = new PluggableReadCommandExtractor(pluginRegistry, dataSourceFormatResolver)

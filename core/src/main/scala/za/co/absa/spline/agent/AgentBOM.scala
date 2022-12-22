@@ -37,6 +37,7 @@ private[spline] trait AgentBOM {
   def lineageDispatcher: LineageDispatcher
   def iwdStrategy: IgnoredWriteDetectionStrategy
   def execPlanUUIDVersion: UUIDVersion
+  def pluginsConfig: Configuration
 }
 
 object AgentBOM {
@@ -59,6 +60,10 @@ object AgentBOM {
 
     override def execPlanUUIDVersion: UUIDVersion = {
       mergedConfig.getRequiredInt(ConfProperty.ExecPlanUUIDVersion)
+    }
+
+    override def pluginsConfig: Configuration = {
+      mergedConfig.subset(ConfProperty.PluginsConfigNamespace)
     }
 
     override lazy val postProcessingFilter: Option[PostProcessingFilter] = {
