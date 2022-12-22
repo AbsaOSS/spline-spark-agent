@@ -18,6 +18,7 @@ package za.co.absa.spline
 import org.scalatest.OneInstancePerTest
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
+import za.co.absa.commons.io.TempFile
 import za.co.absa.spline.test.LineageWalker
 import za.co.absa.spline.test.ProducerModelImplicits._
 import za.co.absa.spline.test.SplineMatchers._
@@ -134,6 +135,35 @@ class ViewAttributeLineageSpec
             outAttribute should dependOn(inAttribute)
           }
         }
+      }
+    }
+
+  it should "handle read as a view child" in
+    withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
+      withLineageTracking { captor =>
+        for {
+          (plan, _) <- captor.lineageOf {
+            spark.read
+              .csv("data/cities.csv")
+              .createOrReplaceTempView("my_local_temp_view")
+
+            spark.sql("select * FROM my_local_temp_view")
+              .write
+              .csv(TempFile(pathOnly = true).deleteOnExit().asString)
+          }
+        } yield {
+          implicit val walker: LineageWalker = LineageWalker(plan)
+
+          val writeOutput = plan.operations.write.childOperation.outputAttributes
+          val outAttribute = writeOutput(0)
+
+          val reads = plan.operations.reads
+          val readOutput = reads(0).outputAttributes
+          val inAttribute = readOutput(0)
+
+          outAttribute should dependOn(inAttribute)
+        }
+
       }
     }
 

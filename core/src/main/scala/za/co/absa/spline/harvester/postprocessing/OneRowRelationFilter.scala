@@ -32,14 +32,15 @@ class OneRowRelationFilter extends AbstractInternalPostProcessingFilter {
   }
 
   private def removeOneRowRelations(plan: ExecutionPlan, oneRowRelations: Seq[DataOperation]): ExecutionPlan = {
-    val relIds = oneRowRelations.map(_.id)
+    val relIdSet = oneRowRelations.map(_.id).toSet
 
     val filteredOps = plan.operations.other.flatMap {
-      case op if relIds.contains(op.id) =>
+      case op if relIdSet(op.id) =>
         None
 
-      case op if op.childIds.exists(relIds.contains(_)) =>
-        Some(op.copy(childIds = Seq.empty))
+      case op if op.childIds.exists(relIdSet) =>
+        val newChildIds = op.childIds.filterNot(relIdSet)
+        Some(op.copy(childIds = newChildIds))
 
       case op =>
         Some(op)
