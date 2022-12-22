@@ -123,10 +123,10 @@ class FileFormatSpec extends AsyncFlatSpec
           )
         } yield {
           plan1.operations.write.append shouldBe false
-          plan1.operations.write.extra("destinationType").asInstanceOf[Some[String]].get.toString.toUpperCase() shouldBe "JSON"
+          plan1.operations.write.extra("destinationType").asInstanceOf[Some[String]].get.toUpperCase() shouldBe "JSON"
           plan1.operations.write.outputSource shouldBe jsonPath
           plan2.operations.reads.head.inputSources.head shouldBe plan1.operations.write.outputSource
-          plan2.operations.reads.head.extra("sourceType").asInstanceOf[Some[String]].get.toString.toUpperCase() shouldBe "JSON"
+          plan2.operations.reads.head.extra("sourceType").asInstanceOf[Some[String]].get.toUpperCase() shouldBe "JSON"
         }
       }
     }
@@ -155,10 +155,10 @@ class FileFormatSpec extends AsyncFlatSpec
           )
         } yield {
           plan1.operations.write.append shouldBe false
-          plan1.operations.write.extra("destinationType").asInstanceOf[Some[String]].get.toString.toUpperCase() shouldBe "ORC"
+          plan1.operations.write.extra("destinationType").asInstanceOf[Some[String]].get.toUpperCase() shouldBe "ORC"
           plan1.operations.write.outputSource shouldBe orcPath
           plan2.operations.reads.head.inputSources.head shouldBe plan1.operations.write.outputSource
-          plan2.operations.reads.head.extra("sourceType").asInstanceOf[Some[String]].get.toString.toUpperCase() shouldBe "ORC"
+          plan2.operations.reads.head.extra("sourceType").asInstanceOf[Some[String]].get.toUpperCase() shouldBe "ORC"
         }
       }
     }
@@ -186,10 +186,10 @@ class FileFormatSpec extends AsyncFlatSpec
           )
         } yield {
           plan1.operations.write.append shouldBe false
-          plan1.operations.write.extra("destinationType").asInstanceOf[Some[String]].get.toString.toUpperCase() shouldBe "CSV"
+          plan1.operations.write.extra("destinationType").asInstanceOf[Some[String]].get.toUpperCase() shouldBe "CSV"
           plan1.operations.write.outputSource shouldBe csvPath
           plan2.operations.reads.head.inputSources.head shouldBe plan1.operations.write.outputSource
-          plan2.operations.reads.head.extra("sourceType").asInstanceOf[Some[String]].get.toString.toUpperCase() shouldBe "CSV"
+          plan2.operations.reads.head.extra("sourceType").asInstanceOf[Some[String]].get.toUpperCase() shouldBe "CSV"
         }
       }
     }
