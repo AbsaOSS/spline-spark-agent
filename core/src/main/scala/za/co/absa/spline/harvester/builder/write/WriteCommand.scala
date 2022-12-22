@@ -25,4 +25,5 @@ case class WriteCommand(
   sourceIdentifier: SourceIdentifier,
   mode: SaveMode,
   query: LogicalPlan,
-  params: Map[String, Any] = Map.empty)
+  params: Map[String, Any] = Map.empty,
+  extras: Map[String, Any] = Map.empty)
