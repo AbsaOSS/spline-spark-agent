@@ -32,54 +32,50 @@ class IcebergDSV2Spec extends AsyncFlatSpec
   with SparkDatabaseFixture {
 
   it should "support Write to iceberg" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withRestartingSparkContext {
-      withCustomSparkSession(_
-        .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
-        .config("spark.sql.catalog.iceberg_catalog", "org.apache.iceberg.spark.SparkCatalog")
-        .config("spark.sql.catalog.iceberg_catalog.type", "hadoop")
-        .config("spark.sql.catalog.iceberg_catalog.warehouse", warehouseDir)
-      ) { implicit spark =>
-        withLineageTracking { lineageCaptor =>
-          spark.sql("CREATE TABLE iceberg_catalog.foo (id bigint, data string) USING iceberg;")
+    withRestartingSparkSession(_
+      .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
+      .config("spark.sql.catalog.iceberg_catalog", "org.apache.iceberg.spark.SparkCatalog")
+      .config("spark.sql.catalog.iceberg_catalog.type", "hadoop")
+      .config("spark.sql.catalog.iceberg_catalog.warehouse", warehouseDir)
+    ) { implicit spark =>
+      withLineageTracking { lineageCaptor =>
+        spark.sql("CREATE TABLE iceberg_catalog.foo (id bigint, data string) USING iceberg;")
 
-          for {
-            (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
-              spark.sql("INSERT INTO iceberg_catalog.foo VALUES (1, 'a'), (2, 'b'), (3, 'c');")
-            }
-          } yield {
-            plan1.id.get shouldEqual event1.planId
-            plan1.operations.write.append shouldBe true
-            plan1.operations.write.extra("destinationType") shouldBe Some("iceberg")
-            plan1.operations.write.outputSource shouldBe s"file:$warehouseDir/foo"
+        for {
+          (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
+            spark.sql("INSERT INTO iceberg_catalog.foo VALUES (1, 'a'), (2, 'b'), (3, 'c');")
           }
+        } yield {
+          plan1.id.get shouldEqual event1.planId
+          plan1.operations.write.append shouldBe true
+          plan1.operations.write.extra("destinationType") shouldBe Some("iceberg")
+          plan1.operations.write.outputSource shouldBe s"file:$warehouseDir/foo"
         }
       }
     }
 
   it should "support read from iceberg" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withRestartingSparkContext {
-      withCustomSparkSession(_
-        .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
-        .config("spark.sql.catalog.iceberg_catalog", "org.apache.iceberg.spark.SparkCatalog")
-        .config("spark.sql.catalog.iceberg_catalog.type", "hadoop")
-        .config("spark.sql.catalog.iceberg_catalog.warehouse", warehouseDir)
-      ) { implicit spark =>
-        withLineageTracking { lineageCaptor =>
-          spark.sql("CREATE TABLE iceberg_catalog.bar (id bigint, data string) USING iceberg;")
-          spark.sql("CREATE TABLE iceberg_catalog.baz (id bigint, data string) USING iceberg;")
+    withRestartingSparkSession(_
+      .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
+      .config("spark.sql.catalog.iceberg_catalog", "org.apache.iceberg.spark.SparkCatalog")
+      .config("spark.sql.catalog.iceberg_catalog.type", "hadoop")
+      .config("spark.sql.catalog.iceberg_catalog.warehouse", warehouseDir)
+    ) { implicit spark =>
+      withLineageTracking { lineageCaptor =>
+        spark.sql("CREATE TABLE iceberg_catalog.bar (id bigint, data string) USING iceberg;")
+        spark.sql("CREATE TABLE iceberg_catalog.baz (id bigint, data string) USING iceberg;")
 
-          for {
-            (_, Seq(_)) <- lineageCaptor.lineageOf {
-              spark.sql("INSERT INTO iceberg_catalog.bar VALUES (1, 'a'), (2, 'b'), (3, 'c');")
-            }
-            (plan2, Seq(event2)) <- lineageCaptor.lineageOf {
-              spark.sql("INSERT INTO iceberg_catalog.baz SELECT * FROM iceberg_catalog.bar;")
-            }
-          } yield {
-            plan2.id.get shouldEqual event2.planId
-            plan2.operations.reads(0).extra("sourceType") shouldBe Some("iceberg")
-            plan2.operations.reads(0).inputSources(0) shouldBe s"file:$warehouseDir/bar"
+        for {
+          (_, Seq(_)) <- lineageCaptor.lineageOf {
+            spark.sql("INSERT INTO iceberg_catalog.bar VALUES (1, 'a'), (2, 'b'), (3, 'c');")
           }
+          (plan2, Seq(event2)) <- lineageCaptor.lineageOf {
+            spark.sql("INSERT INTO iceberg_catalog.baz SELECT * FROM iceberg_catalog.bar;")
+          }
+        } yield {
+          plan2.id.get shouldEqual event2.planId
+          plan2.operations.reads(0).extra("sourceType") shouldBe Some("iceberg")
+          plan2.operations.reads(0).inputSources(0) shouldBe s"file:$warehouseDir/bar"
         }
       }
     }

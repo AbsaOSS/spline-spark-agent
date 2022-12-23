@@ -109,7 +109,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
         } yield {
           val write = plan.operations.write
           write.id shouldBe "op-0"
-          write.name should(be("InsertIntoHadoopFsRelationCommand") or be("SaveIntoDataSourceCommand"))
+          write.name should (be("InsertIntoHadoopFsRelationCommand") or be("SaveIntoDataSourceCommand"))
           write.childIds should be(Seq("op-1"))
           write.outputSource should be(tmpLocal.toURI.toString.stripSuffix("/"))
           write.params should be(Map("path" -> tmpPath))
@@ -365,43 +365,41 @@ class LineageHarvesterSpec extends AsyncFlatSpec
     }
 
   it should "support `CREATE TABLE ... AS SELECT` in Hive" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in
-    withRestartingSparkContext {
-      withCustomSparkSession(_
-        .enableHiveSupport()
-        .config("hive.exec.dynamic.partition.mode", "nonstrict")
-      ) { implicit spark =>
-        withDatabase(s"unitTestDatabase_${this.getClass.getSimpleName}") {
-          withLineageTracking { captor =>
-            import spark.implicits._
+    withRestartingSparkSession(_
+      .enableHiveSupport()
+      .config("hive.exec.dynamic.partition.mode", "nonstrict")
+    ) { implicit spark =>
+      withDatabase(s"unitTestDatabase_${this.getClass.getSimpleName}") {
+        withLineageTracking { captor =>
+          import spark.implicits._
 
-            val df = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
+          val df = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
 
-            for {
-              (plan, _) <- captor.lineageOf {
-                df.createOrReplaceTempView("tempView")
-                spark.sql("create table users_sales as select i, d, s from tempView ")
-              }
-            } yield {
-              val writeOperation = plan.operations.write
-              writeOperation.id shouldEqual "op-0"
-              writeOperation.append shouldEqual false
-              writeOperation.childIds shouldEqual Seq("op-1")
-              writeOperation.extra("destinationType") shouldEqual Some("hive")
-
-              val otherOperations = plan.operations.other.sortBy(_.id)
-
-              val firstOperation = otherOperations.head
-              firstOperation.id shouldEqual "op-1"
-              firstOperation.childIds shouldEqual Seq("op-2")
-              firstOperation.name shouldEqual "Project"
-              firstOperation.extra shouldBe empty
-
-              val secondOperation = otherOperations(1)
-              secondOperation.id shouldEqual "op-2"
-              secondOperation.childIds shouldEqual Seq("op-3")
-              secondOperation.name should (be("SubqueryAlias") or be("`tempview`")) // Spark 2.3/2.4
-              secondOperation.extra shouldBe empty
+          for {
+            (plan, _) <- captor.lineageOf {
+              df.createOrReplaceTempView("tempView")
+              spark.sql("create table users_sales as select i, d, s from tempView ")
             }
+          } yield {
+            val writeOperation = plan.operations.write
+            writeOperation.id shouldEqual "op-0"
+            writeOperation.append shouldEqual false
+            writeOperation.childIds shouldEqual Seq("op-1")
+            writeOperation.extra("destinationType") shouldEqual Some("hive")
+
+            val otherOperations = plan.operations.other.sortBy(_.id)
+
+            val firstOperation = otherOperations.head
+            firstOperation.id shouldEqual "op-1"
+            firstOperation.childIds shouldEqual Seq("op-2")
+            firstOperation.name shouldEqual "Project"
+            firstOperation.extra shouldBe empty
+
+            val secondOperation = otherOperations(1)
+            secondOperation.id shouldEqual "op-2"
+            secondOperation.childIds shouldEqual Seq("op-3")
+            secondOperation.name should (be("SubqueryAlias") or be("`tempview`")) // Spark 2.3/2.4
+            secondOperation.extra shouldBe empty
           }
         }
       }
@@ -429,7 +427,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
         |}
         |""".stripMargin
 
-    withCustomSparkSession(_
+    withRestartingSparkSession(_
       .config("spark.spline.postProcessingFilter", "userExtraMeta")
       .config("spark.spline.postProcessingFilter.userExtraMeta.rules", injectRules)
     ) { implicit spark =>

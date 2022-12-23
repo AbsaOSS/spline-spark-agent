@@ -38,7 +38,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
   it should "support AppendData V2 command" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withCustomSparkSession(_
+    withRestartingSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
@@ -67,7 +67,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
   it should "support OverwriteByExpression V2 command without deleteExpression" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withCustomSparkSession(_
+    withRestartingSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
@@ -99,7 +99,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
   it should "support OverwriteByExpression V2 command with deleteExpression" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withCustomSparkSession(_
+    withRestartingSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
@@ -138,7 +138,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
     */
   it should "support OverwritePartitionsDynamic V2 command" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withCustomSparkSession(_
+    withRestartingSparkSession(_
       .enableHiveSupport
       .config("hive.exec.dynamic.partition", "true")
       .config("hive.exec.dynamic.partition.mode", "nonstrict")
@@ -173,7 +173,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
   it should "support CreateTableAsSelect V2 command" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withCustomSparkSession(_
+    withRestartingSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
@@ -201,7 +201,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
   it should "support ReplaceTableAsSelect V2 command" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withCustomSparkSession(_
+    withRestartingSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
@@ -230,7 +230,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
   it should "support DELETE table command" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withCustomSparkSession(_
+    withRestartingSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
@@ -263,7 +263,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
   it should "support UPDATE table command" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withCustomSparkSession(_
+    withRestartingSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
@@ -297,7 +297,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
   it should "support MERGE INTO table command" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withCustomSparkSession(_
+    withRestartingSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")

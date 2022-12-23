@@ -18,7 +18,7 @@ package za.co.absa.spline.test.fixture
 
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.SparkSession
-import org.scalatest.{Assertion, AsyncTestSuite, BeforeAndAfterEach}
+import org.scalatest.{AsyncTestSuite, BeforeAndAfterEach}
 import za.co.absa.commons.io.TempDirectory
 
 import java.io.File
@@ -36,10 +36,10 @@ trait SparkFixture {
   val metastoreDir: String = TempDirectory("Metastore", "debug", pathOnly = true).deleteOnExit().asString
   val metastoreConnectURL = s"jdbc:derby:$metastoreDir/metastore_db;create=true"
 
-  protected val sessionBuilder: SparkSession.Builder = {
+  protected def sessionBuilder: SparkSession.Builder = {
     SparkSession.builder
       .master("local")
-      .config("spark.driver.host","localhost")
+      .config("spark.driver.host", "localhost")
       .config("spark.sql.warehouse.dir", warehouseDir)
       .config("spark.ui.enabled", "false")
       .config("javax.jdo.option.ConnectionURL", metastoreConnectURL)
@@ -50,16 +50,21 @@ trait SparkFixture {
   }
 
   def withNewSparkSession[T](testBody: SparkSession => T): T = {
-    withCustomSparkSession(identity)(testBody)
+    testBody(sessionBuilder.getOrCreate.newSession)
   }
 
-  def withCustomSparkSession[T](builderCustomizer: SparkSession.Builder => SparkSession.Builder)(testBody: SparkSession => T): T = {
-    testBody(builderCustomizer(sessionBuilder).getOrCreate.newSession)
-  }
-
-  def withRestartingSparkContext(testBody: => Future[Assertion]): Future[Assertion] = {
+  def withRestartingSparkSession[T](builderCustomizer: SparkSession.Builder => SparkSession.Builder = identity)(testBody: SparkSession => T): T = {
     haltSparkAndCleanup()
-    testBody.andThen { case _ => haltSparkAndCleanup() }
+    val res = testBody(builderCustomizer(sessionBuilder).getOrCreate)
+    res match {
+      case ft: Future[_] =>
+        ft.andThen {
+          case _ => haltSparkAndCleanup()
+        }.asInstanceOf[T]
+      case _ =>
+        haltSparkAndCleanup()
+        res
+    }
   }
 
   private[SparkFixture] def haltSparkAndCleanup(): Unit = {
@@ -76,12 +81,12 @@ object SparkFixture {
   trait NewPerTest extends SparkFixture with BeforeAndAfterEach {
     this: AsyncTestSuite =>
 
-    override protected def beforeEach() {
+    override protected def beforeEach(): Unit = {
       haltSparkAndCleanup()
       super.beforeEach()
     }
 
-    override protected def afterEach() {
+    override protected def afterEach(): Unit = {
       try super.afterEach()
       finally haltSparkAndCleanup()
     }

@@ -39,22 +39,20 @@ class NonPersistentActionsSpec extends AsyncFlatSpec
     )
   ) yield {
     it should s"capture lineage from the `$methodName()` action" in
-      withRestartingSparkContext {
-        withCustomSparkSession(_.config(NonPersistentActionsPluginEnabledProperty, value = true)) { implicit spark =>
-          withLineageTracking { captor =>
-            for {
-              (plan, _) <- captor.lineageOf {
-                import spark.implicits._
-                val df1 = Seq((1, 2, 3)).toDF()
-                action(df1)
-              }
-            } yield {
-              plan.operations.write.append shouldBe false
-              plan.operations.write.name shouldEqual expectedCommandName
-              plan.operations.write.extra should contain("synthetic" -> true)
-              plan.operations.write.outputSource should startWith("memory://")
-              plan.operations.write.outputSource should include("jvm_")
+      withRestartingSparkSession(_.config(NonPersistentActionsPluginEnabledProperty, value = true)) { implicit spark =>
+        withLineageTracking { captor =>
+          for {
+            (plan, _) <- captor.lineageOf {
+              import spark.implicits._
+              val df1 = Seq((1, 2, 3)).toDF()
+              action(df1)
             }
+          } yield {
+            plan.operations.write.append shouldBe false
+            plan.operations.write.name shouldEqual expectedCommandName
+            plan.operations.write.extra should contain("synthetic" -> true)
+            plan.operations.write.outputSource should startWith("memory://")
+            plan.operations.write.outputSource should include("jvm_")
           }
         }
       }
