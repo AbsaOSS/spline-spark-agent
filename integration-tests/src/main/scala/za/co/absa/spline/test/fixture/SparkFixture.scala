@@ -16,13 +16,11 @@
 
 package za.co.absa.spline.test.fixture
 
-import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.SparkSession
-import org.scalatest.{AsyncTestSuite, BeforeAndAfterEach}
+import org.scalatest.AsyncTestSuite
 import za.co.absa.commons.io.TempDirectory
+import za.co.absa.spline.test.fixture.SparkFixture._
 
-import java.io.File
-import java.net.URI
 import java.sql.DriverManager
 import scala.concurrent.Future
 import scala.util.Try
@@ -30,32 +28,18 @@ import scala.util.Try
 trait SparkFixture {
   this: AsyncTestSuite =>
 
-  val baseDir: TempDirectory = TempDirectory("SparkFixture", "UnitTest", pathOnly = true).deleteOnExit()
-  val warehouseDir: String = baseDir.asString.stripSuffix("/")
-  val warehouseUri: URI = baseDir.toURI
-  val metastoreDir: String = TempDirectory("Metastore", "debug", pathOnly = true).deleteOnExit().asString
-  val metastoreConnectURL = s"jdbc:derby:$metastoreDir/metastore_db;create=true"
-
-  protected def sessionBuilder: SparkSession.Builder = {
-    SparkSession.builder
-      .master("local")
-      .config("spark.driver.host", "localhost")
-      .config("spark.sql.warehouse.dir", warehouseDir)
-      .config("spark.ui.enabled", "false")
-      .config("javax.jdo.option.ConnectionURL", metastoreConnectURL)
-  }
-
   def withSparkSession[T](testBody: SparkSession => T): T = {
-    testBody(sessionBuilder.getOrCreate)
+    testBody(sessionBuilder().getOrCreate)
   }
 
   def withNewSparkSession[T](testBody: SparkSession => T): T = {
-    testBody(sessionBuilder.getOrCreate.newSession)
+    testBody(sessionBuilder().getOrCreate.newSession)
   }
 
   def withRestartingSparkSession[T](builderCustomizer: SparkSession.Builder => SparkSession.Builder = identity)(testBody: SparkSession => T): T = {
     haltSparkAndCleanup()
-    val res = testBody(builderCustomizer(sessionBuilder).getOrCreate)
+    val sparkSession = builderCustomizer(sessionBuilder()).getOrCreate
+    val res = testBody(sparkSession)
     res match {
       case ft: Future[_] =>
         ft.andThen {
@@ -66,30 +50,23 @@ trait SparkFixture {
         res
     }
   }
-
-  private[SparkFixture] def haltSparkAndCleanup(): Unit = {
-    SparkSession.getDefaultSession.foreach(_.close())
-    // clean up Derby resources to allow for re-creation of a Hive context later in the same JVM instance
-    Try(DriverManager.getConnection("jdbc:derby:;shutdown=true"))
-    FileUtils.deleteQuietly(new File("metastore_db"))
-    FileUtils.deleteQuietly(new File(warehouseDir))
-  }
 }
 
 object SparkFixture {
-
-  trait NewPerTest extends SparkFixture with BeforeAndAfterEach {
-    this: AsyncTestSuite =>
-
-    override protected def beforeEach(): Unit = {
-      haltSparkAndCleanup()
-      super.beforeEach()
-    }
-
-    override protected def afterEach(): Unit = {
-      try super.afterEach()
-      finally haltSparkAndCleanup()
-    }
+  private def sessionBuilder(): SparkSession.Builder = {
+    val warehouseDir: String = TempDirectory("SparkFixture_", ".warehouse", pathOnly = true).deleteOnExit().asString
+    val metastoreDir: String = TempDirectory("SparkFixture_", ".metastore", pathOnly = true).deleteOnExit().asString
+    SparkSession.builder
+      .master("local")
+      .config("spark.driver.host", "localhost")
+      .config("spark.ui.enabled", "false")
+      .config("spark.sql.warehouse.dir", warehouseDir)
+      .config("javax.jdo.option.ConnectionURL", s"jdbc:derby:$metastoreDir/metastore_db;create=true")
   }
 
+  private def haltSparkAndCleanup(): Unit = {
+    SparkSession.getDefaultSession.foreach(_.close())
+    // clean up Derby resources to allow for re-creation of a Hive context later in the same JVM instance
+    Try(DriverManager.getConnection("jdbc:derby:;shutdown=true"))
+  }
 }

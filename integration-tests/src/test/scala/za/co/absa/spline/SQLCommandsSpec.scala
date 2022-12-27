@@ -59,9 +59,9 @@ class SQLCommandsSpec extends AsyncFlatSpec
                 | WHERE id > 1""".stripMargin))
 
         } yield {
-          plan1.operations.write.outputSource should equalToUri(s"$warehouseUri/sourcetable")
-          plan2.operations.reads.head.inputSources.head should equalToUri(plan1.operations.write.outputSource)
-          plan2.operations.write.outputSource should equalToUri(s"$warehouseUri/targettable")
+          plan1.operations.write.outputSource should endWith("/sourcetable")
+          plan2.operations.reads.head.inputSources.head shouldBe plan1.operations.write.outputSource
+          plan2.operations.write.outputSource should endWith("/targettable")
         }
       }
     }
@@ -89,7 +89,7 @@ class SQLCommandsSpec extends AsyncFlatSpec
                  | FROM sourceTable
                  | WHERE id > 1""".stripMargin))
         } yield {
-          plan.operations.reads.head.inputSources.head should equalToUri(s"$warehouseUri/sourcetable")
+          plan.operations.reads.head.inputSources.head should endWith("/sourcetable")
           plan.operations.write.outputSource should equalToUri(dir.toUri.toString.stripSuffix("/"))
         }
       }
@@ -122,7 +122,7 @@ class SQLCommandsSpec extends AsyncFlatSpec
                  | WHERE id > 1""".stripMargin)
           )
         } yield {
-          plan.operations.reads.head.inputSources.head should equalToUri(s"$warehouseUri/sourcetable")
+          plan.operations.reads.head.inputSources.head should endWith("/sourcetable")
           plan.operations.write.outputSource should equalToUri(csvFile.toUri.toString.stripSuffix("/"))
         }
       }
