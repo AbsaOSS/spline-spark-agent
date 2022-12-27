@@ -43,7 +43,7 @@ class ElasticSearchSpec
       val esPort = container.getFirstMappedPort
       val esOptions = Map("es.nodes" -> esNodes, "es.port" -> esPort.toString, "es.nodes.wan.only" -> "true")
 
-      withSparkSession(implicit spark => {
+      withNewSparkSession(implicit spark => {
         withLineageTracking { captor =>
           val testData: DataFrame = {
             val schema = StructType(StructField("id", IntegerType, nullable = false) :: StructField("name", StringType, nullable = false) :: Nil)
