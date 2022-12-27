@@ -365,7 +365,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
     }
 
   it should "support `CREATE TABLE ... AS SELECT` in Hive" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in
-    withRestartingSparkSession(_
+    withIsolatedSparkSession(_
       .enableHiveSupport()
       .config("hive.exec.dynamic.partition.mode", "nonstrict")
     ) { implicit spark =>
@@ -427,7 +427,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
         |}
         |""".stripMargin
 
-    withRestartingSparkSession(_
+    withIsolatedSparkSession(_
       .config("spark.spline.postProcessingFilter", "userExtraMeta")
       .config("spark.spline.postProcessingFilter.userExtraMeta.rules", injectRules)
     ) { implicit spark =>

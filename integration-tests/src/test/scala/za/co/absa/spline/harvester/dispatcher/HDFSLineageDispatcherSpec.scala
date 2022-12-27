@@ -39,7 +39,7 @@ class HDFSLineageDispatcherSpec
   behavior of "HDFSLineageDispatcher"
 
   it should "save lineage file to a filesystem" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
-    withRestartingSparkSession(_
+    withIsolatedSparkSession(_
       .config("spark.spline.lineageDispatcher", "hdfs")
       .config("spark.spline.lineageDispatcher.hdfs.className", classOf[HDFSLineageDispatcher].getName)
     ) { implicit spark =>

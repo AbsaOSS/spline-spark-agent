@@ -37,7 +37,7 @@ class IcebergDSV2Spec extends AsyncFlatSpec
   private val warehouseUri: URI = TempDirectory(getClass.getSimpleName, "UnitTest", pathOnly = true).deleteOnExit().toURI
 
   it should "support Write to iceberg" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withRestartingSparkSession(_
+    withIsolatedSparkSession(_
       .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
       .config("spark.sql.catalog.iceberg_catalog", "org.apache.iceberg.spark.SparkCatalog")
       .config("spark.sql.catalog.iceberg_catalog.type", "hadoop")
@@ -60,7 +60,7 @@ class IcebergDSV2Spec extends AsyncFlatSpec
     }
 
   it should "support read from iceberg" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withRestartingSparkSession(_
+    withIsolatedSparkSession(_
       .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
       .config("spark.sql.catalog.iceberg_catalog", "org.apache.iceberg.spark.SparkCatalog")
       .config("spark.sql.catalog.iceberg_catalog.type", "hadoop")

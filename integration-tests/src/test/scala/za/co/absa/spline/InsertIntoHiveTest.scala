@@ -35,7 +35,7 @@ class InsertIntoHiveTest
     with SplineFixture {
 
   "InsertInto" should "produce lineage when inserting into Hive table" in
-    withRestartingSparkSession(_.enableHiveSupport()) { implicit spark =>
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
         withDatabase(databaseName,
@@ -67,7 +67,7 @@ class InsertIntoHiveTest
     }
 
   "CsvSerdeTable" should "Produce CatalogTable params" in
-    withRestartingSparkSession(_.enableHiveSupport()) { implicit spark =>
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         withDatabase("test",
           (
@@ -104,7 +104,7 @@ class InsertIntoHiveTest
     }
 
   "ParquetSerdeTable" should "Produce CatalogTable params" in
-    withRestartingSparkSession(_.enableHiveSupport()) { implicit spark =>
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         withDatabase("test",
           (
@@ -139,7 +139,7 @@ class InsertIntoHiveTest
     }
 
   "OrcSerdeTable" should "Produce CatalogTable params" in
-    withRestartingSparkSession(_.enableHiveSupport()) { implicit spark =>
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         withDatabase("test",
           (

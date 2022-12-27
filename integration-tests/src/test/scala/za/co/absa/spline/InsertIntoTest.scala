@@ -32,7 +32,7 @@ class InsertIntoTest extends AsyncFlatSpec
   with SparkDatabaseFixture {
 
   "InsertInto" should "not fail when inserting to partitioned table created as Spark tables" in
-    withRestartingSparkSession(_.enableHiveSupport()) { implicit spark =>
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         withDatabase("test",
           ("path_archive", "(x String, ymd int) USING json PARTITIONED BY (ymd)",
@@ -58,7 +58,7 @@ class InsertIntoTest extends AsyncFlatSpec
     }
 
   "ParquetTable" should "Produce CatalogTable params" in
-    withRestartingSparkSession(_.enableHiveSupport()) { implicit spark =>
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         withDatabase("test",
           ("path_archive", "(x String, ymd int) USING parquet PARTITIONED BY (ymd)",
@@ -89,7 +89,7 @@ class InsertIntoTest extends AsyncFlatSpec
     }
 
   "CsvTable" should "Produce CatalogTable params" in
-    withRestartingSparkSession(_.enableHiveSupport()) { implicit spark =>
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         withDatabase("test",
           ("path_archive", "(x String, ymd int) USING csv PARTITIONED BY (ymd)",
@@ -120,7 +120,7 @@ class InsertIntoTest extends AsyncFlatSpec
     }
 
   "JsonTable" should "Produce CatalogTable params" in
-    withRestartingSparkSession(_.enableHiveSupport()) { implicit spark =>
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         withDatabase("test",
           ("path_archive", "(x String, ymd int) USING json PARTITIONED BY (ymd)",
@@ -152,7 +152,7 @@ class InsertIntoTest extends AsyncFlatSpec
     }
 
   "ORCTable" should "Produce CatalogTable params" in
-    withRestartingSparkSession(_.enableHiveSupport()) { implicit spark =>
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         withDatabase("test",
           ("path_archive", "(x String, ymd int) USING orc PARTITIONED BY (ymd)",

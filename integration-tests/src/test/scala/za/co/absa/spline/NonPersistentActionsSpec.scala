@@ -39,7 +39,7 @@ class NonPersistentActionsSpec extends AsyncFlatSpec
     )
   ) yield {
     it should s"capture lineage from the `$methodName()` action" in
-      withRestartingSparkSession(_.config(NonPersistentActionsPluginEnabledProperty, value = true)) { implicit spark =>
+      withIsolatedSparkSession(_.config(NonPersistentActionsPluginEnabledProperty, value = true)) { implicit spark =>
         withLineageTracking { captor =>
           for {
             (plan, _) <- captor.lineageOf {

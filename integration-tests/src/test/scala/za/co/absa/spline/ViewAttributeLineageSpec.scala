@@ -34,7 +34,7 @@ class ViewAttributeLineageSpec
     with SplineFixture {
 
   it should "trace attribute dependencies through persistent view" in
-    withRestartingSparkSession(_.enableHiveSupport()) { implicit spark =>
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
         withDatabase(databaseName,
@@ -71,7 +71,7 @@ class ViewAttributeLineageSpec
     }
 
   it should "trace attribute dependencies through global temp view" in
-    withRestartingSparkSession(_.enableHiveSupport()) { implicit spark =>
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
         withDatabase(databaseName,
@@ -104,7 +104,7 @@ class ViewAttributeLineageSpec
     }
 
   it should "trace attribute dependencies through local temp view" in
-    withRestartingSparkSession(_.enableHiveSupport()) { implicit spark =>
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
         withDatabase(databaseName,
@@ -137,7 +137,7 @@ class ViewAttributeLineageSpec
     }
 
   it should "handle read as a view child" in
-    withRestartingSparkSession(_.enableHiveSupport()) { implicit spark =>
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         for {
           (plan, _) <- captor.lineageOf {

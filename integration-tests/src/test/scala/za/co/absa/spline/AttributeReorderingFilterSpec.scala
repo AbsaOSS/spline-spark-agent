@@ -34,7 +34,7 @@ class AttributeReorderingFilterSpec extends AsyncFlatSpec
 
   "AttributeOrderEnrichingFilter" should "produce lineage with correct attribute order" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0" || ver"$SPARK_VERSION" >= ver"3.3.0") in
-    withRestartingSparkSession(_
+    withIsolatedSparkSession(_
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
     ) { implicit spark =>

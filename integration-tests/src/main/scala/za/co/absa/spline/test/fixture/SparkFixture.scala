@@ -28,15 +28,30 @@ import scala.util.Try
 trait SparkFixture {
   this: AsyncTestSuite =>
 
-  def withSparkSession[T](testBody: SparkSession => T): T = {
-    testBody(sessionBuilder().getOrCreate)
-  }
-
+  /**
+   * Returns a new session with isolated SQL configurations, temporary tables, registered functions are isolated,
+   * but sharing the underlying `SparkContext` and cached data.
+   *
+   * NOTE:
+   * as the returning session shares the underlying `SparkContext` the method completes quickly, but it might
+   * create undesired dependency between tests.
+   * To properly isolate Spark context use [[withIsolatedSparkSession]] method instead.
+   */
   def withNewSparkSession[T](testBody: SparkSession => T): T = {
-    testBody(sessionBuilder().getOrCreate.newSession)
+    val activeSession = sessionBuilder().getOrCreate
+    // always call `newSession` to minimize dependencies between tests using this fixture
+    val newSession = activeSession.newSession
+    testBody(newSession)
   }
 
-  def withRestartingSparkSession[T](builderCustomizer: SparkSession.Builder => SparkSession.Builder = identity)(testBody: SparkSession => T): T = {
+  /**
+   *
+   * Create a completely new, isolated Spark session. The `SparkContext` is restarted before and after the test.
+   *
+   * This method provides high level of test isolation, but because `SparkContext` is restarted, it takes significantly
+   * longer to complete in comparison with the [[withNewSparkSession]] method.
+   */
+  def withIsolatedSparkSession[T](builderCustomizer: SparkSession.Builder => SparkSession.Builder = identity)(testBody: SparkSession => T): T = {
     haltSparkAndCleanup()
     val sparkSession = builderCustomizer(sessionBuilder()).getOrCreate
     val res = testBody(sparkSession)
