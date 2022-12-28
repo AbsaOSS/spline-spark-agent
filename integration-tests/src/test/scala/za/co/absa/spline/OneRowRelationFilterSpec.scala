@@ -28,24 +28,22 @@ class OneRowRelationFilterSpec extends AsyncFlatSpec
   with SparkDatabaseFixture {
 
   it should "produce lineage without OneRowRelation operation" in
-    withRestartingSparkContext {
-      withSparkSession { implicit spark =>
-        withLineageTracking { lineageCaptor =>
-          withDatabase("testDB") {
-            for {
-              (plan, _) <- lineageCaptor.lineageOf {
-                spark
-                  .sql("SELECT 'Green' AS data_quality_status, 'Batch Started' AS batch_status")
-                  .write
-                  .saveAsTable("t1")
-              }
-            } yield {
-              val Seq(op) = plan.operations.other
-
-              op.name should be("Project")
-              op.childIds should be(Seq.empty)
-              op.output.size should be(2)
+    withIsolatedSparkSession() { implicit spark =>
+      withLineageTracking { lineageCaptor =>
+        withDatabase("testDB") {
+          for {
+            (plan, _) <- lineageCaptor.lineageOf {
+              spark
+                .sql("SELECT 'Green' AS data_quality_status, 'Batch Started' AS batch_status")
+                .write
+                .saveAsTable("t1")
             }
+          } yield {
+            val Seq(op) = plan.operations.other
+
+            op.name should be("Project")
+            op.childIds should be(Seq.empty)
+            op.output.size should be(2)
           }
         }
       }

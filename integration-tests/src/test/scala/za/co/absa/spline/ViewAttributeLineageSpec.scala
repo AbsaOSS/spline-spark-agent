@@ -34,46 +34,44 @@ class ViewAttributeLineageSpec
     with SplineFixture {
 
   it should "trace attribute dependencies through persistent view" in
-    withRestartingSparkContext {
-      withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
-        withLineageTracking { captor =>
-          val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
-          withDatabase(databaseName,
-            ("path", "(x String) USING hive", Seq("Monika", "Buba"))
-          ) {
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
+      withLineageTracking { captor =>
+        val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
+        withDatabase(databaseName,
+          ("path", "(x String) USING hive", Seq("Monika", "Buba"))
+        ) {
 
-            withNewSparkSession { innerSpark =>
-              innerSpark.sql(s"DROP VIEW IF EXISTS $databaseName.test_source_vw")
-              innerSpark.sql(s"CREATE VIEW $databaseName.test_source_vw AS SELECT * FROM $databaseName.path")
+          withNewSparkSession { innerSpark =>
+            innerSpark.sql(s"DROP VIEW IF EXISTS $databaseName.test_source_vw")
+            innerSpark.sql(s"CREATE VIEW $databaseName.test_source_vw AS SELECT * FROM $databaseName.path")
+          }
+
+          for {
+            (plan, _) <- captor.lineageOf {
+              spark.sql("select * from test_source_vw")
+                .write
+                .format("hive")
+                .mode("overwrite")
+                .saveAsTable("view_test_target")
             }
+          } yield {
+            implicit val walker: LineageWalker = LineageWalker(plan)
 
-            for {
-              (plan, _) <- captor.lineageOf {
-                spark.sql("select * from test_source_vw")
-                  .write
-                  .format("hive")
-                  .mode("overwrite")
-                  .saveAsTable("view_test_target")
-              }
-            } yield {
-              implicit val walker: LineageWalker = LineageWalker(plan)
+            val writeOutput = plan.operations.write.childOperation.outputAttributes
+            val outAttribute = writeOutput(0)
 
-              val writeOutput = plan.operations.write.childOperation.outputAttributes
-              val outAttribute = writeOutput(0)
+            val reads = plan.operations.reads
+            val readOutput = reads(0).outputAttributes
+            val inAttribute = readOutput(0)
 
-              val reads = plan.operations.reads
-              val readOutput = reads(0).outputAttributes
-              val inAttribute = readOutput(0)
-
-              outAttribute should dependOn(inAttribute)
-            }
+            outAttribute should dependOn(inAttribute)
           }
         }
       }
     }
 
   it should "trace attribute dependencies through global temp view" in
-    withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
         withDatabase(databaseName,
@@ -106,7 +104,7 @@ class ViewAttributeLineageSpec
     }
 
   it should "trace attribute dependencies through local temp view" in
-    withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
         withDatabase(databaseName,
@@ -139,7 +137,7 @@ class ViewAttributeLineageSpec
     }
 
   it should "handle read as a view child" in
-    withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         for {
           (plan, _) <- captor.lineageOf {

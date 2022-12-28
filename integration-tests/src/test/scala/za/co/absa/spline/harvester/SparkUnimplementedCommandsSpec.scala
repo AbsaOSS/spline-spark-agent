@@ -93,7 +93,7 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
     * }}}
     */
   "Lineage for create data source table" should "be caught" in
-    withCustomSparkSession(_
+    withIsolatedSparkSession(_
       .enableHiveSupport()
       .config("hive.exec.dynamic.partition.mode", "nonstrict")
     ) { implicit spark =>
@@ -119,7 +119,7 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
     }
 
   "Lineage for create table like" should "be caught" in
-    withCustomSparkSession(_
+    withIsolatedSparkSession(_
       .enableHiveSupport()
       .config("hive.exec.dynamic.partition.mode", "nonstrict")
     ) { implicit spark =>
@@ -139,7 +139,7 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
     }
 
   "Lineage for truncate table" should "be caught" in
-    withCustomSparkSession(_
+    withIsolatedSparkSession(_
       .enableHiveSupport()
       .config("hive.exec.dynamic.partition.mode", "nonstrict")
     ) { implicit spark =>
@@ -159,7 +159,7 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
     }
 
   "Lineage for alter table add columns" should "be caught" in
-    withCustomSparkSession(_
+    withIsolatedSparkSession(_
       .enableHiveSupport()
       .config("hive.exec.dynamic.partition.mode", "nonstrict")) { implicit spark =>
 
@@ -182,7 +182,7 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
     * column name/type change not supported in spark 2.3 only comment change is supported
     */
   "Lineage for alter table change column" should "be caught" in
-    withCustomSparkSession(_
+    withIsolatedSparkSession(_
       .enableHiveSupport()
       .config("hive.exec.dynamic.partition.mode", "nonstrict")) { implicit spark =>
 
@@ -203,7 +203,7 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
     }
 
   "Lineage for alter table rename" should "be caught" in
-    withCustomSparkSession(_
+    withIsolatedSparkSession(_
       .enableHiveSupport()
       .config("hive.exec.dynamic.partition.mode", "nonstrict")) { implicit spark =>
 
@@ -225,7 +225,7 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
   private val tempDirPath = TempDirectory(prefix = "test").deleteOnExit().path
 
   "Lineage for load data" should "be caught" in
-    withCustomSparkSession(_
+    withIsolatedSparkSession(_
       .enableHiveSupport()
       .config("hive.exec.dynamic.partition.mode", "nonstrict")) { implicit spark =>
 
@@ -253,7 +253,7 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
     }
 
   "Lineage for alter table set location" should "be caught" in
-    withCustomSparkSession(_
+    withIsolatedSparkSession(_
       .enableHiveSupport()
       .config("hive.exec.dynamic.partition.mode", "nonstrict")) { implicit spark =>
 

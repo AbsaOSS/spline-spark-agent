@@ -32,162 +32,152 @@ class InsertIntoTest extends AsyncFlatSpec
   with SparkDatabaseFixture {
 
   "InsertInto" should "not fail when inserting to partitioned table created as Spark tables" in
-    withRestartingSparkContext {
-      withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
-        withLineageTracking { captor =>
-          withDatabase("test",
-            ("path_archive", "(x String, ymd int) USING json PARTITIONED BY (ymd)",
-              Seq(("Tata", 20190401), ("Tere", 20190403))),
-            ("path", "(x String) USING json",
-              Seq("Monika", "Buba"))
-          ) {
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
+      withLineageTracking { captor =>
+        withDatabase("test",
+          ("path_archive", "(x String, ymd int) USING json PARTITIONED BY (ymd)",
+            Seq(("Tata", 20190401), ("Tere", 20190403))),
+          ("path", "(x String) USING json",
+            Seq("Monika", "Buba"))
+        ) {
 
-            val df = spark
-              .table("test.path")
-              .withColumn("ymd", lit(20190401))
+          val df = spark
+            .table("test.path")
+            .withColumn("ymd", lit(20190401))
 
-            for {
-              (plan, _) <- captor.lineageOf {
-                df.write.mode(SaveMode.Overwrite).insertInto("test.path_archive")
-              }
-            } yield {
-              plan.operations.write.outputSource should include("path_archive")
-              plan.operations.write.append should be(false)
+          for {
+            (plan, _) <- captor.lineageOf {
+              df.write.mode(SaveMode.Overwrite).insertInto("test.path_archive")
             }
+          } yield {
+            plan.operations.write.outputSource should include("path_archive")
+            plan.operations.write.append should be(false)
           }
         }
       }
     }
 
   "ParquetTable" should "Produce CatalogTable params" in
-    withRestartingSparkContext {
-      withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
-        withLineageTracking { captor =>
-          withDatabase("test",
-            ("path_archive", "(x String, ymd int) USING parquet PARTITIONED BY (ymd)",
-              Seq(("Tata", 20190401), ("Tere", 20190403))),
-            ("path", "(x String) USING parquet",
-              Seq("Monika", "Buba"))
-          ) {
-            val df = spark
-              .table("test.path")
-              .withColumn("ymd", lit(20190401))
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
+      withLineageTracking { captor =>
+        withDatabase("test",
+          ("path_archive", "(x String, ymd int) USING parquet PARTITIONED BY (ymd)",
+            Seq(("Tata", 20190401), ("Tere", 20190403))),
+          ("path", "(x String) USING parquet",
+            Seq("Monika", "Buba"))
+        ) {
+          val df = spark
+            .table("test.path")
+            .withColumn("ymd", lit(20190401))
 
-            for {
-              (plan, _) <- captor.lineageOf {
-                df.write.mode(SaveMode.Overwrite).insertInto("test.path_archive")
-              }
-            } yield {
-              plan.operations.write.outputSource should include("path_archive")
-              plan.operations.write.append should be(false)
-              val writeTable = extractTableIdentifier(plan.operations.write.params)
-              val readTable = extractTableIdentifier(plan.operations.reads.head.params)
-              writeTable("table") should be("path_archive")
-              writeTable("database") should be(Some("test"))
-              readTable("table") should be("path")
-              readTable("database") should be(Some("test"))
+          for {
+            (plan, _) <- captor.lineageOf {
+              df.write.mode(SaveMode.Overwrite).insertInto("test.path_archive")
             }
+          } yield {
+            plan.operations.write.outputSource should include("path_archive")
+            plan.operations.write.append should be(false)
+            val writeTable = extractTableIdentifier(plan.operations.write.params)
+            val readTable = extractTableIdentifier(plan.operations.reads.head.params)
+            writeTable("table") should be("path_archive")
+            writeTable("database") should be(Some("test"))
+            readTable("table") should be("path")
+            readTable("database") should be(Some("test"))
           }
         }
       }
     }
 
   "CsvTable" should "Produce CatalogTable params" in
-    withRestartingSparkContext {
-      withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
-        withLineageTracking { captor =>
-          withDatabase("test",
-            ("path_archive", "(x String, ymd int) USING csv PARTITIONED BY (ymd)",
-              Seq(("Tata", 20190401), ("Tere", 20190403))),
-            ("path", "(x String) USING csv",
-              Seq("Monika", "Buba"))
-          ) {
-            val df = spark
-              .table("test.path")
-              .withColumn("ymd", lit(20190401))
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
+      withLineageTracking { captor =>
+        withDatabase("test",
+          ("path_archive", "(x String, ymd int) USING csv PARTITIONED BY (ymd)",
+            Seq(("Tata", 20190401), ("Tere", 20190403))),
+          ("path", "(x String) USING csv",
+            Seq("Monika", "Buba"))
+        ) {
+          val df = spark
+            .table("test.path")
+            .withColumn("ymd", lit(20190401))
 
-            for {
-              (plan, _) <- captor.lineageOf {
-                df.write.mode(SaveMode.Overwrite).insertInto("test.path_archive")
-              }
-            } yield {
-              plan.operations.write.outputSource should include("path_archive")
-              plan.operations.write.append should be(false)
-              val writeTable = extractTableIdentifier(plan.operations.write.params)
-              val readTable = extractTableIdentifier(plan.operations.reads.head.params)
-              writeTable("table") should be("path_archive")
-              writeTable("database") should be(Some("test"))
-              readTable("table") should be("path")
-              readTable("database") should be(Some("test"))
+          for {
+            (plan, _) <- captor.lineageOf {
+              df.write.mode(SaveMode.Overwrite).insertInto("test.path_archive")
             }
+          } yield {
+            plan.operations.write.outputSource should include("path_archive")
+            plan.operations.write.append should be(false)
+            val writeTable = extractTableIdentifier(plan.operations.write.params)
+            val readTable = extractTableIdentifier(plan.operations.reads.head.params)
+            writeTable("table") should be("path_archive")
+            writeTable("database") should be(Some("test"))
+            readTable("table") should be("path")
+            readTable("database") should be(Some("test"))
           }
         }
       }
     }
 
   "JsonTable" should "Produce CatalogTable params" in
-    withRestartingSparkContext {
-      withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
-        withLineageTracking { captor =>
-          withDatabase("test",
-            ("path_archive", "(x String, ymd int) USING json PARTITIONED BY (ymd)",
-              Seq(("Tata", 20190401), ("Tere", 20190403))),
-            ("path", "(x String) USING json",
-              Seq("Monika", "Buba"))
-          ) {
-            val df = spark
-              .table("test.path")
-              .withColumn("ymd", lit(20190401))
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
+      withLineageTracking { captor =>
+        withDatabase("test",
+          ("path_archive", "(x String, ymd int) USING json PARTITIONED BY (ymd)",
+            Seq(("Tata", 20190401), ("Tere", 20190403))),
+          ("path", "(x String) USING json",
+            Seq("Monika", "Buba"))
+        ) {
+          val df = spark
+            .table("test.path")
+            .withColumn("ymd", lit(20190401))
 
-            for {
-              (plan, _) <- captor.lineageOf {
-                df.write.mode(SaveMode.Overwrite).insertInto("test.path_archive")
-              }
-            } yield {
-
-              plan.operations.write.outputSource should include("path_archive")
-              plan.operations.write.append should be(false)
-              val writeTable = extractTableIdentifier(plan.operations.write.params)
-              val readTable = extractTableIdentifier(plan.operations.reads.head.params)
-              writeTable("table") should be("path_archive")
-              writeTable("database") should be(Some("test"))
-              readTable("table") should be("path")
-              readTable("database") should be(Some("test"))
+          for {
+            (plan, _) <- captor.lineageOf {
+              df.write.mode(SaveMode.Overwrite).insertInto("test.path_archive")
             }
+          } yield {
+
+            plan.operations.write.outputSource should include("path_archive")
+            plan.operations.write.append should be(false)
+            val writeTable = extractTableIdentifier(plan.operations.write.params)
+            val readTable = extractTableIdentifier(plan.operations.reads.head.params)
+            writeTable("table") should be("path_archive")
+            writeTable("database") should be(Some("test"))
+            readTable("table") should be("path")
+            readTable("database") should be(Some("test"))
           }
         }
       }
     }
 
   "ORCTable" should "Produce CatalogTable params" in
-    withRestartingSparkContext {
-      withCustomSparkSession(_.enableHiveSupport()) { implicit spark =>
-        withLineageTracking { captor =>
-          withDatabase("test",
-            ("path_archive", "(x String, ymd int) USING orc PARTITIONED BY (ymd)",
-              Seq(("Tata", 20190401), ("Tere", 20190403))),
-            ("path", "(x String) USING orc",
-              Seq("Monika", "Buba"))
-          ) {
+    withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
+      withLineageTracking { captor =>
+        withDatabase("test",
+          ("path_archive", "(x String, ymd int) USING orc PARTITIONED BY (ymd)",
+            Seq(("Tata", 20190401), ("Tere", 20190403))),
+          ("path", "(x String) USING orc",
+            Seq("Monika", "Buba"))
+        ) {
 
-            val df = spark
-              .table("test.path")
-              .withColumn("ymd", lit(20190401))
+          val df = spark
+            .table("test.path")
+            .withColumn("ymd", lit(20190401))
 
-            for {
-              (plan, _) <- captor.lineageOf {
-                df.write.mode(SaveMode.Overwrite).insertInto("test.path_archive")
-              }
-            } yield {
-              plan.operations.write.outputSource should include("path_archive")
-              plan.operations.write.append should be(false)
-              val writeTable = extractTableIdentifier(plan.operations.write.params)
-              val readTable = extractTableIdentifier(plan.operations.reads.head.params)
-              writeTable("table") should be("path_archive")
-              writeTable("database") should be(Some("test"))
-              readTable("table") should be("path")
-              readTable("database") should be(Some("test"))
+          for {
+            (plan, _) <- captor.lineageOf {
+              df.write.mode(SaveMode.Overwrite).insertInto("test.path_archive")
             }
+          } yield {
+            plan.operations.write.outputSource should include("path_archive")
+            plan.operations.write.append should be(false)
+            val writeTable = extractTableIdentifier(plan.operations.write.params)
+            val readTable = extractTableIdentifier(plan.operations.reads.head.params)
+            writeTable("table") should be("path_archive")
+            writeTable("database") should be(Some("test"))
+            readTable("table") should be("path")
+            readTable("database") should be(Some("test"))
           }
         }
       }

@@ -24,12 +24,13 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version.VersionStringInterpolator
-import za.co.absa.spline.producer.model.{AttrOrExprRef, ExprRef, ReadOperation}
+import za.co.absa.spline.producer.model.{ExprRef, ReadOperation}
 import za.co.absa.spline.test.LineageWalker
 import za.co.absa.spline.test.ProducerModelImplicits._
 import za.co.absa.spline.test.SplineMatchers._
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
+
 class DeltaDSV2Spec extends AsyncFlatSpec
   with Matchers
   with SparkFixture
@@ -38,7 +39,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
   it should "support AppendData V2 command" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withCustomSparkSession(_
+    withIsolatedSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
@@ -59,7 +60,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
             plan1.id.value shouldEqual event1.planId
             plan1.operations.write.append shouldBe true
             plan1.operations.write.extra("destinationType") shouldBe Some("delta")
-            plan1.operations.write.outputSource shouldBe s"file:$warehouseDir/testdb.db/foo"
+            plan1.operations.write.outputSource should endWith("/testdb.db/foo")
           }
         }
       }
@@ -67,7 +68,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
   it should "support OverwriteByExpression V2 command without deleteExpression" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withCustomSparkSession(_
+    withIsolatedSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
@@ -91,7 +92,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
             val deleteExprId = plan1.operations.write.params("deleteExpr").asInstanceOf[ExprRef].id
             val literal = plan1.expressions.constants.find(_.id == deleteExprId).value
             literal.value shouldEqual true
-            plan1.operations.write.outputSource shouldBe s"file:$warehouseDir/testdb.db/foo"
+            plan1.operations.write.outputSource should endWith("/testdb.db/foo")
           }
         }
       }
@@ -99,7 +100,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
   it should "support OverwriteByExpression V2 command with deleteExpression" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withCustomSparkSession(_
+    withIsolatedSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
@@ -115,17 +116,18 @@ class DeltaDSV2Spec extends AsyncFlatSpec
           for {
             (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
               spark.sql(s"CREATE TABLE foo (ID int, NAME string) USING delta PARTITIONED BY (ID)")
-              spark.sql("""
-                          |INSERT OVERWRITE foo PARTITION (ID = 222222)
-                          |  (SELECT NAME FROM tempdata WHERE NAME = 'Warsaw')
-                          |""".stripMargin)
+              spark.sql(
+                """
+                  |INSERT OVERWRITE foo PARTITION (ID = 222222)
+                  |  (SELECT NAME FROM tempdata WHERE NAME = 'Warsaw')
+                  |""".stripMargin)
             }
           } yield {
             plan1.id.value shouldEqual event1.planId
             plan1.operations.write.append shouldBe false
             plan1.operations.write.extra("destinationType") shouldBe Some("delta")
-            plan1.operations.write.params("deleteExpr") should not be(Literal(true))
-            plan1.operations.write.outputSource shouldBe s"file:$warehouseDir/testdb.db/foo"
+            plan1.operations.write.params("deleteExpr") should not be Literal(true)
+            plan1.operations.write.outputSource should endWith("/testdb.db/foo")
           }
         }
       }
@@ -138,7 +140,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
     */
   it should "support OverwritePartitionsDynamic V2 command" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withCustomSparkSession(_
+    withIsolatedSparkSession(_
       .enableHiveSupport
       .config("hive.exec.dynamic.partition", "true")
       .config("hive.exec.dynamic.partition.mode", "nonstrict")
@@ -156,16 +158,17 @@ class DeltaDSV2Spec extends AsyncFlatSpec
           for {
             (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
               spark.sql(s"CREATE TABLE foo (ID int, NAME string) USING delta PARTITIONED BY (NAME)")
-              spark.sql("""
-                          |INSERT OVERWRITE foo PARTITION (NAME)
-                          |  (SELECT ID, NAME FROM tempdata WHERE NAME = 'Warsaw')
-                          |""".stripMargin)
+              spark.sql(
+                """
+                  |INSERT OVERWRITE foo PARTITION (NAME)
+                  |  (SELECT ID, NAME FROM tempdata WHERE NAME = 'Warsaw')
+                  |""".stripMargin)
             }
           } yield {
             plan1.id.value shouldEqual event1.planId
             plan1.operations.write.append shouldBe false
             plan1.operations.write.extra("destinationType") shouldBe Some("delta")
-            plan1.operations.write.outputSource shouldBe s"file:$warehouseDir/testdb.db/foo"
+            plan1.operations.write.outputSource should endWith("/testdb.db/foo")
           }
         }
       }
@@ -173,7 +176,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
   it should "support CreateTableAsSelect V2 command" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withCustomSparkSession(_
+    withIsolatedSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
@@ -193,7 +196,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
             plan1.id.value shouldEqual event1.planId
             plan1.operations.write.append shouldBe false
             plan1.operations.write.extra("destinationType") shouldBe Some("delta")
-            plan1.operations.write.outputSource shouldBe s"file:$warehouseDir/testdb.db/foo"
+            plan1.operations.write.outputSource should endWith("/testdb.db/foo")
           }
         }
       }
@@ -201,7 +204,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
   it should "support ReplaceTableAsSelect V2 command" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withCustomSparkSession(_
+    withIsolatedSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
@@ -222,7 +225,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
             plan1.id.value shouldEqual event1.planId
             plan1.operations.write.append shouldBe false
             plan1.operations.write.extra("destinationType") shouldBe Some("delta")
-            plan1.operations.write.outputSource shouldBe s"file:$warehouseDir/testdb.db/foo"
+            plan1.operations.write.outputSource should endWith("/testdb.db/foo")
           }
         }
       }
@@ -230,7 +233,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
   it should "support DELETE table command" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withCustomSparkSession(_
+    withIsolatedSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
@@ -253,9 +256,9 @@ class DeltaDSV2Spec extends AsyncFlatSpec
             plan2.id.value shouldEqual event2.planId
             plan2.operations.write.append shouldBe false
             plan2.operations.write.extra("destinationType") shouldBe Some("delta")
-            plan2.operations.write.outputSource shouldBe s"file:$warehouseDir/testdb.db/foo"
-            plan2.operations.write.params("condition").asInstanceOf[String] should include ("1014")
-            plan2.operations.reads.head.output.size shouldBe(2)
+            plan2.operations.write.outputSource should endWith("/testdb.db/foo")
+            plan2.operations.write.params("condition").asInstanceOf[String] should include("1014")
+            plan2.operations.reads.head.output.size shouldBe 2
           }
         }
       }
@@ -263,7 +266,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
   it should "support UPDATE table command" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withCustomSparkSession(_
+    withIsolatedSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
@@ -286,10 +289,10 @@ class DeltaDSV2Spec extends AsyncFlatSpec
             plan2.id.value shouldEqual event2.planId
             plan2.operations.write.append shouldBe false
             plan2.operations.write.extra("destinationType") shouldBe Some("delta")
-            plan2.operations.write.outputSource shouldBe s"file:$warehouseDir/testdb.db/foo"
-            plan2.operations.write.params("condition").asInstanceOf[String] should include ("1002")
-            plan2.operations.write.params("updateExpressions").asInstanceOf[Seq[String]] should contain ("Korok")
-            plan2.operations.reads.head.output.size shouldBe(2)
+            plan2.operations.write.outputSource should endWith("/testdb.db/foo")
+            plan2.operations.write.params("condition").asInstanceOf[String] should include("1002")
+            plan2.operations.write.params("updateExpressions").asInstanceOf[Seq[String]] should contain("Korok")
+            plan2.operations.reads.head.output.size shouldBe 2
           }
         }
       }
@@ -297,7 +300,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
   it should "support MERGE INTO table command" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-    withCustomSparkSession(_
+    withIsolatedSparkSession(_
       .enableHiveSupport
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
@@ -333,7 +336,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
                   |  THEN INSERT (ID, NAME)
                   |  VALUES (fooUpdate.ID, fooUpdate.NAME)
                   |""".stripMargin
-                )
+              )
             }
           } yield {
             implicit val walker = LineageWalker(plan)
@@ -341,7 +344,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
             plan.id.value shouldEqual event.planId
             plan.operations.write.append shouldBe false
             plan.operations.write.extra("destinationType") shouldBe Some("delta")
-            plan.operations.write.outputSource shouldBe s"file:$warehouseDir/testdb.db/foo"
+            plan.operations.write.outputSource should endWith("/testdb.db/foo")
 
             val mergeOp = plan.operations.write.childOperation
             mergeOp.params("condition").asInstanceOf[Option[String]].value should include("ID")
