@@ -20,6 +20,7 @@ import za.co.absa.commons.lang.extensions.NonOptionExtension._
 import za.co.absa.commons.lang.extensions.TraversableExtension._
 import za.co.absa.commons.version.Version
 import za.co.absa.spline.harvester.LineageHarvester
+import za.co.absa.spline.harvester.dispatcher.ProducerApiVersion.JsonSchemaURLs
 import za.co.absa.spline.harvester.dispatcher.modelmapper.OpenLineageModelMapper._
 import za.co.absa.spline.harvester.dispatcher.openlineage.model.facet.SplinePayloadFacet
 import za.co.absa.spline.producer.model.openlineage.v0_3_1._
@@ -53,8 +54,8 @@ class OpenLineageModelMapper(splineModelMapper: ModelMapper[_, _], apiVersion: V
       eventType = event.error.map(_ => EventType.Fail).orElse(EventType.Complete.asOption),
       eventTime = java.util.Date.from(completeTime),
       run = Run(runId = runId, facets = Some(Map(
-        SplineEvent -> createSplinePayloadFacet(splineModelMapper.toDTO(event), "TODO"), // see issue #416
-        SplinePlan -> createSplinePayloadFacet(splineModelMapper.toDTO(plan), "TODO") // see issue #416
+        SplinePlan -> createSplinePayloadFacet(splineModelMapper.toDTO(plan), JsonSchemaURLs.planSchemaForAPIVersion(apiVersion)),
+        SplineEvent -> createSplinePayloadFacet(splineModelMapper.toDTO(event), JsonSchemaURLs.eventSchemaForAPIVersion(apiVersion))
       ))),
       job = job,
       inputs = plan.operations.reads
@@ -71,7 +72,7 @@ class OpenLineageModelMapper(splineModelMapper: ModelMapper[_, _], apiVersion: V
   private def createSplinePayloadFacet(payload: AnyRef, payloadSchemaUrl: String) =
     new SplinePayloadFacet(
       _producer = Producer,
-      _schemaURL = "TODO", // see issue #416
+      _schemaURL = PayloadFacetSchemaUrl,
       payloadSchemaURL = payloadSchemaUrl,
       payload = payload
     )
@@ -101,6 +102,7 @@ class OpenLineageModelMapper(splineModelMapper: ModelMapper[_, _], apiVersion: V
 object OpenLineageModelMapper {
   private val Producer = s"https://github.com/AbsaOSS/spline-spark-agent/tree/release/${LineageHarvester.SplineVersionInfo.version}"
   private val SchemaUrl = "https://openlineage.io/spec/1-0-2/OpenLineage.json#/$defs/RunEvent"
+  private val PayloadFacetSchemaUrl = "https://raw.githubusercontent.com/AbsaOSS/spline/api-doc/schemas/openlineage/spline-payload-facet-1.0.json"
 
   object EventType {
     val Start = "START"
