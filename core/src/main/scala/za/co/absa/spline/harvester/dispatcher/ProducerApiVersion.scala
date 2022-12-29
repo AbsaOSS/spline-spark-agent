@@ -31,4 +31,20 @@ object ProducerApiVersion {
     val Max: Version = V1_2
   }
 
+  object JsonSchemaURLs {
+    private val PlanSchemas: Map[Version, String] = Map(
+      ProducerApiVersion.V1 ->   "https://cdn.jsdelivr.net/gh/AbsaOSS/spline@api-doc/schemas/producer/execution-plan-1.0.json",
+      ProducerApiVersion.V1_1 -> "https://cdn.jsdelivr.net/gh/AbsaOSS/spline@api-doc/schemas/producer/execution-plan-1.1.json",
+      ProducerApiVersion.V1_2 -> "https://cdn.jsdelivr.net/gh/AbsaOSS/spline@api-doc/schemas/producer/execution-plan-1.2.json"
+    )
+    private val EventSchemas: Map[Version, String] = Map(
+      ProducerApiVersion.V1 ->   "https://cdn.jsdelivr.net/gh/AbsaOSS/spline@api-doc/schemas/producer/execution-event-1.0.json",
+      ProducerApiVersion.V1_1 -> "https://cdn.jsdelivr.net/gh/AbsaOSS/spline@api-doc/schemas/producer/execution-event-1.1.json",
+      ProducerApiVersion.V1_2 -> "https://cdn.jsdelivr.net/gh/AbsaOSS/spline@api-doc/schemas/producer/execution-event-1.2.json"
+    )
+
+    def planSchemaForAPIVersion(ver: Version): String = PlanSchemas(ver)
+
+    def eventSchemaForAPIVersion(ver: Version): String = EventSchemas(ver)
+  }
 }
