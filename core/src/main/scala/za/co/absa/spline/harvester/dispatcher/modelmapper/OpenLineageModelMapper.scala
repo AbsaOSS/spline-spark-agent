@@ -102,7 +102,7 @@ class OpenLineageModelMapper(splineModelMapper: ModelMapper[_, _], apiVersion: V
 object OpenLineageModelMapper {
   private val Producer = s"https://github.com/AbsaOSS/spline-spark-agent/tree/release/${LineageHarvester.SplineVersionInfo.version}"
   private val SchemaUrl = "https://openlineage.io/spec/1-0-2/OpenLineage.json#/$defs/RunEvent"
-  private val PayloadFacetSchemaUrl = "https://raw.githubusercontent.com/AbsaOSS/spline/api-doc/schemas/openlineage/spline-payload-facet-1.0.json"
+  private val PayloadFacetSchemaUrl = "https://cdn.jsdelivr.net/gh/AbsaOSS/spline@api-doc/schemas/openlineage/spline-payload-facet-1.0.json"
 
   object EventType {
     val Start = "START"
