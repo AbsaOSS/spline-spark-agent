@@ -218,7 +218,7 @@ class ModelMapperV11Spec
               "attId" -> v1_1.AttrOrExprRef(Some("attr-42"), None),
               "expId" -> v1_1.AttrOrExprRef(None, Some("expr-42"))
             )),
-            name = "Expr1",
+            name = "Expr1"
           )
         )),
         constants = Some(Seq(
