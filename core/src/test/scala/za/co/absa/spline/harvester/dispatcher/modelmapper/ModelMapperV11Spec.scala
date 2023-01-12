@@ -100,7 +100,7 @@ class ModelMapperV11Spec
             childRefs = Seq(AttrRef("a1")),
             params = Map("param3" -> 42, "attId" -> AttrRef("attr-42"), "expId" -> ExprRef("expr-42")),
             extra = Map("param3" -> 42, "attId" -> AttrRef("attr-42"), "expId" -> ExprRef("expr-42")),
-            name = "Expr1",
+            name = "Expr1"
           )
         ),
         constants = Seq(

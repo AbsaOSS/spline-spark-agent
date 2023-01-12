@@ -156,7 +156,7 @@ class ModelMapperV12Spec
             "param3" -> 42,
             "attId" -> v1_2.AttrOrExprRef(Some("attr-42"), None),
             "expId" -> v1_2.AttrOrExprRef(None, Some("expr-42"))
-          )),
+          ))
         ))),
         other = Some(Seq(v1_2.DataOperation(
           id = "op-1",
@@ -172,7 +172,7 @@ class ModelMapperV12Spec
             "param3" -> 42,
             "attId" -> v1_2.AttrOrExprRef(Some("attr-42"), None),
             "expId" -> v1_2.AttrOrExprRef(None, Some("expr-42"))
-          )),
+          ))
         )))
       ),
       attributes = Some(Seq(
@@ -218,7 +218,7 @@ class ModelMapperV12Spec
               "param3" -> 42,
               "attId" -> v1_2.AttrOrExprRef(Some("attr-42"), None),
               "expId" -> v1_2.AttrOrExprRef(None, Some("expr-42"))
-            )),
+            ))
           )
         )),
         constants = Some(Seq(
