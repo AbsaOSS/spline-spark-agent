@@ -98,7 +98,7 @@ object ModelMapperV12 extends ModelMapper[v1_2.ExecutionPlan, v1_2.ExecutionEven
     childRefs = fe.childRefs.map(toAttrOrExprRef).asNonEmptyOption,
     extra = toUntypedMap(fe.extra).asNonEmptyOption,
     name = fe.name,
-    params = toUntypedMap(fe.params).asNonEmptyOption,
+    params = toUntypedMap(fe.params).asNonEmptyOption
   )
 
   def toConstant(l: Literal): v1_2.Literal = v1_2.Literal(

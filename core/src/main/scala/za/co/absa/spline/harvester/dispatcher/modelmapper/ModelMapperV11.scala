@@ -24,7 +24,6 @@ import scala.language.implicitConversions
 
 object ModelMapperV11 extends ModelMapper[v1_1.ExecutionPlan, v1_1.ExecutionEvent] {
 
-
   override def toDTO(plan: ExecutionPlan): Option[v1_1.ExecutionPlan] = Some(v1_1.ExecutionPlan(
     id = plan.id,
     name = Some(plan.name),
@@ -99,7 +98,7 @@ object ModelMapperV11 extends ModelMapper[v1_1.ExecutionPlan, v1_1.ExecutionEven
     childRefs = fe.childRefs.map(toAttrOrExprRef).asNonEmptyOption,
     extra = toUntypedMap(fe.extra).asNonEmptyOption,
     name = fe.name,
-    params = toUntypedMap(fe.params).asNonEmptyOption,
+    params = toUntypedMap(fe.params).asNonEmptyOption
   )
 
   def toConstant(l: Literal): v1_1.Literal = v1_1.Literal(
