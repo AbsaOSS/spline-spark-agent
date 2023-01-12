@@ -48,24 +48,24 @@ class ModelMapperV12Spec
           id = "op-0",
           name = "Write Operation",
           childIds = Seq("op-1"),
-          params = Map("param1" -> 42),
-          extra = Map("extra1" -> 42)
+          params = Map("param3" -> 42, "attId" -> AttrRef("attr-42"), "expId" -> ExprRef("expr-42")),
+          extra = Map("param3" -> 42, "attId" -> AttrRef("attr-42"), "expId" -> ExprRef("expr-42"))
         ),
         reads = Seq(ReadOperation(
           inputSources = Seq("bbb"),
           id = "op-2",
           name = "Read Operation",
           output = Seq("attr-1", "attr-2"),
-          params = Map("param2" -> 42),
-          extra = Map("extra2" -> 42)
+          params = Map("param3" -> 42, "attId" -> AttrRef("attr-42"), "expId" -> ExprRef("expr-42")),
+          extra = Map("param3" -> 42, "attId" -> AttrRef("attr-42"), "expId" -> ExprRef("expr-42"))
         )),
         other = Seq(DataOperation(
           id = "op-1",
           name = "Data Operation",
           childIds = Seq("op-2"),
           output = Seq("attr-3"),
-          params = Map("param3" -> 42),
-          extra = Map("extra3" -> 42)
+          params = Map("param3" -> 42, "attId" -> AttrRef("attr-42"), "expId" -> ExprRef("expr-42")),
+          extra = Map("param3" -> 42, "attId" -> AttrRef("attr-42"), "expId" -> ExprRef("expr-42"))
         ))
       ),
       attributes = Seq(
@@ -73,7 +73,7 @@ class ModelMapperV12Spec
           id = "attr-1",
           dataType = Some(dummyDataType),
           childRefs = Seq.empty,
-          extra = Map.empty,
+          extra = Map("param3" -> 42, "attId" -> AttrRef("attr-42"), "expId" -> ExprRef("expr-42")),
           name = "A"
         ),
         Attribute(
@@ -97,23 +97,26 @@ class ModelMapperV12Spec
             id = "e1",
             dataType = Some(dummyDataType),
             childRefs = Seq(AttrRef("a1")),
-            extra = Map("extra_e1" -> 777),
+            extra = Map("param3" -> 42, "attId" -> AttrRef("attr-42"), "expId" -> ExprRef("expr-42")),
             name = "Expr1",
-            params = Map.empty
+            params = Map("param3" -> 42, "attId" -> AttrRef("attr-42"), "expId" -> ExprRef("expr-42"))
           )
         ),
         constants = Seq(
           Literal(
             id = "c1",
             dataType = None,
-            extra = Map.empty,
+            extra = Map("param3" -> 42, "attId" -> AttrRef("attr-42"), "expId" -> ExprRef("expr-42")),
             value = "forty two"
           )
         )
       ),
       systemInfo = NameAndVersion("xxx", "777"),
       agentInfo = NameAndVersion("yyy", "777"),
-      extraInfo = Map("extra42" -> 42)
+      extraInfo = Map(
+        "param3" -> 42,
+        "nestedParam" -> Some(Seq(Map("attId" -> AttrRef("attr-42"), "expId" -> ExprRef("expr-42"))))
+      )
     )
 
     val planDTO = v1_2.ExecutionPlan(
@@ -128,24 +131,48 @@ class ModelMapperV12Spec
           id = "op-0",
           name = Some("Write Operation"),
           childIds = Seq("op-1"),
-          params = Some(Map("param1" -> 42)),
-          extra = Some(Map("extra1" -> 42))
+          params = Some(Map(
+            "param3" -> 42,
+            "attId" -> v1_2.AttrOrExprRef(Some("attr-42"), None),
+            "expId" -> v1_2.AttrOrExprRef(None, Some("expr-42"))
+          )),
+          extra = Some(Map(
+            "param3" -> 42,
+            "attId" -> v1_2.AttrOrExprRef(Some("attr-42"), None),
+            "expId" -> v1_2.AttrOrExprRef(None, Some("expr-42"))
+          ))
         ),
         reads = Some(Seq(v1_2.ReadOperation(
           inputSources = Seq("bbb"),
           id = "op-2",
           name = Some("Read Operation"),
           output = Some(Seq("attr-1", "attr-2")),
-          params = Some(Map("param2" -> 42)),
-          extra = Some(Map("extra2" -> 42))
+          params = Some(Map(
+            "param3" -> 42,
+            "attId" -> v1_2.AttrOrExprRef(Some("attr-42"), None),
+            "expId" -> v1_2.AttrOrExprRef(None, Some("expr-42"))
+          )),
+          extra = Some(Map(
+            "param3" -> 42,
+            "attId" -> v1_2.AttrOrExprRef(Some("attr-42"), None),
+            "expId" -> v1_2.AttrOrExprRef(None, Some("expr-42"))
+          )),
         ))),
         other = Some(Seq(v1_2.DataOperation(
           id = "op-1",
           name = Some("Data Operation"),
           childIds = Some(Seq("op-2")),
           output = Some(Seq("attr-3")),
-          params = Some(Map("param3" -> 42)),
-          extra = Some(Map("extra3" -> 42))
+          params = Some(Map(
+            "param3" -> 42,
+            "attId" -> v1_2.AttrOrExprRef(Some("attr-42"), None),
+            "expId" -> v1_2.AttrOrExprRef(None, Some("expr-42"))
+          )),
+          extra = Some(Map(
+            "param3" -> 42,
+            "attId" -> v1_2.AttrOrExprRef(Some("attr-42"), None),
+            "expId" -> v1_2.AttrOrExprRef(None, Some("expr-42"))
+          )),
         )))
       ),
       attributes = Some(Seq(
@@ -153,7 +180,11 @@ class ModelMapperV12Spec
           id = "attr-1",
           dataType = Some(dummyDataType),
           childRefs = None,
-          extra = None,
+          extra = Some(Map(
+            "param3" -> 42,
+            "attId" -> v1_2.AttrOrExprRef(Some("attr-42"), None),
+            "expId" -> v1_2.AttrOrExprRef(None, Some("expr-42"))
+          )),
           name = "A"
         ),
         v1_2.Attribute(
@@ -177,23 +208,41 @@ class ModelMapperV12Spec
             id = "e1",
             dataType = Some(dummyDataType),
             childRefs = Some(Seq(v1_2.AttrOrExprRef(Some("a1"), None))),
-            extra = Some(Map("extra_e1" -> 777)),
             name = "Expr1",
-            params = None
+            params = Some(Map(
+              "param3" -> 42,
+              "attId" -> v1_2.AttrOrExprRef(Some("attr-42"), None),
+              "expId" -> v1_2.AttrOrExprRef(None, Some("expr-42"))
+            )),
+            extra = Some(Map(
+              "param3" -> 42,
+              "attId" -> v1_2.AttrOrExprRef(Some("attr-42"), None),
+              "expId" -> v1_2.AttrOrExprRef(None, Some("expr-42"))
+            )),
           )
         )),
         constants = Some(Seq(
           v1_2.Literal(
             id = "c1",
             dataType = None,
-            extra = None,
+            extra = Some(Map(
+              "param3" -> 42,
+              "attId" -> v1_2.AttrOrExprRef(Some("attr-42"), None),
+              "expId" -> v1_2.AttrOrExprRef(None, Some("expr-42"))
+            )),
             value = "forty two"
           )
         ))
       )),
       systemInfo = v1_2.NameAndVersion("xxx", "777"),
       agentInfo = Some(v1_2.NameAndVersion("yyy", "777")),
-      extraInfo = Some(Map("extra42" -> 42))
+      extraInfo = Some(Map(
+        "param3" -> 42,
+        "nestedParam" -> Some(Seq(Map(
+          "attId" -> v1_2.AttrOrExprRef(Some("attr-42"), None),
+          "expId" -> v1_2.AttrOrExprRef(None, Some("expr-42"))
+        )))
+      ))
     )
 
     mapper.toDTO(planEntity) shouldEqual Some(planDTO)
@@ -207,8 +256,11 @@ class ModelMapperV12Spec
         labels = Map("lbl1" -> Seq("a", "b")),
         timestamp = 123456789,
         durationNs = Some(555),
-        error = None,
-        extra = Map("extra1" -> 42)
+        error = error,
+        extra = Map(
+          "param3" -> 42,
+          "nestedParam" -> Some(Seq(Map("attId" -> AttrRef("attr-42"), "expId" -> ExprRef("expr-42"))))
+        )
       )
 
       val eventDTO = v1_2.ExecutionEvent(
@@ -217,8 +269,14 @@ class ModelMapperV12Spec
         labels = Some(Map("lbl1" -> Seq("a", "b"))),
         timestamp = 123456789,
         durationNs = Some(555),
-        error = None,
-        extra = Some(Map("extra1" -> 42))
+        error = error,
+        extra = Some(Map(
+          "param3" -> 42,
+          "nestedParam" -> Some(Seq(Map(
+            "attId" -> v1_2.AttrOrExprRef(Some("attr-42"), None),
+            "expId" -> v1_2.AttrOrExprRef(None, Some("expr-42"))
+          )))
+        ))
       )
 
       mapper.toDTO(eventEntity) shouldEqual Some(eventDTO)
