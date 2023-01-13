@@ -33,4 +33,17 @@ object ModelMapper {
     case ProducerApiVersion.V1 => ModelMapperV10
     case _ => throw new UnsupportedOperationException(s"API Version:'$version' is not supported!")
   }
+
+  def toUntypedMap(toAttrOrExprRef: (AttrOrExprRef => Any), map: Map[String, Any]): Map[String, Any] = {
+    def mapValue(value: Any): Any = value match {
+      case aoe: AttrOrExprRef => toAttrOrExprRef(aoe)
+      case s: Seq[_] => s.map(mapValue)
+      case m: Map[_, _] => m.transform((k, v) => mapValue(v))
+      case o: Option[_] => o.map(mapValue)
+      case other => other
+    }
+
+    map.transform((k, v) => mapValue(v))
+  }
+
 }

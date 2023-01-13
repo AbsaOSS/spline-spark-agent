@@ -83,9 +83,8 @@ object ModelMapperV11 extends ModelMapper[v1_1.ExecutionPlan, v1_1.ExecutionEven
     case ExprRef(exprId) => v1_1.AttrOrExprRef(None, Some(exprId))
   }
 
-  val untypedMapConverter = new UntypedMapConverter(toAttrOrExprRef)
-
-  def toUntypedMap(map: Map[String, Any]): Map[String, Any] = untypedMapConverter.toUntypedMap(map)
+  def toUntypedMap(map: Map[String, Any]): Map[String, Any] =
+    ModelMapper.toUntypedMap(toAttrOrExprRef, map)
 
   def toExpressions(expressions: Expressions): v1_1.Expressions = v1_1.Expressions(
     functions = expressions.functions.map(toFunctionalExpression).asNonEmptyOption,
@@ -109,7 +108,8 @@ object ModelMapperV11 extends ModelMapper[v1_1.ExecutionPlan, v1_1.ExecutionEven
   )
 
   def toNameAndVersion(nav: NameAndVersion): v1_1.NameAndVersion = v1_1.NameAndVersion(
-    name = nav.name, version = nav.version
+    name = nav.name,
+    version = nav.version
   )
 
   override def toDTO(event: ExecutionEvent): Option[v1_1.ExecutionEvent] = PartialFunction.condOpt(event) {
