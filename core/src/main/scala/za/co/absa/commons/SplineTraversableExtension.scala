@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 ABSA Group Limited
+ * Copyright 2023 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.dispatcher.modelmapper
+package za.co.absa.commons
 
-import scala.language.implicitConversions
+object SplineTraversableExtension {
+  implicit class TraversableOps[A <: Traversable[_]](val xs: A) extends AnyVal {
 
-object ImplicitMappingConversions {
-  implicit def stringToOption(str: String): Option[String] = Option(str)
+    /**
+     * Returns None if Traversable is null or is empty, otherwise returns Some(traversable).
+     */
+    def asNonEmptyOption: Option[A] = if (xs == null || xs.isEmpty) None else Some(xs)
 
-  implicit def seqToOption[T](seq: Seq[T]): Option[Seq[T]] = {
-    if (seq.isEmpty) {
-      None
-    } else {
-      Some(seq)
-    }
   }
-
-  implicit def mapToOption[K, V](map: Map[K, V]): Option[Map[K, V]] =
-    if (map.isEmpty) {
-      None
-    } else {
-      Some(map)
-    }
 }
