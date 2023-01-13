@@ -76,11 +76,6 @@
             <artifactId>fastparse_${scala.binary.version}</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.bfil</groupId>
-            <artifactId>automapper_${scala.binary.version}</artifactId>
-            <version>${automapper.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>1.33</version>
