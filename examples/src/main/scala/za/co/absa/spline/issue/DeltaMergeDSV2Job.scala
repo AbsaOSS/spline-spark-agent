@@ -47,17 +47,30 @@ object DeltaMergeDSV2Job extends SparkApp(
   spark.sql("CREATE TABLE dsv2.fooUpdate ( ID Int, NAME String ) USING DELTA")
   spark.sql("INSERT INTO dsv2.fooUpdate VALUES (1014, 'Lodz'), (1003, 'Prague')")
 
+  spark.sql("CREATE TABLE dsv2.barUpdate ( ID Int, NAME String ) USING DELTA")
+  spark.sql("INSERT INTO dsv2.barUpdate VALUES (4242, 'Paris'), (3342, 'Bordeaux')")
+
+
+  spark.sql(
+    """
+      | CREATE OR REPLACE VIEW tempview AS
+      |   SELECT * FROM dsv2.fooUpdate
+      |   UNION
+      |   SELECT * FROM dsv2.barUpdate
+      |""".stripMargin
+  )
+
   spark.sql(
     """
       | MERGE INTO dsv2.foo
-      | USING dsv2.fooUpdate
-      | ON dsv2.foo.ID = dsv2.fooUpdate.ID
+      | USING tempview AS foobar
+      | ON dsv2.foo.ID = foobar.ID
       | WHEN MATCHED THEN
       |   UPDATE SET
-      |     NAME = dsv2.fooUpdate.NAME
+      |     NAME = foobar.NAME
       | WHEN NOT MATCHED
       |  THEN INSERT (ID, NAME)
-      |  VALUES (dsv2.fooUpdate.ID, dsv2.fooUpdate.NAME)
+      |  VALUES (foobar.ID, foobar.NAME)
       |""".stripMargin
   )
 }
