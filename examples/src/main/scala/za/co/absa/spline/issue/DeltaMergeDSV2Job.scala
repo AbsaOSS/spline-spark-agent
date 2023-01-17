@@ -35,7 +35,7 @@ object DeltaMergeDSV2Job extends SparkApp(
   // Initializing library to hook up to Apache Spark
   spark.enableLineageTracking()
 
-  spark.sql(s"CREATE DATABASE dsv2 LOCATION '$path'")
+  spark.sql("CREATE DATABASE dsv2 LOCATION '$path'")
 
   spark.sql("CREATE TABLE dsv2.foo ( ID int, NAME string ) USING DELTA")
   spark.sql("INSERT INTO dsv2.foo VALUES (1014, 'Warsaw'), (1002, 'Corte')")
@@ -46,7 +46,7 @@ object DeltaMergeDSV2Job extends SparkApp(
   spark.sql("CREATE TABLE dsv2.barUpdate ( ID Int, NAME String ) USING DELTA")
   spark.sql("INSERT INTO dsv2.barUpdate VALUES (4242, 'Paris'), (3342, 'Bordeaux')")
 
-  spark.sql(s"UPDATE dsv2.foo SET NAME = 'Korok' WHERE ID == 1002")
+  spark.sql("UPDATE dsv2.foo SET NAME = 'Korok' WHERE ID == 1002")
 
   spark.sql(
     """
@@ -71,5 +71,5 @@ object DeltaMergeDSV2Job extends SparkApp(
       |""".stripMargin
   )
 
-  spark.sql(s"DELETE FROM dsv2.foo WHERE ID == 1014")
+  spark.sql("DELETE FROM dsv2.foo WHERE ID == 1014")
 }

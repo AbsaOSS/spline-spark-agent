@@ -80,7 +80,7 @@ class DeltaPlugin(
     val path = Try {
       val targetFileIndex = extractValue[AnyRef](command, fieldName)
       extractValue[org.apache.hadoop.fs.Path](targetFileIndex, "path")
-    }.getOrElse {
+    } getOrElse {
       val deltaLog = extractValue[AnyRef](command, "deltaLog")
       extractValue[AnyRef](deltaLog, "dataPath")
     }

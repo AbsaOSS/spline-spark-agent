@@ -53,7 +53,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
           for {
             (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
-              spark.sql(s"CREATE TABLE foo (ID int, NAME string) USING delta")
+              spark.sql("CREATE TABLE foo (ID int, NAME string) USING delta")
               testData.write.format("delta").mode("append").saveAsTable("foo")
             }
           } yield {
@@ -82,7 +82,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
           for {
             (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
-              spark.sql(s"CREATE TABLE foo (ID int, NAME string) USING delta")
+              spark.sql("CREATE TABLE foo (ID int, NAME string) USING delta")
               testData.write.format("delta").mode("overwrite").insertInto("foo")
             }
           } yield {
@@ -115,7 +115,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
           for {
             (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
-              spark.sql(s"CREATE TABLE foo (ID int, NAME string) USING delta PARTITIONED BY (ID)")
+              spark.sql("CREATE TABLE foo (ID int, NAME string) USING delta PARTITIONED BY (ID)")
               spark.sql(
                 """
                   |INSERT OVERWRITE foo PARTITION (ID = 222222)
@@ -157,7 +157,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
           for {
             (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
-              spark.sql(s"CREATE TABLE foo (ID int, NAME string) USING delta PARTITIONED BY (NAME)")
+              spark.sql("CREATE TABLE foo (ID int, NAME string) USING delta PARTITIONED BY (NAME)")
               spark.sql(
                 """
                   |INSERT OVERWRITE foo PARTITION (NAME)
@@ -218,7 +218,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
           for {
             (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
-              spark.sql(s"CREATE TABLE foo (toBeOrNotToBe boolean) USING delta")
+              spark.sql("CREATE TABLE foo (toBeOrNotToBe boolean) USING delta")
               testData.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable("foo")
             }
           } yield {
@@ -250,7 +250,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
               testData.write.format("delta").saveAsTable("foo")
             }
             (plan2, Seq(event2)) <- lineageCaptor.lineageOf {
-              spark.sql(s"DELETE FROM foo WHERE ID == 1014")
+              spark.sql("DELETE FROM foo WHERE ID == 1014")
             }
           } yield {
             plan2.id.value shouldEqual event2.planId
@@ -283,7 +283,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
               testData.write.format("delta").saveAsTable("foo")
             }
             (plan2, Seq(event2)) <- lineageCaptor.lineageOf {
-              spark.sql(s"UPDATE foo SET NAME = 'Korok' WHERE ID == 1002")
+              spark.sql("UPDATE foo SET NAME = 'Korok' WHERE ID == 1002")
             }
           } yield {
             plan2.id.value shouldEqual event2.planId
