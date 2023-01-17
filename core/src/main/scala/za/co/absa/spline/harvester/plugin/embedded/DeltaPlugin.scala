@@ -30,6 +30,7 @@ import za.co.absa.spline.harvester.qualifier.PathQualifier
 
 import javax.annotation.Priority
 import scala.language.reflectiveCalls
+import scala.util.Try
 
 @Priority(Precedence.Normal)
 class DeltaPlugin(
@@ -76,8 +77,13 @@ class DeltaPlugin(
   }
 
   private def extractPath(command: AnyRef, fieldName: String): String = {
-    val targetFileIndex = extractValue[AnyRef](command, fieldName)
-    val path = extractValue[org.apache.hadoop.fs.Path](targetFileIndex, "path")
+    val path = Try {
+      val targetFileIndex = extractValue[AnyRef](command, fieldName)
+      extractValue[org.apache.hadoop.fs.Path](targetFileIndex, "path")
+    }.getOrElse {
+      val deltaLog = extractValue[AnyRef](command, "deltaLog")
+      extractValue[AnyRef](deltaLog, "dataPath")
+    }
     pathQualifier.qualify(path.toString)
   }
 
