@@ -40,7 +40,7 @@ class LiteralConverter(
       id = idGen.nextId(),
       dataType = dataTypeConverter
         .convert(lit.dataType, lit.nullable)
-        .asOption
+        .toOption
         .map(_.id),
       extra = createExtra(lit, "expr.Literal"),
       value = dataConverter.convert((lit.value, lit.dataType))

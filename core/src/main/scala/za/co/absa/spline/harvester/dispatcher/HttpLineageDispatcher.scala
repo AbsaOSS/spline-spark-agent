@@ -147,13 +147,13 @@ object HttpLineageDispatcher extends Logging {
     val serverApiVersions =
       serverHeaders(SplineHeaders.ApiVersion)
         .map(Version.asSimple)
-        .asOption
+        .toNonEmptyOption
         .getOrElse(Seq(ProducerApiVersion.Default))
 
     val serverApiLTSVersions =
       serverHeaders(SplineHeaders.ApiLTSVersion)
         .map(Version.asSimple)
-        .asOption
+        .toNonEmptyOption
         .getOrElse(serverApiVersions)
 
     val apiCompatManager = ProducerApiCompatibilityManager(serverApiVersions, serverApiLTSVersions)

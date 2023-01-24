@@ -50,7 +50,7 @@ class UnionNodeBuilder
     FunctionalExpression(
       id = idGenerators.expressionIdGenerator.nextId(),
       dataType = dataTypeConverter
-        .convert(outputSparkAttribute.dataType, outputSparkAttribute.nullable).id.asOption,
+        .convert(outputSparkAttribute.dataType, outputSparkAttribute.nullable).id.toOption,
       childRefs = inputSplineAttributes.map(att => AttrRef(att.id)),
       extra = Map(CommonExtras.Synthetic -> true),
       name = Names.Union,
