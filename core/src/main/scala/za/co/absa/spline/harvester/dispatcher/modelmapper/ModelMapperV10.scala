@@ -197,7 +197,7 @@ object ModelMapperV10 extends ModelMapper[v1_0.ExecutionPlan, v1_0.ExecutionEven
       plan.id,
       toV1Operations(plan.operations),
       toV1SystemInfo(plan.systemInfo),
-      toV1AgentInfo(plan.agentInfo).asOption,
+      toV1AgentInfo(plan.agentInfo).toOption,
       Some(plan.extraInfo
         + (FieldsV1.ExecutionPlanExtra.Attributes -> plan.attributes.map(toV1Attribute))
         + (FieldsV1.ExecutionPlanExtra.AppName -> plan.name)

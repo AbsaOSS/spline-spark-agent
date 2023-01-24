@@ -47,8 +47,8 @@ object ValueDecomposer extends ValueDecomposer {
     case (b: Boolean, _) => Some(b)
     case (s: String, _) => Some(s)
     case (opt: Option[_], arg) => opt.flatMap(recursion(_, arg))
-    case (map: Map[_, _], arg) => (for ((k, v) <- map; r <- recursion(v, arg)) yield k.toString -> r).asOption
-    case (seq: Traversable[_], arg) => seq.map(item => recursion(item, arg).orNull).toVector.asOption
+    case (map: Map[_, _], arg) => (for ((k, v) <- map; r <- recursion(v, arg)) yield k.toString -> r).toNonEmptyOption
+    case (seq: Traversable[_], arg) => seq.map(item => recursion(item, arg).orNull).toVector.toNonEmptyOption
     case (ModuleClassSymbolExtractor(symbol), _) => Some(symbol.name.toString)
     case (x: Any, _) => Some(x.toString)
   }
