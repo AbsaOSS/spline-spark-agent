@@ -31,6 +31,16 @@
     <properties>
         <timestamp>${maven.build.timestamp}</timestamp>
         <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssX</maven.build.timestamp.format>
+
+        <!--
+            The Core module is compiled against Spark 2.4.
+            To use correct dependencies (regardless of which Spark profile is currently activated),
+            the following properties must be aligned with ones from the Spark-2.4 profile.
+        -->
+
+        <spark.version>${spark-24.version}</spark.version>
+        <json4s.version>${json4s-35.version}</json4s.version>
+        <cassandra-connector.version>${cassandra-connector-24.version}</cassandra-connector.version>
     </properties>
 
     <dependencies>
