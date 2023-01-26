@@ -17,12 +17,15 @@
 
 package za.co.absa.spline
 
+import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode}
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.TempDirectory
+import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
+import za.co.absa.commons.version.Version._
 import za.co.absa.spline.test.LineageWalker
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{JDBCFixture, SparkDatabaseFixture, SparkFixture}
@@ -41,7 +44,7 @@ class RddSpec extends AsyncFlatSpec
   private val inputPathURI = baseTempDir.path.toUri
   private val tempPath = TempDirectory().deleteOnExit().asString
 
-  it should "support parquet read" in
+  it should "support parquet read" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.4.0") in
     withNewSparkSession { implicit spark =>
       withLineageTracking { lineageCaptor =>
         import spark.implicits._
@@ -77,7 +80,7 @@ class RddSpec extends AsyncFlatSpec
       }
     }
 
-  it should "support json read" in
+  it should "support json read" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.4.0") in
     withNewSparkSession { implicit spark =>
       withLineageTracking { lineageCaptor =>
         for {
@@ -101,7 +104,7 @@ class RddSpec extends AsyncFlatSpec
       }
     }
 
-  it should "support csv read" in
+  it should "support csv read" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.4.0") in
     withNewSparkSession { implicit spark =>
       withLineageTracking { lineageCaptor =>
         for {
@@ -127,8 +130,7 @@ class RddSpec extends AsyncFlatSpec
     }
 
 
-
-  it should "support rdd json read" in
+  it should "support rdd json read" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.4.0") in
     withNewSparkSession { implicit spark =>
       withLineageTracking { lineageCaptor =>
         for {
@@ -150,7 +152,7 @@ class RddSpec extends AsyncFlatSpec
       }
     }
 
-  it should "support rdd direct data" in
+  it should "support rdd direct data" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.4.0") in
     withNewSparkSession { implicit spark =>
       withLineageTracking { lineageCaptor =>
         for {
@@ -182,7 +184,7 @@ class RddSpec extends AsyncFlatSpec
       }
     }
 
-  it should "support JDBC as a source" in
+  it should "support JDBC as a source" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.4.0") in
     withNewSparkSession { implicit spark =>
       withLineageTracking { captor =>
         val tableName = s"someTable${System.currentTimeMillis()}"
