@@ -16,15 +16,16 @@
 
 package za.co.absa.spline.harvester.builder.plan
 
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import za.co.absa.commons.reflect.ReflectionUtils.extractValue
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.ModelConstants.CommonExtras
-import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
-import za.co.absa.spline.harvester.plugin.embedded.DeltaPlugin
+import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter, OperationParamsConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
-import za.co.absa.spline.producer.model.{AttrRef, Attribute, FunctionalExpression}
+import za.co.absa.spline.producer.model.{AttrRef, Attribute, DataOperation, FunctionalExpression}
 
 class MergeIntoNodeBuilder
-(override val logicalPlan: DeltaPlugin.SyntheticDeltaMerge)
+(override val logicalPlan: LogicalPlan)
   (idGenerators: IdGeneratorsBundle, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
   extends GenericPlanNodeBuilder(logicalPlan)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
 
@@ -45,5 +46,26 @@ class MergeIntoNodeBuilder
       extra = Map(CommonExtras.Synthetic -> true),
       name = attr1.name
     )
+  }
+
+  override def build(): DataOperation = {
+
+    val condition = extractValue[Any](logicalPlan, "condition").toString
+    val matchedClauses = extractValue[Seq[Any]](logicalPlan, "matchedClauses").map(_.toString)
+    val notMatchedClauses = extractValue[Seq[Any]](logicalPlan, "notMatchedClauses").map(_.toString)
+
+    val dop = DataOperation(
+      id = operationId,
+      name = logicalPlan.nodeName,
+      childIds = childIds,
+      output = outputAttributes.map(_.id),
+      params = Map(
+        "condition" -> condition,
+        "matchedClauses" -> matchedClauses,
+        "notMatchedClauses" -> notMatchedClauses),
+      extra = Map.empty
+    )
+
+    postProcessor.process(dop)
   }
 }

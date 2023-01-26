@@ -53,7 +53,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
           for {
             (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
-              spark.sql(s"CREATE TABLE foo (ID int, NAME string) USING delta")
+              spark.sql("CREATE TABLE foo (ID int, NAME string) USING delta")
               testData.write.format("delta").mode("append").saveAsTable("foo")
             }
           } yield {
@@ -82,7 +82,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
           for {
             (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
-              spark.sql(s"CREATE TABLE foo (ID int, NAME string) USING delta")
+              spark.sql("CREATE TABLE foo (ID int, NAME string) USING delta")
               testData.write.format("delta").mode("overwrite").insertInto("foo")
             }
           } yield {
@@ -115,7 +115,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
           for {
             (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
-              spark.sql(s"CREATE TABLE foo (ID int, NAME string) USING delta PARTITIONED BY (ID)")
+              spark.sql("CREATE TABLE foo (ID int, NAME string) USING delta PARTITIONED BY (ID)")
               spark.sql(
                 """
                   |INSERT OVERWRITE foo PARTITION (ID = 222222)
@@ -157,7 +157,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
           for {
             (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
-              spark.sql(s"CREATE TABLE foo (ID int, NAME string) USING delta PARTITIONED BY (NAME)")
+              spark.sql("CREATE TABLE foo (ID int, NAME string) USING delta PARTITIONED BY (NAME)")
               spark.sql(
                 """
                   |INSERT OVERWRITE foo PARTITION (NAME)
@@ -218,7 +218,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
           for {
             (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
-              spark.sql(s"CREATE TABLE foo (toBeOrNotToBe boolean) USING delta")
+              spark.sql("CREATE TABLE foo (toBeOrNotToBe boolean) USING delta")
               testData.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable("foo")
             }
           } yield {
@@ -250,7 +250,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
               testData.write.format("delta").saveAsTable("foo")
             }
             (plan2, Seq(event2)) <- lineageCaptor.lineageOf {
-              spark.sql(s"DELETE FROM foo WHERE ID == 1014")
+              spark.sql("DELETE FROM foo WHERE ID == 1014")
             }
           } yield {
             plan2.id.value shouldEqual event2.planId
@@ -283,7 +283,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
               testData.write.format("delta").saveAsTable("foo")
             }
             (plan2, Seq(event2)) <- lineageCaptor.lineageOf {
-              spark.sql(s"UPDATE foo SET NAME = 'Korok' WHERE ID == 1002")
+              spark.sql("UPDATE foo SET NAME = 'Korok' WHERE ID == 1002")
             }
           } yield {
             plan2.id.value shouldEqual event2.planId
@@ -307,34 +307,40 @@ class DeltaDSV2Spec extends AsyncFlatSpec
     ) { implicit spark =>
       withLineageTracking { lineageCaptor =>
         withDatabase("testDB") {
-          val testData = {
-            import spark.implicits._
-            Seq((1014, "Warsaw"), (1002, "Corte")).toDF("ID", "NAME")
-          }
-          val updateData = {
-            import spark.implicits._
-            Seq((1014, "Lodz"), (1003, "Prague")).toDF("ID", "NAME")
-          }
-
           for {
             (_, _) <- lineageCaptor.lineageOf {
-              testData.write.format("delta").saveAsTable("foo")
+              spark.sql("CREATE TABLE foo ( ID int, NAME string ) USING DELTA")
+              spark.sql("INSERT INTO foo VALUES (1014, 'Warsaw'), (1002, 'Corte')")
             }
             (_, _) <- lineageCaptor.lineageOf {
-              updateData.write.format("delta").saveAsTable("fooUpdate")
+              spark.sql("CREATE TABLE fooUpdate ( ID Int, NAME String ) USING DELTA")
+              spark.sql("INSERT INTO fooUpdate VALUES (1014, 'Lodz'), (1003, 'Prague')")
+            }
+            (_, _) <- lineageCaptor.lineageOf {
+              spark.sql("CREATE TABLE barUpdate ( ID Int, NAME String ) USING DELTA")
+              spark.sql("INSERT INTO barUpdate VALUES (4242, 'Paris'), (3342, 'Bordeaux')")
             }
             (plan, Seq(event)) <- lineageCaptor.lineageOf {
               spark.sql(
                 """
+                  | CREATE OR REPLACE VIEW tempview AS
+                  |   SELECT * FROM fooUpdate
+                  |   UNION
+                  |   SELECT * FROM barUpdate
+                  |""".stripMargin
+              )
+
+              spark.sql(
+                """
                   | MERGE INTO foo
-                  | USING fooUpdate
-                  | ON foo.ID = fooUpdate.ID
+                  | USING tempview AS foobar
+                  | ON foo.ID = foobar.ID
                   | WHEN MATCHED THEN
                   |   UPDATE SET
-                  |     NAME = fooUpdate.NAME
+                  |     NAME = foobar.NAME
                   | WHEN NOT MATCHED
                   |  THEN INSERT (ID, NAME)
-                  |  VALUES (fooUpdate.ID, fooUpdate.NAME)
+                  |  VALUES (foobar.ID, foobar.NAME)
                   |""".stripMargin
               )
             }
@@ -347,18 +353,22 @@ class DeltaDSV2Spec extends AsyncFlatSpec
             plan.operations.write.outputSource should endWith("/testdb.db/foo")
 
             val mergeOp = plan.operations.write.childOperation
-            mergeOp.params("condition").asInstanceOf[Option[String]].value should include("ID")
+            mergeOp.params("condition").asInstanceOf[String] should include("ID")
 
-            val reads = mergeOp.childOperations.map(_.asInstanceOf[ReadOperation])
+            val reads =  plan.operations.reads
 
             val mergeOutput = mergeOp.outputAttributes
             val read0Output = reads(0).outputAttributes
             val read1Output = reads(1).outputAttributes
+            val read2Output = reads(2).outputAttributes
 
             mergeOutput(0) should dependOn(read0Output(0))
             mergeOutput(1) should dependOn(read0Output(1))
             mergeOutput(0) should dependOn(read1Output(0))
             mergeOutput(1) should dependOn(read1Output(1))
+            mergeOutput(0) should dependOn(read2Output(0))
+            mergeOutput(1) should dependOn(read2Output(1))
+
           }
         }
       }
