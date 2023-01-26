@@ -16,8 +16,8 @@
 
 package za.co.absa.spline.harvester.plugin.embedded
 
-import org.apache.spark.sql.catalyst.expressions.{Attribute, Expression}
-import org.apache.spark.sql.catalyst.plans.logical.{BinaryNode, LogicalPlan}
+import org.apache.spark.sql.catalyst.expressions.Expression
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.{SaveMode, SparkSession}
 import za.co.absa.commons.reflect.ReflectionUtils.extractValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
@@ -61,19 +61,10 @@ class DeltaPlugin(
       WriteNodeInfo(sourceId, SaveMode.Overwrite, target, params)
 
     case (_, `_: MergeIntoCommand`(command)) =>
-      val target = extractValue[LogicalPlan](command, "target")
-      val source = extractValue[LogicalPlan](command, "source")
-
       val qualifiedPath = extractPath(command, "targetFileIndex")
       val targetId = SourceIdentifier(Some("delta"), qualifiedPath)
 
-      val condition = extractValue[Expression](command, "condition").toString
-      val matchedClauses = extractValue[Seq[Any]](command, "matchedClauses").map(_.toString)
-      val notMatchedClauses = extractValue[Seq[Any]](command, "notMatchedClauses").map(_.toString)
-
-      val merge = SyntheticDeltaMerge(target.output, source, target, condition, matchedClauses, notMatchedClauses)
-
-      WriteNodeInfo(targetId, SaveMode.Overwrite, merge, Map.empty[String, Any])
+      WriteNodeInfo(targetId, SaveMode.Overwrite, command, Map.empty[String, Any])
   }
 
   private def extractPath(command: AnyRef, fieldName: String): String = {
@@ -91,26 +82,13 @@ class DeltaPlugin(
 
 object DeltaPlugin {
 
-  case class SyntheticDeltaMerge(
-    output: Seq[Attribute],
-    left: LogicalPlan,
-    right: LogicalPlan,
-    condition: String,
-    matchedClauses: Seq[String],
-    notMatchedClauses: Seq[String]
-  ) extends BinaryNode {
-
-    protected def withNewChildrenInternal(newLeft: LogicalPlan, newRight: LogicalPlan): LogicalPlan =
-      throw new UnsupportedOperationException()
-  }
-
   private object `_: DeleteCommand` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.delta.commands.DeleteCommand")
 
   private object `_: UpdateCommand` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.delta.commands.UpdateCommand")
 
-  private object `_: MergeIntoCommand` extends SafeTypeMatchingExtractor[AnyRef](
+  object `_: MergeIntoCommand` extends SafeTypeMatchingExtractor[LogicalPlan](
     "org.apache.spark.sql.delta.commands.MergeIntoCommand")
 
 }

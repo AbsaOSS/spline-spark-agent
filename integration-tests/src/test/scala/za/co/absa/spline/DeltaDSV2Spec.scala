@@ -353,7 +353,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
             plan.operations.write.outputSource should endWith("/testdb.db/foo")
 
             val mergeOp = plan.operations.write.childOperation
-            mergeOp.params("condition").asInstanceOf[Option[String]].value should include("ID")
+            mergeOp.params("condition").asInstanceOf[String] should include("ID")
 
             val reads =  plan.operations.reads
 
