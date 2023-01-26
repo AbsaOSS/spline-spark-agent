@@ -40,7 +40,7 @@ class OpenLineageModelMapper(splineModelMapper: ModelMapper[_, _], apiVersion: V
     val startTime = completeTime.minus(duration)
 
     val eventStart = RunEvent(
-      eventType = EventType.Start.asOption,
+      eventType = EventType.Start.toOption,
       eventTime = java.util.Date.from(startTime),
       run = Run(runId = runId, facets = None),
       job = job,
@@ -51,7 +51,7 @@ class OpenLineageModelMapper(splineModelMapper: ModelMapper[_, _], apiVersion: V
     )
 
     val eventCompleted = RunEvent(
-      eventType = event.error.map(_ => EventType.Fail).orElse(EventType.Complete.asOption),
+      eventType = event.error.map(_ => EventType.Fail).orElse(EventType.Complete.toOption),
       eventTime = java.util.Date.from(completeTime),
       run = Run(runId = runId, facets = Some(Map(
         SplinePlan -> createSplinePayloadFacet(splineModelMapper.toDTO(plan), JsonSchemaURLs.planSchemaForAPIVersion(apiVersion)),
@@ -60,7 +60,7 @@ class OpenLineageModelMapper(splineModelMapper: ModelMapper[_, _], apiVersion: V
       job = job,
       inputs = plan.operations.reads
         .flatMap(ro => ro.inputSources.map(createInputDataset))
-        .asOption,
+        .toNonEmptyOption,
       outputs = Some(Seq(createOutputDataset(plan.operations.write.outputSource))),
       producer = Producer,
       schemaURL = SchemaUrl

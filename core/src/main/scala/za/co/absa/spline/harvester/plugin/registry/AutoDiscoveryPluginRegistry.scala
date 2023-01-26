@@ -23,7 +23,7 @@ import org.apache.spark.internal.Logging
 import za.co.absa.commons.lang.ARM
 import za.co.absa.spline.harvester.plugin.Plugin
 import za.co.absa.spline.harvester.plugin.Plugin.Precedence
-import za.co.absa.spline.harvester.plugin.registry.AutoDiscoveryPluginRegistry.{PluginClasses, getOnlyOrThrow}
+import za.co.absa.spline.harvester.plugin.registry.AutoDiscoveryPluginRegistry.{EnabledByDefault, EnabledConfProperty, PluginClasses, getOnlyOrThrow}
 
 import javax.annotation.Priority
 import scala.collection.JavaConverters._
@@ -48,7 +48,7 @@ class AutoDiscoveryPluginRegistry(
   }
 
   private val allPlugins: Seq[Plugin] =
-    for (pc <- PluginClasses) yield {
+    for (pc <- PluginClasses if isPluginEnabled(pc)) yield {
       logInfo(s"Loading plugin: $pc")
       instantiatePlugin(pc)
         .recover({ case NonFatal(e) => throw new RuntimeException(s"Plugin instantiation failure: $pc", e) })
@@ -62,7 +62,7 @@ class AutoDiscoveryPluginRegistry(
 
   private def instantiatePlugin(pluginClass: Class[_]): Try[Plugin] = Try {
     val constrs = pluginClass.getConstructors
-    val constr = getOnlyOrThrow(constrs, s"Cannot instantiate plugin with multiple constructors: ${constrs.mkString(", ")}")
+    val constr = getOnlyOrThrow(constrs, s"Plugin class must have a single public constructor: ${constrs.mkString(", ")}")
     val args = constr.getParameterTypes.map {
       case ct if classOf[Configuration].isAssignableFrom(ct) =>
         conf.subset(pluginClass.getName)
@@ -73,9 +73,21 @@ class AutoDiscoveryPluginRegistry(
     constr.newInstance(args: _*).asInstanceOf[Plugin]
   }
 
+  private def isPluginEnabled(pc: Class[Plugin]): Boolean = {
+    val pluginConf = conf.subset(pc.getName)
+    val isEnabled = pluginConf.getBoolean(EnabledConfProperty, EnabledByDefault)
+    if (!isEnabled) {
+      logWarning(s"Plugin ${pc.getName} is disabled in the configuration.")
+    }
+    isEnabled
+  }
+
 }
 
 object AutoDiscoveryPluginRegistry extends Logging {
+
+  private val EnabledConfProperty = "enabled"
+  private val EnabledByDefault = true
 
   private val PluginClasses: Seq[Class[Plugin]] = {
     logDebug("Scanning for plugins")

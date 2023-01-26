@@ -114,6 +114,13 @@
         <delta-20.version>2.0.0</delta-20.version>
         <delta-21.version>2.1.0</delta-21.version>
 
+        <!-- Cassandra -->
+        <cassandra-connector.version>${cassandra-connector-24.version}</cassandra-connector.version>
+        <cassandra-connector-24.version>2.4.2</cassandra-connector-24.version>
+        <cassandra-connector-30.version>3.0.1</cassandra-connector-30.version>
+        <cassandra-connector-31.version>3.1.0</cassandra-connector-31.version>
+        <cassandra-connector-32.version>3.2.0</cassandra-connector-32.version>
+
         <!-- Cross build properties -->
 
         <default.scala.binary.version>2.12</default.scala.binary.version>
@@ -392,6 +399,13 @@
 
             <dependency>
                 <groupId>org.apache.spark</groupId>
+                <artifactId>spark-parent_${scala.binary.version}</artifactId>
+                <version>${spark.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.spark</groupId>
                 <artifactId>spark-core_${scala.binary.version}</artifactId>
                 <version>${spark.version}</version>
             </dependency>
@@ -428,7 +442,7 @@
             <dependency>
                 <groupId>com.datastax.spark</groupId>
                 <artifactId>spark-cassandra-connector_${scala.binary.version}</artifactId>
-                <version>2.4.2</version>
+                <version>${cassandra-connector.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.mongodb.spark</groupId>
@@ -672,13 +686,6 @@
                         <artifactId>antlr4-runtime</artifactId>
                         <version>4.7</version>
                     </dependency>
-                    <dependency>
-                        <groupId>org.apache.spark</groupId>
-                        <artifactId>spark-parent_${scala.binary.version}</artifactId>
-                        <version>${spark.version}</version>
-                        <type>pom</type>
-                        <scope>import</scope>
-                    </dependency>
                 </dependencies>
             </dependencyManagement>
         </profile>
@@ -712,13 +719,6 @@
                             </exclusion>
                         </exclusions>
                     </dependency>
-                    <dependency>
-                        <groupId>org.apache.spark</groupId>
-                        <artifactId>spark-parent_${scala.binary.version}</artifactId>
-                        <version>${spark.version}</version>
-                        <type>pom</type>
-                        <scope>import</scope>
-                    </dependency>
                 </dependencies>
             </dependencyManagement>
         </profile>
@@ -729,18 +729,8 @@
                 <spark.version>${spark-24.version}</spark.version>
                 <json4s.version>${json4s-35.version}</json4s.version>
                 <delta.version>${delta-03.version}</delta.version>
+                <cassandra-connector.version>${cassandra-connector-24.version}</cassandra-connector.version>
             </properties>
-            <dependencyManagement>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.spark</groupId>
-                        <artifactId>spark-parent_${scala.binary.version}</artifactId>
-                        <version>${spark.version}</version>
-                        <type>pom</type>
-                        <scope>import</scope>
-                    </dependency>
-                </dependencies>
-            </dependencyManagement>
         </profile>
 
         <profile>
@@ -749,23 +739,8 @@
                 <spark.version>${spark-30.version}</spark.version>
                 <json4s.version>${json4s-36.version}</json4s.version>
                 <delta.version>${delta-08.version}</delta.version>
+                <cassandra-connector.version>${cassandra-connector-30.version}</cassandra-connector.version>
             </properties>
-            <dependencyManagement>
-                <dependencies>
-                    <dependency>
-                        <groupId>com.datastax.spark</groupId>
-                        <artifactId>spark-cassandra-connector_${scala.binary.version}</artifactId>
-                        <version>3.0.1</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.apache.spark</groupId>
-                        <artifactId>spark-parent_${scala.binary.version}</artifactId>
-                        <version>${spark.version}</version>
-                        <type>pom</type>
-                        <scope>import</scope>
-                    </dependency>
-                </dependencies>
-            </dependencyManagement>
         </profile>
 
         <profile>
@@ -774,23 +749,8 @@
                 <spark.version>${spark-31.version}</spark.version>
                 <json4s.version>${json4s-37-M5.version}</json4s.version>
                 <delta.version>${delta-10.version}</delta.version>
+                <cassandra-connector.version>${cassandra-connector-31.version}</cassandra-connector.version>
             </properties>
-            <dependencyManagement>
-                <dependencies>
-                    <dependency>
-                        <groupId>com.datastax.spark</groupId>
-                        <artifactId>spark-cassandra-connector_${scala.binary.version}</artifactId>
-                        <version>3.1.0</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.apache.spark</groupId>
-                        <artifactId>spark-parent_${scala.binary.version}</artifactId>
-                        <version>${spark.version}</version>
-                        <type>pom</type>
-                        <scope>import</scope>
-                    </dependency>
-                </dependencies>
-            </dependencyManagement>
         </profile>
 
         <profile>
@@ -799,23 +759,8 @@
                 <spark.version>${spark-32.version}</spark.version>
                 <json4s.version>${json4s-37-M11.version}</json4s.version>
                 <delta.version>${delta-20.version}</delta.version>
+                <cassandra-connector.version>${cassandra-connector-32.version}</cassandra-connector.version>
             </properties>
-            <dependencyManagement>
-                <dependencies>
-                    <dependency>
-                        <groupId>com.datastax.spark</groupId>
-                        <artifactId>spark-cassandra-connector_${scala.binary.version}</artifactId>
-                        <version>3.2.0</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.apache.spark</groupId>
-                        <artifactId>spark-parent_${scala.binary.version}</artifactId>
-                        <version>${spark.version}</version>
-                        <type>pom</type>
-                        <scope>import</scope>
-                    </dependency>
-                </dependencies>
-            </dependencyManagement>
         </profile>
 
         <profile>
@@ -824,24 +769,9 @@
                 <spark.version>${spark-33.version}</spark.version>
                 <json4s.version>${json4s-37-M11.version}</json4s.version>
                 <delta.version>${delta-21.version}</delta.version>
+                <!-- Cassandra connector for Spark 3.3 is not yet available, using the latest version -->
+                <cassandra-connector.version>${cassandra-connector-32.version}</cassandra-connector.version>
             </properties>
-            <dependencyManagement>
-                <dependencies>
-                    <!-- connector for Spark 3.3 is not yet available, using the latest version -->
-                    <dependency>
-                        <groupId>com.datastax.spark</groupId>
-                        <artifactId>spark-cassandra-connector_${scala.binary.version}</artifactId>
-                        <version>3.2.0</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.apache.spark</groupId>
-                        <artifactId>spark-parent_${scala.binary.version}</artifactId>
-                        <version>${spark.version}</version>
-                        <type>pom</type>
-                        <scope>import</scope>
-                    </dependency>
-                </dependencies>
-            </dependencyManagement>
         </profile>
 
         <!-- Binary compatibility checking profile -->

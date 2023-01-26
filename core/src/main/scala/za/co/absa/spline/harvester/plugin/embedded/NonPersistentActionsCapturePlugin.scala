@@ -40,27 +40,23 @@ class NonPersistentActionsCapturePlugin(
     with WriteNodeProcessing {
 
   private val actionNames: Set[String] = conf.getRequiredStringArray(ConfProps.FuncNames).toSet
-  private val isEnabled: Boolean = conf.getRequiredBoolean(ConfProps.IsEnabled)
 
-  override val writeNodeProcessor: PartialFunction[(FuncName, LogicalPlan), WriteNodeInfo] =
-    if (isEnabled) {
-      case (funcName, lp: LogicalPlan) if actionNames(funcName) =>
-        WriteNodeInfo(
-          SourceIdentifier(None, s"memory://$LocalMacAddressString/$JVMId"),
-          SaveMode.Overwrite,
-          lp,
-          name = funcName,
-          extras = Map(CommonExtras.Synthetic -> true)
-        )
-    }
-    else PartialFunction.empty
+  override val writeNodeProcessor: PartialFunction[(FuncName, LogicalPlan), WriteNodeInfo] = {
+    case (funcName, lp: LogicalPlan) if actionNames(funcName) =>
+      WriteNodeInfo(
+        SourceIdentifier(None, s"memory://$LocalMacAddressString/$JVMId"),
+        SaveMode.Overwrite,
+        lp,
+        name = funcName,
+        extras = Map(CommonExtras.Synthetic -> true)
+      )
+  }
 }
 
 object NonPersistentActionsCapturePlugin {
 
   private object ConfProps {
     val FuncNames = "funcNames"
-    val IsEnabled = "enabled"
   }
 
   private val JVMId = s"jvm_${UUID.randomUUID()}"

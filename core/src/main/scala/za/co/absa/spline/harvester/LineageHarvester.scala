@@ -27,6 +27,7 @@ import za.co.absa.commons.CollectionImplicits._
 import za.co.absa.commons.graph.GraphImplicits._
 import za.co.absa.commons.lang.CachingConverter
 import za.co.absa.commons.reflect.ReflectionUtils
+import za.co.absa.commons.reflect.ReflectionUtils.extractValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.agent.SplineAgent.FuncName
 import za.co.absa.spline.harvester.LineageHarvester._
@@ -37,6 +38,7 @@ import za.co.absa.spline.harvester.builder.write.{WriteCommand, WriteCommandExtr
 import za.co.absa.spline.harvester.converter.DataTypeConverter
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.logging.ObjectStructureLogging
+import za.co.absa.spline.harvester.plugin.embedded.DeltaPlugin.`_: MergeIntoCommand`
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model._
 
@@ -205,6 +207,10 @@ class LineageHarvester(
           Seq(RddWrap(erdd.rdd))
         case lrdd: LogicalRDD =>
           Seq(RddWrap(lrdd.rdd))
+        case `_: MergeIntoCommand`(command) =>
+          val target = extractValue[LogicalPlan](command, "target")
+          val source = extractValue[LogicalPlan](command, "source")
+          Seq(PlanWrap(source), PlanWrap(target))
         case _ => plan.children.map(PlanWrap)
       }
     case RddWrap(rdd) =>

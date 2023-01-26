@@ -82,7 +82,7 @@ object AgentBOM {
 
       val filters = refs.map(obtain[PostProcessingFilter](ConfProperty.RootPostProcessingFilter, _))
 
-      filters.asOption.map {
+      filters.toNonEmptyOption.map {
         case Seq(filter) => filter
         case fs: Seq[_] => new CompositePostProcessingFilter(fs)
       }
