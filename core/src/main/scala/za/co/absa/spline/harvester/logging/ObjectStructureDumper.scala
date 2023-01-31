@@ -26,6 +26,8 @@ import scala.util.control.NonFatal
 
 object ObjectStructureDumper {
 
+  val MaxDepth = 5
+
   type FieldName = String
   type FieldType = String
   type DumpResult = String
@@ -74,6 +76,7 @@ object ObjectStructureDumper {
     prevResult: DumpResult
   ): DumpResult = stack match {
     case Nil => prevResult
+    case head :: tail if head.depth > MaxDepth => objectToStringRec(extractFieldValue)(tail, visited, prevResult)
     case head :: tail => {
       val value = head.value
       val depth = head.depth

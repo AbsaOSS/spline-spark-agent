@@ -60,12 +60,17 @@ class DeltaPlugin(
       val params = Map("condition" -> condition.map(_.toString), "updateExpressions" -> updateExpressions.map(_.toString()))
       WriteNodeInfo(sourceId, SaveMode.Overwrite, target, params)
 
-    case (_, `_: MergeIntoCommand`(command)) =>
-      val qualifiedPath = extractPath(command, "targetFileIndex")
-      val targetId = SourceIdentifier(Some("delta"), qualifiedPath)
-
-      WriteNodeInfo(targetId, SaveMode.Overwrite, command, Map.empty[String, Any])
+    case (_, `_: MergeIntoCommand`(command)) => extractMerge(command)
+    case (_, `_: MergeIntoCommandEdge`(command)) => extractMerge(command)
   }
+
+  private def extractMerge(command: LogicalPlan): WriteNodeInfo = {
+    val qualifiedPath = extractPath(command, "targetFileIndex")
+    val targetId = SourceIdentifier(Some("delta"), qualifiedPath)
+
+    WriteNodeInfo(targetId, SaveMode.Overwrite, command, Map.empty[String, Any])
+  }
+
 
   private def extractPath(command: AnyRef, fieldName: String): String = {
     val path = Try {
@@ -90,5 +95,8 @@ object DeltaPlugin {
 
   object `_: MergeIntoCommand` extends SafeTypeMatchingExtractor[LogicalPlan](
     "org.apache.spark.sql.delta.commands.MergeIntoCommand")
+
+  object `_: MergeIntoCommandEdge` extends SafeTypeMatchingExtractor[LogicalPlan](
+    "com.databricks.sql.transaction.tahoe.commands.MergeIntoCommandEdge")
 
 }

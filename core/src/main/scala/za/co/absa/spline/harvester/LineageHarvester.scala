@@ -38,7 +38,7 @@ import za.co.absa.spline.harvester.builder.write.{WriteCommand, WriteCommandExtr
 import za.co.absa.spline.harvester.converter.DataTypeConverter
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.logging.ObjectStructureLogging
-import za.co.absa.spline.harvester.plugin.embedded.DeltaPlugin.`_: MergeIntoCommand`
+import za.co.absa.spline.harvester.plugin.embedded.DeltaPlugin.{`_: MergeIntoCommandEdge`, `_: MergeIntoCommand`}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model._
 
@@ -208,6 +208,10 @@ class LineageHarvester(
         case lrdd: LogicalRDD =>
           Seq(RddWrap(lrdd.rdd))
         case `_: MergeIntoCommand`(command) =>
+          val target = extractValue[LogicalPlan](command, "target")
+          val source = extractValue[LogicalPlan](command, "source")
+          Seq(PlanWrap(source), PlanWrap(target))
+        case `_: MergeIntoCommandEdge`(command) =>
           val target = extractValue[LogicalPlan](command, "target")
           val source = extractValue[LogicalPlan](command, "source")
           Seq(PlanWrap(source), PlanWrap(target))
