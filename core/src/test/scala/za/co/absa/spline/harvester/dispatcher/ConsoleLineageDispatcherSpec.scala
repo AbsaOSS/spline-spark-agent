@@ -35,7 +35,8 @@ class ConsoleLineageDispatcherSpec
 
   it should "send lineage to the stdout" in {
     assertingStdOut(include(
-    """["event",{"planId":"12345678-90ab-cdef-1234-567890abcdef","labels":{},"timestamp":999,"extra":{}}]""")) {
+      """ |ExecutionEvent (apiVersion: 1.2):
+          |{"planId":"12345678-90ab-cdef-1234-567890abcdef","timestamp":999}""".stripMargin)) {
       new ConsoleLineageDispatcher(new BaseConfiguration {
         addProperty("stream", "OUT")
       }).send(ExecutionEvent(uuid1, Map.empty, 999, None, None, None, Map.empty))
@@ -44,7 +45,8 @@ class ConsoleLineageDispatcherSpec
 
   it should "send lineage to the stderr" in {
     assertingStdErr(include(
-    """["event",{"planId":"12345678-90ab-cdef-1234-567890abcdef","labels":{},"timestamp":999,"extra":{}}]""")) {
+      """ |ExecutionEvent (apiVersion: 1.2):
+          |{"planId":"12345678-90ab-cdef-1234-567890abcdef","timestamp":999}""".stripMargin)) {
       new ConsoleLineageDispatcher(new BaseConfiguration {
         addProperty("stream", "ERR")
       }).send(ExecutionEvent(uuid1, Map.empty, 999, None, None, None, Map.empty))
