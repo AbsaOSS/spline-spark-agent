@@ -28,7 +28,7 @@ import za.co.absa.spline.harvester.builder.rdd.read.RddReadNodeBuilder
 import za.co.absa.spline.harvester.builder.read.ReadCommand
 import za.co.absa.spline.harvester.builder.write.WriteCommand
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
-import za.co.absa.spline.harvester.plugin.embedded.DeltaPlugin.`_: MergeIntoCommand`
+import za.co.absa.spline.harvester.plugin.embedded.DeltaPlugin.{`_: MergeIntoCommandEdge`, `_: MergeIntoCommand`}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 
 class OperationNodeBuilderFactory(
@@ -58,6 +58,7 @@ class OperationNodeBuilderFactory(
     case w: Window => new WindowNodeBuilder(w)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
     case j: Join => new JoinNodeBuilder(j)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
     case `_: MergeIntoCommand`(m) => new MergeIntoNodeBuilder(m)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
+    case `_: MergeIntoCommandEdge`(m) => new MergeIntoNodeBuilder(m)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
     case _ => new GenericPlanNodeBuilder(lp)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
   }
 

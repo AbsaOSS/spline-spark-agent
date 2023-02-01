@@ -26,6 +26,8 @@ import scala.util.control.NonFatal
 
 object ObjectStructureDumper {
 
+  val MaxDepth = 5
+
   type FieldName = String
   type FieldType = String
   type DumpResult = String
@@ -81,6 +83,7 @@ object ObjectStructureDumper {
       val (fieldsDetails, newStack, newVisited) = value match {
         case null => ("= null", tail, visited)
         case v if isReadyForPrint(v) => (s"= $v", tail, visited)
+        case _ if head.depth >= MaxDepth => (s"! Max depth ($MaxDepth) reached", tail, visited)
         case v if wasVisited(visited, v) => ("! Object was already logged", tail, visited)
         case None => ("= None", tail, visited)
         case Some(x) => {

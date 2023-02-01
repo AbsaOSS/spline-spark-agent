@@ -88,6 +88,17 @@ class ObjectStructureDumperSpec extends AnyFlatSpec with Matchers with MockitoSu
     classBoxDump should not include "canonicalName"
   }
 
+  it should "not descend bellow MaxLevel" in {
+    case class AnyBox(anything: Any)
+
+    val dump = ObjectStructureDumper.dump(AnyBox(AnyBox(AnyBox(AnyBox(AnyBox(AnyBox("tooDeep")))))))
+
+    dump should include("! Max depth (5) reached")
+    dump should include("anything")
+    dump should not include "tooDeep"
+  }
+
+
   it should "ignore transient fields" in {
     class Foo {
       @transient lazy val bar = "42"

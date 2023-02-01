@@ -20,7 +20,7 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.commons.reflect.ReflectionUtils.extractValue
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.ModelConstants.CommonExtras
-import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter, OperationParamsConverter}
+import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.{AttrRef, Attribute, DataOperation, FunctionalExpression}
 
