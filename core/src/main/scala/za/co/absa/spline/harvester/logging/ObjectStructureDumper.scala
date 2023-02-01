@@ -76,7 +76,6 @@ object ObjectStructureDumper {
     prevResult: DumpResult
   ): DumpResult = stack match {
     case Nil => prevResult
-    case head :: tail if head.depth > MaxDepth => objectToStringRec(extractFieldValue)(tail, visited, prevResult)
     case head :: tail => {
       val value = head.value
       val depth = head.depth
@@ -84,6 +83,7 @@ object ObjectStructureDumper {
       val (fieldsDetails, newStack, newVisited) = value match {
         case null => ("= null", tail, visited)
         case v if isReadyForPrint(v) => (s"= $v", tail, visited)
+        case _ if head.depth >= MaxDepth => (s"! Max depth ($MaxDepth) reached", tail, visited)
         case v if wasVisited(visited, v) => ("! Object was already logged", tail, visited)
         case None => ("= None", tail, visited)
         case Some(x) => {
