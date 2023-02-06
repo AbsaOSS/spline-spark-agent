@@ -78,7 +78,7 @@ spline:
         kafka:
             className: za.co.absa.spline.harvester.dispatcher.KafkaLineageDispatcher
             # Spline Producer API version
-            apiVersion: 1.2
+            apiVersion: "1.2"
             # producer configs as defined by kafka (bootstrap.servers, key.serializer, etc) all kafka configs are supported
             producer.bootstrap.servers:
             producer.key.serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -145,7 +145,7 @@ spline:
             disableSslValidation: false
             namespace: default
             # Spline Producer API version
-            apiVersion: 1.2
+            apiVersion: "1.2"
             # Base URL of the Spline Producer REST API endpoint
             api.url:
 

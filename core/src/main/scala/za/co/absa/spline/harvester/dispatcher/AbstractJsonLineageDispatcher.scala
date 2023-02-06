@@ -18,24 +18,30 @@ package za.co.absa.spline.harvester.dispatcher
 
 import za.co.absa.commons.EnumUtils.EnumOps
 import za.co.absa.commons.reflect.EnumerationMacros
-import za.co.absa.spline.harvester.dispatcher.AbstractJsonLineageDispatcher.ModelEntity
-import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
-
+import za.co.absa.spline.harvester.dispatcher.modelmapper.ModelMapper
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe
+import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
 abstract class AbstractJsonLineageDispatcher
   extends LineageDispatcher {
 
-  import ModelEntity.Implicits._
   import HarvesterJsonSerDe.impl._
 
-  final override def send(plan: ExecutionPlan): Unit = send(Array(getEntityName(ModelEntity.Plan), plan).toJson)
+  private val apiVersion = ProducerApiVersion.V1_2
+  private val modelMapper = ModelMapper.forApiVersion(apiVersion)
 
-  final override def send(event: ExecutionEvent): Unit = send(Array(getEntityName(ModelEntity.Event), event).toJson)
+  final override def send(plan: ExecutionPlan): Unit = {
+    val json = modelMapper.toDTO(plan).map(_.toJson).getOrElse("{}")
+    send(s"ExecutionPlan (apiVersion: ${apiVersion.asString}):\n$json")
+  }
+
+  final override def send(event: ExecutionEvent): Unit = {
+    val json = modelMapper.toDTO(event).map(_.toJson).getOrElse("{}")
+    send(s"ExecutionEvent (apiVersion: ${apiVersion.asString}):\n$json")
+  }
 
   protected def send(json: String): Unit
 
-  private def getEntityName(entity: ModelEntity): String = entity.name.toLowerCase
 }
 
 object AbstractJsonLineageDispatcher {
