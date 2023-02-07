@@ -825,7 +825,6 @@
             </properties>
             <dependencyManagement>
                 <dependencies>
-                    <!-- connector for Spark 3.3 is not yet available, using the latest version -->
                     <dependency>
                         <groupId>org.apache.spark</groupId>
                         <artifactId>spark-parent_${scala.binary.version}</artifactId>
