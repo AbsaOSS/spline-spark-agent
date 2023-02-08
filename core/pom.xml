@@ -25,7 +25,7 @@
         <groupId>za.co.absa.spline.agent.spark</groupId>
         <artifactId>spline-spark-agent_2.12</artifactId>
         <relativePath>../pom.xml</relativePath>
-        <version>1.0.4-SNAPSHOT</version>
+        <version>1.0.4</version>
     </parent>
 
     <properties>
