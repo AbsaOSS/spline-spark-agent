@@ -14,9 +14,7 @@
 # limitations under the License.
 #
 
-ARG DOCKER_BASE_IMAGE_PREFIX=
-
-FROM "$DOCKER_BASE_IMAGE_PREFIX"maven:3.6.0-jdk-8-slim
+FROM maven:3.6.0-jdk-8-slim
 
 LABEL \
     vendor="ABSA" \

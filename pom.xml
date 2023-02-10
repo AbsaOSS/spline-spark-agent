@@ -27,7 +27,7 @@
     <parent>
         <groupId>za.co.absa</groupId>
         <artifactId>root-pom</artifactId>
-        <version>1.0.1</version>
+        <version>1.0.5</version>
     </parent>
 
     <packaging>pom</packaging>
@@ -250,10 +250,9 @@
             </plugin>
 
             <!-- Enable docker build -->
-
             <plugin>
-                <groupId>com.spotify</groupId>
-                <artifactId>dockerfile-maven-plugin</artifactId>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
                 <inherited>false</inherited>
                 <configuration>
                     <skip>false</skip>
