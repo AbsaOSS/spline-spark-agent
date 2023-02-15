@@ -18,75 +18,27 @@ package za.co.absa.spline.harvester.json
 
 import org.apache.commons.lang3.StringUtils._
 import org.json4s.{DefaultFormats, Formats, TypeHints}
-import za.co.absa.commons.json.format.FormatsBuilder
 import za.co.absa.commons.reflect.ReflectionUtils._
-import za.co.absa.spline.harvester.json.ShortTypeHintForSpline03ModelSupport._
-import za.co.absa.spline.model
+import za.co.absa.spline.model.dt.DataType
 
-import scala.reflect.runtime.universe._
-
-trait ShortTypeHintForSpline03ModelSupport extends FormatsBuilder {
-  override protected def formats: Formats = createFormats(Map(
-    "typeHintFieldName" -> "_typeHint",
-    "typeHintClasses" -> directSubClassesOf[model.dt.DataType],
-    "dateFormatterFn" -> DefaultFormats.losslessDate.get _))
-}
+import java.text.SimpleDateFormat
 
 object ShortTypeHintForSpline03ModelSupport {
+  val formats: Formats = new DefaultFormats {
+    override def dateFormatter: SimpleDateFormat = DefaultFormats.losslessDate.get
 
-  private val createFormats =
-    if (isJson4sVerAtLeast37) createFormats37
-    else createFormats32
+    override val typeHintFieldName: String = "_typeHint"
 
-  private def isJson4sVerAtLeast37: Boolean =
-    classOf[TypeHints].getMethods.exists(_.getName == "typeHintFieldName")
+    override val typeHints: TypeHints = new TypeHints {
+      private val classes: Seq[Class[_ <: DataType]] = directSubClassesOf[DataType]
+      override val hints: List[Class[_]] = classes.toList
 
-  abstract class AbstractSplineShortTypeHints(classes: Seq[Class[_]]) extends TypeHints {
-    override val hints: List[Class[_]] = classes.toList
+      override def hintFor(clazz: Class[_]): String = {
+        val className = clazz.getName
+        className.substring(1 + lastOrdinalIndexOf(className, ".", 2))
+      }
 
-    def classFor(hint: String, a: Class[_]): Option[Class[_]] = classFor(hint)
-
-    def classFor(hint: String): Option[Class[_]] = classes find (hintForAsString(_) == hint)
-
-    // TypeHints.hintFor() has a different return type in Json4s >= 3.7
-    // So we should not use it directly, and use this method instead.
-    protected def hintForAsString(clazz: Class[_]): String = {
-      val className = clazz.getName
-      className.substring(1 + lastOrdinalIndexOf(className, ".", 2))
+      def classFor(hint: String): Option[Class[_]] = classes find (hintFor(_) == hint)
     }
   }
-
-  private def createFormats32: Map[String, Any] => Formats = compile[Formats](
-    q"""
-      import java.text.SimpleDateFormat
-      import org.json4s.{DefaultFormats, TypeHints}
-      import za.co.absa.spline.harvester.json.ShortTypeHintForSpline03ModelSupport.AbstractSplineShortTypeHints
-
-      new DefaultFormats {
-        override def dateFormatter = args[() => SimpleDateFormat]("dateFormatterFn")()
-        override val typeHintFieldName: String = args("typeHintFieldName")
-        override val typeHints: TypeHints = {
-          new AbstractSplineShortTypeHints(args("typeHintClasses")) {
-            override def hintFor(clazz: Class[_]): String = super.hintForAsString(clazz)
-          }
-        }
-      }
-    """)
-
-  private def createFormats37: Map[String, Any] => Formats = compile[Formats](
-    q"""
-      import java.text.SimpleDateFormat
-      import org.json4s.{DefaultFormats, TypeHints}
-      import za.co.absa.spline.harvester.json.ShortTypeHintForSpline03ModelSupport.AbstractSplineShortTypeHints
-
-      new DefaultFormats {
-        override def dateFormatter = args[() => SimpleDateFormat]("dateFormatterFn")()
-        override val typeHints: TypeHints = {
-          new AbstractSplineShortTypeHints(args("typeHintClasses")) {
-            override def hintFor(clazz: Class[_]): Option[String] = Option(super.hintForAsString(clazz))
-            override val typeHintFieldName: String = args("typeHintFieldName")
-          }
-        }
-      }
-    """)
 }

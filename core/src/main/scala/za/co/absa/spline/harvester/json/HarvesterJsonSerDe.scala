@@ -16,37 +16,28 @@
 
 package za.co.absa.spline.harvester.json
 
-import org.json4s.JValue
-import org.json4s.jackson.JsonMethods
-import za.co.absa.commons.json.AbstractJsonSerDe
-import za.co.absa.commons.json.format.JavaTypesSupport
-import za.co.absa.commons.reflect.ReflectionUtils
-
-import scala.reflect.ClassTag
-import scala.reflect.runtime.universe._
-import scala.tools.reflect.ToolBox
+import org.json4s.Extraction.decompose
+import org.json4s.ext.JavaTypesSerializers
+import org.json4s.native.JsonMethods.{compact, parse, pretty, render}
+import org.json4s.{Formats, StringInput}
 
 object HarvesterJsonSerDe {
 
-  private def classNameOf[A: ClassTag] = {
-    implicitly[ClassTag[A]].runtimeClass.getCanonicalName
-  }
+  object impl {
+    private implicit val formats: Formats =
+      ShortTypeHintForSpline03ModelSupport.formats ++
+        JavaTypesSerializers.all
 
-  private val JsonMethods = classNameOf[JsonMethods]
-  private val JavaTypesSupport = classNameOf[JavaTypesSupport]
-  private val ShortTypeHintForSpline03ModelSupport = classNameOf[ShortTypeHintForSpline03ModelSupport]
-  private val JValue = classNameOf[JValue]
-  private val AbstractJsonSerDe = classNameOf[AbstractJsonSerDe[_]]
+    implicit class EntityToJson[B <: AnyRef](entity: B) {
+      def toJson: String = compact(render(decompose(entity)(formats)))
+    }
 
-  // This delays the compilation (to bytecode) of that piece of code at runtime.
-  // Commons are build against json4s 3.5.5, spark 2.4 usually provides json4s 3.5.3 and these are not binary compatible!
-  val impl: AbstractJsonSerDe[JValue] = {
-    ReflectionUtils.compile(runtimeMirror(getClass.getClassLoader).mkToolBox().parse(
-      s"""
-        new $AbstractJsonSerDe[$JValue]
-          with $JsonMethods
-          with $ShortTypeHintForSpline03ModelSupport
-          with $JavaTypesSupport
-      """))(Map.empty)
+    implicit class JsonToEntity(json: String) {
+      def fromJson[B: Manifest]: B = parseJson().extract(formats, implicitly[Manifest[B]])
+
+      def asPrettyJson: String = pretty(render(parseJson()))
+
+      private def parseJson() = parse(StringInput(json), formats.wantsBigDecimal, formats.wantsBigInt)
+    }
   }
 }
