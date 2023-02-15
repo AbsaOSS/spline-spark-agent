@@ -33,11 +33,6 @@
             <artifactId>agent-core_${scala.binary.version}</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.json4s</groupId>
-            <artifactId>json4s-ext_${scala.binary.version}</artifactId>
-            <version>${json4s-37-M11.version}</version>
-        </dependency>
     </dependencies>
 
     <dependencyManagement>

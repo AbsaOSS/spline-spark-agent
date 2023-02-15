@@ -28,7 +28,6 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.{Assertion, BeforeAndAfter, Succeeded}
 import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.commons.io.TempFile
-import za.co.absa.commons.json.DefaultJacksonJsonSerDe
 import za.co.absa.commons.scalatest.ConditionalTestTags._
 import za.co.absa.commons.version.Version._
 import za.co.absa.spline.agent.AgentConfig.ConfProperty
@@ -220,7 +219,7 @@ object SparkLineageInitializerSpec {
     override def send(event: ExecutionEvent): Unit = MockLineageDispatcher.theMock.send(event)
   }
 
-  private object MockLineageDispatcher extends MockitoSugar with DefaultJacksonJsonSerDe {
+  private object MockLineageDispatcher extends MockitoSugar {
     private val theMock: LineageDispatcher = mock[LineageDispatcher]
     private[this] var throwableOnConstruction: Option[_ <: Throwable] = None
     private[this] var _instanceCount: Int = _
