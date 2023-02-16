@@ -29,7 +29,14 @@ class MergeIntoNodeBuilder
   (idGenerators: IdGeneratorsBundle, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
   extends GenericPlanNodeBuilder(logicalPlan)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
 
-  private lazy val mergeInputs: Seq[Seq[Attribute]] = inputAttributes.transpose
+  private lazy val mergeInputs: Seq[Seq[Attribute]] = {
+    val Seq(srcAttrs, trgAttrs) = inputAttributes
+    val srcAttrsByName = srcAttrs.map(a => a.name -> a).toMap
+    trgAttrs.map(trg => {
+      val src = srcAttrsByName.get(trg.name)
+      Seq(trg) ++ src
+    })
+  }
 
   override lazy val functionalExpressions: Seq[FunctionalExpression] = Seq.empty
 

@@ -24,7 +24,7 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.commons.version.Version.VersionStringInterpolator
-import za.co.absa.spline.producer.model.{ExprRef, ReadOperation}
+import za.co.absa.spline.producer.model.ExprRef
 import za.co.absa.spline.test.LineageWalker
 import za.co.absa.spline.test.ProducerModelImplicits._
 import za.co.absa.spline.test.SplineMatchers._
@@ -309,15 +309,15 @@ class DeltaDSV2Spec extends AsyncFlatSpec
         withDatabase("testDB") {
           for {
             (_, _) <- lineageCaptor.lineageOf {
-              spark.sql("CREATE TABLE foo ( ID int, NAME string ) USING DELTA")
-              spark.sql("INSERT INTO foo VALUES (1014, 'Warsaw'), (1002, 'Corte')")
+              spark.sql("CREATE TABLE foo ( id INT, code STRING, name STRING ) USING DELTA")
+              spark.sql("INSERT INTO foo VALUES (1014, 'PLN', 'Warsaw'), (1002, 'FRA', 'Corte')")
             }
             (_, _) <- lineageCaptor.lineageOf {
-              spark.sql("CREATE TABLE fooUpdate ( ID Int, NAME String ) USING DELTA")
+              spark.sql("CREATE TABLE fooUpdate ( id INT, name STRING ) USING DELTA")
               spark.sql("INSERT INTO fooUpdate VALUES (1014, 'Lodz'), (1003, 'Prague')")
             }
             (_, _) <- lineageCaptor.lineageOf {
-              spark.sql("CREATE TABLE barUpdate ( ID Int, NAME String ) USING DELTA")
+              spark.sql("CREATE TABLE barUpdate ( id INT, name STRING ) USING DELTA")
               spark.sql("INSERT INTO barUpdate VALUES (4242, 'Paris'), (3342, 'Bordeaux')")
             }
             (plan, Seq(event)) <- lineageCaptor.lineageOf {
@@ -332,15 +332,15 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
               spark.sql(
                 """
-                  | MERGE INTO foo
-                  | USING tempview AS foobar
-                  | ON foo.ID = foobar.ID
+                  | MERGE INTO foo AS dst
+                  | USING tempview AS src
+                  | ON dst.id = src.id
                   | WHEN MATCHED THEN
                   |   UPDATE SET
-                  |     NAME = foobar.NAME
+                  |     NAME = src.name
                   | WHEN NOT MATCHED
-                  |  THEN INSERT (ID, NAME)
-                  |  VALUES (foobar.ID, foobar.NAME)
+                  |  THEN INSERT (id, name)
+                  |  VALUES (src.id, src.name)
                   |""".stripMargin
               )
             }
@@ -353,22 +353,24 @@ class DeltaDSV2Spec extends AsyncFlatSpec
             plan.operations.write.outputSource should endWith("/testdb.db/foo")
 
             val mergeOp = plan.operations.write.childOperation
-            mergeOp.params("condition").asInstanceOf[String] should include("ID")
+            mergeOp.params("condition").asInstanceOf[String] should include("id")
 
-            val reads =  plan.operations.reads
+            val reads = plan.operations.reads.sortBy(_.outputAttributes.size)
 
             val mergeOutput = mergeOp.outputAttributes
-            val read0Output = reads(0).outputAttributes
-            val read1Output = reads(1).outputAttributes
-            val read2Output = reads(2).outputAttributes
+            val twoColumnsRead0Output = reads(0).outputAttributes
+            val twoColumnsRead1Output = reads(1).outputAttributes
+            val threeColumnsRead2Output = reads(2).outputAttributes
 
-            mergeOutput(0) should dependOn(read0Output(0))
-            mergeOutput(1) should dependOn(read0Output(1))
-            mergeOutput(0) should dependOn(read1Output(0))
-            mergeOutput(1) should dependOn(read1Output(1))
-            mergeOutput(0) should dependOn(read2Output(0))
-            mergeOutput(1) should dependOn(read2Output(1))
+            mergeOutput(0) should dependOn(twoColumnsRead0Output(0))
+            mergeOutput(0) should dependOn(twoColumnsRead1Output(0))
+            mergeOutput(0) should dependOn(threeColumnsRead2Output(0))
 
+            mergeOutput(1) should dependOn(threeColumnsRead2Output(1))
+
+            mergeOutput(2) should dependOn(twoColumnsRead0Output(1))
+            mergeOutput(2) should dependOn(twoColumnsRead1Output(1))
+            mergeOutput(2) should dependOn(threeColumnsRead2Output(2))
           }
         }
       }
