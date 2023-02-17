@@ -337,7 +337,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
                   | ON dst.id = src.id
                   | WHEN MATCHED THEN
                   |   UPDATE SET
-                  |     NAME = src.name
+                  |     name = src.name
                   | WHEN NOT MATCHED
                   |  THEN INSERT (id, name)
                   |  VALUES (src.id, src.name)

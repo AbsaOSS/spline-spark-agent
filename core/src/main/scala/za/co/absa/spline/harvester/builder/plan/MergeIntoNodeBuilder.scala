@@ -33,8 +33,8 @@ class MergeIntoNodeBuilder
     val Seq(srcAttrs, trgAttrs) = inputAttributes
     val srcAttrsByName = srcAttrs.map(a => a.name -> a).toMap
     trgAttrs.map(trg => {
-      val src = srcAttrsByName.get(trg.name)
-      Seq(trg) ++ src
+      val maybeSrc = srcAttrsByName.get(trg.name)
+      Seq(trg) ++ maybeSrc
     })
   }
 
