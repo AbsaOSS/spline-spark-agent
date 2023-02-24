@@ -26,14 +26,41 @@ import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPOutputStream
 import javax.ws.rs.HttpMethod
 
-class RestEndpoint(val request: HttpRequest) {
+class RestEndpoint(val request: HttpRequest,val authentication: Option[Map[String, String]]) {
 
-  def head(): HttpResponse[String] = request
+  def withAuth(): HttpRequest = {
+    if(authentication.contains("clientId") && authentication.contains("clientSecret") && authentication.contains("tokenUrl") && authentication.contains("scope")) {
+      val clientId = authentication.get("clientId")
+      val clientSecret = authentication.get("clientSecret")
+      val tokenUrl = authentication.get("tokenUrl")
+      val token = getToken(clientId, clientSecret, tokenUrl)
+      request.header("Authorization", s"Bearer $token")
+    } else {
+      request
+    }
+  }
+
+  private def getToken(clientId: String, clientSecret: String, tokenUrl: String): String = {
+    val resp = scalaj.http.Http(tokenUrl)
+      .postForm(Seq(
+        "grant_type" -> "client_credentials",
+        "client_id" -> clientId,
+        "client_secret" -> clientSecret))
+      .asString
+
+    val jsonResp = scala.util.parsing.json.JSON.parseFull(resp.body)
+    jsonResp match {
+      case Some(map: Map[String, Any]) => map.getOrElse("access_token", "").toString
+      case _ => ""
+    }
+  }
+      
+  def head(): HttpResponse[String] = withAuth()
     .method(HttpMethod.HEAD)
     .asString
 
   def post(data: String, contentType: String, enableRequestCompression: Boolean): HttpResponse[String] = {
-    val jsonRequest = request
+    val jsonRequest = withAuth()
       .header(HttpHeaders.CONTENT_TYPE, contentType)
 
     if (enableRequestCompression && data.length > GzipCompressionLengthThreshold) {

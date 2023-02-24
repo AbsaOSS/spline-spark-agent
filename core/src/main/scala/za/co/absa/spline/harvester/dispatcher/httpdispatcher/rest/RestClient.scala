@@ -41,7 +41,8 @@ object RestClient extends Logging {
     connTimeout: Duration,
     readTimeout: Duration,
     disableSslValidation: Boolean,
-    headers: Map[String, String]
+    headers: Map[String, String],
+    authentication: Option[Map[String, String]]
   ): RestClient = {
 
     logDebug(s"baseURL = $baseURL")
@@ -67,7 +68,7 @@ object RestClient extends Logging {
           .having(maybeDisableSslValidationOption)(_ option _)
           .header(SplineHeaders.Timeout, readTimeout.toMillis.toString)
           .headers(headers)
-          .compress(true))
+          .compress(true),authentication)
     }
   }
 }
