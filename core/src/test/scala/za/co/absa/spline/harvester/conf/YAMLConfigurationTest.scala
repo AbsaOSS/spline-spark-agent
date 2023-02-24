@@ -34,6 +34,22 @@ class YAMLConfigurationTest extends ReadOnlyConfigurationTest {
       |    - c
       |  ~: null_key
       |  null_value:
+      |
+      |  # ------------------------------
+      |  # for value type sensitive tests
+      |  # ------------------------------
+      |
+      |  decimalAsNumber: 1.2
+      |  decimalAsString: "1.2"
+      |  integerAsNumber: 42
+      |  integerAsString: "42"
+      |  booleanAsBoolean: true
+      |  booleanAsString: "true"
+      |  heterogeneousValues:
+      |    - 1.2
+      |    - 42
+      |    - true
+      |    - "foo"
       |""".stripMargin)
 
   test("null keys should be mapped to their parent") {
@@ -46,5 +62,32 @@ class YAMLConfigurationTest extends ReadOnlyConfigurationTest {
     givenConf.containsKey("spline.null_value") shouldBe false
     givenConf.getKeys("spline").asScala.toSeq shouldNot contain("spline.null_value")
     givenConf.getProperty("spline.null_value") shouldEqual null
+  }
+
+  test("get string value as String") {
+    givenConf getString "spline.x.y" shouldEqual "foo"
+    givenConf getString "spline.w.z" shouldEqual "bar"
+  }
+
+  test("get string value as another type") {
+    givenConf getDouble "spline.decimalAsString" shouldEqual 1.2d
+    givenConf getInt "spline.integerAsString" shouldEqual 42
+    givenConf getBoolean "spline.booleanAsString" shouldEqual true
+  }
+
+  test("get non-string value as String") {
+    givenConf getString "spline.decimalAsNumber" shouldEqual "1.2"
+    givenConf getString "spline.integerAsNumber" shouldEqual "42"
+    givenConf getString "spline.booleanAsBoolean" shouldEqual "true"
+  }
+
+  test("get single-valued non-string property as List") {
+    givenConf getList "spline.decimalAsNumber" should contain theSameElementsAs Seq("1.2")
+    givenConf getList "spline.integerAsNumber" should contain theSameElementsAs Seq("42")
+    givenConf getList "spline.booleanAsBoolean" should contain theSameElementsAs Seq("true")
+  }
+
+  test("get heterogeneous list") {
+    givenConf getList "spline.heterogeneousValues" should contain theSameElementsInOrderAs Seq(1.2, 42, true, "foo")
   }
 }

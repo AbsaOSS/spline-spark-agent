@@ -83,7 +83,7 @@ spline:
             producer.bootstrap.servers:
             producer.key.serializer: org.apache.kafka.common.serialization.StringSerializer
             producer.value.serializer: org.apache.kafka.common.serialization.StringSerializer
-            producer.max.in.flight.requests.per.connection: "1"
+            producer.max.in.flight.requests.per.connection: 1
             # topic name
             topic:
 
