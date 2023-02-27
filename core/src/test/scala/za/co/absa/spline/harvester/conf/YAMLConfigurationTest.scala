@@ -61,7 +61,7 @@ class YAMLConfigurationTest extends ReadOnlyConfigurationTest {
   test("null values should be completely ignored") {
     givenConf.containsKey("spline.null_value") shouldBe false
     givenConf.getKeys("spline").asScala.toSeq shouldNot contain("spline.null_value")
-    givenConf.getProperty("spline.null_value") shouldEqual null
+    givenConf.getProperty("spline.null_value") shouldBe null
   }
 
   test("get string value as String") {
@@ -70,15 +70,21 @@ class YAMLConfigurationTest extends ReadOnlyConfigurationTest {
   }
 
   test("get string value as another type") {
-    givenConf getDouble "spline.decimalAsString" shouldEqual 1.2d
-    givenConf getInt "spline.integerAsString" shouldEqual 42
-    givenConf getBoolean "spline.booleanAsString" shouldEqual true
+    givenConf getDouble "spline.decimalAsString" shouldBe 1.2d
+    givenConf getInt "spline.integerAsString" shouldBe 42
+    givenConf getBoolean "spline.booleanAsString" shouldBe true
   }
 
   test("get non-string value as String") {
     givenConf getString "spline.decimalAsNumber" shouldEqual "1.2"
     givenConf getString "spline.integerAsNumber" shouldEqual "42"
     givenConf getString "spline.booleanAsBoolean" shouldEqual "true"
+  }
+
+  test("get non-string value as its own type") {
+    givenConf getDouble "spline.decimalAsNumber" shouldBe 1.2d
+    givenConf getInt "spline.integerAsNumber" shouldBe 42
+    givenConf getBoolean "spline.booleanAsBoolean" shouldBe true
   }
 
   test("get single-valued non-string property as List") {
