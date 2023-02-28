@@ -21,6 +21,7 @@ import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.extensions.NonOptionExtension._
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.ModelConstants.CommonExtras
+import za.co.absa.spline.harvester.builder.OperationNodeBuilder.Attributes
 import za.co.absa.spline.harvester.builder.plan.UnionNodeBuilder.Names
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
@@ -31,7 +32,7 @@ class UnionNodeBuilder
   (idGenerators: IdGeneratorsBundle, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
   extends GenericPlanNodeBuilder(logicalPlan)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
 
-  private lazy val unionInputs: Seq[Seq[Attribute]] = inputAttributes.transpose
+  private lazy val unionInputs: Seq[Attributes] = inputAttributes.transpose
 
   override lazy val functionalExpressions: Seq[FunctionalExpression] =
     unionInputs

@@ -25,7 +25,7 @@ import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.{AttrRef, Attribute, DataOperation, FunctionalExpression}
 
 class MergeIntoNodeBuilder
-(override val logicalPlan: LogicalPlan)
+  (logicalPlan: LogicalPlan)
   (idGenerators: IdGeneratorsBundle, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
   extends GenericPlanNodeBuilder(logicalPlan)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
 
