@@ -27,7 +27,7 @@ import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.{AttrRef, Attribute, ExprRef, FunctionalExpression}
 
 class UnionNodeBuilder
-(override val logicalPlan: Union)
+  (logicalPlan: Union)
   (idGenerators: IdGeneratorsBundle, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
   extends GenericPlanNodeBuilder(logicalPlan)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
 
