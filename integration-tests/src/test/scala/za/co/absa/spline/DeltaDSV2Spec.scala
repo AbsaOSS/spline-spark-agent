@@ -309,7 +309,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
         withDatabase("testDB") {
           for {
             (_, _) <- lineageCaptor.lineageOf {
-              spark.sql("CREATE TABLE foo ( id INT, code STRING, name STRING ) USING DELTA")
+              spark.sql("CREATE TABLE foo ( id INT, code STRING, text STRING ) USING DELTA")
               spark.sql("INSERT INTO foo VALUES (1014, 'PLN', 'Warsaw'), (1002, 'FRA', 'Corte')")
             }
             (_, _) <- lineageCaptor.lineageOf {
@@ -337,9 +337,9 @@ class DeltaDSV2Spec extends AsyncFlatSpec
                   | ON dst.id = src.id
                   | WHEN MATCHED THEN
                   |   UPDATE SET
-                  |     name = src.name
+                  |     text = src.name
                   | WHEN NOT MATCHED
-                  |  THEN INSERT (id, name)
+                  |  THEN INSERT (id, text)
                   |  VALUES (src.id, src.name)
                   |""".stripMargin
               )
