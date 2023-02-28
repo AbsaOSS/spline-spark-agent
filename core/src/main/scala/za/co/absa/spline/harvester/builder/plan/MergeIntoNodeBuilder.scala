@@ -76,3 +76,27 @@ class MergeIntoNodeBuilder
     postProcessor.process(dop)
   }
 }
+
+object MergeIntoNodeBuilder {
+
+  type DeltaMergeIntoClause = SparkExpression
+  type DeltaMergeAction = SparkExpression
+
+  def extractChildren(mergeNode: LogicalPlan): Seq[LogicalPlan] = Seq(extractSource(mergeNode), extractTarget(mergeNode))
+
+  private def extractSource(mergeNode: LogicalPlan): LogicalPlan = extractValue[LogicalPlan](mergeNode, "source")
+
+  private def extractTarget(mergeNode: LogicalPlan): LogicalPlan = extractValue[LogicalPlan](mergeNode, "target")
+
+  private def extractCondition(mergeNode: LogicalPlan): SparkExpression = extractValue[SparkExpression](mergeNode, "condition")
+
+  private def extractMatchedClauses(mergeNode: LogicalPlan): Seq[DeltaMergeIntoClause] = extractValue[Seq[DeltaMergeIntoClause]](mergeNode, "matchedClauses")
+
+  private def extractNonMatchedClauses(mergeNode: LogicalPlan): Seq[DeltaMergeIntoClause] = extractValue[Seq[DeltaMergeIntoClause]](mergeNode, "notMatchedClauses")
+
+  private def extractClauseActions(clause: DeltaMergeIntoClause): Seq[DeltaMergeAction] = extractValue[Seq[DeltaMergeAction]](clause, "actions")
+
+  private def extractActionTargetAttrName(clause: DeltaMergeAction): String = extractValue[Seq[String]](clause, "targetColNameParts").head
+
+  private def extractActionSourceExpression(clause: DeltaMergeAction): SparkExpression = extractValue[SparkExpression](clause, "expr")
+}
