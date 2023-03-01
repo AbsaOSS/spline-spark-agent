@@ -30,7 +30,7 @@ import scala.collection.mutable
 
 class RestEndpoint(val request: HttpRequest, val authentication: Map[String, String]) {
 
-  private val myCache: mutable.Map[String, (String, Instant)] = mutable.Map.empty[String, (String, Instant)]
+  private val tokenCache: mutable.Map[String, (String, Instant)] = mutable.Map.empty[String, (String, Instant)]
 
   def withAuth(): HttpRequest = {
     if (authentication.contains("clientId") && authentication.contains("clientSecret") && authentication.contains("tokenUrl") && authentication.contains("scope")) {
@@ -45,7 +45,7 @@ class RestEndpoint(val request: HttpRequest, val authentication: Map[String, Str
   }
 
   private def getToken(clientId: String, clientSecret: String, tokenUrl: String): String = {
-    val cachedToken = myCache.get("token")
+    val cachedToken = tokenCache.get("token")
     if (cachedToken.isDefined && !isTokenExpired(cachedToken.get._2)) {
       // Token found in cache and not expired, return it
       cachedToken.get._1
@@ -63,7 +63,7 @@ class RestEndpoint(val request: HttpRequest, val authentication: Map[String, Str
           val token = map.getOrElse("access_token", "").toString
           if (token.nonEmpty) {
             val expirationTime = Instant.now().plus(Duration.ofSeconds(map.getOrElse("expires_in", "0").toString.toLong))
-            myCache.put("token", (token, expirationTime))
+            tokenCache.put("token", (token, expirationTime))
           }
           token
         case _ =>
