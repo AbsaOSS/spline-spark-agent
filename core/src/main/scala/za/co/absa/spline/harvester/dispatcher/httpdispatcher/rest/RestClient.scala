@@ -42,7 +42,7 @@ object RestClient extends Logging {
     readTimeout: Duration,
     disableSslValidation: Boolean,
     headers: Map[String, String],
-    authentication: Option[Map[String, String]]
+    authentication: Map[String, String]
   ): RestClient = {
 
     logDebug(s"baseURL = $baseURL")

@@ -97,7 +97,7 @@ object HttpOpenLineageDispatcher extends Logging {
       config.readTimeout,
       config.disableSslValidation,
       config.headers,
-      Some(config.authentication)
+      config.authentication
     )
   }
 
