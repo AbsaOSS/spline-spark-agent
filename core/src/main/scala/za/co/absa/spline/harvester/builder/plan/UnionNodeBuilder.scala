@@ -21,24 +21,25 @@ import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.extensions.NonOptionExtension._
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.ModelConstants.CommonExtras
+import za.co.absa.spline.harvester.builder.OperationNodeBuilder.IOAttributes
 import za.co.absa.spline.harvester.builder.plan.UnionNodeBuilder.Names
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.{AttrRef, Attribute, ExprRef, FunctionalExpression}
 
 class UnionNodeBuilder
-(override val logicalPlan: Union)
+  (logicalPlan: Union)
   (idGenerators: IdGeneratorsBundle, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
   extends GenericPlanNodeBuilder(logicalPlan)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
 
-  private lazy val unionInputs: Seq[Seq[Attribute]] = inputAttributes.transpose
+  private lazy val unionInputs: Seq[IOAttributes] = inputAttributes.transpose
 
   override lazy val functionalExpressions: Seq[FunctionalExpression] =
     unionInputs
       .zip(logicalPlan.output)
       .map { case (input, output) => constructUnionFunction(input, output) }
 
-  override lazy val outputAttributes: Seq[Attribute] =
+  override lazy val outputAttributes: IOAttributes =
     unionInputs
       .zip(functionalExpressions)
       .map { case (input, function) => constructUnionAttribute(input, function) }

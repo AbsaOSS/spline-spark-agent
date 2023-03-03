@@ -58,8 +58,10 @@ class YAMLConfiguration(yaml: String)
         case null => // ignore entries with `null` value
         case m: ju.Map[_, _] =>
           populateRecursively(dstKey, m.asInstanceOf[ju.Map[String, AnyRef]], dstMap)
+        case xs: ju.List[_] =>
+          dstMap.put(dstKey, xs)
         case v =>
-          dstMap.put(dstKey, v)
+          dstMap.put(dstKey, v.toString)
       }
     })
     dstMap
