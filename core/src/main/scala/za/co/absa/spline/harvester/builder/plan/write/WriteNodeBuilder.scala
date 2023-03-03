@@ -27,7 +27,7 @@ import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model.{Attribute, WriteOperation}
 
 class WriteNodeBuilder
-(command: WriteCommand)
+  (command: WriteCommand)
   (val idGenerators: IdGeneratorsBundle, val dataTypeConverter: DataTypeConverter, val dataConverter: DataConverter, postProcessor: PostProcessor)
   extends PlanOperationNodeBuilder {
 

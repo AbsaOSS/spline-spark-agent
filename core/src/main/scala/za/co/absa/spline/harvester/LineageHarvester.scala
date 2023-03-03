@@ -22,13 +22,10 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.plans.logical._
-import org.apache.spark.sql.execution.{ExternalRDD, LeafExecNode, LogicalRDD, SparkPlan}
+import org.apache.spark.sql.execution.{LeafExecNode, SparkPlan}
 import za.co.absa.commons.CollectionImplicits._
 import za.co.absa.commons.graph.GraphImplicits._
 import za.co.absa.commons.lang.CachingConverter
-import za.co.absa.commons.reflect.ReflectionUtils
-import za.co.absa.commons.reflect.ReflectionUtils.extractValue
-import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.agent.SplineAgent.FuncName
 import za.co.absa.spline.harvester.LineageHarvester._
 import za.co.absa.spline.harvester.ModelConstants.{AppMetaInfo, ExecutionEventExtra, ExecutionPlanExtra}
@@ -38,7 +35,6 @@ import za.co.absa.spline.harvester.builder.write.{WriteCommand, WriteCommandExtr
 import za.co.absa.spline.harvester.converter.DataTypeConverter
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.logging.ObjectStructureLogging
-import za.co.absa.spline.harvester.plugin.embedded.DeltaPlugin.{`_: MergeIntoCommandEdge`, `_: MergeIntoCommand`}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model._
 
@@ -174,7 +170,7 @@ class LineageHarvester(
 
           if (maybeExistingBuilder.isEmpty) {
 
-            val newNodesToProcess = extractChildren(curOpNode)
+            val newNodesToProcess = opNodeBuilderFactory.nodeChildren(curOpNode)
 
             traverseAndCollect(
               curBuilder +: accBuilders,
@@ -196,30 +192,6 @@ class LineageHarvester(
       .map(rc => opNodeBuilderFactory.readNodeBuilder(rc, por))
       .getOrElse(opNodeBuilderFactory.genericNodeBuilder(por))
 
-  private def extractChildren(por: PlanOrRdd): Seq[PlanOrRdd] = por match {
-    case PlanWrap(plan) =>
-      plan match {
-        case AnalysisBarrierExtractor(_) =>
-          // special handling - spark 2.3 sometimes includes AnalysisBarrier in the plan
-          val child = ReflectionUtils.extractValue[LogicalPlan](plan, "child")
-          Seq(PlanWrap(child))
-        case erdd: ExternalRDD[_] =>
-          Seq(RddWrap(erdd.rdd))
-        case lrdd: LogicalRDD =>
-          Seq(RddWrap(lrdd.rdd))
-        case `_: MergeIntoCommand`(command) =>
-          val target = extractValue[LogicalPlan](command, "target")
-          val source = extractValue[LogicalPlan](command, "source")
-          Seq(PlanWrap(source), PlanWrap(target))
-        case `_: MergeIntoCommandEdge`(command) =>
-          val target = extractValue[LogicalPlan](command, "target")
-          val source = extractValue[LogicalPlan](command, "source")
-          Seq(PlanWrap(source), PlanWrap(target))
-        case _ => plan.children.map(PlanWrap)
-      }
-    case RddWrap(rdd) =>
-      rdd.dependencies.map(dep => RddWrap(dep.rdd))
-  }
 }
 
 object LineageHarvester {
@@ -227,7 +199,9 @@ object LineageHarvester {
   import za.co.absa.commons.version.Version
 
   trait PlanOrRdd
+
   case class PlanWrap(plan: LogicalPlan) extends PlanOrRdd
+
   case class RddWrap(rdd: RDD[_]) extends PlanOrRdd
 
   val SparkVersionInfo: NameAndVersion = NameAndVersion(
@@ -267,8 +241,5 @@ object LineageHarvester {
 
     (cumulatedReadMetrics, getNodeMetrics(executedPlan))
   }
-
-  object AnalysisBarrierExtractor extends SafeTypeMatchingExtractor[LogicalPlan](
-    "org.apache.spark.sql.catalyst.plans.logical.AnalysisBarrier")
 
 }

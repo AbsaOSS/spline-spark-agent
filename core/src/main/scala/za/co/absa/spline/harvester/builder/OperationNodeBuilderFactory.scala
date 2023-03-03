@@ -18,11 +18,15 @@ package za.co.absa.spline.harvester.builder
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.plans.logical._
+import org.apache.spark.sql.execution.{ExternalRDD, LogicalRDD}
+import za.co.absa.commons.reflect.ReflectionUtils
+import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.LineageHarvester.{PlanOrRdd, PlanWrap, RddWrap}
+import za.co.absa.spline.harvester.builder.OperationNodeBuilderFactory.AnalysisBarrierExtractor
+import za.co.absa.spline.harvester.builder.plan._
 import za.co.absa.spline.harvester.builder.plan.read.ReadNodeBuilder
 import za.co.absa.spline.harvester.builder.plan.write.WriteNodeBuilder
-import za.co.absa.spline.harvester.builder.plan._
 import za.co.absa.spline.harvester.builder.rdd.GenericRddNodeBuilder
 import za.co.absa.spline.harvester.builder.rdd.read.RddReadNodeBuilder
 import za.co.absa.spline.harvester.builder.read.ReadCommand
@@ -50,6 +54,27 @@ class OperationNodeBuilderFactory(
     case RddWrap(rdd) => genericRddNodeBuilder(rdd)
   }
 
+  def nodeChildren(por: PlanOrRdd): Seq[PlanOrRdd] = por match {
+    case PlanWrap(plan) =>
+      plan match {
+        case AnalysisBarrierExtractor(_) =>
+          // special handling - spark 2.3 sometimes includes AnalysisBarrier in the plan
+          val child = ReflectionUtils.extractValue[LogicalPlan](plan, "child")
+          Seq(PlanWrap(child))
+        case erdd: ExternalRDD[_] =>
+          Seq(RddWrap(erdd.rdd))
+        case lrdd: LogicalRDD =>
+          Seq(RddWrap(lrdd.rdd))
+        case `_: MergeIntoCommand`(command) =>
+          MergeIntoNodeBuilder.extractChildren(command).map(PlanWrap)
+        case `_: MergeIntoCommandEdge`(command) =>
+          MergeIntoNodeBuilder.extractChildren(command).map(PlanWrap)
+        case _ => plan.children.map(PlanWrap)
+      }
+    case RddWrap(rdd) =>
+      rdd.dependencies.map(dep => RddWrap(dep.rdd))
+  }
+
   private def genericPlanNodeBuilder(lp: LogicalPlan): OperationNodeBuilder = lp match {
     case p: Project => new ProjectNodeBuilder(p)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
     case u: Union => new UnionNodeBuilder(u)(idGenerators, dataTypeConverter, dataConverter, postProcessor)
@@ -65,4 +90,9 @@ class OperationNodeBuilderFactory(
   private def genericRddNodeBuilder(rdd: RDD[_]): OperationNodeBuilder = rdd match {
     case _ => new GenericRddNodeBuilder(rdd)(idGenerators, postProcessor)
   }
+}
+
+object OperationNodeBuilderFactory {
+  object AnalysisBarrierExtractor extends SafeTypeMatchingExtractor[LogicalPlan](
+    "org.apache.spark.sql.catalyst.plans.logical.AnalysisBarrier")
 }
