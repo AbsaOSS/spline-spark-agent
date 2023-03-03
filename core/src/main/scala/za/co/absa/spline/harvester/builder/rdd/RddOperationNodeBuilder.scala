@@ -18,9 +18,9 @@ package za.co.absa.spline.harvester.builder.rdd
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.expressions.ExprId
-import za.co.absa.commons.lang.OptionImplicits.NonOptionWrapper
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder
+import za.co.absa.spline.harvester.builder.OperationNodeBuilder.IOAttributes
 import za.co.absa.spline.producer.model.{Attribute, FunctionalExpression, Literal}
 
 trait RddOperationNodeBuilder extends OperationNodeBuilder {
@@ -29,7 +29,7 @@ trait RddOperationNodeBuilder extends OperationNodeBuilder {
 
   protected def idGenerators: IdGeneratorsBundle
 
-  lazy val outputAttributes: Seq[Attribute] = Seq.empty
+  lazy val outputAttributes: IOAttributes = Seq.empty
 
   override def outputExprToAttMap: Map[ExprId, Attribute] = Map.empty
 

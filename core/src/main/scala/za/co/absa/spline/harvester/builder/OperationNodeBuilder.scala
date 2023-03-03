@@ -18,7 +18,7 @@ package za.co.absa.spline.harvester.builder
 
 import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.spline.harvester.IdGeneratorsBundle
-import za.co.absa.spline.harvester.builder.OperationNodeBuilder.Attributes
+import za.co.absa.spline.harvester.builder.OperationNodeBuilder.IOAttributes
 import za.co.absa.spline.harvester.builder.plan.PlanOperationNodeBuilder.OperationId
 import za.co.absa.spline.producer.model.{Attribute, FunctionalExpression, Literal}
 
@@ -34,10 +34,10 @@ trait OperationNodeBuilder {
   def addChild(childBuilder: OperationNodeBuilder): Unit = childBuilders :+= childBuilder
   protected def resolveAttributeChild(attribute: sparkExprssions.Attribute): Option[sparkExprssions.Expression] = None
 
-  protected def inputAttributes: Seq[Attributes] = childBuilders.map(_.outputAttributes)
+  protected def inputAttributes: Seq[IOAttributes] = childBuilders.map(_.outputAttributes)
   protected def idGenerators: IdGeneratorsBundle
 
-  def outputAttributes: Attributes
+  def outputAttributes: IOAttributes
 
   def childIds: Seq[OperationId] = childBuilders.map(_.operationId)
 
@@ -49,5 +49,5 @@ trait OperationNodeBuilder {
 }
 
 object OperationNodeBuilder {
-  type Attributes = Seq[Attribute]
+  type IOAttributes = Seq[Attribute]
 }

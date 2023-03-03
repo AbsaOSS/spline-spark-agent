@@ -21,6 +21,7 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import za.co.absa.commons.reflect.ReflectionUtils.extractValue
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.ModelConstants.CommonExtras
+import za.co.absa.spline.harvester.builder.OperationNodeBuilder.IOAttributes
 import za.co.absa.spline.harvester.builder.plan.MergeIntoNodeBuilder._
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor
@@ -33,9 +34,9 @@ class MergeIntoNodeBuilder
 
   override lazy val functionalExpressions: Seq[FunctionalExpression] = Seq.empty
 
-  override lazy val outputAttributes: Seq[Attribute] = {
+  override lazy val outputAttributes: IOAttributes = {
     val target: LogicalPlan = extractTarget(logicalPlan)
-    val trgAttrs: Seq[Attribute] = target.output.map(attributeConverter.convert)
+    val trgAttrs: IOAttributes = target.output.map(attributeConverter.convert)
 
     val dependenciesByAttrName: Map[String, Seq[AttrOrExprRef]] =
       (extractMatchedClauses(logicalPlan) ++ extractNonMatchedClauses(logicalPlan))

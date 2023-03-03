@@ -16,6 +16,7 @@
 
 package za.co.absa.spline.test
 
+import za.co.absa.spline.harvester.builder.OperationNodeBuilder.IOAttributes
 import za.co.absa.spline.producer.model._
 
 import scala.annotation.tailrec
@@ -24,7 +25,7 @@ object ProducerModelImplicits {
 
   implicit class OperationOps(val operation: Operation) extends AnyVal {
 
-    def outputAttributes(implicit walker: LineageWalker): Seq[Attribute] = {
+    def outputAttributes(implicit walker: LineageWalker): IOAttributes = {
       operation.output.map(walker.attributeById)
     }
 

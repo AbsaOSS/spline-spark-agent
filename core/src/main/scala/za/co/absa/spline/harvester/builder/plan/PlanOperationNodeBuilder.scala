@@ -21,6 +21,7 @@ import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.CachingConverter
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder
+import za.co.absa.spline.harvester.builder.OperationNodeBuilder.IOAttributes
 import za.co.absa.spline.harvester.converter._
 import za.co.absa.spline.producer.model.{Attribute, FunctionalExpression, Literal}
 
@@ -62,7 +63,7 @@ trait PlanOperationNodeBuilder extends OperationNodeBuilder {
       literalConverter
     )
 
-  lazy val outputAttributes: Seq[Attribute] =
+  lazy val outputAttributes: IOAttributes =
     logicalPlan.output.map(attributeConverter.convert)
 
   override def outputExprToAttMap: Map[sparkExprssions.ExprId, Attribute] =
@@ -75,5 +76,4 @@ trait PlanOperationNodeBuilder extends OperationNodeBuilder {
 
 object PlanOperationNodeBuilder {
   type OperationId = String
-  type OutputAttIds = Seq[String]
 }
