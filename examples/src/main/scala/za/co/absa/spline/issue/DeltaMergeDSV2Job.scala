@@ -35,18 +35,18 @@ object DeltaMergeDSV2Job extends SparkApp(
   // Initializing library to hook up to Apache Spark
   spark.enableLineageTracking()
 
-  spark.sql("CREATE DATABASE dsv2 LOCATION '$path'")
+  spark.sql(s"CREATE DATABASE dsv2 LOCATION '$path'")
 
-  spark.sql("CREATE TABLE dsv2.foo ( ID int, NAME string ) USING DELTA")
-  spark.sql("INSERT INTO dsv2.foo VALUES (1014, 'Warsaw'), (1002, 'Corte')")
+  spark.sql("CREATE TABLE dsv2.foo ( id INT, code STRING, name STRING ) USING DELTA")
+  spark.sql("INSERT INTO dsv2.foo VALUES (1014, 'PLN', 'Warsaw'), (1002, 'FRA', 'Corte')")
 
-  spark.sql("CREATE TABLE dsv2.fooUpdate ( ID Int, NAME String ) USING DELTA")
+  spark.sql("CREATE TABLE dsv2.fooUpdate ( id INT, name STRING ) USING DELTA")
   spark.sql("INSERT INTO dsv2.fooUpdate VALUES (1014, 'Lodz'), (1003, 'Prague')")
 
-  spark.sql("CREATE TABLE dsv2.barUpdate ( ID Int, NAME String ) USING DELTA")
+  spark.sql("CREATE TABLE dsv2.barUpdate ( id INT, name STRING ) USING DELTA")
   spark.sql("INSERT INTO dsv2.barUpdate VALUES (4242, 'Paris'), (3342, 'Bordeaux')")
 
-  spark.sql("UPDATE dsv2.foo SET NAME = 'Korok' WHERE ID == 1002")
+  spark.sql("UPDATE dsv2.foo SET name = 'Korok' WHERE id == 1002")
 
   spark.sql(
     """
@@ -59,17 +59,19 @@ object DeltaMergeDSV2Job extends SparkApp(
 
   spark.sql(
     """
-      | MERGE INTO dsv2.foo
-      | USING tempview AS foobar
-      | ON dsv2.foo.ID = foobar.ID
+      | MERGE INTO dsv2.foo AS dst
+      | USING tempview AS src
+      | ON dst.id = src.id
       | WHEN MATCHED THEN
       |   UPDATE SET
-      |     NAME = foobar.NAME
+      |     NAME = src.name
       | WHEN NOT MATCHED
-      |  THEN INSERT (ID, NAME)
-      |  VALUES (foobar.ID, foobar.NAME)
+      |  THEN INSERT (id, name)
+      |  VALUES (src.id, src.name)
       |""".stripMargin
-  )
+  ).show
+
+  spark.read.table("dsv2.foo").show()
 
   spark.sql("DELETE FROM dsv2.foo WHERE ID == 1014")
 }

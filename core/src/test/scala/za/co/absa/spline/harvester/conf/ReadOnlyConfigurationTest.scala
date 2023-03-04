@@ -25,38 +25,44 @@ trait ReadOnlyConfigurationTest extends AnyFunSuite with Matchers {
   protected val givenConf: ReadOnlyConfiguration
   protected val emptyConf: ReadOnlyConfiguration
 
-  test("testContainsKey") {
+  test("containsKey") {
     givenConf containsKey "spline.x.y" shouldBe true
     givenConf containsKey "spline.w.z" shouldBe true
     givenConf containsKey "spline.xs" shouldBe true
     givenConf containsKey "non-existent" shouldBe false
   }
 
-  test("testGetProperty") {
+  test("getProperty") {
     givenConf getProperty "spline.x.y" shouldEqual "foo"
     givenConf getProperty "spline.w.z" shouldEqual "bar"
     givenConf getProperty "spline.xs" should be(a[util.List[_]])
     givenConf getProperty "non-existent" shouldBe null
   }
 
-  test("testGetStringArray") {
+  test("getStringArray") {
     val xs: Array[String] = givenConf.getStringArray("spline.xs")
     xs should not be null
     xs should contain theSameElementsInOrderAs Seq("a", "b", "c")
   }
 
-  test("testGetList") {
+  test("getList") {
+    // multi-value property
     val xs: util.List[_] = givenConf.getList("spline.xs")
     xs should not be null
     xs should contain theSameElementsInOrderAs Seq("a", "b", "c")
+
+    // single-value property
+    val ys: util.List[_] = givenConf.getList("spline.x.y")
+    ys should not be null
+    ys should contain theSameElementsAs Seq("foo")
   }
 
-  test("testIsEmpty") {
+  test("isEmpty") {
     givenConf isEmpty() shouldBe false
     emptyConf isEmpty() shouldBe true
   }
 
-  test("testGetKeys") {
+  test("getKeys") {
     import scala.collection.JavaConverters._
     (givenConf getKeys "spline.x").asScala.toSeq should contain("spline.x.y")
     (givenConf getKeys "spline.x").asScala.toSeq shouldNot contain("spline.w.z")
