@@ -10,13 +10,16 @@ trait Authentication {
   def createRequest(httpRequest: HttpRequest,authentication: Map[String,String]):HttpRequest
 }
 
+case class NoAuthentication(authentication: Map[String, String]) extends Authentication {
+  override def createRequest(httpRequest: HttpRequest, authentication: Map[String, String]): HttpRequest = httpRequest
+}
 case class ClientCredentialsAuthentication(authentication: Map[String, String]) extends Authentication {
   private val tokenCache: mutable.Map[String, (String, Instant)] = mutable.Map.empty[String, (String, Instant)]
-  private val clientId: String = ""
-  private val clientSecret: String = ""
-  private val tokenUrl: String = ""
-  private val grantType: String = ""
-  private val scope: String = ""
+  private var clientId: String = ""
+  private var clientSecret: String = ""
+  private var tokenUrl: String = ""
+  private var grantType: String = ""
+  private var scope: String = ""
 
   private def isTokenExpired(expirationTime: Instant): Boolean = {
     Instant.now().isAfter(expirationTime.minusSeconds(300) )
@@ -56,10 +59,11 @@ case class ClientCredentialsAuthentication(authentication: Map[String, String]) 
     authentication.get("mode") match {
       case Some("enabled") => {
         if (authentication.contains("clientId") && authentication.contains("clientSecret") && authentication.contains("tokenUrl") && authentication.contains("scope")) {
-          val clientId = authentication("clientId")
-          val clientSecret = authentication("clientSecret")
-          val tokenUrl = authentication("tokenUrl")
-          val scope = authentication("scope")
+          clientId = authentication("clientId")
+          clientSecret = authentication("clientSecret")
+          tokenUrl = authentication("tokenUrl")
+          scope = authentication("scope")
+          grantType = authentication("grantType")
           val token = getToken(clientId, clientSecret, tokenUrl, scope)
           httpRequest.header("Authorization", s"Bearer $token")
         } else {
@@ -75,7 +79,7 @@ object AuthenticationFactory {
   def createAuthentication(authentication: Map[String, String]): Authentication = {
     authentication("grantType") match {
       case "client_credentials" => ClientCredentialsAuthentication(authentication)
-      case _ => throw new IllegalArgumentException("Invalid grant type.")
+      case _ => NoAuthentication(authentication)
     }
   }
 }

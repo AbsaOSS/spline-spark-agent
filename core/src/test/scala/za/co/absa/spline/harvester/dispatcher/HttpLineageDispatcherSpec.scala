@@ -38,8 +38,8 @@ class HttpLineageDispatcherSpec extends AnyFlatSpec with MockitoSugar {
   private val restClientMock = mock[RestClient]
   private val httpRequestMock = mock[HttpRequest]
   private val httpResponseMock = mock[HttpResponse[String]]
-
-  when(restClientMock.endpoint("status")) thenReturn new RestEndpoint(httpRequestMock)
+  private val restEndpointMock = new RestEndpoint(httpRequestMock,mock[Map[String,String]])
+  when(restClientMock.endpoint("status")) thenReturn restEndpointMock
   when(httpRequestMock.method("HEAD")) thenReturn httpRequestMock
 
   it should "not do anything when producer is ready" in {
