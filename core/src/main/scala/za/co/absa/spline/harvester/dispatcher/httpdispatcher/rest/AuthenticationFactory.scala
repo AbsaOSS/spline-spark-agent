@@ -14,7 +14,8 @@ case class NoAuthentication(authentication: Map[String, String]) extends Authent
   override def createRequest(httpRequest: HttpRequest, authentication: Map[String, String]): HttpRequest = httpRequest
 }
 case class ClientCredentialsAuthentication(authentication: Map[String, String]) extends Authentication {
-  private val tokenCache: mutable.Map[String, (String, Instant)] = mutable.Map.empty[String, (String, Instant)]
+  case class Token(tokenValue: String, expirationTime: Instant)
+  private var tokenCache: Map[String, Token] = Map.empty[String, Token]
   private var clientId: String = ""
   private var clientSecret: String = ""
   private var tokenUrl: String = ""
@@ -27,9 +28,9 @@ case class ClientCredentialsAuthentication(authentication: Map[String, String]) 
 
   private def getToken(clientId: String, clientSecret: String, tokenUrl: String,scope: String): String = {
     val cachedToken= tokenCache.get("token")
-    if (cachedToken.isDefined && !isTokenExpired(cachedToken.get._2)) {
+    if (cachedToken.isDefined && !isTokenExpired(cachedToken.get.expirationTime)) {
       // Token found in cache and not expired, return it
-      cachedToken.get._1
+      cachedToken.get.tokenValue
     } else {
       val resp = scalaj.http.Http(tokenUrl)
         .postForm(Seq(
