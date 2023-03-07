@@ -25,64 +25,17 @@ import za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest.RestEndpoint._
 import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPOutputStream
 import javax.ws.rs.HttpMethod
-import java.time.{ Instant, Duration }
-import scala.collection.mutable
 
 class RestEndpoint(val request: HttpRequest, val authentication: Map[String, String]) {
 
-  private val tokenCache: mutable.Map[String, (String, Instant)] = mutable.Map.empty[String, (String, Instant)]
+  private val authenticationContext: Authentication = AuthenticationFactory.createAuthentication(authentication)
 
-  def withAuth(): HttpRequest = {
-    if (authentication.contains("clientId") && authentication.contains("clientSecret") && authentication.contains("tokenUrl") && authentication.contains("scope")) {
-      val clientId = authentication("clientId")
-      val clientSecret = authentication("clientSecret")
-      val tokenUrl = authentication("tokenUrl")
-      val token = getToken(clientId, clientSecret, tokenUrl)
-      request.header("Authorization", s"Bearer $token")
-    } else {
-      request
-    }
-  }
-
-  private def getToken(clientId: String, clientSecret: String, tokenUrl: String): String = {
-    val cachedToken = tokenCache.get("token")
-    if (cachedToken.isDefined && !isTokenExpired(cachedToken.get._2)) {
-      // Token found in cache and not expired, return it
-      cachedToken.get._1
-    } else {
-      val resp = scalaj.http.Http(tokenUrl)
-        .postForm(Seq(
-          "grant_type" -> "client_credentials",
-          "client_id" -> clientId,
-          "client_secret" -> clientSecret))
-        .asString
-
-      val jsonResp = scala.util.parsing.json.JSON.parseFull(resp.body)
-      jsonResp match {
-        case Some(map: Map[String, Any]) =>
-          val token = map.getOrElse("access_token", "").toString
-          if (token.nonEmpty) {
-            val expirationTime = Instant.now().plus(Duration.ofSeconds(map.getOrElse("expires_in", "0").toString.toLong))
-            tokenCache.put("token", (token, expirationTime))
-          }
-          token
-        case _ =>
-          throw new RuntimeException("Failed to retrieve token from response")
-
-      }
-    }
-  }
-
-  private def isTokenExpired(expirationTime: Instant): Boolean = {
-    Instant.now().isAfter(expirationTime)
-  }
-
-  def head(): HttpResponse[String] = withAuth()
+  def head(): HttpResponse[String] = authenticationContext.createRequest(httpRequest = request,authentication = authentication)
     .method(HttpMethod.HEAD)
     .asString
 
   def post(data: String, contentType: String, enableRequestCompression: Boolean): HttpResponse[String] = {
-    val jsonRequest = withAuth()
+    val jsonRequest = authenticationContext.createRequest(httpRequest = request,authentication = authentication)
       .header(HttpHeaders.CONTENT_TYPE, contentType)
 
     if (enableRequestCompression && data.length > GzipCompressionLengthThreshold) {
