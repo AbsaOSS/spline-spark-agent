@@ -4,23 +4,24 @@ import java.time.{Duration, Instant}
 
 import scalaj.http.{Base64, HttpRequest}
 
-import scala.collection.mutable
+import scala.collection.mutable.Map
+import scala.collection.immutable.Map
 
 trait Authentication {
-  def createRequest(httpRequest: HttpRequest,authentication: Map[String,String]):HttpRequest
+  def createRequest(httpRequest: HttpRequest,authentication: scala.collection.immutable.Map[String,String]):HttpRequest
 }
 
-case class NoAuthentication(authentication: Map[String, String]) extends Authentication {
-  override def createRequest(httpRequest: HttpRequest, authentication: Map[String, String]): HttpRequest = httpRequest
+case class NoAuthentication(authentication: scala.collection.immutable.Map[String, String]) extends Authentication {
+  override def createRequest(httpRequest: HttpRequest, authentication: scala.collection.immutable.Map[String, String]): HttpRequest = httpRequest
 }
-case class ClientCredentialsAuthentication(authentication: Map[String, String]) extends Authentication {
+case class ClientCredentialsAuthentication(authentication: scala.collection.immutable.Map[String, String]) extends Authentication {
   case class Token(tokenValue: String, expirationTime: Instant)
-  private var tokenCache: Map[String, Token] = Map.empty[String, Token]
-  private var clientId: String = ""
-  private var clientSecret: String = ""
-  private var tokenUrl: String = ""
-  private var grantType: String = ""
-  private var scope: String = ""
+  private val tokenCache: scala.collection.mutable.Map[String, Token] = scala.collection.mutable.Map.empty[String, Token]
+  private val clientId: String = authentication.getOrElse("clientId","")
+  private val clientSecret: String = authentication.getOrElse("clientSecret","")
+  private val tokenUrl: String = authentication.getOrElse("tokenUrl","")
+  private val grantType: String = authentication.getOrElse("grantType","")
+  private val scope: String = authentication.getOrElse("scope","")
 
   private def isTokenExpired(expirationTime: Instant): Boolean = {
     Instant.now().isAfter(expirationTime.minusSeconds(300) )
@@ -34,7 +35,7 @@ case class ClientCredentialsAuthentication(authentication: Map[String, String]) 
     } else {
       val resp = scalaj.http.Http(tokenUrl)
         .postForm(Seq(
-          "grant_type" -> "client_credentials",
+          "grant_type" -> grantType,
           "client_id" -> clientId,
           "client_secret" -> clientSecret,
           "scope" -> scope))
@@ -42,11 +43,12 @@ case class ClientCredentialsAuthentication(authentication: Map[String, String]) 
 
       val jsonResp = scala.util.parsing.json.JSON.parseFull(resp.body)
       jsonResp match {
-        case Some(map: Map[String, Any]) =>
+        case Some(map: scala.collection.immutable.Map[String, Any]) =>
           val token = map.getOrElse("access_token", "").toString
           if (token.nonEmpty) {
             val expirationTime = Instant.now().plus(Duration.ofSeconds(map.getOrElse("expires_in", "0").toString.toLong))
-            tokenCache.put("token", (token, expirationTime))
+            val newToken = Token(token,expirationTime)
+            tokenCache.put("token",newToken)
           }
           token
         case _ =>
@@ -56,15 +58,10 @@ case class ClientCredentialsAuthentication(authentication: Map[String, String]) 
     }
   }
 
-  override def createRequest(httpRequest: HttpRequest, authentication: Map[String, String]): HttpRequest ={
+  override def createRequest(httpRequest: HttpRequest, authentication: scala.collection.immutable.Map[String, String]): HttpRequest ={
     authentication.get("mode") match {
       case Some("enabled") => {
         if (authentication.contains("clientId") && authentication.contains("clientSecret") && authentication.contains("tokenUrl") && authentication.contains("scope")) {
-          clientId = authentication("clientId")
-          clientSecret = authentication("clientSecret")
-          tokenUrl = authentication("tokenUrl")
-          scope = authentication("scope")
-          grantType = authentication("grantType")
           val token = getToken(clientId, clientSecret, tokenUrl, scope)
           httpRequest.header("Authorization", s"Bearer $token")
         } else {
@@ -77,7 +74,7 @@ case class ClientCredentialsAuthentication(authentication: Map[String, String]) 
 }
 
 object AuthenticationFactory {
-  def createAuthentication(authentication: Map[String, String]): Authentication = {
+  def createAuthentication(authentication: scala.collection.immutable.Map[String, String]): Authentication = {
     authentication("grantType") match {
       case "client_credentials" => ClientCredentialsAuthentication(authentication)
       case _ => NoAuthentication(authentication)
