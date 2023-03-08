@@ -29,9 +29,10 @@ case class ClientCredentialsAuthentication(authentication: scala.collection.immu
 
   private def getToken(clientId: String, clientSecret: String, tokenUrl: String,scope: String): String = {
     val cachedToken= tokenCache.get("token")
-    if (cachedToken.isDefined && !isTokenExpired(cachedToken.get.expirationTime)) {
+    val failureMessage = "Failed to retrieve token from response"
+    if (cachedToken.isDefined && !isTokenExpired(cachedToken.getOrElse(throw new IllegalArgumentException(failureMessage)).expirationTime)) {
       // Token found in cache and not expired, return it
-      cachedToken.get.tokenValue
+      cachedToken.getOrElse(throw new IllegalArgumentException(failureMessage)).tokenValue
     } else {
       val resp = scalaj.http.Http(tokenUrl)
         .postForm(Seq(
@@ -52,7 +53,7 @@ case class ClientCredentialsAuthentication(authentication: scala.collection.immu
           }
           token
         case _ =>
-          throw new RuntimeException("Failed to retrieve token from response")
+          throw new RuntimeException(failureMessage)
 
       }
     }
