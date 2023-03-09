@@ -50,6 +50,7 @@ object RestClient extends Logging {
     logDebug(s"readTimeout = $readTimeout")
     logDebug(s"disableSslValidation = $disableSslValidation")
     logDebug(s"headers = $headers")
+    logInfo(s"authe= $authentication")
 
     val maybeDisableSslValidationOption: Option[HttpOption] =
       if (disableSslValidation) {

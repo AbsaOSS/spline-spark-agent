@@ -22,15 +22,16 @@ import scalaj.http.{Base64, HttpRequest}
 
 import scala.collection.mutable.Map
 import scala.collection.immutable.Map
+import org.apache.spark.internal.Logging
 
 trait Authentication {
   def createRequest(httpRequest: HttpRequest,authentication: scala.collection.immutable.Map[String,String]):HttpRequest
 }
 
-case class NoAuthentication(authentication: scala.collection.immutable.Map[String, String]) extends Authentication {
+case class NoAuthentication(authentication: scala.collection.immutable.Map[String, String]) extends Authentication with Logging {
   override def createRequest(httpRequest: HttpRequest, authentication: scala.collection.immutable.Map[String, String]): HttpRequest = httpRequest
 }
-case class ClientCredentialsAuthentication(authentication: scala.collection.immutable.Map[String, String]) extends Authentication {
+case class ClientCredentialsAuthentication(authentication: scala.collection.immutable.Map[String, String]) extends Authentication with Logging {
   case class Token(tokenValue: String, expirationTime: Instant)
   private val tokenCache: scala.collection.mutable.Map[String, Token] = scala.collection.mutable.Map.empty[String, Token]
   private val clientId: String = authentication.getOrElse("clientId","")
@@ -67,6 +68,7 @@ case class ClientCredentialsAuthentication(authentication: scala.collection.immu
             val newToken = Token(token,expirationTime)
             tokenCache.put("token",newToken)
           }
+          logInfo(token)
           token
         case _ =>
           throw new RuntimeException(failureMessage)
@@ -92,6 +94,7 @@ case class ClientCredentialsAuthentication(authentication: scala.collection.immu
 
 object AuthenticationFactory {
   def createAuthentication(authentication: scala.collection.immutable.Map[String, String]): Authentication = {
+    log
     authentication("grantType") match {
       case "client_credentials" => ClientCredentialsAuthentication(authentication)
       case _ => NoAuthentication(authentication)

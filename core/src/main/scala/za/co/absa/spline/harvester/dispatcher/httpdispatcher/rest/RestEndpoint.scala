@@ -15,6 +15,7 @@
  */
 
 package za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest
+import org.apache.spark.internal.Logging
 
 import org.apache.http.HttpHeaders
 import scalaj.http.{ HttpRequest, HttpResponse }
