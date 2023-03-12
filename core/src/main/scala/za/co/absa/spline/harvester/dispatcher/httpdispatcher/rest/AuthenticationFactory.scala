@@ -28,7 +28,7 @@ trait Authentication {
   def createRequest(httpRequest: HttpRequest,authentication: scala.collection.immutable.Map[String,String]):HttpRequest
 }
 
-case class NoAuthentication(authentication: scala.collection.immutable.Map[String, String]) extends Authentication with Logging {
+case class NoAuthentication(authentication: scala.collection.immutable.Map[String, String]) extends Authentication{
   override def createRequest(httpRequest: HttpRequest, authentication: scala.collection.immutable.Map[String, String]): HttpRequest = httpRequest
 }
 case class ClientCredentialsAuthentication(authentication: scala.collection.immutable.Map[String, String]) extends Authentication with Logging {
@@ -64,11 +64,10 @@ case class ClientCredentialsAuthentication(authentication: scala.collection.immu
         case Some(map: scala.collection.immutable.Map[String, Any]) =>
           val token = map.getOrElse("access_token", "").toString
           if (token.nonEmpty) {
-            val expirationTime = Instant.now().plus(Duration.ofSeconds(map.getOrElse("expires_in", "0").toString.toLong))
+            val expirationTime = Instant.now().plus(Duration.ofSeconds(map.getOrElse("expires_in", 0).toString.toDouble.toInt))
             val newToken = Token(token,expirationTime)
             tokenCache.put("token",newToken)
           }
-          logInfo(token)
           token
         case _ =>
           throw new RuntimeException(failureMessage)
@@ -92,9 +91,8 @@ case class ClientCredentialsAuthentication(authentication: scala.collection.immu
   }
 }
 
-object AuthenticationFactory extends Logging {
+object AuthenticationFactory{
   def createAuthentication(authentication: scala.collection.immutable.Map[String, String]): Authentication = {
-    logInfo(authentication("grantType"))
     authentication("grantType") match {
       case "client_credentials" => ClientCredentialsAuthentication(authentication)
       case _ => NoAuthentication(authentication)
