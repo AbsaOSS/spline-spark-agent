@@ -92,9 +92,9 @@ case class ClientCredentialsAuthentication(authentication: scala.collection.immu
   }
 }
 
-object AuthenticationFactory {
+object AuthenticationFactory extends Logging {
   def createAuthentication(authentication: scala.collection.immutable.Map[String, String]): Authentication = {
-    log
+    logInfo(authentication("grantType"))
     authentication("grantType") match {
       case "client_credentials" => ClientCredentialsAuthentication(authentication)
       case _ => NoAuthentication(authentication)
