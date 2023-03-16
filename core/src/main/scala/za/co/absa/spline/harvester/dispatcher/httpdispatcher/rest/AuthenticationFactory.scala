@@ -75,7 +75,7 @@ case class ClientCredentialsAuthentication(authentication: scala.collection.immu
   }
 
   override def createRequest(httpRequest: HttpRequest, authentication: scala.collection.immutable.Map[String, String]): HttpRequest = {
-        val token = getToken()
+        val token = getToken
         httpRequest.header("Authorization", s"Bearer $token")
   }
 }
@@ -88,7 +88,7 @@ object AuthenticationFactory extends Logging {
           case "enabled" => authentication("grantType") match {
                                   case "client_credentials" => ClientCredentialsAuthentication(authentication)
                                   case _ =>
-                                    logInfo(s"$authentication(\"grantType\") not implemented")
+                                    logInfo(s"$authentication('grantType') not implemented")
                                     NoAuthentication(authentication)
           }
         case _ =>
