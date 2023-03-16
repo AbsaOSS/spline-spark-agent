@@ -18,10 +18,8 @@ package za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest
 
 import java.time.{Duration, Instant}
 
-import scalaj.http.{Base64, HttpRequest}
+import scalaj.http.HttpRequest
 
-import scala.collection.mutable.Map
-import scala.collection.immutable.Map
 import org.apache.spark.internal.Logging
 
 trait Authentication {
@@ -31,26 +29,25 @@ trait Authentication {
 case class NoAuthentication(authentication: scala.collection.immutable.Map[String, String]) extends Authentication{
   override def createRequest(httpRequest: HttpRequest, authentication: scala.collection.immutable.Map[String, String]): HttpRequest = httpRequest
 }
+
 case class ClientCredentialsAuthentication(authentication: scala.collection.immutable.Map[String, String]) extends Authentication with Logging {
   case class Token(tokenValue: String, expirationTime: Instant)
   private val tokenCache: scala.collection.mutable.Map[String, Token] = scala.collection.mutable.Map.empty[String, Token]
-  private val clientId: String = authentication.getOrElse("clientId","")
-  private val clientSecret: String = authentication.getOrElse("clientSecret","")
-  private val tokenUrl: String = authentication.getOrElse("tokenUrl","")
-  private val grantType: String = authentication.getOrElse("grantType","")
-  private val scope: String = authentication.getOrElse("scope","")
+  private val clientId: String = authentication("clientId")
+  private val clientSecret: String = authentication("clientSecret")
+  private val tokenUrl: String = authentication("tokenUrl")
+  private val grantType: String = authentication("grantType")
+  private val scope: String = authentication("scope")
+  val failureMessage = "Failed to retrieve token from response"
 
-  private def isTokenExpired(expirationTime: Instant): Boolean = {
-    Instant.now().isAfter(expirationTime.minusSeconds(300) )
+  private def isTokenInvalid: Boolean = {
+    val cachedToken = tokenCache.get("token")
+    cachedToken.isEmpty || Instant.now().isAfter(cachedToken.getOrElse(throw new IllegalArgumentException(failureMessage)).expirationTime.minusSeconds(300))
   }
 
-  private def getToken(clientId: String, clientSecret: String, tokenUrl: String,scope: String): String = {
-    val cachedToken= tokenCache.get("token")
-    val failureMessage = "Failed to retrieve token from response"
-    if (cachedToken.isDefined && !isTokenExpired(cachedToken.getOrElse(throw new IllegalArgumentException(failureMessage)).expirationTime)) {
-      // Token found in cache and not expired, return it
-      cachedToken.getOrElse(throw new IllegalArgumentException(failureMessage)).tokenValue
-    } else {
+  private def getToken: String = {
+    val cachedToken = tokenCache.get("token")
+    if (isTokenInvalid) {
       val resp = scalaj.http.Http(tokenUrl)
         .postForm(Seq(
           "grant_type" -> grantType,
@@ -65,37 +62,43 @@ case class ClientCredentialsAuthentication(authentication: scala.collection.immu
           val token = map.getOrElse("access_token", "").toString
           if (token.nonEmpty) {
             val expirationTime = Instant.now().plus(Duration.ofSeconds(map.getOrElse("expires_in", 0).toString.toDouble.toInt))
-            val newToken = Token(token,expirationTime)
-            tokenCache.put("token",newToken)
+            val newToken = Token(token, expirationTime)
+            tokenCache.put("token", newToken)
           }
           token
         case _ =>
           throw new RuntimeException(failureMessage)
-
       }
+    } else {
+        cachedToken.get.tokenValue
     }
   }
 
-  override def createRequest(httpRequest: HttpRequest, authentication: scala.collection.immutable.Map[String, String]): HttpRequest ={
-    authentication.get("mode") match {
-      case Some("enabled") => {
-        if (authentication.contains("clientId") && authentication.contains("clientSecret") && authentication.contains("tokenUrl") && authentication.contains("scope")) {
-          val token = getToken(clientId, clientSecret, tokenUrl, scope)
-          httpRequest.header("Authorization", s"Bearer $token")
-        } else {
-          throw new IllegalArgumentException("Missing or wrong credentials")
-        }
-      }
-      case _ => httpRequest
-    }
+  override def createRequest(httpRequest: HttpRequest, authentication: scala.collection.immutable.Map[String, String]): HttpRequest = {
+        val token = getToken()
+        httpRequest.header("Authorization", s"Bearer $token")
   }
 }
 
-object AuthenticationFactory{
+
+object AuthenticationFactory extends Logging {
   def createAuthentication(authentication: scala.collection.immutable.Map[String, String]): Authentication = {
-    authentication("grantType") match {
-      case "client_credentials" => ClientCredentialsAuthentication(authentication)
-      case _ => NoAuthentication(authentication)
+    if (authentication.isDefinedAt("mode") && authentication.isDefinedAt("grantType")) {
+      authentication("mode") match {
+          case "enabled" => authentication("grantType") match {
+                                  case "client_credentials" => ClientCredentialsAuthentication(authentication)
+                                  case _ =>
+                                    logInfo(s"$authentication(\"grantType\") not implemented")
+                                    NoAuthentication(authentication)
+          }
+        case _ =>
+          logInfo("Authentication mode is set to Disabled")
+          NoAuthentication(authentication)
+      }
+    }
+    else {
+      logInfo("Authentication mode is set to Disabled")
+      NoAuthentication(authentication)
     }
   }
 }
