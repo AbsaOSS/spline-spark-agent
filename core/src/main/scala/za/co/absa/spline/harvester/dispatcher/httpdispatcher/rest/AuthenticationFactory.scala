@@ -23,30 +23,29 @@ import scalaj.http.HttpRequest
 import org.apache.spark.internal.Logging
 
 trait Authentication {
-  def createRequest(httpRequest: HttpRequest,authentication: scala.collection.immutable.Map[String,String]):HttpRequest
+  def createRequest(httpRequest: HttpRequest, authentication: scala.collection.immutable.Map[String, String]): HttpRequest
 }
 
-case class NoAuthentication(authentication: scala.collection.immutable.Map[String, String]) extends Authentication{
+case class NoAuthentication(authentication: scala.collection.immutable.Map[String, String]) extends Authentication {
   override def createRequest(httpRequest: HttpRequest, authentication: scala.collection.immutable.Map[String, String]): HttpRequest = httpRequest
 }
 
 case class ClientCredentialsAuthentication(authentication: scala.collection.immutable.Map[String, String]) extends Authentication with Logging {
-  case class Token(tokenValue: String, expirationTime: Instant)
-  private val tokenCache: scala.collection.mutable.Map[String, Token] = scala.collection.mutable.Map.empty[String, Token]
+
+  val failureMessage = "Failed to retrieve token from response"
   private val clientId: String = authentication("clientId")
   private val clientSecret: String = authentication("clientSecret")
   private val tokenUrl: String = authentication("tokenUrl")
   private val grantType: String = authentication("grantType")
   private val scope: String = authentication("scope")
-  val failureMessage = "Failed to retrieve token from response"
+  private var tokenCache: Option[Token] = None
 
-  private def isTokenInvalid: Boolean = {
-    val cachedToken = tokenCache.get("token")
-    cachedToken.isEmpty || Instant.now().isAfter(cachedToken.getOrElse(throw new IllegalArgumentException(failureMessage)).expirationTime.minusSeconds(300))
+  override def createRequest(httpRequest: HttpRequest, authentication: scala.collection.immutable.Map[String, String]): HttpRequest = {
+    val token = getToken
+    httpRequest.header("Authorization", s"Bearer $token")
   }
 
   private def getToken: String = {
-    val cachedToken = tokenCache.get("token")
     if (isTokenInvalid) {
       val resp = scalaj.http.Http(tokenUrl)
         .postForm(Seq(
@@ -61,23 +60,24 @@ case class ClientCredentialsAuthentication(authentication: scala.collection.immu
         case Some(map: scala.collection.immutable.Map[String, Any]) =>
           val token = map.getOrElse("access_token", "").toString
           if (token.nonEmpty) {
-            val expirationTime = Instant.now().plus(Duration.ofSeconds(map.getOrElse("expires_in", 0).toString.toDouble.toInt))
+            val expirationTime = Instant.now().plus(Duration.ofSeconds(map.getOrElse("expires_in", 0).toString.toLong))
             val newToken = Token(token, expirationTime)
-            tokenCache.put("token", newToken)
+            tokenCache = Some(newToken)
           }
           token
         case _ =>
           throw new RuntimeException(failureMessage)
       }
     } else {
-        cachedToken.getOrElse(throw new RuntimeException(failureMessage)).tokenValue
+      tokenCache.getOrElse(throw new RuntimeException(failureMessage)).tokenValue
     }
   }
 
-  override def createRequest(httpRequest: HttpRequest, authentication: scala.collection.immutable.Map[String, String]): HttpRequest = {
-        val token = getToken
-        httpRequest.header("Authorization", s"Bearer $token")
+  private def isTokenInvalid: Boolean = {
+    tokenCache.isEmpty || Instant.now().isAfter(tokenCache.get.expirationTime.minusSeconds(300))
   }
+
+  case class Token(tokenValue: String, expirationTime: Instant)
 }
 
 
@@ -85,12 +85,11 @@ object AuthenticationFactory extends Logging {
   def createAuthentication(authentication: scala.collection.immutable.Map[String, String]): Authentication = {
     if (authentication.isDefinedAt("mode") && authentication.isDefinedAt("grantType")) {
       authentication("mode") match {
-          case "enabled" => authentication("grantType") match {
-                                  case "client_credentials" => ClientCredentialsAuthentication(authentication)
-                                  case _ =>
-                                    logInfo(s"$authentication('grantType') not implemented")
-                                    NoAuthentication(authentication)
-          }
+        case "enabled" => authentication("grantType") match {
+          case "client_credentials" => ClientCredentialsAuthentication(authentication)
+          case _ =>
+            throw new IllegalArgumentException(s"$authentication('grantType') not implemented")
+        }
         case _ =>
           logInfo("Authentication mode is set to Disabled")
           NoAuthentication(authentication)
