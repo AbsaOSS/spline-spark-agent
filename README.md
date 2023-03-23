@@ -383,6 +383,63 @@ spline.postProcessingFilter.composite.filters=myFilter1,myFilter2
 
 (see `spline.default.yaml` for details and examples)
 
+#### Using MetadataCollectingFilter
+MetadataCollectingFilter provides a way to add additional data to lineage produced by Spline Agent.
+
+Data can be added to the following lineage entities: `executionPlan`, `executionEvent`, `operation`, `read` and `write`.
+
+Inside each entity two places can be used for user data: `labels` and `extra`. 
+Labels are intended for identification and filtering on the server.
+Extra is for any other user defined data.
+
+Example usage:
+```properties
+spline.postProcessingFilter=userExtraMeta
+spline.postProcessingFilter.userExtraMeta.rules=file:///path/to/json-with-rules.json
+```
+json-with-rules.json could look like this:
+
+```json
+{
+    "executionPlan": {
+        "extra": {
+            "my-extra-1": 42,
+            "my-extra-2": [ "aaa", "bbb", "ccc" ]
+       }
+    },
+    "write": {
+      "labels": {
+        "my-label": "my-value"
+      }
+    }
+}
+```
+The `spline.postProcessingFilter.userExtraMeta.rules` can be either url pointing to json file or a json string. 
+The rules definition can be quite long and when providing string directly a lot of escaping may be necessary so using a file is recommended.
+
+There is also option to get environment variables using `$env`, jvm properties using `$jvm` and execute javascript using `$js`. 
+See the following example:
+```json
+{
+    "executionPlan": {
+        "extra": {
+            "my-extra-1": 42,
+            "my-extra-2": [ "aaa", "bbb", "ccc" ],
+            "bar": { "$env": "BAR_HOME" },
+            "baz": { "$jvm": "some.jvm.prop" },
+            "daz": { "$js": "session.conf().get('k')" }
+       }
+    }
+}
+```
+For the javascript evaluation `org.apache.spark.sql.SparkSession` is available as `session`, 
+internal Spark Logical Plan `org.apache.spark.sql.catalyst.plans.logical.LogicalPlan` ia available as `logicalPlan` and
+`Option[org.apache.spark.sql.execution.SparkPlan]` as `executedPlanOpt`.
+Using those objects it should be possible to extract almost any relevant information from Spark.
+
+
+For more examples of usage please se `MetadataCollectingFilterSpec` test class.
+
 <a id="spark-coverage"></a>
 ## Spark features coverage
 
