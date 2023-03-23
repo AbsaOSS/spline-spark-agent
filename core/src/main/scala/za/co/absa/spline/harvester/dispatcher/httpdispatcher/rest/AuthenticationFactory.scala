@@ -69,7 +69,7 @@ case class ClientCredentialsAuthentication(authentication: scala.collection.immu
           throw new RuntimeException(failureMessage)
       }
     } else {
-      tokenCache.getOrElse(throw new RuntimeException(failureMessage)).tokenValue
+      tokenCache.get.tokenValue
     }
   }
 
