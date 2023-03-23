@@ -58,12 +58,10 @@ case class ClientCredentialsAuthentication(authentication: scala.collection.immu
       val jsonResp = scala.util.parsing.json.JSON.parseFull(resp.body)
       jsonResp match {
         case Some(map: scala.collection.immutable.Map[String, Any]) =>
-          val token = map.getOrElse("access_token", "").toString
-          if (token.nonEmpty) {
-            val expirationTime = Instant.now().plus(Duration.ofSeconds(map.getOrElse("expires_in", 0).toString.toLong))
-            val newToken = Token(token, expirationTime)
-            tokenCache = Some(newToken)
-          }
+          val token = map("access_token").toString
+          val expirationTime = Instant.now().plus(Duration.ofSeconds(map.getOrElse("expires_in", 0).toString.toLong))
+          val newToken = Token(token, expirationTime)
+          tokenCache = Some(newToken)
           token
         case _ =>
           throw new RuntimeException(failureMessage)
