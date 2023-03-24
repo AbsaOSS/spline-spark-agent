@@ -68,7 +68,8 @@ object RestClient extends Logging {
           .having(maybeDisableSslValidationOption)(_ option _)
           .header(SplineHeaders.Timeout, readTimeout.toMillis.toString)
           .headers(headers)
-          .compress(true),authentication)
+          .compress(true),
+        authentication)
     }
   }
 }

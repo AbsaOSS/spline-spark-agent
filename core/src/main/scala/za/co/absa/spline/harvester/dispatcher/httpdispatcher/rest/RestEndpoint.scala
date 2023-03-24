@@ -15,10 +15,9 @@
  */
 
 package za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest
-import org.apache.spark.internal.Logging
 
 import org.apache.http.HttpHeaders
-import scalaj.http.{ HttpRequest, HttpResponse }
+import scalaj.http.{HttpRequest, HttpResponse}
 import za.co.absa.commons.lang.ARM.using
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.HttpConstants.Encoding
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest.RestEndpoint._
@@ -31,12 +30,12 @@ class RestEndpoint(val request: HttpRequest, val authentication: Map[String, Str
 
   private val authenticationContext: Authentication = AuthenticationFactory.createAuthentication(authentication)
 
-  def head(): HttpResponse[String] = authenticationContext.createRequest(httpRequest = request,authentication = authentication)
+  def head(): HttpResponse[String] = authenticationContext.authenticate(httpRequest = request, authParams = authentication)
     .method(HttpMethod.HEAD)
     .asString
 
   def post(data: String, contentType: String, enableRequestCompression: Boolean): HttpResponse[String] = {
-    val jsonRequest = authenticationContext.createRequest(httpRequest = request,authentication = authentication)
+    val jsonRequest = authenticationContext.authenticate(httpRequest = request, authParams = authentication)
       .header(HttpHeaders.CONTENT_TYPE, contentType)
 
     if (enableRequestCompression && data.length > GzipCompressionLengthThreshold) {
