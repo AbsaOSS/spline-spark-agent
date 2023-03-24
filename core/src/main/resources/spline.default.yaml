@@ -68,6 +68,16 @@ spline:
             # Should the payload be compressed.
             # If unspecified, the request compression is negotiated with the endpoint, otherwise it's disabled.
             requestCompression: # true | false
+
+            # Authentication config
+            authentication:
+                mode: enabled
+                grantType: client_credentials
+                # clientId: <client id>
+                # clientSecret: <secret>
+                # tokenUrl: <token url>
+                # scope: <scope>
+
             # Additional http headers to be sent by dispatcher
             header:
             #   X-CUSTOM-HEADER: custom-header-value

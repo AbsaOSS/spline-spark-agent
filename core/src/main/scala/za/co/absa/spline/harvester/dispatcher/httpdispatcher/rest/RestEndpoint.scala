@@ -26,16 +26,16 @@ import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPOutputStream
 import javax.ws.rs.HttpMethod
 
-class RestEndpoint(val request: HttpRequest, val authentication: Map[String, String]) {
+class RestEndpoint(val request: HttpRequest, val authParams: Map[String, String]) {
 
-  private val authenticationContext: Authentication = AuthenticationFactory.createAuthentication(authentication)
+  private val authenticationContext: Authentication = AuthenticationFactory.createAuthentication(authParams)
 
-  def head(): HttpResponse[String] = authenticationContext.authenticate(httpRequest = request, authParams = authentication)
+  def head(): HttpResponse[String] = authenticationContext.authenticate(httpRequest = request, authParams = authParams)
     .method(HttpMethod.HEAD)
     .asString
 
   def post(data: String, contentType: String, enableRequestCompression: Boolean): HttpResponse[String] = {
-    val jsonRequest = authenticationContext.authenticate(httpRequest = request, authParams = authentication)
+    val jsonRequest = authenticationContext.authenticate(httpRequest = request, authParams = authParams)
       .header(HttpHeaders.CONTENT_TYPE, contentType)
 
     if (enableRequestCompression && data.length > GzipCompressionLengthThreshold) {

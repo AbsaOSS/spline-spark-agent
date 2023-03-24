@@ -38,7 +38,7 @@ class HttpLineageDispatcherSpec extends AnyFlatSpec with MockitoSugar {
   private val restClientMock = mock[RestClient]
   private val httpRequestMock = mock[HttpRequest]
   private val httpResponseMock = mock[HttpResponse[String]]
-  private val restEndpointMock = new RestEndpoint(httpRequestMock,mock[Map[String,String]])
+  private val restEndpointMock = new RestEndpoint(httpRequestMock, Map.empty)
   when(restClientMock.endpoint("status")) thenReturn restEndpointMock
   when(httpRequestMock.method("HEAD")) thenReturn httpRequestMock
 
