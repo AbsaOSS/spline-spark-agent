@@ -216,6 +216,7 @@ spline:
         userExtraMeta:
             className: za.co.absa.spline.harvester.postprocessing.metadata.MetadataCollectingFilter
             # rules are defined in a JSON format
+            # can be a json string or url to json file
             rules: { }
 
     # Plugins configuration.
