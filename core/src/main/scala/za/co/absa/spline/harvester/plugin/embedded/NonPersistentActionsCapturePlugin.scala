@@ -31,6 +31,7 @@ import za.co.absa.spline.harvester.plugin.{Plugin, WriteNodeProcessing}
 import java.net.{InetAddress, NetworkInterface}
 import java.util.UUID
 import javax.annotation.Priority
+import scala.collection.JavaConverters._
 import scala.language.reflectiveCalls
 
 @Priority(Precedence.Normal)
@@ -60,10 +61,24 @@ object NonPersistentActionsCapturePlugin {
   }
 
   private val JVMId = s"jvm_${UUID.randomUUID()}"
+  private val NullMacAddress = Array.fill[Byte](6)(0)
+
   private val LocalMacAddressString: String = {
-    val hardwareAddress = NetworkInterface.getByInetAddress(InetAddress.getLocalHost).getHardwareAddress
+    val localAddress = InetAddress.getLocalHost
+    val hardwareAddress =
+      Option(NetworkInterface.getByInetAddress(localAddress))
+        .flatMap(iface => Option(iface.getHardwareAddress))
+        .getOrElse {
+          // Local address was resolved incorrectly (see issue #634)
+          // Let's try to find the most suitable interface by ourselves
+          val ifaces = NetworkInterface.getNetworkInterfaces.asScala.toSeq
+            .filter(iface => !iface.isVirtual && !iface.isLoopback && iface.getHardwareAddress != null)
+            .sortBy(iface => !iface.getInetAddresses.asScala.exists(_.isSiteLocalAddress))
+          ifaces match {
+            case iface +: _ => iface.getHardwareAddress
+            case _ => NullMacAddress
+          }
+        }
     Hex.encodeHexString(hardwareAddress).grouped(2).toArray.mkString("-")
   }
 }
-
-
