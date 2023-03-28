@@ -25,6 +25,7 @@ import za.co.absa.spline.harvester.dispatcher.httpdispatcher.HttpLineageDispatch
 import scala.concurrent.duration._
 
 object HttpLineageDispatcherConfig {
+  val AuthenticationProperty = "authentication"
   val ProducerUrlProperty = "producer.url"
   val ConnectionTimeoutMsKey = "timeout.connection"
   val ReadTimeoutMsKey = "timeout.read"
@@ -42,6 +43,7 @@ class HttpLineageDispatcherConfig(config: Configuration) {
   val readTimeout: Duration = config.getRequiredLong(ReadTimeoutMsKey).millis
   val disableSslValidation: Boolean = config.getRequiredBoolean(DisableSslValidation)
   val headers: Map[String, String] = config.subset(Header).toMap[String]
+  val authConfig: Configuration = config.subset(AuthenticationProperty)
 
   def apiVersionOption: Option[Version] = config.getOptionalString(ApiVersion).map(stringToVersion)
 

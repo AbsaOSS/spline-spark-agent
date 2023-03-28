@@ -16,6 +16,7 @@
 
 package za.co.absa.spline.harvester.dispatcher
 
+import org.apache.commons.configuration.BaseConfiguration
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.{anyBoolean, anyString}
 import org.mockito.Mockito._
@@ -23,8 +24,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.mockito.MockitoSugar
 import scalaj.http._
 import za.co.absa.commons.version.Version.VersionStringInterpolator
-import za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest.{RestClient, RestEndpoint}
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.RESTResource
+import za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest.{RestClient, RestEndpoint}
 import za.co.absa.spline.harvester.exception.SplineInitializationException
 import za.co.absa.spline.producer.model.ExecutionEvent
 
@@ -38,8 +39,8 @@ class HttpLineageDispatcherSpec extends AnyFlatSpec with MockitoSugar {
   private val restClientMock = mock[RestClient]
   private val httpRequestMock = mock[HttpRequest]
   private val httpResponseMock = mock[HttpResponse[String]]
-
-  when(restClientMock.endpoint("status")) thenReturn new RestEndpoint(httpRequestMock)
+  private val restEndpointMock = new RestEndpoint(httpRequestMock, new BaseConfiguration)
+  when(restClientMock.endpoint("status")) thenReturn restEndpointMock
   when(httpRequestMock.method("HEAD")) thenReturn httpRequestMock
 
   it should "not do anything when producer is ready" in {

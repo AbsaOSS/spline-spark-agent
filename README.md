@@ -275,6 +275,15 @@ spline.lineageDispatcher.http.timeout.read=120000
 spline.lineageDispatcher.http.apiVersion=LATEST
 spline.lineageDispatcher.http.header.X-CUSTOM-HEADER=custom-header-value
 ```
+If the producer requires token based authentication for requests, below mentioned details must be included in configuration.
+```properties
+spline.lineageDispatcher.http.authentication.mode=enabled
+spline.lineageDispatcher.http.authentication.grantType=client_credentials
+spline.lineageDispatcher.http.authentication.clientId=clientid
+spline.lineageDispatcher.http.authentication.clientSecret=secret
+spline.lineageDispatcher.http.authentication.tokenUrl=tokenurl
+spline.lineageDispatcher.http.authentication.scope=scope
+```
 Example: Azure HTTP trigger template API key header can be set like this:
 ```properties
 spline.lineageDispatcher.http.header.X-FUNCTIONS-KEY=USER_API_KEY

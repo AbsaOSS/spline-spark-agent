@@ -16,6 +16,7 @@
 
 package za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest
 
+import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpHeaders
 import scalaj.http.{HttpRequest, HttpResponse}
 import za.co.absa.commons.lang.ARM.using
@@ -26,14 +27,16 @@ import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPOutputStream
 import javax.ws.rs.HttpMethod
 
-class RestEndpoint(val request: HttpRequest) {
+class RestEndpoint(val request: HttpRequest, val authConfig: Configuration) {
 
-  def head(): HttpResponse[String] = request
+  private val authenticationContext: Authentication = AuthenticationFactory.createAuthentication(authConfig)
+
+  def head(): HttpResponse[String] = authenticationContext.authenticate(httpRequest = request, authConfig = authConfig)
     .method(HttpMethod.HEAD)
     .asString
 
   def post(data: String, contentType: String, enableRequestCompression: Boolean): HttpResponse[String] = {
-    val jsonRequest = request
+    val jsonRequest = authenticationContext.authenticate(httpRequest = request, authConfig = authConfig)
       .header(HttpHeaders.CONTENT_TYPE, contentType)
 
     if (enableRequestCompression && data.length > GzipCompressionLengthThreshold) {

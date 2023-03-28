@@ -68,6 +68,16 @@ spline:
             # Should the payload be compressed.
             # If unspecified, the request compression is negotiated with the endpoint, otherwise it's disabled.
             requestCompression: # true | false
+
+            # Authentication config
+            authentication:
+                mode: disabled
+                grantType: client_credentials
+                clientId: # <client id>
+                clientSecret: # <secret>
+                scope: # <scope>
+                tokenUrl: # <token url>
+
             # Additional http headers to be sent by dispatcher
             header:
             #   X-CUSTOM-HEADER: custom-header-value
@@ -148,6 +158,15 @@ spline:
             apiVersion: "1.2"
             # Base URL of the Spline Producer REST API endpoint
             api.url:
+            # Authentication config
+            authentication:
+                mode: disabled
+                grantType: client_credentials
+                clientId: # <client id>
+                clientSecret: # <secret>
+                scope: # <scope>
+                tokenUrl: # <token url>
+
 
         # -------------------------------------------
         # User Custom dispatcher (example)
