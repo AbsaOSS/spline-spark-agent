@@ -43,7 +43,7 @@ class HttpLineageDispatcherConfig(config: Configuration) {
   val readTimeout: Duration = config.getRequiredLong(ReadTimeoutMsKey).millis
   val disableSslValidation: Boolean = config.getRequiredBoolean(DisableSslValidation)
   val headers: Map[String, String] = config.subset(Header).toMap[String]
-  val authentication: Map[String, String] = config.subset(AuthenticationProperty).toMap[String]
+  val authConfig: Configuration = config.subset(AuthenticationProperty)
 
   def apiVersionOption: Option[Version] = config.getOptionalString(ApiVersion).map(stringToVersion)
 

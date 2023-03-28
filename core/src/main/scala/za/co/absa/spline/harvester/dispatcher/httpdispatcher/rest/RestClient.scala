@@ -16,6 +16,7 @@
 
 package za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest
 
+import org.apache.commons.configuration.Configuration
 import org.apache.spark.internal.Logging
 import scalaj.http.HttpOptions.HttpOption
 import scalaj.http.{BaseHttp, HttpOptions}
@@ -42,7 +43,7 @@ object RestClient extends Logging {
     readTimeout: Duration,
     disableSslValidation: Boolean,
     headers: Map[String, String],
-    authentication: Map[String, String]
+    authConfig: Configuration
   ): RestClient = {
 
     logDebug(s"baseURL = $baseURL")
@@ -69,7 +70,7 @@ object RestClient extends Logging {
           .header(SplineHeaders.Timeout, readTimeout.toMillis.toString)
           .headers(headers)
           .compress(true),
-        authentication)
+        authConfig)
     }
   }
 }

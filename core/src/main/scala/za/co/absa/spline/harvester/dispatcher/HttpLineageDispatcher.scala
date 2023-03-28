@@ -110,7 +110,7 @@ object HttpLineageDispatcher extends Logging {
       config.readTimeout,
       config.disableSslValidation,
       config.headers,
-      config.authentication
+      config.authConfig
     )
   }
 

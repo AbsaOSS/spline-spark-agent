@@ -16,31 +16,33 @@
 
 package za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest
 
+import org.apache.commons.configuration.Configuration
 import org.apache.spark.internal.Logging
 import scalaj.http.{Http, HttpRequest}
+import za.co.absa.commons.config.ConfigurationImplicits._
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
 
 import java.time.{Duration, Instant}
 
 
 trait Authentication {
-  def authenticate(httpRequest: HttpRequest, authParams: Map[String, String]): HttpRequest
+  def authenticate(httpRequest: HttpRequest, authConfig: Configuration): HttpRequest
 }
 
 object NoAuthentication extends Authentication {
-  override def authenticate(httpRequest: HttpRequest, authParams: Map[String, String]): HttpRequest = httpRequest
+  override def authenticate(httpRequest: HttpRequest, authConfig: Configuration): HttpRequest = httpRequest
 }
 
-class ClientCredentialsAuthentication(authentication: Map[String, String]) extends Authentication with Logging {
-  private val clientId: String = authentication("clientId")
-  private val clientSecret: String = authentication("clientSecret")
-  private val tokenUrl: String = authentication("tokenUrl")
-  private val grantType: String = authentication("grantType")
-  private val scope: String = authentication("scope")
+class OAuthAuthentication(authentication: Configuration) extends Authentication with Logging {
+  private val tokenUrl: String = authentication.getRequiredString("tokenUrl")
+  private val grantType: String = authentication.getRequiredString("grantType")
+  private val clientId: String = authentication.getRequiredString("clientId")
+  private val clientSecret: String = authentication.getRequiredString("clientSecret")
+  private val maybeScope: Option[String] = authentication.getOptionalString("scope")
 
   private var tokenCache: Option[Token] = None
 
-  override def authenticate(httpRequest: HttpRequest, authParams: Map[String, String]): HttpRequest = {
+  override def authenticate(httpRequest: HttpRequest, authConfig: Configuration): HttpRequest = {
     val token = tokenCache
       .filter(_.expirationTime.minusSeconds(300) isAfter Instant.now())
       .getOrElse(obtainFreshToken())
@@ -55,8 +57,8 @@ class ClientCredentialsAuthentication(authentication: Map[String, String]) exten
       .postForm(Seq(
         "grant_type" -> grantType,
         "client_id" -> clientId,
-        "client_secret" -> clientSecret,
-        "scope" -> scope))
+        "client_secret" -> clientSecret
+      ) ++ maybeScope.map("scope" -> _))
       .asString
 
     val jsonResp = resp.body.fromJson[Map[String, Any]]
@@ -70,13 +72,13 @@ class ClientCredentialsAuthentication(authentication: Map[String, String]) exten
 private case class Token(tokenValue: String, expirationTime: Instant)
 
 object AuthenticationFactory extends Logging {
-  def createAuthentication(authentication: Map[String, String]): Authentication = {
+  def createAuthentication(authConfig: Configuration): Authentication = {
     val maybeAuth =
       for {
-        mode <- authentication.get("mode") if mode == "enabled"
-        grantType <- authentication.get("grantType")
+        mode <- authConfig.getOptionalString("mode") if mode == "enabled"
+        grantType <- authConfig.getOptionalString("grantType")
       } yield grantType match {
-        case "client_credentials" => new ClientCredentialsAuthentication(authentication)
+        case "client_credentials" => new OAuthAuthentication(authConfig)
         case _ => throw new IllegalArgumentException(s"$grantType not implemented")
       }
 

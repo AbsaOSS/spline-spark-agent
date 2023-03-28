@@ -44,5 +44,5 @@ class HttpOpenLineageDispatcherConfig(config: Configuration) {
   val apiVersion: Version = Version.asSimple(config.getRequiredString(ApiVersion))
   val namespace: String = config.getRequiredString(Namespace)
   val headers: Map[String, String] = config.subset(Header).toMap[String]
-  val authentication: Map[String, String] = config.subset(AuthenticationProperty).toMap[String]
+  val authConfig: Configuration = config.subset(AuthenticationProperty)
 }
