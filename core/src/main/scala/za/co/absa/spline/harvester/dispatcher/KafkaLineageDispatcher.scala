@@ -17,7 +17,7 @@
 package za.co.absa.spline.harvester.dispatcher
 
 import org.apache.commons.configuration.{Configuration, ConfigurationConverter}
-import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.clients.producer.{KafkaProducer, Producer}
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import za.co.absa.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
@@ -32,7 +32,8 @@ import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
  */
 class KafkaLineageDispatcher(
   apiVersion: Version,
-  createSenderFactory: Version => SplineRecordSenderFactory
+  topic: String,
+  kafkaProducer: Producer[String, String]
 ) extends LineageDispatcher
   with Logging {
 
@@ -40,27 +41,21 @@ class KafkaLineageDispatcher(
 
   def this(configuration: Configuration, sparkSession: SparkSession) = this(
     Version.asSimple(configuration.getRequiredString(ApiVersion)),
-    apiVersion => new SplineRecordSenderFactory(
-      apiVersion,
-      configuration.getRequiredString(TopicKey),
-      () => {
-        val kp = new KafkaProducer[String, String](ConfigurationConverter.getProperties(configuration.subset(ProducerKey)))
-        sparkSession.sparkContext.addSparkListener(new AppEndListener(kp.close))
-        kp
-      }
-    )
+    configuration.getRequiredString(TopicKey),
+    {
+      val kp = new KafkaProducer[String, String](ConfigurationConverter.getProperties(configuration.subset(ProducerKey)))
+      sparkSession.sparkContext.addSparkListener(new AppEndListener(kp.close))
+      kp
+    }
   )
 
   override def name = "Kafka"
 
-  private val senderFactory = {
-    val sf = createSenderFactory(apiVersion)
-    sys.addShutdownHook(sf.close())
-    sf
-  }
+  logInfo(s"Kafka topic: $topic")
+  logDebug(s"Producer API version: $apiVersion")
 
-  private val planRecordSender = senderFactory.createSender[ExecutionPlan](SplineEntityType.ExecutionPlan)
-  private val eventRecordSender = senderFactory.createSender[ExecutionEvent](SplineEntityType.ExecutionEvent)
+  private val planRecordSender = SplineRecordSender(SplineEntityType.ExecutionPlan, apiVersion, topic, kafkaProducer)
+  private val eventRecordSender = SplineRecordSender(SplineEntityType.ExecutionEvent, apiVersion, topic, kafkaProducer)
   private val modelMapper = ModelMapper.forApiVersion(apiVersion)
 
   override def send(plan: ExecutionPlan): Unit = {
