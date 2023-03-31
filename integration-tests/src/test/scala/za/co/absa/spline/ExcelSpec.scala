@@ -30,7 +30,7 @@ class ExcelSpec extends AsyncFlatSpec
   with SparkFixture
   with SplineFixture {
 
-  private val filePath = TempFile("file1", ".xlsx", false).deleteOnExit().toURI.toString
+  private val filePath = TempFile("file1", ".xlsx", pathOnly = false).deleteOnExit().toURI.toString
 
   it should "support Excel files as a source" in
     withNewSparkSession { implicit spark =>

@@ -34,7 +34,7 @@ object ModelMapper {
     case _ => throw new UnsupportedOperationException(s"API Version:'$version' is not supported!")
   }
 
-  def toUntypedMap(toAttrOrExprRef: (AttrOrExprRef => Any), map: Map[String, Any]): Map[String, Any] = {
+  def toUntypedMap(toAttrOrExprRef: AttrOrExprRef => Any, map: Map[String, Any]): Map[String, Any] = {
     def mapValue(value: Any): Any = value match {
       case aoe: AttrOrExprRef => toAttrOrExprRef(aoe)
       case s: Seq[_] => s.map(mapValue)

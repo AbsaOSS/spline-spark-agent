@@ -26,13 +26,12 @@ import scala.util.control.NonFatal
 
 object ObjectStructureDumper {
 
-  val MaxDepth = 5
+  private val MaxDepth = 5
 
-  type FieldName = String
-  type FieldType = String
-  type DumpResult = String
+  private type FieldName = String
+  private type FieldType = String
+  private type DumpResult = String
 
-  type DumpFn = Any => DumpResult
   type ExtractFieldValueFn = (AnyRef, FieldName) => AnyRef
 
   def dump(obj: Any, extractFieldValueFn: ExtractFieldValueFn = ReflectionUtils.extractValue[AnyRef]): DumpResult = {
@@ -76,7 +75,7 @@ object ObjectStructureDumper {
     prevResult: DumpResult
   ): DumpResult = stack match {
     case Nil => prevResult
-    case head :: tail => {
+    case head :: tail =>
       val value = head.value
       val depth = head.depth
 
@@ -86,11 +85,10 @@ object ObjectStructureDumper {
         case _ if head.depth >= MaxDepth => (s"! Max depth ($MaxDepth) reached", tail, visited)
         case v if wasVisited(visited, v) => ("! Object was already logged", tail, visited)
         case None => ("= None", tail, visited)
-        case Some(x) => {
+        case Some(x) =>
           val newVal = ObjectBox(x.asInstanceOf[AnyRef], "x", x.getClass.getName, depth + 1)
           ("Some", newVal :: tail, addToVisited(visited, value))
-        }
-        case _ => {
+        case _ =>
           val newFields = value.getClass.getDeclaredFields
             .filter(!isIgnoredField(_))
             .map { f =>
@@ -104,7 +102,6 @@ object ObjectStructureDumper {
             }.toList
 
           ("", newFields ::: tail, addToVisited(visited, value))
-        }
       }
 
       val indent = " " * depth * 2
@@ -118,7 +115,6 @@ object ObjectStructureDumper {
         else s"$prevResult\n$line"
 
       objectToStringRec(extractFieldValue)(newStack, newVisited, newResult)
-    }
   }
 
   private def isIgnoredField(f: Field): Boolean = {

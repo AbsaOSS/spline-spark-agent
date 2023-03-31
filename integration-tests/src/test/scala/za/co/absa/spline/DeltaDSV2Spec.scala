@@ -345,7 +345,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
               )
             }
           } yield {
-            implicit val walker = LineageWalker(plan)
+            implicit val walker: LineageWalker = LineageWalker(plan)
 
             plan.id.value shouldEqual event.planId
             plan.operations.write.append shouldBe false

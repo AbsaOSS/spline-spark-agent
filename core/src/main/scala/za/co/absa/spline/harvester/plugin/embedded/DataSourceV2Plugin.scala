@@ -201,37 +201,34 @@ object DataSourceV2Plugin {
   object `_: V2WriteCommand` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.catalyst.plans.logical.V2WriteCommand")
 
-  object `_: AppendData` extends SafeTypeMatchingExtractor[AnyRef](
+  private object `_: AppendData` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.catalyst.plans.logical.AppendData")
 
-  object `_: OverwriteByExpression` extends SafeTypeMatchingExtractor[AnyRef](
+  private object `_: OverwriteByExpression` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.catalyst.plans.logical.OverwriteByExpression")
 
-  object `_: OverwritePartitionsDynamic` extends SafeTypeMatchingExtractor[AnyRef](
+  private object `_: OverwritePartitionsDynamic` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.catalyst.plans.logical.OverwritePartitionsDynamic")
 
-  object `_: CreateTableAsSelect` extends SafeTypeMatchingExtractor[AnyRef](
+  private object `_: CreateTableAsSelect` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.catalyst.plans.logical.CreateTableAsSelect")
 
-  object `_: ReplaceTableAsSelect` extends SafeTypeMatchingExtractor[AnyRef](
+  private object `_: ReplaceTableAsSelect` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.catalyst.plans.logical.ReplaceTableAsSelect")
 
-  object `_: DataSourceV2Relation` extends SafeTypeMatchingExtractor[AnyRef](
+  private object `_: DataSourceV2Relation` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.execution.datasources.v2.DataSourceV2Relation")
 
-  object `_: FileTable` extends SafeTypeMatchingExtractor[AnyRef](
+  private object `_: FileTable` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.execution.datasources.v2.FileTable")
 
-  object `_: JsonTable` extends SafeTypeMatchingExtractor[AnyRef](
-    "org.apache.spark.sql.execution.datasources.v2.json.JsonTable")
-
-  object `_: DatabricksDeltaTableV2` extends SafeTypeMatchingExtractor[AnyRef](
+  private object `_: DatabricksDeltaTableV2` extends SafeTypeMatchingExtractor[AnyRef](
     "com.databricks.sql.transaction.tahoe.catalog.DeltaTableV2")
 
-  object `_: CassandraTable` extends SafeTypeMatchingExtractor[AnyRef](
+  private object `_: CassandraTable` extends SafeTypeMatchingExtractor[AnyRef](
     "com.datastax.spark.connector.datasource.CassandraTable")
 
-  object `_: TableV2` extends SafeTypeMatchingExtractor[AnyRef](
+  private object `_: TableV2` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.connector.catalog.Table")
 
 }

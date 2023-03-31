@@ -69,7 +69,7 @@ class DataSourcePasswordReplacingFilter(
 }
 
 object DataSourcePasswordReplacingFilter {
-  final val ReplacementKey = "replacement"
-  final val SensitiveValueRegexesKey = "valueRegexes"
-  final val SensitiveNameRegexesKey = "nameRegexes"
+  private final val ReplacementKey = "replacement"
+  private final val SensitiveValueRegexesKey = "valueRegexes"
+  private final val SensitiveNameRegexesKey = "nameRegexes"
 }

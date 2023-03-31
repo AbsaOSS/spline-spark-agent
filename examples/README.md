@@ -19,7 +19,7 @@
         --conf spark.sql.queryExecutionListeners=za.co.absa.spline.harvester.listener.SplineQueryExecutionListener \
         --conf spark.spline.producer.url=http://localhost:8080/producer
     ```
-   In this example we used a so called _codeless_ initialization method,
+   In this example we used a so-called _codeless_ initialization method,
    e.i. the one that requires no changes in your Spark application code.
 
    Alternatively you can enable Spline manually by calling the `SparkLineageInitializer.enableLineageTracking()` method.

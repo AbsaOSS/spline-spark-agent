@@ -45,23 +45,23 @@ object ExtraMetadataImplicits {
 
     implicit object ExecPlanExtraAdder extends ExtraAdder[ExecutionPlan] {
       override def addedExtra(a: ExecutionPlan, m: Map[String, Any]): ExecutionPlan =
-        a.copy(extraInfo = (a.extraInfo ++ m))
+        a.copy(extraInfo = a.extraInfo ++ m)
 
       override def addedLabels(a: ExecutionPlan, m: Map[String, Seq[String]]): ExecutionPlan =
-        a.copy(labels = (a.labels ++ m))
+        a.copy(labels = a.labels ++ m)
     }
 
     implicit object ExecEventExtraAdder extends ExtraAdder[ExecutionEvent] {
       override def addedExtra(a: ExecutionEvent, m: Map[String, Any]): ExecutionEvent =
-        a.copy(extra = (a.extra ++ m))
+        a.copy(extra = a.extra ++ m)
 
       override def addedLabels(a: ExecutionEvent, m: Map[String, Seq[String]]): ExecutionEvent =
-        a.copy(labels = (a.labels ++ m))
+        a.copy(labels = a.labels ++ m)
     }
 
     implicit object ReadOperationExtraAdder extends ExtraAdder[ReadOperation] {
       override def addedExtra(a: ReadOperation, m: Map[String, Any]): ReadOperation =
-        a.copy(extra = (a.extra ++ m))
+        a.copy(extra = a.extra ++ m)
 
       override def addedLabels(a: ReadOperation, m: Map[String, Seq[String]]): Nothing =
         throw new UnsupportedOperationException
@@ -69,7 +69,7 @@ object ExtraMetadataImplicits {
 
     implicit object WriteOperationExtraAdder extends ExtraAdder[WriteOperation] {
       override def addedExtra(a: WriteOperation, m: Map[String, Any]): WriteOperation =
-        a.copy(extra = (a.extra ++ m))
+        a.copy(extra = a.extra ++ m)
 
       override def addedLabels(a: WriteOperation, m: Map[String, Seq[String]]): Nothing =
         throw new UnsupportedOperationException
@@ -77,7 +77,7 @@ object ExtraMetadataImplicits {
 
     implicit object DataOperationExtraAdder extends ExtraAdder[DataOperation] {
       override def addedExtra(a: DataOperation, m: Map[String, Any]): DataOperation =
-        a.copy(extra = (a.extra ++ m))
+        a.copy(extra = a.extra ++ m)
 
       override def addedLabels(a: DataOperation, m: Map[String, Seq[String]]): Nothing =
         throw new UnsupportedOperationException

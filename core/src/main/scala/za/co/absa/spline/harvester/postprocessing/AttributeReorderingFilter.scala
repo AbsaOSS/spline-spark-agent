@@ -48,8 +48,8 @@ class AttributeReorderingFilter extends AbstractInternalPostProcessingFilter {
 
     val reorderedOutput = newOrder(ctx)
       .zip(writeChildOutput)
-      .sortBy { case (order, attribute) => order }
-      .map { case (order, attribute) => attribute }
+      .sortBy { case (order, _) => order }
+      .map { case (_, attribute) => attribute }
 
     val syntheticProjection = DataOperation(
       id = ctx.idGenerators.operationIdGenerator.nextId(),
