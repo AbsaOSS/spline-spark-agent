@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.producer.model
 
-case class Operations (
+case class Operations(
   write: WriteOperation,
   reads: Seq[ReadOperation],
   other: Seq[DataOperation]

@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.producer.model
 
-case class FunctionalExpression (
+case class FunctionalExpression(
   id: String,
   dataType: Option[Any],
   childRefs: Seq[AttrOrExprRef],

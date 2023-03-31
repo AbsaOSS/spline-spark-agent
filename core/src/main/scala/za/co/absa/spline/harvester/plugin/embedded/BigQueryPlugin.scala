@@ -121,8 +121,8 @@ object BigQueryPlugin {
   // We cannot use the following static types here due to possible shading, so we'll mimic them.
   //
 
-  object TableId {
-    type TableId = {
+  private object TableId {
+    private type TableId = {
       def getProject: String
       def getDataset: String
       def getTable: String
@@ -136,7 +136,7 @@ object BigQueryPlugin {
   }
 
   object SparkBigQueryConfig {
-    type SparkBigQueryConfig = {
+    private type SparkBigQueryConfig = {
       def getParentProjectId: String
     }
     private val clazz = findPossiblyShadedClass("com.google.cloud", "com.google.cloud.spark.bigquery.SparkBigQueryConfig")
@@ -165,7 +165,7 @@ object BigQueryPlugin {
         .asInstanceOf[SparkBigQueryConfig]
   }
 
-  object `_: DirectBigQueryRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.google.cloud.spark.bigquery.direct.DirectBigQueryRelation")
+  private object `_: DirectBigQueryRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.google.cloud.spark.bigquery.direct.DirectBigQueryRelation")
 
   private object BigQueryRelationProviderExtractor extends SafeTypeMatchingExtractor("com.google.cloud.spark.bigquery.BigQueryRelationProvider")
 

@@ -25,20 +25,18 @@ import za.co.absa.commons.io.{TempDirectory, TempFile}
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 
-import java.io.File
-
 class ExcelSpec extends AsyncFlatSpec
   with Matchers
   with SparkFixture
   with SplineFixture {
 
-  private val filePath = TempFile("file1", ".xlsx", false).deleteOnExit().toURI.toString
+  private val filePath = TempFile("file1", ".xlsx", pathOnly = false).deleteOnExit().toURI.toString
 
   it should "support Excel files as a source" in
     withNewSparkSession { implicit spark =>
       withLineageTracking { captor =>
         val testData: DataFrame = {
-          val schema = StructType(StructField("ID", IntegerType, nullable = false) :: StructField("NAME", StringType, nullable = false) :: Nil)
+          val schema = StructType(StructField("id", IntegerType, nullable = false) :: StructField("name", StringType, nullable = false) :: Nil)
           val rdd = spark.sparkContext.parallelize(Row(1014, "Warsaw") :: Row(1002, "Corte") :: Nil)
           spark.sqlContext.createDataFrame(rdd, schema)
         }

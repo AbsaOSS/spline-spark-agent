@@ -35,9 +35,9 @@ class InsertIntoTest extends AsyncFlatSpec
     withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         withDatabase("test",
-          ("path_archive", "(x String, ymd int) USING json PARTITIONED BY (ymd)",
+          ("path_archive", "(x STRING, ymd INT) USING JSON PARTITIONED BY (ymd)",
             Seq(("Tata", 20190401), ("Tere", 20190403))),
-          ("path", "(x String) USING json",
+          ("path", "(x STRING) USING JSON",
             Seq("Monika", "Buba"))
         ) {
 
@@ -61,9 +61,9 @@ class InsertIntoTest extends AsyncFlatSpec
     withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         withDatabase("test",
-          ("path_archive", "(x String, ymd int) USING parquet PARTITIONED BY (ymd)",
+          ("path_archive", "(x STRING, ymd INT) USING PARQUET PARTITIONED BY (ymd)",
             Seq(("Tata", 20190401), ("Tere", 20190403))),
-          ("path", "(x String) USING parquet",
+          ("path", "(x STRING) USING PARQUET",
             Seq("Monika", "Buba"))
         ) {
           val df = spark
@@ -92,9 +92,9 @@ class InsertIntoTest extends AsyncFlatSpec
     withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         withDatabase("test",
-          ("path_archive", "(x String, ymd int) USING csv PARTITIONED BY (ymd)",
+          ("path_archive", "(x STRING, ymd INT) USING CSV PARTITIONED BY (ymd)",
             Seq(("Tata", 20190401), ("Tere", 20190403))),
-          ("path", "(x String) USING csv",
+          ("path", "(x STRING) USING CSV",
             Seq("Monika", "Buba"))
         ) {
           val df = spark
@@ -123,9 +123,9 @@ class InsertIntoTest extends AsyncFlatSpec
     withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         withDatabase("test",
-          ("path_archive", "(x String, ymd int) USING json PARTITIONED BY (ymd)",
+          ("path_archive", "(x STRING, ymd INT) USING JSON PARTITIONED BY (ymd)",
             Seq(("Tata", 20190401), ("Tere", 20190403))),
-          ("path", "(x String) USING json",
+          ("path", "(x STRING) USING JSON",
             Seq("Monika", "Buba"))
         ) {
           val df = spark
@@ -155,9 +155,9 @@ class InsertIntoTest extends AsyncFlatSpec
     withIsolatedSparkSession(_.enableHiveSupport()) { implicit spark =>
       withLineageTracking { captor =>
         withDatabase("test",
-          ("path_archive", "(x String, ymd int) USING orc PARTITIONED BY (ymd)",
+          ("path_archive", "(x STRING, ymd INT) USING ORC PARTITIONED BY (ymd)",
             Seq(("Tata", 20190401), ("Tere", 20190403))),
-          ("path", "(x String) USING orc",
+          ("path", "(x STRING) USING ORC",
             Seq("Monika", "Buba"))
         ) {
 

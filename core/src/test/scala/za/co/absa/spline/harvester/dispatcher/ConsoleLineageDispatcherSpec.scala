@@ -16,13 +16,13 @@
 
 package za.co.absa.spline.harvester.dispatcher
 
-import java.util.UUID
-
 import org.apache.commons.configuration.BaseConfiguration
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.scalatest.ConsoleStubs
 import za.co.absa.spline.producer.model.ExecutionEvent
+
+import java.util.UUID
 
 class ConsoleLineageDispatcherSpec
   extends AnyFlatSpec
@@ -35,8 +35,8 @@ class ConsoleLineageDispatcherSpec
 
   it should "send lineage to the stdout" in {
     assertingStdOut(include(
-      """ |ExecutionEvent (apiVersion: 1.2):
-          |{"planId":"12345678-90ab-cdef-1234-567890abcdef","timestamp":999}""".stripMargin)) {
+      """|ExecutionEvent (apiVersion: 1.2):
+         |{"planId":"12345678-90ab-cdef-1234-567890abcdef","timestamp":999}""".stripMargin)) {
       new ConsoleLineageDispatcher(new BaseConfiguration {
         addProperty("stream", "OUT")
       }).send(ExecutionEvent(uuid1, Map.empty, 999, None, None, None, Map.empty))
@@ -45,8 +45,8 @@ class ConsoleLineageDispatcherSpec
 
   it should "send lineage to the stderr" in {
     assertingStdErr(include(
-      """ |ExecutionEvent (apiVersion: 1.2):
-          |{"planId":"12345678-90ab-cdef-1234-567890abcdef","timestamp":999}""".stripMargin)) {
+      """|ExecutionEvent (apiVersion: 1.2):
+         |{"planId":"12345678-90ab-cdef-1234-567890abcdef","timestamp":999}""".stripMargin)) {
       new ConsoleLineageDispatcher(new BaseConfiguration {
         addProperty("stream", "ERR")
       }).send(ExecutionEvent(uuid1, Map.empty, 999, None, None, None, Map.empty))

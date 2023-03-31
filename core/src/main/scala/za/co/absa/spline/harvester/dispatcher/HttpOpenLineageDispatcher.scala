@@ -87,7 +87,7 @@ class HttpOpenLineageDispatcher(restClient: RestClient, apiVersion: Version, ope
 }
 
 object HttpOpenLineageDispatcher extends Logging {
-  
+
   private def createDefaultRestClient(config: HttpOpenLineageDispatcherConfig): RestClient = {
     logInfo(s"Producer URL: ${config.apiUrl}")
     RestClient(

@@ -23,8 +23,8 @@ object BigQueryExample extends SparkApp("BigQuery Job") {
 
   SparkLineageInitializer.enableLineageTracking(spark)
 
-  val InputBQTable = "bigquery-public-data:baseball.games_post_wide"
-  val OutputBQTable = s"test.bigquery_result"
+  private val InputBQTable = "bigquery-public-data:baseball.games_post_wide"
+  private val OutputBQTable = "test.bigquery_result"
 
   val df1 = spark
     .read
@@ -40,5 +40,5 @@ object BigQueryExample extends SparkApp("BigQuery Job") {
     .write
     .format("bigquery")
     .mode("overwrite")
-    .save("test.bigquery_result")
+    .save(OutputBQTable)
 }

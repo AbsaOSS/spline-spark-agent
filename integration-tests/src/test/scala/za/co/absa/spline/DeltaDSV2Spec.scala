@@ -48,12 +48,12 @@ class DeltaDSV2Spec extends AsyncFlatSpec
         withDatabase("testDB") {
           val testData = {
             import spark.implicits._
-            Seq((1014, "Warsaw"), (1002, "Corte")).toDF("ID", "NAME")
+            Seq((1014, "Warsaw"), (1002, "Corte")).toDF("id", "name")
           }
 
           for {
             (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
-              spark.sql("CREATE TABLE foo (ID int, NAME string) USING delta")
+              spark.sql("CREATE TABLE foo (id INT, name STRING) USING DELTA")
               testData.write.format("delta").mode("append").saveAsTable("foo")
             }
           } yield {
@@ -77,12 +77,12 @@ class DeltaDSV2Spec extends AsyncFlatSpec
         withDatabase("testDB") {
           val testData = {
             import spark.implicits._
-            Seq((1014, "Warsaw"), (1002, "Corte")).toDF("ID", "NAME")
+            Seq((1014, "Warsaw"), (1002, "Corte")).toDF("id", "name")
           }
 
           for {
             (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
-              spark.sql("CREATE TABLE foo (ID int, NAME string) USING delta")
+              spark.sql("CREATE TABLE foo (id INT, name STRING) USING DELTA")
               testData.write.format("delta").mode("overwrite").insertInto("foo")
             }
           } yield {
@@ -115,11 +115,11 @@ class DeltaDSV2Spec extends AsyncFlatSpec
 
           for {
             (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
-              spark.sql("CREATE TABLE foo (ID int, NAME string) USING delta PARTITIONED BY (ID)")
+              spark.sql("CREATE TABLE foo (id INT, name STRING) USING DELTA PARTITIONED BY (id)")
               spark.sql(
                 """
-                  |INSERT OVERWRITE foo PARTITION (ID = 222222)
-                  |  (SELECT NAME FROM tempdata WHERE NAME = 'Warsaw')
+                  |INSERT OVERWRITE foo PARTITION (id = 222222)
+                  |  (SELECT name FROM tempdata WHERE name = 'Warsaw')
                   |""".stripMargin)
             }
           } yield {
@@ -134,10 +134,10 @@ class DeltaDSV2Spec extends AsyncFlatSpec
     }
 
   /**
-    * Even though the code actually does dynamic partition overwrite,
-    * the spark command generated is OverwriteByExpression.
-    * Keeping this test in case the command will be used in future Spark versions.
-    */
+   * Even though the code actually does dynamic partition overwrite,
+   * the spark command generated is OverwriteByExpression.
+   * Keeping this test in case the command will be used in future Spark versions.
+   */
   it should "support OverwritePartitionsDynamic V2 command" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
     withIsolatedSparkSession(_
@@ -151,17 +151,17 @@ class DeltaDSV2Spec extends AsyncFlatSpec
         withDatabase("testDB") {
           val testData = {
             import spark.implicits._
-            Seq((1014, "Warsaw"), (1002, "Corte")).toDF("ID", "NAME")
+            Seq((1014, "Warsaw"), (1002, "Corte")).toDF("id", "name")
           }
           testData.createOrReplaceTempView("tempdata")
 
           for {
             (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
-              spark.sql("CREATE TABLE foo (ID int, NAME string) USING delta PARTITIONED BY (NAME)")
+              spark.sql("CREATE TABLE foo (id INT, name STRING) USING DELTA PARTITIONED BY (name)")
               spark.sql(
                 """
-                  |INSERT OVERWRITE foo PARTITION (NAME)
-                  |  (SELECT ID, NAME FROM tempdata WHERE NAME = 'Warsaw')
+                  |INSERT OVERWRITE foo PARTITION (name)
+                  |  (SELECT id, name FROM tempdata WHERE name = 'Warsaw')
                   |""".stripMargin)
             }
           } yield {
@@ -185,7 +185,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
         withDatabase("testDB") {
           val testData = {
             import spark.implicits._
-            Seq((1014, "Warsaw"), (1002, "Corte")).toDF("ID", "NAME")
+            Seq((1014, "Warsaw"), (1002, "Corte")).toDF("id", "name")
           }
 
           for {
@@ -213,12 +213,12 @@ class DeltaDSV2Spec extends AsyncFlatSpec
         withDatabase("testDB") {
           val testData = {
             import spark.implicits._
-            Seq((1014, "Warsaw"), (1002, "Corte")).toDF("ID", "NAME")
+            Seq((1014, "Warsaw"), (1002, "Corte")).toDF("id", "name")
           }
 
           for {
             (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
-              spark.sql("CREATE TABLE foo (toBeOrNotToBe boolean) USING delta")
+              spark.sql("CREATE TABLE foo (toBeOrNotToBe BOOLEAN) USING DELTA")
               testData.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable("foo")
             }
           } yield {
@@ -242,7 +242,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
         withDatabase("testDB") {
           val testData = {
             import spark.implicits._
-            Seq((1014, "Warsaw"), (1002, "Corte")).toDF("ID", "NAME")
+            Seq((1014, "Warsaw"), (1002, "Corte")).toDF("id", "name")
           }
 
           for {
@@ -250,7 +250,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
               testData.write.format("delta").saveAsTable("foo")
             }
             (plan2, Seq(event2)) <- lineageCaptor.lineageOf {
-              spark.sql("DELETE FROM foo WHERE ID == 1014")
+              spark.sql("DELETE FROM foo WHERE id == 1014")
             }
           } yield {
             plan2.id.value shouldEqual event2.planId
@@ -345,7 +345,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
               )
             }
           } yield {
-            implicit val walker = LineageWalker(plan)
+            implicit val walker: LineageWalker = LineageWalker(plan)
 
             plan.id.value shouldEqual event.planId
             plan.operations.write.append shouldBe false

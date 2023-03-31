@@ -1,16 +1,16 @@
 Spline Gateway Mockoon Environment
 ===
 
-Environment definition for Mockoon app mocking producer API. 
+Environment definition for Mockoon app mocking producer API.
 It allows you to test the agent without any existing Spline server.
 
 ### Instalation
 
 https://mockoon.com/download/
 
-
 ### Usage
-- Open the Mockoon app  
+
+- Open the Mockoon app
 - `Open enviroment` -> `enviroment.json`
 - `Start server`
 
@@ -20,7 +20,6 @@ Configure the dispatcher like this:
 ```
 -Dspline.lineageDispatcher.http.producer.url=http://localhost:8080/producer
 ```
-
 
 ---
 

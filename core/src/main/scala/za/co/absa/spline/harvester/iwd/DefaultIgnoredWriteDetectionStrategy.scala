@@ -24,7 +24,7 @@ import za.co.absa.spline.harvester.iwd.DefaultIgnoredWriteDetectionStrategy._
 object DefaultIgnoredWriteDetectionStrategy {
   val OnMissingMetricsKey = "onMissingMetrics"
 
-  object Behaviour {
+  private object Behaviour {
     val IgnoreLineage = "IGNORE_LINEAGE"
     val CaptureLineage = "CAPTURE_LINEAGE"
   }

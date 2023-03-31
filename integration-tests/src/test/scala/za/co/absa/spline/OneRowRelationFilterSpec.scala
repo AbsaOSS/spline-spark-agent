@@ -55,7 +55,7 @@ class OneRowRelationFilterSpec extends AsyncFlatSpec
         for {
           (plan, _) <- lineageCaptor.lineageOf {
             spark
-              .sql("with sub as (SELECT 1.0 AS a) select a FROM sub")
+              .sql("WITH sub AS (SELECT 1.0 AS a) SELECT a FROM sub")
               .write.csv(TempFile(pathOnly = true).deleteOnExit().asString)
           }
         } yield {

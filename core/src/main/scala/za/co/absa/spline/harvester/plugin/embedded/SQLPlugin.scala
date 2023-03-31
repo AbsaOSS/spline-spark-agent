@@ -16,7 +16,6 @@
 
 package za.co.absa.spline.harvester.plugin.embedded
 
-import javax.annotation.Priority
 import org.apache.spark.sql.SaveMode.{Append, Overwrite}
 import org.apache.spark.sql.catalyst.catalog.{CatalogStorageFormat, HiveTableRelation}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
@@ -33,6 +32,7 @@ import za.co.absa.spline.harvester.plugin.extractor.CatalogTableExtractor
 import za.co.absa.spline.harvester.plugin.{Plugin, ReadNodeProcessing, WriteNodeProcessing}
 import za.co.absa.spline.harvester.qualifier.PathQualifier
 
+import javax.annotation.Priority
 import scala.language.reflectiveCalls
 
 @Priority(Precedence.Normal)

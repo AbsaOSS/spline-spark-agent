@@ -38,7 +38,7 @@ class KafkaSinkSpec
   private var kafkaUrl = ""
 
   override def beforeAll: Unit = {
-    implicit val config = EmbeddedKafkaConfig(0, 0)
+    implicit val config: EmbeddedKafkaConfig = EmbeddedKafkaConfig(0, 0)
 
     val kafka = EmbeddedKafka.start()
     kafkaUrl = s"localhost:${kafka.config.kafkaPort}"
@@ -67,7 +67,7 @@ class KafkaSinkSpec
         for {
           (plan1, _) <- captor.lineageOf(
             testData
-              .selectExpr("CAST (NAME as STRING) as value")
+              .selectExpr("CAST (name AS STRING) AS value")
               .write
               .format("kafka")
               .option("kafka.bootstrap.servers", kafkaUrl)

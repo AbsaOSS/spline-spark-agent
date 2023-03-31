@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.producer.model
 
-case class Expressions (
+case class Expressions(
   functions: Seq[FunctionalExpression],
   constants: Seq[Literal]
 )

@@ -44,7 +44,7 @@ class IcebergDSV2Spec extends AsyncFlatSpec
       .config("spark.sql.catalog.iceberg_catalog.warehouse", warehouseUri.toString)
     ) { implicit spark =>
       withLineageTracking { lineageCaptor =>
-        spark.sql("CREATE TABLE iceberg_catalog.foo (id bigint, data string) USING iceberg;")
+        spark.sql("CREATE TABLE iceberg_catalog.foo (id BIGINT, data STRING) USING ICEBERG;")
 
         for {
           (plan1, Seq(event1)) <- lineageCaptor.lineageOf {
@@ -67,8 +67,8 @@ class IcebergDSV2Spec extends AsyncFlatSpec
       .config("spark.sql.catalog.iceberg_catalog.warehouse", warehouseUri.toString)
     ) { implicit spark =>
       withLineageTracking { lineageCaptor =>
-        spark.sql("CREATE TABLE iceberg_catalog.bar (id bigint, data string) USING iceberg;")
-        spark.sql("CREATE TABLE iceberg_catalog.baz (id bigint, data string) USING iceberg;")
+        spark.sql("CREATE TABLE iceberg_catalog.bar (id BIGINT, data STRING) USING ICEBERG;")
+        spark.sql("CREATE TABLE iceberg_catalog.baz (id BIGINT, data STRING) USING ICEBERG;")
 
         for {
           (_, Seq(_)) <- lineageCaptor.lineageOf {

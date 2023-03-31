@@ -20,7 +20,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.spline.harvester.postprocessing.metadata._
 
-private class ExtraPredicateParserSpec  extends AnyFlatSpec with Matchers {
+private class ExtraPredicateParserSpec extends AnyFlatSpec with Matchers {
 
   behavior of "ExtraSelectorParser"
 
@@ -98,7 +98,7 @@ private class ExtraPredicateParserSpec  extends AnyFlatSpec with Matchers {
     val (name, predicate) = PredicateParser.parse("executionPlan[foo.bar[32] < 42]")
 
     predicate shouldBe Predicate(
-      Comparison(Path(PropertyPS("foo") , PropertyPS("bar"), ArrayPS(32)), IntNum(42), "<")
+      Comparison(Path(PropertyPS("foo"), PropertyPS("bar"), ArrayPS(32)), IntNum(42), "<")
     )
   }
 
@@ -106,7 +106,7 @@ private class ExtraPredicateParserSpec  extends AnyFlatSpec with Matchers {
     val (name, predicate) = PredicateParser.parse("executionPlan[foo.map['abc'] != 42]")
 
     predicate shouldBe Predicate(
-      Neq(Path(PropertyPS("foo") , PropertyPS("map"), MapPS("abc")), IntNum(42))
+      Neq(Path(PropertyPS("foo"), PropertyPS("map"), MapPS("abc")), IntNum(42))
     )
   }
 
@@ -115,7 +115,7 @@ private class ExtraPredicateParserSpec  extends AnyFlatSpec with Matchers {
 
     predicate shouldBe Predicate(
       And(
-        Comparison(Path(PropertyPS("foo") , PropertyPS("bar"), PropertyPS("x")), IntNum(42), "<"),
+        Comparison(Path(PropertyPS("foo"), PropertyPS("bar"), PropertyPS("x")), IntNum(42), "<"),
         Comparison(Path(PropertyPS("x"), PropertyPS("y"), PropertyPS("z")), IntNum(5), ">")
       )
     )

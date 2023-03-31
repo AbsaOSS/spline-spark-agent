@@ -45,7 +45,7 @@ class CobrixPlugin extends Plugin with BaseRelationProcessing {
 
 object CobrixPlugin {
 
-  object `_: CobolRelation` extends SafeTypeMatchingExtractor[AnyRef]("za.co.absa.cobrix.spark.cobol.source.CobolRelation")
+  private object `_: CobolRelation` extends SafeTypeMatchingExtractor[AnyRef]("za.co.absa.cobrix.spark.cobol.source.CobolRelation")
 
   private def asSourceId(filePaths: Seq[String]) = SourceIdentifier(Some("cobol"), filePaths: _*)
 }

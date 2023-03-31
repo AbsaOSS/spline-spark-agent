@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.producer.model
 
-case class Literal (
+case class Literal(
   id: String,
   dataType: Option[Any],
   extra: Map[String, Any],

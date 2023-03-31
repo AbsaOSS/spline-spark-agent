@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.producer.model
 
-case class WriteOperation (
+case class WriteOperation(
   outputSource: String,
   append: Boolean,
   id: String,

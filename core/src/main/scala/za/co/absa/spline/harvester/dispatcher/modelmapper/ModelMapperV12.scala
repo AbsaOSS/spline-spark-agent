@@ -84,7 +84,7 @@ object ModelMapperV12 extends ModelMapper[v1_2.ExecutionPlan, v1_2.ExecutionEven
     case ExprRef(exprId) => v1_2.AttrOrExprRef(None, Some(exprId))
   }
 
-  def toUntypedMap(map: Map[String, Any]): Map[String,Any] =
+  def toUntypedMap(map: Map[String, Any]): Map[String, Any] =
     ModelMapper.toUntypedMap(toAttrOrExprRef, map)
 
   def toExpressions(expressions: Expressions): v1_2.Expressions = v1_2.Expressions(

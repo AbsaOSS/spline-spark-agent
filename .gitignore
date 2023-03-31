@@ -1,18 +1,7 @@
 # Created by .ignore support plugin (hsz.mobi)
-### Scala template
+### Scala/Java template
 *.class
 *.log
-
-# sbt specific
-.cache
-.history
-.lib/
-dist/*
-target/
-lib_managed/
-src_managed/
-project/boot/
-project/plugins/project/
 
 # Scala-IDE specific
 .scala_dependencies
@@ -35,8 +24,6 @@ buildNumber.properties
 
 # Exclude maven wrapper
 !/.mvn/wrapper/maven-wrapper.jar
-### Java template
-*.class
 
 # BlueJ files
 *.ctxt
@@ -80,22 +67,6 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 fabric.properties
-### SBT template
-# Simple Build Tool
-# http://www.scala-sbt.org/release/docs/Getting-Started/Directories.html#configuring-version-control
-
-target/
-lib_managed/
-src_managed/
-project/boot/
-.history
-.cache
-.classpath
-.cache-main
-.cache-tests
-.project
-.settings/
-.extract
 
 spark-warehouse/
 metastore_db/

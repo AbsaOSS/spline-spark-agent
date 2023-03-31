@@ -30,7 +30,7 @@ class XmlSpec extends AsyncFlatSpec
   with SparkFixture
   with SplineFixture {
 
-  private val baseFile = TempFile("file1", ".xml", false).deleteOnExit()
+  private val baseFile = TempFile("file1", ".xml", pathOnly = false).deleteOnExit()
   private val filePath = baseFile.asString
   private val fileUri = baseFile.toURI
 

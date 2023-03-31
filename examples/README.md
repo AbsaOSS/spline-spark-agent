@@ -1,8 +1,8 @@
-## Run Spline examples 
+## Run Spline examples
 
 1. Make sure the Spline Producer instance is running ([see instructions](https://absaoss.github.io/spline/#start-spline-server))
 
-2. Download the Spline source code from GitHub and switch to the `examples` directory     
+2. Download the Spline source code from GitHub and switch to the `examples` directory
     ```shell script
     git clone git@github.com:AbsaOSS/spline-spark-agent.git
     cd spline-spark-agent
@@ -19,12 +19,12 @@
         --conf spark.sql.queryExecutionListeners=za.co.absa.spline.harvester.listener.SplineQueryExecutionListener \
         --conf spark.spline.producer.url=http://localhost:8080/producer
     ```
-   In this example we used a so called _codeless_ initialization method, 
+   In this example we used a so-called _codeless_ initialization method,
    e.i. the one that requires no changes in your Spark application code.
-    
+
    Alternatively you can enable Spline manually by calling the `SparkLineageInitializer.enableLineageTracking()` method.
    See [python_example.py](src/main/python/python_example.py)
-   
+
 2. Execute your PySpark code as normal.
 
 #### Spark Shell
@@ -34,16 +34,19 @@ Same as `pyspark` example above, but use `spark-shell` command instead.
 #### Scala / Java
 
 To run all available examples
+
 ```shell script
 mvn test -P examples
 ```
 
 To run examples with the specific Spark 2.x version (i.e. `2.2`, `2.3`, `2.4`)
+
 ```shell script
 mvn test -P examples -P spark-2.4
 ```
 
 To run examples with the specific Spark 3.x version (i.e. `3.0`, `3.1` or newer)
+
 ```shell script
 # switch the project to Scala 2.12 mode
 mvn scala-cross-build:change-version -Pscala-2.12
@@ -52,26 +55,29 @@ mvn test -P examples -P spark-3.1
 ```
 
 To run a selected example job (e.g. `Example1Job`)
+
 ```shell script
 mvn test -P examples -D exampleClass=za.co.absa.spline.example.batch.Example1Job
 ``` 
 
 To change the Spline Producer URL (default is http://localhost:8080/producer)
+
 ```shell script
 mvn test -P examples -D spline.producer.url=http://localhost:8888/producer
 ```
 
 To change the Spline Mode
+
 ```shell script
 mvn test -P examples -D spline.mode=ENABLED
 ```
 
-
 #### Examples source code
-  - [Scala](src/main/scala/za/co/absa/spline/example/)
-  - [Java](src/main/java/za/co/absa/spline/example/)
-  - [Python](src/main/python/)
-  - [Shell script](src/main/shell/) - custom, non-Spark example, using REST API
+
+- [Scala](src/main/scala/za/co/absa/spline/example/)
+- [Java](src/main/java/za/co/absa/spline/example/)
+- [Python](src/main/python/)
+- [Shell script](src/main/shell/) - custom, non-Spark example, using REST API
 
 ## Run Spline examples using docker image
 

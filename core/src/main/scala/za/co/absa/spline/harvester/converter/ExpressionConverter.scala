@@ -55,7 +55,7 @@ class ExpressionConverter(
         id = idGen.nextId(),
         dataType = convertDataType(bo),
         childRefs = convertChildren(bo),
-        extra = (createExtra(bo, ExprV1.Types.Binary) + (ExprExtra.Symbol -> bo.symbol)),
+        extra = createExtra(bo, ExprV1.Types.Binary) + (ExprExtra.Symbol -> bo.symbol),
         name = bo.prettyName,
         params = getExpressionParameters(bo)
       )

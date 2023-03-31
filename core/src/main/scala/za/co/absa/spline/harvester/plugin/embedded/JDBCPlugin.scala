@@ -18,17 +18,17 @@ package za.co.absa.spline.harvester.plugin.embedded
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
-
-import javax.annotation.Priority
 import org.apache.spark.sql.execution.datasources.jdbc.{JDBCOptions, JdbcRelationProvider}
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.commons.reflect.ReflectionUtils.extractValue
 import za.co.absa.commons.reflect.extractors.{AccessorMethodValueExtractor, SafeTypeMatchingExtractor}
 import za.co.absa.spline.harvester.builder.SourceIdentifier
-import za.co.absa.spline.harvester.plugin.Plugin.{Params, Precedence, ReadNodeInfo, WriteNodeInfo}
+import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.embedded.JDBCPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, Plugin, RddReadNodeProcessing, RelationProviderProcessing}
+
+import javax.annotation.Priority
 
 
 @Priority(Precedence.Normal)
@@ -36,7 +36,7 @@ class JDBCPlugin
   extends Plugin
     with BaseRelationProcessing
     with RelationProviderProcessing
-    with RddReadNodeProcessing{
+    with RddReadNodeProcessing {
 
   override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: JDBCRelation`(jr), _) =>
@@ -68,6 +68,7 @@ class JDBCPlugin
 object JDBCPlugin {
 
   object `_: JDBCRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.execution.datasources.jdbc.JDBCRelation")
+
   object `_: JDBCRDD` extends SafeTypeMatchingExtractor[RDD[InternalRow]]("org.apache.spark.sql.execution.datasources.jdbc.JDBCRDD")
 
   object TableOrQueryFromJDBCOptionsExtractor extends AccessorMethodValueExtractor[String]("table", "tableOrQuery")

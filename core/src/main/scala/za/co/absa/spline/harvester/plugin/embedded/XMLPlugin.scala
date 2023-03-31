@@ -42,7 +42,7 @@ class XMLPlugin(pathQualifier: PathQualifier) extends Plugin with BaseRelationPr
 
 object XMLPlugin {
 
-  object `_: XmlRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.databricks.spark.xml.XmlRelation")
+  private object `_: XmlRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.databricks.spark.xml.XmlRelation")
 
   private def asSourceId(paths: Seq[String]) = SourceIdentifier(Some("xml"), paths: _*)
 }

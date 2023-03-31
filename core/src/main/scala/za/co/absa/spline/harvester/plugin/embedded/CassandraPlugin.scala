@@ -16,7 +16,6 @@
 
 package za.co.absa.spline.harvester.plugin.embedded
 
-import javax.annotation.Priority
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.commons.reflect.ReflectionUtils.extractValue
@@ -25,6 +24,8 @@ import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.embedded.CassandraPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, Plugin, RelationProviderProcessing}
+
+import javax.annotation.Priority
 
 
 @Priority(Precedence.Normal)
@@ -53,7 +54,7 @@ class CassandraPlugin
 
 object CassandraPlugin {
 
-  object `_: CassandraSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.cassandra.CassandraSourceRelation")
+  private object `_: CassandraSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.cassandra.CassandraSourceRelation")
 
   private object CassandraSourceExtractor extends SafeTypeMatchingExtractor(classOf[org.apache.spark.sql.cassandra.DefaultSource])
 

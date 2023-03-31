@@ -378,7 +378,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           for {
             (plan, _) <- captor.lineageOf {
               df.createOrReplaceTempView("tempView")
-              spark.sql("create table users_sales as select i, d, s from tempView ")
+              spark.sql("CREATE TABLE users_sales AS SELECT i, d, s FROM tempView ")
             }
           } yield {
             val writeOperation = plan.operations.write

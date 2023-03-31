@@ -24,7 +24,7 @@ import scala.util.Using.Releasable
 trait ReleasableResourceFixture {
   this: AsyncTestSuite =>
 
-  def usingResource[R](resource: R)(testBody: R =>  Future[Assertion])(implicit releasable: Releasable[R]): Future[Assertion] = {
+  def usingResource[R](resource: R)(testBody: R => Future[Assertion])(implicit releasable: Releasable[R]): Future[Assertion] = {
     testBody(resource).andThen { case _ => releasable.release(resource) }
   }
 }

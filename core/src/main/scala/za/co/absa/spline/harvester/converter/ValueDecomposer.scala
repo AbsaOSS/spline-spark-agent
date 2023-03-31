@@ -56,8 +56,9 @@ object ValueDecomposer extends ValueDecomposer {
   }
 
   private object ModuleClassSymbolExtractor {
-    def unapply(o: Any): Option[ClassSymbol] =
-    // a workaround for Scala bug #12190
-    Try(za.co.absa.commons.reflect.ReflectionUtils.ModuleClassSymbolExtractor.unapply(o)).toOption.flatten
+    def unapply(o: Any): Option[ClassSymbol] = {
+      // a workaround for Scala bug #12190
+      Try(za.co.absa.commons.reflect.ReflectionUtils.ModuleClassSymbolExtractor.unapply(o)).toOption.flatten
+    }
   }
 }

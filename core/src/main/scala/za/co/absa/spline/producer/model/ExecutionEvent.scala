@@ -18,7 +18,7 @@ package za.co.absa.spline.producer.model
 
 import java.util.UUID
 
-case class ExecutionEvent (
+case class ExecutionEvent(
   planId: UUID,
   labels: Map[String, Seq[String]],
   timestamp: Long,

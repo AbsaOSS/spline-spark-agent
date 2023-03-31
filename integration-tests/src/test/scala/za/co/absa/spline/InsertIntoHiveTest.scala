@@ -39,8 +39,8 @@ class InsertIntoHiveTest
       withLineageTracking { captor =>
         val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
         withDatabase(databaseName,
-          ("path_archive", "(x String, ymd int) USING hive", Seq(("Tata", 20190401), ("Tere", 20190403))),
-          ("path", "(x String) USING hive", Seq("Monika", "Buba"))
+          ("path_archive", "(x STRING, ymd INT) USING HIVE", Seq(("Tata", 20190401), ("Tere", 20190403))),
+          ("path", "(x String) USING HIVE", Seq("Monika", "Buba"))
         ) {
           val df = spark
             .table("path")
@@ -72,12 +72,12 @@ class InsertIntoHiveTest
         withDatabase("test",
           (
             "path_archive_csvserde",
-            "(x String, ymd int) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'",
+            "(x STRING, ymd INT) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'",
             Seq(("Tata", 20190401), ("Tere", 20190403))
           ),
           (
             "path_csvserde",
-            "(x String) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'",
+            "(x STRING) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'",
             Seq("Monika", "Buba")
           )
         ) {
@@ -108,11 +108,11 @@ class InsertIntoHiveTest
       withLineageTracking { captor =>
         withDatabase("test",
           (
-            "path_archive_parquetserde", "(x String, ymd int) stored as PARQUET",
+            "path_archive_parquetserde", "(x STRING, ymd INT) STORED AS PARQUET",
             Seq(("Tata", 20190401), ("Tere", 20190403))
           ),
           (
-            "path_parquetserde", "(x String) stored as PARQUET",
+            "path_parquetserde", "(x STRING) STORED AS PARQUET",
             Seq("Monika", "Buba")
           )
         ) {
@@ -143,11 +143,11 @@ class InsertIntoHiveTest
       withLineageTracking { captor =>
         withDatabase("test",
           (
-            "path_archive_orcserde", "(x String, ymd int) stored as orc",
+            "path_archive_orcserde", "(x string, ymd INT) STORED AS ORC",
             Seq(("Tata", 20190401), ("Tere", 20190403))
           ),
           (
-            "path_orcserde", "(x String) stored as orc",
+            "path_orcserde", "(x STRING) STORED AS ORC",
             Seq("Monika", "Buba")
           )
         ) {

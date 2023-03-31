@@ -116,7 +116,7 @@ object ModelMapperV11 extends ModelMapper[v1_1.ExecutionPlan, v1_1.ExecutionEven
     case e if e.error.isEmpty => toExecutionEvent(e)
   }
 
-  def toExecutionEvent(event: ExecutionEvent): v1_1.ExecutionEvent = v1_1.ExecutionEvent(
+  private def toExecutionEvent(event: ExecutionEvent): v1_1.ExecutionEvent = v1_1.ExecutionEvent(
     planId = event.planId,
     timestamp = event.timestamp,
     durationNs = event.durationNs,

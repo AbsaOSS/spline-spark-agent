@@ -39,7 +39,7 @@ class CassandraSpec
     with ReleasableResourceFixture {
 
   it should "support Cassandra on older Spark versions" taggedAs ignoreIf(ver"$SPARK_VERSION" >= ver"3.0.0") in {
-    usingResource(new CassandraContainer("cassandra:3.11.3") ) { container =>
+    usingResource(new CassandraContainer("cassandra:3.11.3")) { container =>
       container.start()
 
       withNewSparkSession { implicit spark =>
@@ -52,7 +52,7 @@ class CassandraSpec
 
           Using.resource(container.getCluster.connect()) { session =>
             session.execute(s"CREATE KEYSPACE IF NOT EXISTS $keyspace  WITH replication = {'class':'SimpleStrategy', 'replication_factor':1};")
-            session.execute(s"CREATE TABLE IF NOT EXISTS $keyspace.$table (ID INT, NAME TEXT, PRIMARY KEY (ID))")
+            session.execute(s"CREATE TABLE IF NOT EXISTS $keyspace.$table (id INT, name TEXT, PRIMARY KEY (id))")
           }
 
           val testData: DataFrame = {
@@ -93,7 +93,7 @@ class CassandraSpec
 
   it should "support Cassandra on Spark 3.0, 3.1 and 3.2" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0" || ver"$SPARK_VERSION" >= ver"3.3.0") in {
-    usingResource(new CassandraContainer("cassandra:3.11.2") ) { container =>
+    usingResource(new CassandraContainer("cassandra:3.11.2")) { container =>
       container.start()
 
       withNewSparkSession { implicit spark =>
@@ -107,7 +107,7 @@ class CassandraSpec
 
           Using.resource(container.getCluster.connect()) { session =>
             session.execute(s"CREATE KEYSPACE IF NOT EXISTS $keyspace  WITH replication = {'class':'SimpleStrategy', 'replication_factor':1};")
-            session.execute(s"CREATE TABLE IF NOT EXISTS $keyspace.$table (ID INT, NAME TEXT, PRIMARY KEY (ID))")
+            session.execute(s"CREATE TABLE IF NOT EXISTS $keyspace.$table (id INT, name TEXT, PRIMARY KEY (id))")
           }
 
           val testData: DataFrame = {

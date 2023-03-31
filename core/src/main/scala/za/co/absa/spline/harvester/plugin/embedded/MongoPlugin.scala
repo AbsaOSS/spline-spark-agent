@@ -18,7 +18,6 @@ package za.co.absa.spline.harvester.plugin.embedded
 
 import com.mongodb.spark.config.ReadConfig
 import com.mongodb.spark.rdd.MongoRDD
-import javax.annotation.Priority
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.commons.reflect.ReflectionUtils.extractValue
@@ -27,6 +26,8 @@ import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.embedded.MongoPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, Plugin, RelationProviderProcessing}
+
+import javax.annotation.Priority
 
 
 @Priority(Precedence.Normal)
@@ -58,7 +59,7 @@ class MongoPlugin
 
 object MongoPlugin {
 
-  object `_: MongoRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.mongodb.spark.sql.MongoRelation")
+  private object `_: MongoRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.mongodb.spark.sql.MongoRelation")
 
   private object MongoDBSourceExtractor extends SafeTypeMatchingExtractor(classOf[com.mongodb.spark.sql.DefaultSource])
 

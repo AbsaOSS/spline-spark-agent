@@ -115,9 +115,9 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <property name="classpath" refid="maven.runtime.classpath" />
+                                        <property name="classpath" refid="maven.runtime.classpath"/>
                                         <ant antfile="${basedir}/run-example.xml">
-                                            <target name="main" />
+                                            <target name="main"/>
                                         </ant>
                                     </target>
                                 </configuration>

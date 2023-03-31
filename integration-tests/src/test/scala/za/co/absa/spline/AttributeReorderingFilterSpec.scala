@@ -45,7 +45,7 @@ class AttributeReorderingFilterSpec extends AsyncFlatSpec
 
           for {
             (plan, _) <- lineageCaptor.lineageOf {
-              spark.sql(s"CREATE TABLE t1 (i int, j int) USING delta")
+              spark.sql(s"CREATE TABLE t1 (i int, j int) USING DELTA")
 
               Seq((3, 4)).toDF("j", "i")
                 .write.format("delta")

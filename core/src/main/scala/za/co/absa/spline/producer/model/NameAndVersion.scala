@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.producer.model
 
-case class NameAndVersion (
+case class NameAndVersion(
   name: String,
   version: String
 )

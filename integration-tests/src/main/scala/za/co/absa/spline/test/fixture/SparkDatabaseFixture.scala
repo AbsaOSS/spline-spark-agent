@@ -30,9 +30,9 @@ trait SparkDatabaseFixture {
   private type TableData = Seq[Any]
 
   def withDatabase
-      (databaseName: DatabaseName, tableDefs: (TableName, TableDef, TableData)*)
-      (testBody: => Future[Assertion])
-      (implicit spark: SparkSession): Future[Assertion] = {
+    (databaseName: DatabaseName, tableDefs: (TableName, TableDef, TableData)*)
+    (testBody: => Future[Assertion])
+    (implicit spark: SparkSession): Future[Assertion] = {
 
     val innerSpark = spark.newSession()
 
@@ -61,7 +61,7 @@ trait SparkDatabaseFixture {
     })
   }
 
-  private def dropDatabase(spark: SparkSession, databaseName: DatabaseName) :Unit = {
+  private def dropDatabase(spark: SparkSession, databaseName: DatabaseName): Unit = {
     spark.sql(s"DROP DATABASE IF EXISTS $databaseName CASCADE")
   }
 

@@ -31,12 +31,12 @@ import scala.collection.JavaConverters._
 
 
 /**
-  * Tests in this class serve as a way to produce unimplemented spark commands.
-  * They can be used as a template once the implementation begins.
-  *
-  * None of the tests is supposed to pass yet and therefore they are ignored.
-  *
-  */
+ * Tests in this class serve as a way to produce unimplemented spark commands.
+ * They can be used as a template once the implementation begins.
+ *
+ * None of the tests is supposed to pass yet and therefore they are ignored.
+ *
+ */
 @Ignore
 class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
   with Matchers
@@ -56,7 +56,7 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
           withNewSparkSession(_.sql(s"DROP DATABASE IF EXISTS $databaseName CASCADE"))
 
           for {
-            (plan, _) <- lineageCaptor.lineageOf {
+            (_, _) <- lineageCaptor.lineageOf {
               spark.sql(s"CREATE DATABASE $databaseName") // CreateDatabaseCommand
             }
           } yield {
@@ -71,7 +71,7 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
       withDatabase(databaseName) {
         withLineageTracking { lineageCaptor =>
           for {
-            (plan, _) <- lineageCaptor.lineageOf {
+            (_, _) <- lineageCaptor.lineageOf {
               spark.sql(s"DROP DATABASE $databaseName CASCADE") // DropDatabaseCommand
             }
           } yield {
@@ -82,16 +82,16 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
     }
 
   /**
-    * I wasn't able to generate CreateDataSourceTableCommand instead spark created CreateTableCommand,
-    * even though I was using an sql according to class comment.
-    *
-    * This is proper syntax for CreateDataSourceTableCommand according to class comment:
-    * {{{
-    *   CREATE TABLE [IF NOT EXISTS] [db_name.]table_name
-    *   [(col1 data_type [COMMENT col_comment], ...)]
-    *   USING format OPTIONS ([option1_name "option1_value", option2_name "option2_value", ...])
-    * }}}
-    */
+   * I wasn't able to generate CreateDataSourceTableCommand instead spark created CreateTableCommand,
+   * even though I was using an sql according to class comment.
+   *
+   * This is proper syntax for CreateDataSourceTableCommand according to class comment:
+   * {{{
+   *   CREATE TABLE [IF NOT EXISTS] [db_name.]table_name
+   *   [(col1 data_type [COMMENT col_comment], ...)]
+   *   USING format OPTIONS ([option1_name "option1_value", option2_name "option2_value", ...])
+   * }}}
+   */
   "Lineage for create data source table" should "be caught" in
     withIsolatedSparkSession(_
       .enableHiveSupport()
@@ -100,15 +100,15 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
       withDatabase(databaseName) {
         withLineageTracking { lineageCaptor =>
           for {
-            (plan, _) <- lineageCaptor.lineageOf {
+            (_, _) <- lineageCaptor.lineageOf {
               // CreateDataSourceTableCommand (but actually CreateTableCommand)
               spark.sql(
                 s"""
-              CREATE TABLE $tableName (x String, ymd int) USING hive OPTIONS (
-                INPUTFORMAT 'org.apache.hadoop.mapred.SequenceFileInputFormat',
-                OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat'
-              )
-              """
+                   |CREATE TABLE $tableName (x STRING, ymd INT) USING HIVE OPTIONS (
+                   |    INPUTFORMAT 'org.apache.hadoop.mapred.SequenceFileInputFormat',
+                   |    OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat'
+                   |)
+                   |""".stripMargin
               )
             }
           } yield {
@@ -128,7 +128,7 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
 
         withLineageTracking { lineageCaptor =>
           for {
-            (plan, _) <- lineageCaptor.lineageOf {
+            (_, _) <- lineageCaptor.lineageOf {
               spark.sql(s"CREATE TABLE fooTable LIKE $tableName") // CreateTableLikeCommand
             }
           } yield {
@@ -148,7 +148,7 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
 
         withLineageTracking { lineageCaptor =>
           for {
-            (plan, _) <- lineageCaptor.lineageOf {
+            (_, _) <- lineageCaptor.lineageOf {
               spark.sql(s"TRUNCATE TABLE $tableName") // TruncateTableCommand
             }
           } yield {
@@ -168,7 +168,7 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
 
         withLineageTracking { lineageCaptor =>
           for {
-            (plan, _) <- lineageCaptor.lineageOf {
+            (_, _) <- lineageCaptor.lineageOf {
               spark.sql(s"ALTER TABLE $tableName ADD COLUMNS (foo int)") // AlterTableAddColumnsCommand
             }
           } yield {
@@ -179,8 +179,8 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
     }
 
   /**
-    * column name/type change not supported in spark 2.3 only comment change is supported
-    */
+   * column name/type change not supported in spark 2.3 only comment change is supported
+   */
   "Lineage for alter table change column" should "be caught" in
     withIsolatedSparkSession(_
       .enableHiveSupport()
@@ -191,7 +191,7 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
 
         withLineageTracking { lineageCaptor =>
           for {
-            (plan, _) <- lineageCaptor.lineageOf {
+            (_, _) <- lineageCaptor.lineageOf {
               // AlterTableChangeColumnCommand
               spark.sql(s"ALTER TABLE $tableName CHANGE COLUMN x x String COMMENT 'This is a comment'")
             }
@@ -212,7 +212,7 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
 
         withLineageTracking { lineageCaptor =>
           for {
-            (plan, _) <- lineageCaptor.lineageOf {
+            (_, _) <- lineageCaptor.lineageOf {
               spark.sql(s"ALTER TABLE $tableName RENAME TO new_name") // AlterTableRenameCommand
             }
           } yield {
@@ -242,7 +242,7 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
 
         withLineageTracking { lineageCaptor =>
           for {
-            (plan, _) <- lineageCaptor.lineageOf {
+            (_, _) <- lineageCaptor.lineageOf {
               spark.sql(s"LOAD DATA LOCAL INPATH '${filePath.toUri}' INTO TABLE $tableName") // LoadDataCommand
             }
           } yield {
@@ -264,7 +264,7 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
 
         withLineageTracking { lineageCaptor =>
           for {
-            (plan, _) <- lineageCaptor.lineageOf {
+            (_, _) <- lineageCaptor.lineageOf {
               spark.sql(s"ALTER TABLE $tableName SET LOCATION '${newPath.toUri}'") // AlterTableSetLocationCommand
             }
           } yield {
@@ -275,9 +275,9 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
     }
 
   /**
-    * This actually produce both InsertIntoDataSourceCommand and SaveIntoDataSourceCommand.
-    * Since SaveIntoDataSourceCommand is already implemented, there is no need to implement InsertIntoDataSourceCommand.
-    */
+   * This actually produce both InsertIntoDataSourceCommand and SaveIntoDataSourceCommand.
+   * Since SaveIntoDataSourceCommand is already implemented, there is no need to implement InsertIntoDataSourceCommand.
+   */
   "Lineage for insert into (jdbc) table" should "be caught" in
     withNewSparkSession { implicit spark =>
 
@@ -294,15 +294,16 @@ class SparkUnimplementedCommandsSpec extends AsyncFlatSpec
           (_, _) <- lineageCaptor.lineageOf {
             testData.write.jdbc(jdbcConnectionString, "atable", new Properties)
           }
-          (plan, _) <- lineageCaptor.lineageOf {
-            spark.sql(s"""
-              CREATE TABLE jdbcTable USING org.apache.spark.sql.jdbc OPTIONS (
-                url '$jdbcConnectionString',
-                dbtable 'atable',
-                user '',
-                password ''
-              )
-              """
+          (_, _) <- lineageCaptor.lineageOf {
+            spark.sql(
+              s"""
+                 |CREATE TABLE jdbcTable USING org.apache.spark.sql.jdbc OPTIONS (
+                 |    url '$jdbcConnectionString',
+                 |    dbtable 'atable',
+                 |    user '',
+                 |    password ''
+                 |)
+                 |""".stripMargin
             )
 
             // SaveIntoDataSourceCommand

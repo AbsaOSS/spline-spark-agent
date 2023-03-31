@@ -18,7 +18,7 @@ package za.co.absa.spline.producer.model
 
 import java.util.UUID
 
-case class ExecutionPlan (
+case class ExecutionPlan(
   id: Option[UUID],
   name: String,
   discriminator: Option[String],
