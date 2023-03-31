@@ -39,7 +39,7 @@ class CassandraSpec
     with ReleasableResourceFixture {
 
   it should "support Cassandra on older Spark versions" taggedAs ignoreIf(ver"$SPARK_VERSION" >= ver"3.0.0") in {
-    usingResource(new CassandraContainer("cassandra:3.11.3") ) { container =>
+    usingResource(new CassandraContainer("cassandra:3.11.3")) { container =>
       container.start()
 
       withNewSparkSession { implicit spark =>
@@ -93,7 +93,7 @@ class CassandraSpec
 
   it should "support Cassandra on Spark 3.0, 3.1 and 3.2" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0" || ver"$SPARK_VERSION" >= ver"3.3.0") in {
-    usingResource(new CassandraContainer("cassandra:3.11.2") ) { container =>
+    usingResource(new CassandraContainer("cassandra:3.11.2")) { container =>
       container.start()
 
       withNewSparkSession { implicit spark =>

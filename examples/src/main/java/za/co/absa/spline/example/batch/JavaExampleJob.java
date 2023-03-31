@@ -28,7 +28,7 @@ public class JavaExampleJob {
         final SparkSession session = builder
             .appName("java example app")
             .master("local[*]")
-            .config("spark.driver.host","localhost")
+            .config("spark.driver.host", "localhost")
             .getOrCreate();
 
 

@@ -35,13 +35,13 @@ class RDDPlugin(
   pathQualifier: PathQualifier,
   session: SparkSession)
   extends Plugin
-    with RddReadNodeProcessing  {
+    with RddReadNodeProcessing {
 
   override def rddReadNodeProcessor: PartialFunction[RDD[_], ReadNodeInfo] = {
     case fsr: FileScanRDD =>
       val uris = fsr.filePartitions.flatMap(_.files.map(_.filePath))
       ReadNodeInfo(SourceIdentifier(None, uris: _*), Map.empty)
-    case hr: HadoopRDD[_, _]  =>
+    case hr: HadoopRDD[_, _] =>
       val partitions = ReflectionUtils.extractValue[Array[Partition]](hr, "partitions_")
       val uris = partitions.map(hadoopPartitionToUriString)
       ReadNodeInfo(SourceIdentifier(None, uris: _*), Map.empty)

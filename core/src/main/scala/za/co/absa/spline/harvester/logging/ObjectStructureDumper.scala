@@ -98,7 +98,7 @@ object ObjectStructureDumper {
                 try {
                   extractFieldValue(value, f.getName)
                 } catch {
-                  case e @ (_:LinkageError | NonFatal(_)) => s"! error occurred: ${e.toShortString}"
+                  case e @ (_: LinkageError | NonFatal(_)) => s"! error occurred: ${e.toShortString}"
                 }
               ObjectBox(subValue, f.getName, f.getType.getName, depth + 1)
             }.toList
@@ -120,6 +120,7 @@ object ObjectStructureDumper {
       objectToStringRec(extractFieldValue)(newStack, newVisited, newResult)
     }
   }
+
   private def isIgnoredField(f: Field): Boolean = {
     Set("child", "session")(f.getName) ||
       Modifier.isStatic(f.getModifiers) ||
@@ -128,7 +129,7 @@ object ObjectStructureDumper {
 
   private def isReadyForPrint(value: AnyRef): Boolean = {
     isPrimitiveLike(value) ||
-      value.isInstanceOf[java.lang.CharSequence]  ||
+      value.isInstanceOf[java.lang.CharSequence] ||
       value.isInstanceOf[Traversable[_]] ||
       value.isInstanceOf[Enum[_]] ||
       value.isInstanceOf[java.util.Random] ||

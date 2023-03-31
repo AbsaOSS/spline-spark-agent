@@ -16,8 +16,6 @@
 
 package za.co.absa.commons
 
-import scala.util.{Success, Try}
-
 object CollectionImplicits {
 
   implicit class MapOps[A, B](val m1: Map[A, B]) extends AnyVal {

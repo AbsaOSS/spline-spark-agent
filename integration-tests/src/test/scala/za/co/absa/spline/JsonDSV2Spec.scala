@@ -18,7 +18,6 @@
 package za.co.absa.spline
 
 import org.apache.spark.SPARK_VERSION
-import org.apache.spark.sql.catalyst.expressions.Literal
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.io.TempDirectory
@@ -28,9 +27,9 @@ import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 
 /**
-  *  Json DataSource V2 is not used by default in current Spark (3.1.x)
-  *  This test is here to make sure we are ready for the Data Source V2 and as a starting point for future developments
-  */
+ * Json DataSource V2 is not used by default in current Spark (3.1.x)
+ * This test is here to make sure we are ready for the Data Source V2 and as a starting point for future developments
+ */
 class JsonDSV2Spec extends AsyncFlatSpec
   with Matchers
   with SparkFixture
@@ -66,7 +65,6 @@ class JsonDSV2Spec extends AsyncFlatSpec
         }
       }
     }
-
 
 
 }

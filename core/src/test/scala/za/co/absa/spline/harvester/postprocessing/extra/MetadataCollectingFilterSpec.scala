@@ -50,7 +50,7 @@ class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matc
   private val defaultExtra = Map("ttt" -> 777)
   private val ops = Operations(wop, Seq.empty, Seq.empty)
   private val ep =
-    ExecutionPlan(None, "pn", None, Map.empty, ops , Seq.empty, emptyExpressions, systemInfo, agentInfo, defaultExtra)
+    ExecutionPlan(None, "pn", None, Map.empty, ops, Seq.empty, emptyExpressions, systemInfo, agentInfo, defaultExtra)
 
   private val eventExtra = Map("foo" -> "a", "bar" -> false, "baz" -> Seq(1, 2, 3))
   private val ee = ExecutionEvent(UUID.randomUUID(), Map.empty, 66L, None, None, None, eventExtra)
@@ -296,7 +296,7 @@ class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matc
       addPropertyDirect(InjectRulesKey, configString)
     }
 
-    (the [IllegalArgumentException] thrownBy new MetadataCollectingFilter(config)).getMessage should include("Labels are not supported")
+    (the[IllegalArgumentException] thrownBy new MetadataCollectingFilter(config)).getMessage should include("Labels are not supported")
   }
 
 }

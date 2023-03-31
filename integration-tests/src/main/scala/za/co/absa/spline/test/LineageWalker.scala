@@ -21,7 +21,7 @@ import za.co.absa.spline.producer.model._
 class LineageWalker(
   allOpMap: Map[String, Operation],
   funMap: Map[String, FunctionalExpression],
-  litMap:  Map[String, Literal],
+  litMap: Map[String, Literal],
   attrMap: Map[String, Attribute]
 ) {
 
@@ -38,16 +38,16 @@ class LineageWalker(
 
   private def dependsOnRec(ref: AttrOrExprRef, id: String): Boolean = ref match {
     case AttrRef(attrIfd) =>
-      if(attrIfd == id) true
+      if (attrIfd == id) true
       else dependsOnRec(attrMap(attrIfd).childRefs, id)
     case ExprRef(exprId) =>
-      if(exprId == id) true
+      if (exprId == id) true
       else {
         if (litMap.contains("exprId")) false
         else dependsOnRec(funMap(exprId).childRefs, id)
       }
   }
-  
+
 }
 
 object LineageWalker {
@@ -61,7 +61,7 @@ object LineageWalker {
       .functions
       .map(fun => fun.id -> fun).toMap
 
-    val litMap =  plan.expressions
+    val litMap = plan.expressions
       .constants
       .map(lit => lit.id -> lit).toMap
 

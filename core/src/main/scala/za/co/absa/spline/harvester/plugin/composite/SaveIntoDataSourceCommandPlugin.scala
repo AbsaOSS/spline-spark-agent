@@ -16,7 +16,6 @@
 
 package za.co.absa.spline.harvester.plugin.composite
 
-import javax.annotation.Priority
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources.SaveIntoDataSourceCommand
 import za.co.absa.commons.reflect.extractors.AccessorMethodValueExtractor
@@ -27,6 +26,8 @@ import za.co.absa.spline.harvester.plugin.composite.SaveIntoDataSourceCommandPlu
 import za.co.absa.spline.harvester.plugin.registry.PluginRegistry
 import za.co.absa.spline.harvester.plugin.{Plugin, RelationProviderProcessing, WriteNodeProcessing}
 import za.co.absa.spline.harvester.qualifier.PathQualifier
+
+import javax.annotation.Priority
 
 @Priority(Precedence.Lowest)
 class SaveIntoDataSourceCommandPlugin(

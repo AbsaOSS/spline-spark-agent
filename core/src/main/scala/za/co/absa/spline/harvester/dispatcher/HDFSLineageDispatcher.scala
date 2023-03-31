@@ -16,8 +16,6 @@
 
 package za.co.absa.spline.harvester.dispatcher
 
-import java.net.URI
-
 import org.apache.commons.configuration.Configuration
 import org.apache.hadoop.fs.permission.FsPermission
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -26,12 +24,13 @@ import org.apache.spark.internal.Logging
 import za.co.absa.commons.annotation.Experimental
 import za.co.absa.commons.config.ConfigurationImplicits._
 import za.co.absa.commons.lang.ARM._
-import za.co.absa.spline.harvester.dispatcher.HDFSLineageDispatcher._
-import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
-import za.co.absa.spline.harvester.json.HarvesterJsonSerDe
-
-import scala.concurrent.blocking
 import za.co.absa.commons.s3.SimpleS3Location.SimpleS3LocationExt
+import za.co.absa.spline.harvester.dispatcher.HDFSLineageDispatcher._
+import za.co.absa.spline.harvester.json.HarvesterJsonSerDe
+import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
+
+import java.net.URI
+import scala.concurrent.blocking
 
 /**
  * A port of https://github.com/AbsaOSS/spline/tree/release/0.3.9/persistence/hdfs/src/main/scala/za/co/absa/spline/persistence/hdfs

@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.producer.model
 
-case class ReadOperation (
+case class ReadOperation(
   inputSources: Seq[String],
   id: String,
   name: String,

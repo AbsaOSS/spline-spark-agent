@@ -15,6 +15,7 @@
  */
 
 package za.co.absa.spline.harvester.plugin.extractor
+
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.SaveMode.{Append, Overwrite}
 import org.apache.spark.sql.catalog.Catalog

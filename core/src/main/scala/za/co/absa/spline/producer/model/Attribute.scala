@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.producer.model
 
-case class Attribute (
+case class Attribute(
   id: String,
   dataType: Option[Any],
   childRefs: Seq[AttrOrExprRef],

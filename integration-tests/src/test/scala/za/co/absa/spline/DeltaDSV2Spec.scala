@@ -134,10 +134,10 @@ class DeltaDSV2Spec extends AsyncFlatSpec
     }
 
   /**
-    * Even though the code actually does dynamic partition overwrite,
-    * the spark command generated is OverwriteByExpression.
-    * Keeping this test in case the command will be used in future Spark versions.
-    */
+   * Even though the code actually does dynamic partition overwrite,
+   * the spark command generated is OverwriteByExpression.
+   * Keeping this test in case the command will be used in future Spark versions.
+   */
   it should "support OverwritePartitionsDynamic V2 command" taggedAs
     ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
     withIsolatedSparkSession(_

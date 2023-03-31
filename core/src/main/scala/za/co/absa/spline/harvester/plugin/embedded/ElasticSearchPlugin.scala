@@ -16,7 +16,6 @@
 
 package za.co.absa.spline.harvester.plugin.embedded
 
-import javax.annotation.Priority
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.sources.BaseRelation
 import org.elasticsearch.spark.cfg.SparkSettings
@@ -26,6 +25,8 @@ import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.embedded.ElasticSearchPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, Plugin, RelationProviderProcessing}
+
+import javax.annotation.Priority
 
 
 @Priority(Precedence.Normal)

@@ -25,8 +25,6 @@ import za.co.absa.commons.io.{TempDirectory, TempFile}
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 
-import java.io.File
-
 class ExcelSpec extends AsyncFlatSpec
   with Matchers
   with SparkFixture

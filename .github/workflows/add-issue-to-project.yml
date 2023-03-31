@@ -1,7 +1,7 @@
 name: Add issue to project
 on:
   issues:
-    types: [opened, transferred]
+    types: [ opened, transferred ]
 
 jobs:
   add-to-project:

@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.producer.model
 
-case class DataOperation (
+case class DataOperation(
   id: String,
   name: String,
   childIds: Seq[String],

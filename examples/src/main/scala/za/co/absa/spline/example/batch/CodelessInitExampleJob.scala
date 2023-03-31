@@ -20,10 +20,10 @@ import org.apache.spark.sql.SaveMode
 import za.co.absa.spline.SparkApp
 
 /**
-  * An example job where no explicit Spline code was used to initialize Spline. Only Spark configuration was used.
-  */
+ * An example job where no explicit Spline code was used to initialize Spline. Only Spark configuration was used.
+ */
 object CodelessInitExampleJob extends SparkApp(
-  name ="Codeless Init Example Job",
+  name = "Codeless Init Example Job",
   // Spark configuration used to register Spline listener for codeless init.
   conf = Seq(("spark.sql.queryExecutionListeners", "za.co.absa.spline.harvester.listener.SplineQueryExecutionListener"))) {
 

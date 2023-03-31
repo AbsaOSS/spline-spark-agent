@@ -20,8 +20,6 @@ import za.co.absa.spline.harvester.IdGenerator._
 import za.co.absa.spline.harvester.IdGeneratorsBundle._
 import za.co.absa.spline.producer.model.ExecutionPlan
 
-import java.util.UUID
-
 class IdGeneratorsBundle(execPlanUUIDGeneratorFactory: UUIDGeneratorFactory[UUIDNamespace, ExecutionPlan]) {
   val execPlanIdGenerator: UUIDGenerator[ExecutionPlan] = execPlanUUIDGeneratorFactory(UUIDNamespace.ExecutionPlan)
   val attributeIdGenerator: SequentialIdGenerator = new SequentialIdGenerator(AttributeIdTemplate)

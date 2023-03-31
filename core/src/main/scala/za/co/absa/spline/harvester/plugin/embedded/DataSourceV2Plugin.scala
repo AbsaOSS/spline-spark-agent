@@ -45,7 +45,7 @@ class DataSourceV2Plugin
       val table = extractValue[AnyRef](relation, "table")
       val tableName = extractValue[String](table, "name")
       val identifier = extractValue[AnyRef](relation, "identifier")
-      val options =  extractValue[AnyRef](relation, "options")
+      val options = extractValue[AnyRef](relation, "options")
       val props = Map(
         "table" -> Map("identifier" -> tableName),
         "identifier" -> identifier,
@@ -74,7 +74,7 @@ class DataSourceV2Plugin
 
     case (_, `_: CreateTableAsSelect`(ctc)) =>
       val prop = "ignoreIfExists" -> extractValue[Boolean](ctc, "ignoreIfExists")
-      processV2CreateTableCommand(ctc,prop)
+      processV2CreateTableCommand(ctc, prop)
 
     case (_, `_: ReplaceTableAsSelect`(ctc)) =>
       val prop = "orCreate" -> extractValue[Boolean](ctc, "orCreate")
@@ -82,8 +82,8 @@ class DataSourceV2Plugin
   }
 
   /**
-    * @param v2WriteCommand org.apache.spark.sql.catalyst.plans.logical.V2WriteCommand
-    */
+   * @param v2WriteCommand org.apache.spark.sql.catalyst.plans.logical.V2WriteCommand
+   */
   private def processV2WriteCommand(
     v2WriteCommand: AnyRef,
     sourceId: SourceIdentifier,
@@ -104,7 +104,7 @@ class DataSourceV2Plugin
   private def processV2CreateTableCommand(
     ctc: AnyRef,
     commandSpecificProp: (String, _)
-  ) : WriteNodeInfo = {
+  ): WriteNodeInfo = {
     val catalog = extractCatalog(ctc)
     val identifier = extractValue[AnyRef](ctc, "tableName")
     val loadTableMethods = catalog.getClass.getMethods.filter(_.getName == "loadTable")
@@ -138,16 +138,16 @@ class DataSourceV2Plugin
 
 
   /**
-    * @param namedRelation org.apache.spark.sql.catalyst.analysis.NamedRelation
-    */
+   * @param namedRelation org.apache.spark.sql.catalyst.analysis.NamedRelation
+   */
   private def extractSourceIdFromRelation(namedRelation: AnyRef): SourceIdentifier = {
     val table = extractValue[AnyRef](namedRelation, "table")
     extractSourceIdFromTable(table)
   }
 
   /**
-    * @param table org.apache.spark.sql.connector.catalog.Table
-    */
+   * @param table org.apache.spark.sql.connector.catalog.Table
+   */
   private def extractSourceIdFromTable(table: AnyRef): SourceIdentifier = table match {
     case `_: CassandraTable`(ct) =>
       val metadata = extractValue[AnyRef](ct, "metadata")
@@ -177,7 +177,7 @@ class DataSourceV2Plugin
       .getOrElse(tableProps.get("location"))
 
     val uri =
-      if(URI.create(location).getScheme == null) {
+      if (URI.create(location).getScheme == null) {
         s"file:$location"
       } else {
         location
@@ -187,7 +187,7 @@ class DataSourceV2Plugin
   }
 
   private def prependFileSchemaIfMissing(uri: String): String =
-    if(URI.create(uri).getScheme == null) {
+    if (URI.create(uri).getScheme == null) {
       s"file:$uri"
     } else {
       uri

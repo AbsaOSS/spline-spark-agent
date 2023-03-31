@@ -17,13 +17,12 @@
 package za.co.absa.spline.harvester.converter
 
 import org.apache.spark.sql.catalyst.expressions.Literal
-import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.OneInstancePerTest
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import za.co.absa.spline.harvester.{IdGenerator, SequentialIdGenerator}
+import za.co.absa.spline.harvester.SequentialIdGenerator
 import za.co.absa.spline.model.dt
 
 import java.util.UUID

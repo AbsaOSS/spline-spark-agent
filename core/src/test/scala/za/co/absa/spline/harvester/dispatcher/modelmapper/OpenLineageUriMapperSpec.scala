@@ -30,25 +30,25 @@ class OpenLineageUriMapperSpec
   behavior of "uriToNamespaceAndName(...)"
 
   it should "convert file uri" in {
-    val(namespace, name) = mapper.uriToNamespaceAndName("file://localhost/absolute/path/to/file.csv")
+    val (namespace, name) = mapper.uriToNamespaceAndName("file://localhost/absolute/path/to/file.csv")
     namespace should be("file://localhost")
     name should be("/absolute/path/to/file.csv")
   }
 
   it should "convert file uri without host" in {
-    val(namespace, name) = mapper.uriToNamespaceAndName("file:///absolute/path/to/file.csv")
+    val (namespace, name) = mapper.uriToNamespaceAndName("file:///absolute/path/to/file.csv")
     namespace should be("file")
     name should be("/absolute/path/to/file.csv")
   }
 
   it should "convert jdbc postgresql uri" in {
-    val(namespace, name) = mapper.uriToNamespaceAndName("jdbc:postgresql://localhost:5433/postgres:bar1")
+    val (namespace, name) = mapper.uriToNamespaceAndName("jdbc:postgresql://localhost:5433/postgres:bar1")
     namespace should be("postgresql://localhost:5433")
     name should be("/postgres:bar1")
   }
 
   it should "convert postgresql uri" in {
-    val(namespace, name) = mapper.uriToNamespaceAndName("postgresql://localhost:5433/postgres:bar1")
+    val (namespace, name) = mapper.uriToNamespaceAndName("postgresql://localhost:5433/postgres:bar1")
     namespace should be("postgresql://localhost:5433")
     name should be("/postgres:bar1")
   }
