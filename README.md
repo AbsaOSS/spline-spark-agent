@@ -96,6 +96,9 @@ For example, if you have Spark 2.4.4 pre-built with Scala 2.12.10 then select th
 ```
 spark-2.4-spline-agent-bundle_2.12.jar
 ```
+
+**AWS Glue Note**: dependency on `org.yaml:snakeyaml:1.33` is **missing** in Glue flavour of Spark. Please add this dependency on the classpath.
+
 <a id="initialization"></a>
 ### Initialization
 
