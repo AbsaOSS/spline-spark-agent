@@ -39,7 +39,7 @@ class BasicIntegrationTests extends AsyncFlatSpec
         import spark.implicits._
 
         withNewSparkSession {
-          _.sql("drop table if exists someTable")
+          _.sql("DROP TABLE IF EXISTS someTable")
         }
 
         for {
@@ -81,7 +81,7 @@ class BasicIntegrationTests extends AsyncFlatSpec
         val path = TempDirectory("spline", ".table").deleteOnExit().path.toUri
 
         withNewSparkSession {
-          _.sql(s"create table $tableName (num int) using parquet location '$path' ")
+          _.sql(s"CREATE TABLE $tableName (num INT) USING PARQUET LOCATION '$path' ")
         }
 
         val schema: StructType = StructType(List(StructField("num", IntegerType, nullable = true)))
@@ -103,8 +103,8 @@ class BasicIntegrationTests extends AsyncFlatSpec
         val path = TempDirectory("spline", ".table").deleteOnExit().path.toUri
 
         withNewSparkSession { innerSpark =>
-          innerSpark.sql(s"drop table if exists $tableName")
-          innerSpark.sql(s"create table $tableName (num int) using parquet location '$path' ")
+          innerSpark.sql(s"DROP TABLE IF EXISTS $tableName")
+          innerSpark.sql(s"CREATE TABLE $tableName (num INT) USING PARQUET LOCATION '$path' ")
         }
 
         val schema: StructType = StructType(List(StructField("num", IntegerType, nullable = true)))
@@ -137,7 +137,7 @@ class BasicIntegrationTests extends AsyncFlatSpec
         val path = TempDirectory("spline", ".table", pathOnly = true).deleteOnExit().path
 
         withNewSparkSession {
-          _.sql(s"create table e_table(num int) using parquet location '${path.toUri}'")
+          _.sql(s"CREATE TABLE e_table(num INT) USING PARQUET LOCATION '${path.toUri}'")
         }
 
         for {

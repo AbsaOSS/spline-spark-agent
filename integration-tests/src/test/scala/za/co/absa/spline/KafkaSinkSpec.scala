@@ -67,7 +67,7 @@ class KafkaSinkSpec
         for {
           (plan1, _) <- captor.lineageOf(
             testData
-              .selectExpr("CAST (NAME as STRING) as value")
+              .selectExpr("CAST (name AS STRING) AS value")
               .write
               .format("kafka")
               .option("kafka.bootstrap.servers", kafkaUrl)

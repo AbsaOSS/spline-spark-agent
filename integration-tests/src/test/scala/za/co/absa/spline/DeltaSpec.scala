@@ -41,7 +41,7 @@ class DeltaSpec extends AsyncFlatSpec
     withNewSparkSession { implicit spark =>
       withLineageTracking { captor =>
         val testData: DataFrame = {
-          val schema = StructType(StructField("ID", IntegerType, nullable = false) :: StructField("NAME", StringType, nullable = false) :: Nil)
+          val schema = StructType(StructField("id", IntegerType, nullable = false) :: StructField("name", StringType, nullable = false) :: Nil)
           val rdd = spark.sparkContext.parallelize(Row(1014, "Warsaw") :: Row(1002, "Corte") :: Nil)
           spark.sqlContext.createDataFrame(rdd, schema)
         }
@@ -83,13 +83,13 @@ class DeltaSpec extends AsyncFlatSpec
     withNewSparkSession { implicit spark =>
       withLineageTracking { lineageCaptor =>
         val testData: DataFrame = {
-          val schema = StructType(StructField("ID", IntegerType, nullable = false) :: StructField("NAME", StringType, nullable = false) :: Nil)
+          val schema = StructType(StructField("id", IntegerType, nullable = false) :: StructField("name", StringType, nullable = false) :: Nil)
           val rdd = spark.sparkContext.parallelize(Row(1014, "Warsaw") :: Row(1002, "Corte") :: Nil)
           spark.sqlContext.createDataFrame(rdd, schema)
         }
 
         withNewSparkSession {
-          _.sql(s"CREATE TABLE table_name(ID int, NAME string) USING DELTA LOCATION '$deltaPath'")
+          _.sql(s"CREATE TABLE table_name(id INT, name STRING) USING DELTA LOCATION '$deltaPath'")
         }
 
         for {

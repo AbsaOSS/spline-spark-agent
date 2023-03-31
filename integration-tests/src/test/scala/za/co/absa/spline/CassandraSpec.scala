@@ -52,7 +52,7 @@ class CassandraSpec
 
           Using.resource(container.getCluster.connect()) { session =>
             session.execute(s"CREATE KEYSPACE IF NOT EXISTS $keyspace  WITH replication = {'class':'SimpleStrategy', 'replication_factor':1};")
-            session.execute(s"CREATE TABLE IF NOT EXISTS $keyspace.$table (ID INT, NAME TEXT, PRIMARY KEY (ID))")
+            session.execute(s"CREATE TABLE IF NOT EXISTS $keyspace.$table (id INT, name TEXT, PRIMARY KEY (id))")
           }
 
           val testData: DataFrame = {
@@ -107,7 +107,7 @@ class CassandraSpec
 
           Using.resource(container.getCluster.connect()) { session =>
             session.execute(s"CREATE KEYSPACE IF NOT EXISTS $keyspace  WITH replication = {'class':'SimpleStrategy', 'replication_factor':1};")
-            session.execute(s"CREATE TABLE IF NOT EXISTS $keyspace.$table (ID INT, NAME TEXT, PRIMARY KEY (ID))")
+            session.execute(s"CREATE TABLE IF NOT EXISTS $keyspace.$table (id INT, name TEXT, PRIMARY KEY (id))")
           }
 
           val testData: DataFrame = {

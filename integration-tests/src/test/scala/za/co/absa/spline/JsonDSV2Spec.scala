@@ -45,7 +45,7 @@ class JsonDSV2Spec extends AsyncFlatSpec
       withLineageTracking { lineageCaptor =>
         val testData = {
           import spark.implicits._
-          Seq((1014, "Warsaw"), (1002, "Corte")).toDF("ID", "NAME")
+          Seq((1014, "Warsaw"), (1002, "Corte")).toDF("id", "name")
         }
         for {
           (plan1, Seq(event1)) <- lineageCaptor.lineageOf {

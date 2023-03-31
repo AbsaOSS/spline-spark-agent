@@ -38,22 +38,22 @@ object DeltaDSV2Job extends SparkApp(
   spark.sql(s"CREATE DATABASE dsv2 LOCATION '$path'")
 
   //AppendData
-  spark.sql("CREATE TABLE dsv2.ad ( foo String ) USING DELTA")
+  spark.sql("CREATE TABLE dsv2.ad (foo STRING) USING DELTA")
   spark.sql("INSERT INTO dsv2.ad VALUES ('Mouse')")
 
   //OverwriteByExpression with condition == true
-  spark.sql("CREATE TABLE dsv2.owbe ( foo String ) USING DELTA")
-  spark.sql("INSERT OVERWRITE dsv2.owbe  VALUES ('Dog')")
+  spark.sql("CREATE TABLE dsv2.owbe (foo STRING) USING DELTA")
+  spark.sql("INSERT OVERWRITE dsv2.owbe VALUES ('Dog')")
 
   //OverwriteByExpression with advanced condition
-  spark.sql(s"CREATE TABLE dsv2.owbep (ID int, NAME string) USING delta PARTITIONED BY (ID)")
+  spark.sql(s"CREATE TABLE dsv2.owbep (id INT, name STRING) USING delta PARTITIONED BY (id)")
   spark.sql("INSERT OVERWRITE dsv2.owbep PARTITION (ID = 222222) VALUES ('Cat')")
 
   //CreateTableAsSelect
   spark.sql("CREATE TABLE dsv2.ctas USING DELTA AS SELECT * FROM dsv2.ad;")
 
   //ReplaceTableAsSelect
-  spark.sql(s"CREATE TABLE dsv2.rtas (toBeOrNotToBe boolean) USING delta")
+  spark.sql(s"CREATE TABLE dsv2.rtas (toBeOrNotToBe boolean) USING DELTA")
   val data = spark.sql(s"SELECT * FROM dsv2.ad")
   data.write.format("delta")
     .mode("overwrite")

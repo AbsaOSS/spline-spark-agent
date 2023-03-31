@@ -37,13 +37,13 @@ object DeltaMergeDSV2Job extends SparkApp(
 
   spark.sql(s"CREATE DATABASE dsv2 LOCATION '$path'")
 
-  spark.sql("CREATE TABLE dsv2.foo ( id INT, code STRING, name STRING ) USING DELTA")
+  spark.sql("CREATE TABLE dsv2.foo (id INT, code STRING, name STRING) USING DELTA")
   spark.sql("INSERT INTO dsv2.foo VALUES (1014, 'PLN', 'Warsaw'), (1002, 'FRA', 'Corte')")
 
-  spark.sql("CREATE TABLE dsv2.fooUpdate ( id INT, name STRING ) USING DELTA")
+  spark.sql("CREATE TABLE dsv2.fooUpdate (id INT, name STRING) USING DELTA")
   spark.sql("INSERT INTO dsv2.fooUpdate VALUES (1014, 'Lodz'), (1003, 'Prague')")
 
-  spark.sql("CREATE TABLE dsv2.barUpdate ( id INT, name STRING ) USING DELTA")
+  spark.sql("CREATE TABLE dsv2.barUpdate (id INT, name STRING) USING DELTA")
   spark.sql("INSERT INTO dsv2.barUpdate VALUES (4242, 'Paris'), (3342, 'Bordeaux')")
 
   spark.sql("UPDATE dsv2.foo SET name = 'Korok' WHERE id == 1002")

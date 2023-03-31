@@ -38,7 +38,7 @@ class ViewAttributeLineageSpec
       withLineageTracking { captor =>
         val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
         withDatabase(databaseName,
-          ("path", "(x String) USING hive", Seq("Monika", "Buba"))
+          ("path", "(x STRING) USING HIVE", Seq("Monika", "Buba"))
         ) {
 
           withNewSparkSession { innerSpark =>
@@ -48,7 +48,7 @@ class ViewAttributeLineageSpec
 
           for {
             (plan, _) <- captor.lineageOf {
-              spark.sql("select * from test_source_vw")
+              spark.sql("SELECT * FROM test_source_vw")
                 .write
                 .format("hive")
                 .mode("overwrite")
@@ -75,14 +75,14 @@ class ViewAttributeLineageSpec
       withLineageTracking { captor =>
         val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
         withDatabase(databaseName,
-          ("path", "(x String) USING hive", Seq("Monika", "Buba"))
+          ("path", "(x String) USING HIVE", Seq("Monika", "Buba"))
         ) {
           for {
             (plan, _) <- captor.lineageOf {
-              spark.sql("select * from path")
+              spark.sql("SELECT * FROM path")
                 .createOrReplaceGlobalTempView("my_global_temp_view")
 
-              spark.sql("select * from global_temp.my_global_temp_view")
+              spark.sql("SELECT * FROM global_temp.my_global_temp_view")
                 .write
                 .mode("overwrite")
                 .saveAsTable("view_test_target")
@@ -108,14 +108,14 @@ class ViewAttributeLineageSpec
       withLineageTracking { captor =>
         val databaseName = s"unitTestDatabase_${this.getClass.getSimpleName}"
         withDatabase(databaseName,
-          ("path", "(x String) USING hive", Seq("Monika", "Buba"))
+          ("path", "(x STRING) USING HIVE", Seq("Monika", "Buba"))
         ) {
           for {
             (plan, _) <- captor.lineageOf {
-              spark.sql("select * from path")
+              spark.sql("SELECT * FROM path")
                 .createOrReplaceTempView("my_local_temp_view")
 
-              spark.sql("select * from my_local_temp_view")
+              spark.sql("SELECT * FROM my_local_temp_view")
                 .write
                 .mode("overwrite")
                 .saveAsTable("view_test_target")
@@ -145,7 +145,7 @@ class ViewAttributeLineageSpec
               .csv("data/cities.csv")
               .createOrReplaceTempView("my_local_temp_view")
 
-            spark.sql("select * FROM my_local_temp_view")
+            spark.sql("SELECT * FROM my_local_temp_view")
               .write
               .csv(TempFile(pathOnly = true).deleteOnExit().asString)
           }

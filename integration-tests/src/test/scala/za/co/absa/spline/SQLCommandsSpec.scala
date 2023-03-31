@@ -44,7 +44,7 @@ class SQLCommandsSpec extends AsyncFlatSpec
 
         for {
           (_, _) <- captor.lineageOf(
-            spark.sql("CREATE TABLE sourceTable (id int, name string)"))
+            spark.sql("CREATE TABLE sourceTable (id INT, name STRING)"))
 
           (plan1, _) <- captor.lineageOf(
             Seq((1, "AA"), (2, "BB"), (3, "CC"), (4, "DD"))
@@ -74,7 +74,7 @@ class SQLCommandsSpec extends AsyncFlatSpec
         val dir = TempDirectory("spline", ".table", pathOnly = true).deleteOnExit().path
 
         withNewSparkSession { innerSpark =>
-          innerSpark.sql("CREATE TABLE IF NOT EXISTS sourceTable (id int, name string)")
+          innerSpark.sql("CREATE TABLE IF NOT EXISTS sourceTable (id INT, name STRING)")
         }
 
         for {
@@ -103,7 +103,7 @@ class SQLCommandsSpec extends AsyncFlatSpec
         val csvFile = TempDirectory("spline", ".csv").deleteOnExit().path
 
         withNewSparkSession { innerSpark =>
-          innerSpark.sql("CREATE TABLE sourceTable (id int, name string)")
+          innerSpark.sql("CREATE TABLE sourceTable (id INT, name STRING)")
         }
 
         for {
