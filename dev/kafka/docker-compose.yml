@@ -1,0 +1,32 @@
+services:
+  zookeeper:
+    image: bitnami/zookeeper:${BITNAMI_ZOOKEEPER_VERSION}
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: 'yes'
+  kafka:
+    image: bitnami/kafka:${BITNAMI_KAFKA_VERSION}
+    ports:
+      - ${KAFKA_PORT}:9092
+    environment:
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+      ALLOW_PLAINTEXT_LISTENER: 'yes'
+      KAFKA_CFG_LISTENERS: INTERNAL://:29092,EXTERNAL://:${KAFKA_PORT}
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CFG_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:${KAFKA_PORT}
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: INTERNAL
+    depends_on:
+      - zookeeper
+  kafka-init:
+    image: bitnami/kafka:${BITNAMI_KAFKA_VERSION}
+    entrypoint: [ '/bin/sh', '-c' ]
+    command: |
+      "
+      # blocks until kafka is reachable
+      /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --list
+      
+      echo 'Creating kafka topics'
+      /opt/bitnami/kafka/bin/kafka-topics.sh --create --topic spline-topic --bootstrap-server kafka:29092
+      "
+    depends_on:
+      - kafka
+
