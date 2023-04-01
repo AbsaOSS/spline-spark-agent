@@ -71,12 +71,14 @@ spline:
 
       # Authentication config
       authentication:
-        mode: disabled
-        grantType: client_credentials
-        clientId: # <client id>
-        clientSecret: # <secret>
-        scope: # <scope>
-        tokenUrl: # <token url>
+        type: NONE # NONE | OAUTH
+        # For the OAUTH type the following properties should be set:
+        # ---
+        # grantType: client_credentials
+        # clientId: <client id>
+        # clientSecret: <secret>
+        # scope: <scope> (optional)
+        # tokenUrl: <token url>
 
       # Additional http headers to be sent by dispatcher
       header:
@@ -160,12 +162,14 @@ spline:
       api.url:
       # Authentication config
       authentication:
-        mode: disabled
-        grantType: client_credentials
-        clientId: # <client id>
-        clientSecret: # <secret>
-        scope: # <scope>
-        tokenUrl: # <token url>
+        type: NONE # NONE | OAUTH
+        # For the OAUTH type the following properties should be set:
+        # ---
+        # grantType: client_credentials
+        # clientId: <client id>
+        # clientSecret: <secret>
+        # scope: <scope> (optional)
+        # tokenUrl: <token url>
 
 
     # -------------------------------------------

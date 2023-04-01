@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.harvester.dispatcher
 
-import org.apache.commons.configuration.BaseConfiguration
+import org.apache.commons.configuration.MapConfiguration
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.{anyBoolean, anyString}
 import org.mockito.Mockito._
@@ -24,13 +24,16 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.mockito.MockitoSugar
 import scalaj.http._
 import za.co.absa.commons.version.Version.VersionStringInterpolator
+import za.co.absa.spline.harvester.conf.AuthenticationType
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.RESTResource
+import za.co.absa.spline.harvester.dispatcher.httpdispatcher.auth.Authentication
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest.{RestClient, RestEndpoint}
 import za.co.absa.spline.harvester.exception.SplineInitializationException
 import za.co.absa.spline.producer.model.ExecutionEvent
 
 import java.util.UUID
 import javax.ws.rs.core.MediaType
+import scala.collection.JavaConverters._
 
 class HttpLineageDispatcherSpec extends AnyFlatSpec with MockitoSugar {
 
@@ -39,7 +42,8 @@ class HttpLineageDispatcherSpec extends AnyFlatSpec with MockitoSugar {
   private val restClientMock = mock[RestClient]
   private val httpRequestMock = mock[HttpRequest]
   private val httpResponseMock = mock[HttpResponse[String]]
-  private val restEndpointMock = new RestEndpoint(httpRequestMock, new BaseConfiguration)
+  private val authConfig = new MapConfiguration(Map(Authentication.ConfProps.Type -> AuthenticationType.NONE.name).asJava)
+  private val restEndpointMock = new RestEndpoint(httpRequestMock, authConfig)
   when(restClientMock.endpoint("status")) thenReturn restEndpointMock
   when(httpRequestMock.method("HEAD")) thenReturn httpRequestMock
 
