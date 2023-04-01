@@ -21,6 +21,7 @@ import org.apache.http.HttpHeaders
 import scalaj.http.{HttpRequest, HttpResponse}
 import za.co.absa.commons.lang.ARM.using
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.HttpConstants.Encoding
+import za.co.absa.spline.harvester.dispatcher.httpdispatcher.auth.Authentication
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest.RestEndpoint._
 
 import java.io.ByteArrayOutputStream
@@ -29,7 +30,7 @@ import javax.ws.rs.HttpMethod
 
 class RestEndpoint(val request: HttpRequest, val authConfig: Configuration) {
 
-  private val authenticationContext: Authentication = AuthenticationFactory.createAuthentication(authConfig)
+  private val authenticationContext: Authentication = Authentication.fromConfig(authConfig)
 
   def head(): HttpResponse[String] = authenticationContext.authenticate(httpRequest = request, authConfig = authConfig)
     .method(HttpMethod.HEAD)

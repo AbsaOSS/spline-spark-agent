@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ABSA Group Limited
+ * Copyright 2023 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,31 +14,26 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest
+package za.co.absa.spline.harvester.dispatcher.httpdispatcher.auth
 
 import org.apache.commons.configuration.Configuration
 import org.apache.spark.internal.Logging
 import scalaj.http.{Http, HttpRequest}
 import za.co.absa.commons.config.ConfigurationImplicits._
+import za.co.absa.spline.harvester.dispatcher.httpdispatcher.auth.OAuthAuthentication.{ConfProps, GrantTypes, Token}
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
 
 import java.time.{Duration, Instant}
 
+class OAuthAuthentication(authConfig: Configuration) extends Authentication with Logging {
+  private val tokenUrl: String = authConfig.getRequiredString(ConfProps.TokenUrl)
+  private val grantType: String = authConfig.getRequiredString(ConfProps.GrantType)
 
-trait Authentication {
-  def authenticate(httpRequest: HttpRequest, authConfig: Configuration): HttpRequest
-}
+  require(grantType == GrantTypes.ClientCredentials, "Only 'client_credentials' grant type is currently supported")
 
-object NoAuthentication extends Authentication {
-  override def authenticate(httpRequest: HttpRequest, authConfig: Configuration): HttpRequest = httpRequest
-}
-
-class OAuthAuthentication(authentication: Configuration) extends Authentication with Logging {
-  private val tokenUrl: String = authentication.getRequiredString("tokenUrl")
-  private val grantType: String = authentication.getRequiredString("grantType")
-  private val clientId: String = authentication.getRequiredString("clientId")
-  private val clientSecret: String = authentication.getRequiredString("clientSecret")
-  private val maybeScope: Option[String] = authentication.getOptionalString("scope")
+  private val clientId: String = authConfig.getRequiredString(ConfProps.ClientId)
+  private val clientSecret: String = authConfig.getRequiredString(ConfProps.ClientSecret)
+  private val maybeScope: Option[String] = authConfig.getOptionalString(ConfProps.Scope)
 
   private var tokenCache: Option[Token] = None
 
@@ -69,23 +64,18 @@ class OAuthAuthentication(authentication: Configuration) extends Authentication 
   }
 }
 
-private case class Token(tokenValue: String, expirationTime: Instant)
+object OAuthAuthentication {
+  private case class Token(tokenValue: String, expirationTime: Instant)
 
-object AuthenticationFactory extends Logging {
-  def createAuthentication(authConfig: Configuration): Authentication = {
-    val maybeAuth =
-      for {
-        mode <- authConfig.getOptionalString("mode") if mode == "enabled"
-        grantType <- authConfig.getOptionalString("grantType")
-      } yield grantType match {
-        case "client_credentials" => new OAuthAuthentication(authConfig)
-        case _ => throw new IllegalArgumentException(s"$grantType not implemented")
-      }
+  object ConfProps {
+    val TokenUrl = "tokenUrl"
+    val GrantType = "grantType"
+    val ClientId = "clientId"
+    val ClientSecret = "clientSecret"
+    val Scope = "scope"
+  }
 
-    maybeAuth.getOrElse {
-      logInfo("Authentication mode is set to Disabled")
-      NoAuthentication
-    }
+  object GrantTypes {
+    val ClientCredentials = "client_credentials"
   }
 }
-
