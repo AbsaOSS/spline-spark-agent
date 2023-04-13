@@ -245,6 +245,7 @@
                         <exclude>**/*.mock</exclude>
                         <exclude>**/*.iml</exclude>
                         <exclude>.editorconfig</exclude>
+                        <exclude>.sdkmanrc</exclude>
                     </excludes>
                 </configuration>
             </plugin>
