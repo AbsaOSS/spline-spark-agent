@@ -107,7 +107,7 @@
 
         <!-- Delta -->
 
-        <delta.version>${delta-03.version}</delta.version>
+        <delta.version>0.8.0</delta.version>
         <delta-03.version>0.3.0</delta-03.version>
         <delta-08.version>0.8.0</delta-08.version>
         <delta-10.version>1.0.0</delta-10.version>
@@ -650,7 +650,7 @@
             <properties>
                 <spark.version>${spark-22.version}</spark.version>
                 <json4s.version>${json4s-32.version}</json4s.version>
-                <delta.version>${delta-03.version}</delta.version>
+                <delta.version>0.8.0</delta.version>
             </properties>
             <dependencies>
                 <dependency>
@@ -695,7 +695,7 @@
             <properties>
                 <spark.version>${spark-23.version}</spark.version>
                 <json4s.version>${json4s-32.version}</json4s.version>
-                <delta.version>${delta-03.version}</delta.version>
+                <delta.version>0.8.0</delta.version>
             </properties>
             <dependencies>
                 <dependency>
@@ -735,7 +735,7 @@
             <properties>
                 <spark.version>${spark-24.version}</spark.version>
                 <json4s.version>${json4s-35.version}</json4s.version>
-                <delta.version>${delta-03.version}</delta.version>
+                <delta.version>0.8.0</delta.version>
                 <cassandra-connector.version>${cassandra-connector-24.version}</cassandra-connector.version>
             </properties>
             <dependencyManagement>
@@ -756,7 +756,7 @@
             <properties>
                 <spark.version>${spark-30.version}</spark.version>
                 <json4s.version>${json4s-36.version}</json4s.version>
-                <delta.version>${delta-08.version}</delta.version>
+                <delta.version>0.8.0</delta.version>
                 <cassandra-connector.version>${cassandra-connector-30.version}</cassandra-connector.version>
             </properties>
             <dependencyManagement>
@@ -777,7 +777,7 @@
             <properties>
                 <spark.version>${spark-31.version}</spark.version>
                 <json4s.version>${json4s-37-M5.version}</json4s.version>
-                <delta.version>${delta-10.version}</delta.version>
+                <delta.version>0.8.0</delta.version>
                 <cassandra-connector.version>${cassandra-connector-31.version}</cassandra-connector.version>
             </properties>
             <dependencyManagement>
@@ -798,7 +798,7 @@
             <properties>
                 <spark.version>${spark-32.version}</spark.version>
                 <json4s.version>${json4s-37-M11.version}</json4s.version>
-                <delta.version>${delta-20.version}</delta.version>
+                <delta.version>0.8.0</delta.version>
                 <cassandra-connector.version>${cassandra-connector-32.version}</cassandra-connector.version>
             </properties>
             <dependencyManagement>
@@ -819,7 +819,7 @@
             <properties>
                 <spark.version>${spark-33.version}</spark.version>
                 <json4s.version>${json4s-37-M11.version}</json4s.version>
-                <delta.version>${delta-21.version}</delta.version>
+                <delta.version>0.8.0</delta.version>
                 <!-- Cassandra connector for Spark 3.3 is not yet available, using the latest version -->
                 <cassandra-connector.version>${cassandra-connector-32.version}</cassandra-connector.version>
             </properties>
