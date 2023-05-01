@@ -81,7 +81,7 @@ class LineageHarvester(
       else {
         val planWithoutId = {
           val planExtra = Map[String, Any](
-            ExecutionPlanExtra.AppName -> ctx.session.sparkContext.appName,
+            ExecutionPlanExtra.AppName -> ctx.session.conf.get("spark.app.name"),
             ExecutionPlanExtra.DataTypes -> dataTypeConverter.values
           )
 
@@ -98,7 +98,7 @@ class LineageHarvester(
             id = None,
             discriminator = None,
             labels = Map.empty,
-            name = ctx.session.sparkContext.appName, // `appName` for now, but could be different (user defined) in the future
+            name = ctx.session.conf.get("spark.app.name"), // `appName` for now, but could be different (user defined) in the future
             operations = Operations(writeOp, opReads, opOthers),
             attributes = attributes,
             expressions = expressions,
