@@ -16,19 +16,40 @@
 
 package za.co.absa.spline.example.batch
 
-import org.apache.spark.sql.SaveMode
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
 import za.co.absa.spline.SparkApp
-import za.co.absa.spline.harvester.SparkLineageInitializer._
 
 object Example3Job extends SparkApp("Example 3") {
 
+  import org.apache.spark.sql._
+  import org.apache.spark.sql.functions._
+  import za.co.absa.spline.harvester.SparkLineageInitializer._
+
   spark.enableLineageTracking()
+
+  val refType = StructType(Array(
+    StructField("title", StringType),
+    StructField("author", ArrayType(StructType(Array(
+      StructField("initial", StringType),
+      StructField("lastName", StringType)
+    ))))
+  ))
+
+  val nasaSchema = StructType(Array(
+    StructField("_subject", StringType),
+    StructField("reference", StructType(Array(
+      StructField("source", StructType(Array(
+        StructField("journal", ArrayType(refType)),
+        StructField("other", ArrayType(refType))
+      )))
+    )))
+  ))
 
   val ds = spark.read
     .format("com.databricks.spark.xml")
     .option("rowTag", "dataset")
     .option("rootTag", "datasets")
+    .schema(nasaSchema)
     .load("data/input/batch/nasa.xml")
 
   val astronomySubjectsDS = ds.filter($"_subject" === lit("astronomy")).cache

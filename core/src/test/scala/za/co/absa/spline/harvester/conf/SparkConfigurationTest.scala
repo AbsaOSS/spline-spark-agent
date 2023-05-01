@@ -23,6 +23,7 @@ class SparkConfigurationTest extends ReadOnlyConfigurationTest {
   override protected val givenConf = new SparkConfiguration(new SparkConf() {
     this.set("spark.spline.x.y", "foo")
     this.set("spark.spline.w.z", "bar")
+    this.set("spark.spline.xs", "a,b,c")
   })
 
   override protected val emptyConf = new SparkConfiguration(new SparkConf() {

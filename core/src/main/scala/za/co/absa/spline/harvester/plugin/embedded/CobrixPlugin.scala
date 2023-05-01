@@ -16,15 +16,17 @@
 
 package za.co.absa.spline.harvester.plugin.embedded
 
-import javax.annotation.Priority
 import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.sources.BaseRelation
-import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
+import za.co.absa.commons.reflect.ReflectionUtils.extractValue
 import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo}
 import za.co.absa.spline.harvester.plugin.embedded.CobrixPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, Plugin}
+
+import javax.annotation.Priority
+import scala.util.Try
 
 
 @Priority(Precedence.Normal)
@@ -32,15 +34,18 @@ class CobrixPlugin extends Plugin with BaseRelationProcessing {
 
   override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: CobolRelation`(cr), _) =>
-      val sourceDir = extractFieldValue[String](cr, "sourceDir")
-      (asSourceId(sourceDir), Map.empty)
+      val sourceDirs =
+        Try(extractValue[Seq[String]](cr, "sourceDirs"))
+          .getOrElse(Seq(extractValue[String](cr, "sourceDir")))
+
+      ReadNodeInfo(asSourceId(sourceDirs), Map.empty)
   }
 }
 
 
 object CobrixPlugin {
 
-  object `_: CobolRelation` extends SafeTypeMatchingExtractor[AnyRef]("za.co.absa.cobrix.spark.cobol.source.CobolRelation")
+  private object `_: CobolRelation` extends SafeTypeMatchingExtractor[AnyRef]("za.co.absa.cobrix.spark.cobol.source.CobolRelation")
 
-  private def asSourceId(filePath: String) = SourceIdentifier(Some("cobol"), filePath)
+  private def asSourceId(filePaths: Seq[String]) = SourceIdentifier(Some("cobol"), filePaths: _*)
 }

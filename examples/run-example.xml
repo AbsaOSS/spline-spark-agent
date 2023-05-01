@@ -27,7 +27,7 @@
 
         <condition property="spline.mode"
                    value="${spline.mode}"
-                   else="BEST_EFFORT">
+                   else="ENABLED">
             <isset property="spline.mode"/>
         </condition>
 
@@ -46,7 +46,7 @@
 
     <target name="runAll">
         <foreach target="runFile" param="classFile">
-            <param name="compile_classpath" value="${compile_classpath}"/>
+            <param name="classpath" value="${classpath}"/>
             <param name="spline.producer.url" value="${spline.producer.url}"/>
             <param name="spline.mode" value="${spline.mode}"/>
 
@@ -68,15 +68,35 @@
 
     <target name="runClass">
         <echo message="Running ${className}"/>
-        <echo message="Setting Spline Producer URL: ${spline.producer.url}"/>
-        <echo message="Setting Spline Mode: ${spline.mode}"/>
+
+        <propertyset id="spline-props">
+            <propertyref prefix="spline."/>
+        </propertyset>
+
+        <propertyset id="spark-props">
+            <propertyref prefix="spark."/>
+        </propertyset>
+
+        <propertyset id="proxy-props">
+            <propertyref prefix="http."/>
+            <propertyref prefix="https."/>
+        </propertyset>
+
+        <propertyset id="props">
+            <propertyset refid="spline-props"/>
+            <propertyset refid="spark-props"/>
+            <propertyset refid="proxy-props"/>
+        </propertyset>
+
+        <echoproperties>
+            <propertyset refid="props"/>
+        </echoproperties>
 
         <java fork="true"
               failonerror="true"
               classname="${className}"
-              classpath="${compile_classpath}">
-            <sysproperty key="spline.producer.url" value="${spline.producer.url}"/>
-            <sysproperty key="spline.mode" value="${spline.mode}"/>
+              classpath="${classpath}">
+            <syspropertyset refid="props"/>
         </java>
     </target>
 </project>

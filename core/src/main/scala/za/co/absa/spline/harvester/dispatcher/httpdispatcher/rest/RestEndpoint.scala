@@ -16,35 +16,38 @@
 
 package za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest
 
-import java.io.ByteArrayOutputStream
-import java.util.zip.GZIPOutputStream
-
-import javax.ws.rs.HttpMethod
-import javax.ws.rs.core.MediaType
+import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpHeaders
 import scalaj.http.{HttpRequest, HttpResponse}
 import za.co.absa.commons.lang.ARM.using
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.HttpConstants.Encoding
+import za.co.absa.spline.harvester.dispatcher.httpdispatcher.auth.Authentication
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest.RestEndpoint._
 
-class RestEndpoint(val request: HttpRequest) {
+import java.io.ByteArrayOutputStream
+import java.util.zip.GZIPOutputStream
+import javax.ws.rs.HttpMethod
 
-  def head(): HttpResponse[String] = request
+class RestEndpoint(val request: HttpRequest, val authConfig: Configuration) {
+
+  private val authenticationContext: Authentication = Authentication.fromConfig(authConfig)
+
+  def head(): HttpResponse[String] = authenticationContext.authenticate(httpRequest = request, authConfig = authConfig)
     .method(HttpMethod.HEAD)
     .asString
 
-  def post(json: String, enableRequestCompression: Boolean): HttpResponse[String] = {
-    val jsonRequest = request
-      .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+  def post(data: String, contentType: String, enableRequestCompression: Boolean): HttpResponse[String] = {
+    val jsonRequest = authenticationContext.authenticate(httpRequest = request, authConfig = authConfig)
+      .header(HttpHeaders.CONTENT_TYPE, contentType)
 
-    if (enableRequestCompression && json.length > GzipCompressionLengthThreshold) {
+    if (enableRequestCompression && data.length > GzipCompressionLengthThreshold) {
       jsonRequest
         .header(HttpHeaders.CONTENT_ENCODING, Encoding.GZIP)
-        .postData(gzipContent(json.getBytes("UTF-8")))
+        .postData(gzipContent(data.getBytes("UTF-8")))
         .asString
     } else {
       jsonRequest
-        .postData(json)
+        .postData(data)
         .asString
     }
   }

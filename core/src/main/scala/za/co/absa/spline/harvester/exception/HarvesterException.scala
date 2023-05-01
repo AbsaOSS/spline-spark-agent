@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.exception
 /**
  * All exceptions thrown by Harvester should inherit from this one
  *
- * @param message message describing the exception
+ * @param message   message describing the exception
  * @param throwable cause (A null value is permitted, and indicates that the cause is nonexistent or unknown.)
  */
 class HarvesterException(message: String, throwable: Throwable = null) extends Exception(message, throwable)

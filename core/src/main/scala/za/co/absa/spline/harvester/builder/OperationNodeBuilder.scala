@@ -16,32 +16,38 @@
 
 package za.co.absa.spline.harvester.builder
 
-import java.util.UUID
-
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import za.co.absa.spline.harvester.ComponentCreatorFactory
-import za.co.absa.spline.harvester.builder.OperationNodeBuilder.Schema
+import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
+import za.co.absa.spline.harvester.IdGeneratorsBundle
+import za.co.absa.spline.harvester.builder.OperationNodeBuilder.IOAttributes
+import za.co.absa.spline.harvester.builder.plan.PlanOperationNodeBuilder.OperationId
+import za.co.absa.spline.producer.model.{Attribute, FunctionalExpression, Literal}
 
 trait OperationNodeBuilder {
 
   protected type R
 
-  val id: Int = componentCreatorFactory.nextId
+  val operationId: OperationId = idGenerators.operationIdGenerator.nextId()
 
-  private var childBuilders: Seq[OperationNodeBuilder] = Nil
+  protected var childBuilders: Seq[OperationNodeBuilder] = Nil
 
-  def operation: LogicalPlan
   def build(): R
-  def +=(childBuilder: OperationNodeBuilder): Unit = childBuilders :+= childBuilder
+  def addChild(childBuilder: OperationNodeBuilder): Unit = childBuilders :+= childBuilder
+  protected def resolveAttributeChild(attribute: sparkExprssions.Attribute): Option[sparkExprssions.Expression] = None
 
-  protected def componentCreatorFactory: ComponentCreatorFactory
-  protected lazy val outputSchema: Schema = operation.output.map(componentCreatorFactory.attributeConverter.convert(_).id)
+  protected def inputAttributes: Seq[IOAttributes] = childBuilders.map(_.outputAttributes)
+  protected def idGenerators: IdGeneratorsBundle
 
-  protected def childIds: Seq[Int] = childBuilders.map(_.id)
-  protected def childOutputSchemas: Seq[Schema] = childBuilders.map(_.outputSchema)
-  protected def isTerminal: Boolean = childBuilders.isEmpty
+  def outputAttributes: IOAttributes
+
+  def childIds: Seq[OperationId] = childBuilders.map(_.operationId)
+
+  def functionalExpressions: Seq[FunctionalExpression]
+
+  def literals: Seq[Literal]
+
+  def outputExprToAttMap: Map[sparkExprssions.ExprId, Attribute]
 }
 
 object OperationNodeBuilder {
-  type Schema = Seq[UUID]
+  type IOAttributes = Seq[Attribute]
 }

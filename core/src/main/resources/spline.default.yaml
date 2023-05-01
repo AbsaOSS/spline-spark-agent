@@ -1,0 +1,261 @@
+#
+# Copyright 2017 ABSA Group Limited
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ===================================================================================================
+#                      THIS FILE CONTAINS DEFAULT SPLINE SPARK AGENT PROPERTIES.
+# ===================================================================================================
+
+spline:
+
+  # Spline mode: ENABLED|DISABLED
+  mode: ENABLED
+
+  # The version of UUID that is used for ExecutionPlan ID
+  # (DON'T MODIFY UNLESS YOU UNDERSTAND THE IMPLICATIONS)
+  internal.execPlan.uuid.version: 5
+
+  # Should the agent capture failed executions:
+  # - NONE        (only capture successful executions)
+  # - NON_FATAL   (capture successful executions, and failed executions, but only when the error is non-fatal)
+  # - ALL         (capture all executions regardless of the error type)
+  sql.failure.capture: NON_FATAL
+
+  # Strategy for dealing with writes in ignore mode that doesn't provide info whether the file was actually written
+  IWDStrategy:
+    ~: default
+    default:
+      className: za.co.absa.spline.harvester.iwd.DefaultIgnoredWriteDetectionStrategy
+      # Options: CAPTURE_LINEAGE | IGNORE_LINEAGE
+      onMissingMetrics: IGNORE_LINEAGE
+
+  # ===========================================
+  # Lineage Dispatchers
+  # ===========================================
+
+  # Root lineage dispatcher.
+  # Use one the logical dispatchers names registered below (http, kafka, console etc), or your custom dispatcher name
+  lineageDispatcher:
+    ~: http
+
+    # -------------------------------------------
+    # HTTP dispatcher
+    # -------------------------------------------
+    http:
+      className: za.co.absa.spline.harvester.dispatcher.HttpLineageDispatcher
+      # Base URL of the Spline Producer REST API endpoint
+      producer.url:
+      timeout.connection: 2000
+      timeout.read: 120000
+      disableSslValidation: false
+
+      # Spline Producer API version to use.
+      # If unspecified, the protocol version is determined from the endpoint handshake response.
+      # If unspecified and a custom (non-Spline) endpoint is used, the Producer API version is automatically set to 1 (the oldest one supported).
+      apiVersion: # 1 | 1.1 | LATEST
+
+      # Should the payload be compressed.
+      # If unspecified, the request compression is negotiated with the endpoint, otherwise it's disabled.
+      requestCompression: # true | false
+
+      # Authentication config
+      authentication:
+        type: NONE # NONE | OAUTH
+        # For the OAUTH type the following properties should be set:
+        # ---
+        # grantType: client_credentials
+        # clientId: <client id>
+        # clientSecret: <secret>
+        # scope: <scope> (optional)
+        # tokenUrl: <token url>
+
+      # Additional http headers to be sent by dispatcher
+      header:
+      #  X-CUSTOM-HEADER: custom-header-value
+
+    # -------------------------------------------
+    # Kafka dispatcher
+    # -------------------------------------------\
+    kafka:
+      className: za.co.absa.spline.harvester.dispatcher.KafkaLineageDispatcher
+      # Spline Producer API version
+      apiVersion: "1.2"
+      # producer configs as defined by kafka (bootstrap.servers, key.serializer, etc) all kafka configs are supported
+      producer.bootstrap.servers:
+      producer.key.serializer: org.apache.kafka.common.serialization.StringSerializer
+      producer.value.serializer: org.apache.kafka.common.serialization.StringSerializer
+      producer.max.in.flight.requests.per.connection: 1
+      # topic name
+      topic:
+
+    # -------------------------------------------
+    # Console dispatcher
+    # -------------------------------------------
+    console:
+      className: za.co.absa.spline.harvester.dispatcher.ConsoleLineageDispatcher
+      # (OUT | ERR) - whether the lineage data should be sent to standard output or standard error
+      stream: OUT
+
+    # -------------------------------------------
+    # Logging dispatcher
+    # -------------------------------------------
+    logging:
+      className: za.co.absa.spline.harvester.dispatcher.LoggingLineageDispatcher
+      # (ERROR | WARN | INFO | DEBUG | TRACE) - the logging level on which the lineage data should be logged
+      level: INFO
+
+    # -------------------------------------------
+    # Composite dispatcher
+    # -------------------------------------------
+    composite:
+      className: za.co.absa.spline.harvester.dispatcher.CompositeLineageDispatcher
+      # A comma separated logical dispatcher names to which the lineage data will be delegated
+      dispatchers:
+      # (true | false) - whether the dispatcher should fail fast on the first error occurred, or log it and continue
+      failOnErrors: false
+
+    # -------------------------------------------
+    # Fallback dispatcher
+    # -------------------------------------------
+    fallback:
+      className: za.co.absa.spline.harvester.dispatcher.FallbackLineageDispatcher
+      # dispatcher to use by default (for example: http)
+      primaryDispatcher:
+      # dispatcher that will be used only when primary dispatcher fails to send the data (for example: console)
+      fallbackDispatcher:
+
+    # -------------------------------------------
+    # HDFS dispatcher (experimental, tailored for specific use case, not recommended for general production usage)
+    # -------------------------------------------
+    hdfs:
+      className: za.co.absa.spline.harvester.dispatcher.HDFSLineageDispatcher
+      # Output lineage file will be created alongside the target data file
+      fileName: _LINEAGE
+      # the size of the buffer to be used
+      fileBufferSize: 4096
+      # file/directory permissions, provided as umask string, either in octal or symbolic format
+      filePermissions: 777
+
+    # -------------------------------------------
+    # Open Lineage HTTP dispatcher
+    # -------------------------------------------
+    httpOpenLineage:
+      className: za.co.absa.spline.harvester.dispatcher.HttpOpenLineageDispatcher
+      timeout.connection: 1000
+      timeout.read: 20000
+      disableSslValidation: false
+      namespace: default
+      # Spline Producer API version
+      apiVersion: "1.2"
+      # Base URL of the Spline Producer REST API endpoint
+      api.url:
+      # Authentication config
+      authentication:
+        type: NONE # NONE | OAUTH
+        # For the OAUTH type the following properties should be set:
+        # ---
+        # grantType: client_credentials
+        # clientId: <client id>
+        # clientSecret: <secret>
+        # scope: <scope> (optional)
+        # tokenUrl: <token url>
+
+
+    # -------------------------------------------
+    # User Custom dispatcher (example)
+    # -------------------------------------------
+    # Fully specified class name implementing {LineageDispatcher} trait.
+    # The class must have a constructor with a single parameter of type {org.apache.commons.configuration.Configuration}
+
+    # my-dispatcher:
+    #   className: org.example.spline.MyDispatcherImpl
+    #   prop1: value1
+    #   prop2: value2
+
+  # ===========================================
+  # Post-Processing Filters
+  # ===========================================
+
+  # Root post-processing filter.
+  # Note:
+  #   When overriding the root filter the default filters (like dsPasswordReplace for example) will not be automatically applied.
+  #   If you want to keep default filters active and only add your own filter to the chain then you must use a composite filter,
+  #   and add the "default" to the chain explicitly.
+  #   For example:
+  #     spline.postProcessingFilter=composite
+  #     spline.postProcessingFilter.composite.filters=yourFilter, default
+  postProcessingFilter:
+    ~: default
+
+    # -------------------------------------------
+    # Default Filter
+    # -------------------------------------------
+    default:
+      className: za.co.absa.spline.harvester.postprocessing.CompositePostProcessingFilter
+      filters:
+        - dsPasswordReplace
+
+    # -------------------------------------------
+    # Composite Filter
+    # -------------------------------------------
+    composite:
+      className: za.co.absa.spline.harvester.postprocessing.CompositePostProcessingFilter
+
+      # A comma separated list of user lineage filters {za.co.absa.spline.harvester.postprocessing.PostProcessingFilter}
+      # The classes must have a constructor with a single parameter of type {org.apache.commons.configuration.Configuration}
+      #
+      # Example:
+      # spline.postProcessingFilter.composite.filters=yourCustomFilter, otherFilter
+      filters:
+
+    # -------------------------------------------
+    # Password Replacing Filter
+    # -------------------------------------------
+    # This filter replaces password occurrences in the data source URIs
+    dsPasswordReplace:
+      className: za.co.absa.spline.harvester.postprocessing.DataSourcePasswordReplacingFilter
+      replacement: '*****'
+      nameRegexes:
+        - (?i)password
+        - (?i)passphrase
+      valueRegexes:
+        - (?i)[?&;](?:password|passphrase)=([^&;]*)
+        - /[^:]*:([^@]*)@(?:\w+\.)*\w+
+
+    # -------------------------------------------
+    # User extra metadata capturing filter
+    # -------------------------------------------
+    userExtraMeta:
+      className: za.co.absa.spline.harvester.postprocessing.metadata.MetadataCollectingFilter
+      # rules are defined in a JSON format
+      # can be a json string or url to json file
+      rules: { }
+
+  # Plugins configuration.
+  # The `key` is the fully specified plugin class name.
+  # For example:
+  # ---
+  #  plugins:
+  #    com.example.MyPlugin:
+  #      prop1: foo
+  #      prop2: bar
+  plugins:
+    za.co.absa.spline.harvester.plugin.embedded.NonPersistentActionsCapturePlugin:
+      enabled: false
+      funcNames:
+        - head
+        - count
+        - collect
+        - collectAsList
+        - toLocalIterator

@@ -16,38 +16,52 @@
 
 package za.co.absa.spline.harvester.plugin.embedded
 
-import javax.annotation.Priority
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.execution.datasources.jdbc.{JDBCOptions, JdbcRelationProvider}
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.sources.BaseRelation
-import za.co.absa.commons.reflect.ReflectionUtils.extractFieldValue
+import za.co.absa.commons.reflect.ReflectionUtils.extractValue
 import za.co.absa.commons.reflect.extractors.{AccessorMethodValueExtractor, SafeTypeMatchingExtractor}
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.embedded.JDBCPlugin._
-import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, Plugin, RelationProviderProcessing}
+import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, Plugin, RddReadNodeProcessing, RelationProviderProcessing}
+
+import javax.annotation.Priority
 
 
 @Priority(Precedence.Normal)
 class JDBCPlugin
   extends Plugin
     with BaseRelationProcessing
-    with RelationProviderProcessing {
+    with RelationProviderProcessing
+    with RddReadNodeProcessing {
 
   override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: JDBCRelation`(jr), _) =>
-      val jdbcOptions = extractFieldValue[JDBCOptions](jr, "jdbcOptions")
-      val url = extractFieldValue[String](jdbcOptions, "url")
-      val params = extractFieldValue[Map[String, String]](jdbcOptions, "parameters")
-      val TableOrQueryFromJDBCOptionsExtractor(toq) = jdbcOptions
-      (asSourceId(url, toq), params)
+      val jdbcOptions = extractValue[JDBCOptions](jr, "jdbcOptions")
+      jdbcOptionsToReadNodeInfo(jdbcOptions)
+  }
+
+  override def rddReadNodeProcessor: PartialFunction[RDD[_], ReadNodeInfo] = {
+    case `_: JDBCRDD`(jdbcRdd) =>
+      val jdbcOptions = extractValue[JDBCOptions](jdbcRdd, "options")
+      jdbcOptionsToReadNodeInfo(jdbcOptions)
+  }
+
+  private def jdbcOptionsToReadNodeInfo(jdbcOptions: JDBCOptions): ReadNodeInfo = {
+    val url = extractValue[String](jdbcOptions, "url")
+    val params = extractValue[Map[String, String]](jdbcOptions, "parameters")
+    val TableOrQueryFromJDBCOptionsExtractor(toq) = jdbcOptions
+    ReadNodeInfo(asSourceId(url, toq), params)
   }
 
   override def relationProviderProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
     case (rp, cmd) if rp == "jdbc" || rp.isInstanceOf[JdbcRelationProvider] =>
       val jdbcConnectionString = cmd.options("url")
       val tableName = cmd.options("dbtable")
-      (asSourceId(jdbcConnectionString, tableName), cmd.mode, cmd.query, Map.empty)
+      WriteNodeInfo(asSourceId(jdbcConnectionString, tableName), cmd.mode, cmd.query, Map.empty)
   }
 }
 
@@ -55,10 +69,9 @@ object JDBCPlugin {
 
   object `_: JDBCRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.execution.datasources.jdbc.JDBCRelation")
 
+  object `_: JDBCRDD` extends SafeTypeMatchingExtractor[RDD[InternalRow]]("org.apache.spark.sql.execution.datasources.jdbc.JDBCRDD")
+
   object TableOrQueryFromJDBCOptionsExtractor extends AccessorMethodValueExtractor[String]("table", "tableOrQuery")
 
   private def asSourceId(connectionUrl: String, table: String) = SourceIdentifier(Some("jdbc"), s"$connectionUrl:$table")
 }
-
-
-

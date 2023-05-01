@@ -15,31 +15,45 @@
 
 package za.co.absa.spline.test.fixture.spline
 
+import org.apache.spark.sql.SparkSession
+import za.co.absa.spline.agent.AgentConfig
+import za.co.absa.spline.harvester.SparkLineageInitializer._
 import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
-import za.co.absa.spline.test.fixture.spline.LineageCaptor._
 
-class LineageCaptor extends LineageCaptor.Getter with LineageCaptor.Setter {
-  private var state: CaptorState = NonCapturingState
+import scala.concurrent.{ExecutionContext, Future, Promise}
 
-  override def capture(plan: ExecutionPlan): Unit = state.capture(plan)
 
-  override def capture(event: ExecutionEvent): Unit = state.capture(event)
+class LineageCaptor(builderCustomizer: AgentConfig.Builder => AgentConfig.Builder = identity)(implicit session: SparkSession) {
 
-  override def lineageOf(action: => Unit): CapturedLineage = {
-    assume(state == NonCapturingState)
-    val capturingState = new CapturingState
-    this.state = capturingState
-    try {
-      action
-      capturingState.capturedLineage
-    } finally {
-      state = NonCapturingState
+  @volatile private var promisedPlan = Promise[ExecutionPlan]
+  @volatile private var promisedEvent = Promise[ExecutionEvent]
+
+  session.enableLineageTracking(
+    builderCustomizer(
+      AgentConfig.builder()
+        .lineageDispatcher(
+          new LineageCapturingDispatcher(
+            new LineageCaptor.Setter {
+              override def capture(plan: ExecutionPlan): Unit = promisedPlan.success(plan)
+
+              override def capture(event: ExecutionEvent): Unit = promisedEvent.success(event)
+            }
+          )
+        )
+    ).build()
+  )
+
+  def lineageOf(action: => Unit)(implicit ec: ExecutionContext): Future[LineageCaptor.CapturedLineage] = {
+    action
+    for {
+      plan <- promisedPlan.future
+      event <- promisedEvent.future
+    } yield {
+      promisedPlan = Promise[ExecutionPlan]
+      promisedEvent = Promise[ExecutionEvent]
+      plan -> Seq(event)
     }
   }
-
-  def getter: LineageCaptor.Getter = this
-
-  def setter: LineageCaptor.Setter = this
 }
 
 object LineageCaptor {
@@ -54,30 +68,4 @@ object LineageCaptor {
   trait Getter {
     def lineageOf(action: => Unit): CapturedLineage
   }
-
-  private sealed trait CaptorState extends Setter
-
-  private final class CapturingState extends CaptorState {
-    private var capturedPlan: Option[ExecutionPlan] = None
-    private var capturedEvents: Seq[ExecutionEvent] = Nil
-
-    def capturedLineage: CapturedLineage =
-      capturedPlan.getOrElse(sys.error("No lineage has been captured")) -> capturedEvents
-
-    override def capture(plan: ExecutionPlan): Unit = {
-      require(capturedPlan.isEmpty, "Another execution plan has already been captured")
-      capturedPlan = Some(plan)
-    }
-
-    override def capture(event: ExecutionEvent): Unit = {
-      capturedEvents :+= event
-    }
-  }
-
-  private object NonCapturingState extends CaptorState {
-    override def capture(plan: ExecutionPlan): Unit = Unit
-
-    override def capture(event: ExecutionEvent): Unit = Unit
-  }
-
 }

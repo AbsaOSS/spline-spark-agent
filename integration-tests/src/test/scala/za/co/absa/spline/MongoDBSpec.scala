@@ -16,79 +16,80 @@
 
 package za.co.absa.spline
 
-import com.mongodb.MongoClient
-import de.flapdoodle.embed.mongo.MongodStarter
-import de.flapdoodle.embed.mongo.config.{MongodConfigBuilder, Net}
-import de.flapdoodle.embed.mongo.distribution.Version
-import de.flapdoodle.embed.process.runtime.Network
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row}
-import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.testcontainers.containers.MongoDBContainer
+import org.testcontainers.containers.wait.strategy.Wait
 import za.co.absa.commons.io.TempDirectory
-import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
+import za.co.absa.spline.test.fixture.{ReleasableResourceFixture, SparkFixture}
 
 class MongoDBSpec
-  extends AnyFlatSpec
+  extends AsyncFlatSpec
+    with BeforeAndAfterAll
     with Matchers
     with SparkFixture
-    with SplineFixture {
+    with SplineFixture
+    with ReleasableResourceFixture {
+
+  val databaseName = "test"
+  val collection = "testCollection"
+  val sparkFormat = "com.mongodb.spark.sql.DefaultSource"
 
   it should "support MongoDB as a write source" in {
-    val starter = MongodStarter.getDefaultInstance
+    usingResource(new MongoDBContainer("mongo:4.0.10")) { container =>
+      container.start()
+      Wait.forHealthcheck
 
+      val host = container.getHost
+      val port = container.getFirstMappedPort
 
-    val bindIp = "localhost"
-    val port = 12345
-    val databaseName = "test"
-    val collection = "testCollection"
-    val sparkFormat = "com.mongodb.spark.sql.DefaultSource"
-    val mongodConfig = new MongodConfigBuilder().version(Version.Main.PRODUCTION).net(new Net(bindIp, port, Network.localhostIsIPv6)).build()
+      withNewSparkSession { implicit spark =>
+        withLineageTracking { captor =>
 
-    val mongodExecutable = starter.prepare(mongodConfig)
-    val mongod = mongodExecutable.start()
-    val mongo = new MongoClient(bindIp, port)
+          val testData: DataFrame = {
+            val schema = StructType(StructField("id", IntegerType, nullable = false) :: StructField("name", StringType, nullable = false) :: Nil)
+            val rdd = spark.sparkContext.parallelize(Row(1014, "Warsaw") :: Row(1002, "Corte") :: Nil)
+            spark.sqlContext.createDataFrame(rdd, schema)
+          }
 
-    withNewSparkSession(spark => {
-      withLineageTracking(spark)(lineageCaptor => {
+          for {
+            (plan1, _) <- captor.lineageOf(testData
+              .write
+              .format(sparkFormat)
+              .option("uri", s"mongodb://$host:$port")
+              .option("database", databaseName)
+              .option("collection", collection)
+              .save()
+            )
 
-        val testData: DataFrame = {
-          val schema = StructType(StructField("id", IntegerType, nullable = false) :: StructField("name", StringType, nullable = false) :: Nil)
-          val rdd = spark.sparkContext.parallelize(Row(1014, "Warsaw") :: Row(1002, "Corte") :: Nil)
-          spark.sqlContext.createDataFrame(rdd, schema)
+            (plan2, _) <- captor.lineageOf {
+              val df = spark
+                .read
+                .format(sparkFormat)
+                .option("uri", s"mongodb://$host:$port")
+                .option("database", databaseName)
+                .option("collection", collection)
+                .option("partitioner", "MongoSplitVectorPartitioner")
+                .load()
+
+              df.write.save(TempDirectory(pathOnly = true).deleteOnExit().path.toString)
+            }
+          } yield {
+            plan1.operations.write.append shouldBe false
+            plan1.operations.write.extra("destinationType") shouldBe Some("mongodb")
+            plan1.operations.write.outputSource shouldBe s"mongodb://$host:$port/$databaseName.$collection"
+
+            plan2.operations.reads.head.inputSources.head shouldBe plan1.operations.write.outputSource
+            plan2.operations.reads.head.extra("sourceType") shouldBe Some("mongodb")
+            plan2.operations.write.append shouldBe false
+          }
         }
-        val (plan1, _) = lineageCaptor.lineageOf(testData
-          .write
-          .format(sparkFormat)
-          .option("uri", s"mongodb://$bindIp:$port")
-          .option("database", databaseName)
-          .option("collection", collection)
-          .save()
-        )
-
-        val (plan2, _) = lineageCaptor.lineageOf {
-          val df = spark
-            .read
-            .format(sparkFormat)
-            .option("uri", s"mongodb://$bindIp:$port")
-            .option("database", databaseName)
-            .option("collection", collection)
-            .option("partitioner", "MongoSplitVectorPartitioner")
-            .load()
-
-          df.write.save(TempDirectory(pathOnly = true).deleteOnExit().path.toString)
-        }
-
-        plan1.operations.write.append shouldBe false
-        plan1.operations.write.extra.get("destinationType") shouldBe Some("mongodb")
-        plan1.operations.write.outputSource shouldBe s"mongodb://$bindIp:$port/$databaseName.$collection"
-
-        plan2.operations.reads.get.head.inputSources.head shouldBe plan1.operations.write.outputSource
-        plan2.operations.reads.get.head.extra.get("sourceType") shouldBe Some("mongodb")
-        plan2.operations.write.append shouldBe false
-
-      })
-    })
+      }
+    }
   }
+
 }

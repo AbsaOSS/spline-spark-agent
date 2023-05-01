@@ -17,7 +17,7 @@
 package za.co.absa.spline.harvester.dispatcher.httpdispatcher
 
 import za.co.absa.commons.version.Version
-import za.co.absa.spline.harvester.dispatcher.httpdispatcher.ProducerApiVersion.SupportedApiRange
+import za.co.absa.spline.harvester.dispatcher.ProducerApiVersion.SupportedApiRange
 
 class ProducerApiCompatibilityManager private(serverApiVersions: Seq[Version], serverApiLTSVersions: Seq[Version]) {
 

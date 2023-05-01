@@ -1,0 +1,14 @@
+name: Add issue to project
+on:
+  issues:
+    types: [ opened, transferred ]
+
+jobs:
+  add-to-project:
+    name: Add issue to project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/add-to-project@v0.4.0
+        with:
+          project-url: https://github.com/orgs/AbsaOSS/projects/4
+          github-token: ${{ secrets.GH_TOKEN_PROJECT_ACCESS }}

@@ -16,9 +16,11 @@
 
 package za.co.absa.spline.harvester.plugin
 
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.sources.{BaseRelation, CreatableRelationProvider}
+import za.co.absa.spline.agent.SplineAgent.FuncName
 import za.co.absa.spline.harvester.plugin.Plugin._
 
 /**
@@ -43,12 +45,21 @@ trait ReadNodeProcessing {
 }
 
 /**
+ * Matches on RDDs [[org.apache.spark.rdd.RDD]]
+ * capturing ones that represent `read`-operations.
+ */
+trait RddReadNodeProcessing {
+  self: Plugin =>
+  def rddReadNodeProcessor: PartialFunction[RDD[_], ReadNodeInfo]
+}
+
+/**
  * Matches on the logical plan root node (usually [[org.apache.spark.sql.catalyst.plans.logical.Command]]),
  * capturing `write`-operations.
  */
 trait WriteNodeProcessing {
   self: Plugin =>
-  def writeNodeProcessor: PartialFunction[LogicalPlan, WriteNodeInfo]
+  def writeNodeProcessor: PartialFunction[(FuncName, LogicalPlan), WriteNodeInfo]
 }
 
 /**

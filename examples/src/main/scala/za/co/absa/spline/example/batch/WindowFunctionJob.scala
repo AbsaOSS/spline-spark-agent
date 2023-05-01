@@ -16,13 +16,7 @@
 
 package za.co.absa.spline.example.batch
 
-import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.max
-import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
-import org.apache.spark.sql.{DataFrame, Row}
-import za.co.absa.commons.io.TempFile
 import za.co.absa.spline.SparkApp
-import za.co.absa.spline.harvester.SparkLineageInitializer._
 
 /**
  * Example taken from:
@@ -31,7 +25,11 @@ import za.co.absa.spline.harvester.SparkLineageInitializer._
  */
 object WindowFunctionJob extends SparkApp("Window Function Job") {
 
-  private val filePath1 = TempFile("file1", ".xlsx", false).deleteOnExit().path.toAbsolutePath.toString
+  import org.apache.spark.sql._
+  import org.apache.spark.sql.expressions._
+  import org.apache.spark.sql.functions._
+  import org.apache.spark.sql.types._
+  import za.co.absa.spline.harvester.SparkLineageInitializer._
 
   // Initializing library to hook up to Apache Spark
   spark.enableLineageTracking()
@@ -43,7 +41,7 @@ object WindowFunctionJob extends SparkApp("Window Function Job") {
       StructField("category", StringType, nullable = false),
       StructField("revenue", IntegerType, nullable = false)
     ))
-    val rdd = spark.sparkContext.parallelize(List(
+    val rdd = spark.sparkContext.parallelize(Seq(
       Row("Thin", "Cell phone", 6000),
       Row("Normal", "Tablet", 1500),
       Row("Mini", "Tablet", 5500),
@@ -75,6 +73,6 @@ object WindowFunctionJob extends SparkApp("Window Function Job") {
     .write
     .format("com.crealytics.spark.excel")
     .option("header", "true")
-    .mode("ignore")
-    .save(filePath1)
+    .mode("overwrite")
+    .save("data/output/batch/window_function_job_result")
 }

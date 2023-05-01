@@ -19,16 +19,22 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>za.co.absa.spline.agent.spark</groupId>
-    <artifactId>spline-spark-agent_2.11</artifactId>
+    <artifactId>spline-spark-agent_2.12</artifactId>
     <name>Spline Spark Agent</name>
     <description>Spline Agent for Apache Spark</description>
-    <version>0.6.0-SNAPSHOT</version>
+    <version>1.2.0-SNAPSHOT</version>
+
+    <parent>
+        <groupId>za.co.absa</groupId>
+        <artifactId>root-pom</artifactId>
+        <version>1.0.5</version>
+    </parent>
 
     <packaging>pom</packaging>
 
     <inceptionYear>2017</inceptionYear>
 
-    <url>https://absaoss.github.io/spline-spark-agent/</url>
+    <url>https://github.com/AbsaOSS/spline-spark-agent</url>
 
     <licenses>
         <license>
@@ -66,38 +72,66 @@
     </developers>
 
     <properties>
-        <scm.url>http://github.com/AbsaOSS/spline-spark-agent/tree/master</scm.url>
-        <scm.connection>scm:git:git://github.com/AbsaOSS/spline-spark-agent.git</scm.connection>
-        <scm.developerConnection>scm:git:ssh://github.com/AbsaOSS/spline-spark-agent.git</scm.developerConnection>
-
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+
+        <!-- Loggers -->
+
         <slf4j.version>1.7.25</slf4j.version>
+
+        <!-- Docker -->
+
+        <dockerfile.imageName>spline-spark-agent</dockerfile.imageName>
 
         <!-- json4s -->
 
         <json4s.version>${json4s-35.version}</json4s.version>
         <json4s-32.version>3.2.11</json4s-32.version>
         <json4s-35.version>3.5.3</json4s-35.version>
+        <json4s-36.version>3.6.10</json4s-36.version>
+        <json4s-37-M5.version>3.7.0-M5</json4s-37-M5.version>
+        <json4s-37-M11.version>3.7.0-M11</json4s-37-M11.version>
 
         <!-- Spark -->
 
         <spark.version>${spark-24.version}</spark.version>
-        <spark-22.version>2.2.2</spark-22.version>
-        <spark-23.version>2.3.2</spark-23.version>
-        <spark-24.version>2.4.2</spark-24.version>
+        <spark-22.version>2.2.3</spark-22.version>
+        <spark-23.version>2.3.4</spark-23.version>
+        <spark-24.version>2.4.8</spark-24.version>
+        <spark-30.version>3.0.3</spark-30.version>
+        <spark-31.version>3.1.3</spark-31.version>
+        <spark-32.version>3.2.1</spark-32.version>
+        <spark-33.version>3.3.0</spark-33.version>
+
+        <!-- Delta -->
+
+        <delta.version>${delta-03.version}</delta.version>
+        <delta-03.version>0.3.0</delta-03.version>
+        <delta-08.version>0.8.0</delta-08.version>
+        <delta-10.version>1.0.0</delta-10.version>
+        <delta-20.version>2.0.0</delta-20.version>
+        <delta-21.version>2.1.0</delta-21.version>
+
+        <!-- Cassandra -->
+        <cassandra-connector.version>${cassandra-connector-24.version}</cassandra-connector.version>
+        <cassandra-connector-24.version>2.4.2</cassandra-connector-24.version>
+        <cassandra-connector-30.version>3.0.1</cassandra-connector-30.version>
+        <cassandra-connector-31.version>3.1.0</cassandra-connector-31.version>
+        <cassandra-connector-32.version>3.2.0</cassandra-connector-32.version>
 
         <!-- Cross build properties -->
 
-        <default.scala.binary.version>2.11</default.scala.binary.version>
-        <default.scala.version>${scala_2.11.version}</default.scala.version>
+        <default.scala.binary.version>2.12</default.scala.binary.version>
+        <default.scala.version>${scala_2.12.version}</default.scala.version>
 
         <scala_2.11.version>2.11.12</scala_2.11.version>
-        <scala_2.12.version>2.12.10</scala_2.12.version>
+        <scala_2.12.version>2.12.17</scala_2.12.version>
 
         <!-- Controlled by `scala-cross-build` plugin -->
-        <scala.version>2.11.12</scala.version>
-        <scala.binary.version>2.11</scala.binary.version>
+        <scala.version>2.12.17</scala.version>
+        <scala.binary.version>2.12</scala.binary.version>
     </properties>
 
     <scm>
@@ -107,33 +141,30 @@
         <tag>HEAD</tag>
     </scm>
 
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
-
     <modules>
         <module>core</module>
-        <module>bundle-2.4</module>
+        <module>examples</module>
+        <module>integration-tests</module>
     </modules>
 
     <build>
         <plugins>
+
+            <!-- Scala cross-build -->
+
             <plugin>
                 <groupId>com.github.wajda</groupId>
                 <artifactId>scala-cross-build-maven-plugin</artifactId>
-                <version>0.2.1</version>
+                <version>0.2.2</version>
                 <configuration>
                     <defaultScalaBinaryVersion>${default.scala.binary.version}</defaultScalaBinaryVersion>
                     <defaultScalaVersion>${default.scala.version}</defaultScalaVersion>
+                    <generatePomBackupFiles>false</generatePomBackupFiles>
                 </configuration>
             </plugin>
+
+            <!-- Scala compile -->
+
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
@@ -165,9 +196,17 @@
                             <goal>testCompile</goal>
                         </goals>
                     </execution>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>doc-jar</goal>
+                        </goals>
+                    </execution>
                 </executions>
             </plugin>
+
             <!-- disable surefire -->
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -175,9 +214,11 @@
                     <skipTests>true</skipTests>
                 </configuration>
             </plugin>
+
             <!-- enable scalatest -->
+
             <plugin>
-                <groupId>org.scalatest</groupId>
+                <groupId>com.github.cerveada</groupId>
                 <artifactId>scalatest-maven-plugin</artifactId>
                 <configuration>
                     <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
@@ -193,6 +234,31 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- customize license check -->
+
+            <plugin>
+                <groupId>org.apache.rat</groupId>
+                <artifactId>apache-rat-plugin</artifactId>
+                <configuration>
+                    <excludes combine.children="append">
+                        <exclude>**/*.mock</exclude>
+                        <exclude>**/*.iml</exclude>
+                        <exclude>.editorconfig</exclude>
+                        <exclude>.sdkmanrc</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <!-- Enable docker build -->
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <inherited>false</inherited>
+                <configuration>
+                    <skip>false</skip>
+                </configuration>
+            </plugin>
         </plugins>
 
         <pluginManagement>
@@ -200,17 +266,12 @@
                 <plugin>
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
-                    <version>4.2.0</version>
+                    <version>4.5.0</version>
                 </plugin>
                 <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.1</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.scalatest</groupId>
+                    <groupId>com.github.cerveada</groupId>
                     <artifactId>scalatest-maven-plugin</artifactId>
-                    <version>2.0.0</version>
+                    <version>2.0.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -223,16 +284,31 @@
                     <version>3.2.0</version>
                 </plugin>
                 <plugin>
-                    <groupId>org.apache.rat</groupId>
-                    <artifactId>apache-rat-plugin</artifactId>
-                    <version>0.13</version>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.2.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
-                    <version>3.2.1</version>
+                    <version>3.4.1</version>
                     <configuration>
                         <createDependencyReducedPom>false</createDependencyReducedPom>
+                        <minimizeJar>true</minimizeJar>
+                        <filters>
+                            <filter>
+                                <artifact>za.co.absa.spline.agent.spark:agent-core_${scala.binary.version}</artifact>
+                                <includes>
+                                    <include>**</include>
+                                </includes>
+                            </filter>
+                            <filter>
+                                <artifact>za.co.absa.commons:commons_${scala.binary.version}</artifact>
+                                <includes>
+                                    <include>**</include>
+                                </includes>
+                            </filter>
+                        </filters>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -242,23 +318,13 @@
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-source-plugin</artifactId>
-                    <version>3.2.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-gpg-plugin</artifactId>
-                    <version>1.6</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.sonatype.plugins</groupId>
-                    <artifactId>nexus-staging-maven-plugin</artifactId>
-                    <version>1.6.8</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-antrun-plugin</artifactId>
                     <version>1.8</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.spurint.maven.plugins</groupId>
+                    <artifactId>mima-maven-plugin</artifactId>
+                    <version>0.8.0</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -269,6 +335,11 @@
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
             <version>${scala.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-configuration</groupId>
+            <artifactId>commons-configuration</artifactId>
+            <version>1.6</version>
         </dependency>
         <dependency>
             <groupId>org.scalatest</groupId>
@@ -285,6 +356,11 @@
             <artifactId>jsr305</artifactId>
             <version>3.0.2</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.bigwheel</groupId>
+            <artifactId>util-backports_${scala.binary.version}</artifactId>
+            <version>2.1</version>
         </dependency>
     </dependencies>
 
@@ -342,6 +418,11 @@
                 <version>${spark.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-avro_${scala.binary.version}</artifactId>
+                <version>${spark.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.databricks</groupId>
                 <artifactId>spark-xml_${scala.binary.version}</artifactId>
                 <version>0.5.0</version>
@@ -349,12 +430,12 @@
             <dependency>
                 <groupId>com.crealytics</groupId>
                 <artifactId>spark-excel_${scala.binary.version}</artifactId>
-                <version>0.13.0</version>
+                <version>0.13.7</version>
             </dependency>
             <dependency>
                 <groupId>com.datastax.spark</groupId>
                 <artifactId>spark-cassandra-connector_${scala.binary.version}</artifactId>
-                <version>2.4.2</version>
+                <version>${cassandra-connector.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.mongodb.spark</groupId>
@@ -367,19 +448,27 @@
                 <version>7.6.0</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.spark</groupId>
-                <artifactId>spark-avro_${scala.binary.version}</artifactId>
-                <version>2.4.4</version>
-            </dependency>
-            <dependency>
-                <groupId>com.databricks</groupId>
-                <artifactId>spark-avro_2.11</artifactId>
-                <version>4.0.0</version>
-            </dependency>
-            <dependency>
                 <groupId>za.co.absa.cobrix</groupId>
                 <artifactId>spark-cobol_${scala.binary.version}</artifactId>
-                <version>2.0.8</version>
+                <version>2.6.4</version>
+            </dependency>
+            <dependency>
+                <groupId>io.delta</groupId>
+                <artifactId>delta-core_${scala.binary.version}</artifactId>
+                <version>${delta.version}</version>
+            </dependency>
+
+            <!-- Kafka -->
+
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>kafka-clients</artifactId>
+                <version>2.4.1</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.embeddedkafka</groupId>
+                <artifactId>embedded-kafka_${scala.binary.version}</artifactId>
+                <version>2.4.1</version>
             </dependency>
 
             <!-- Json4s -->
@@ -420,7 +509,7 @@
             <dependency>
                 <groupId>commons-codec</groupId>
                 <artifactId>commons-codec</artifactId>
-                <version>1.13</version>
+                <version>1.10</version>
             </dependency>
             <dependency>
                 <groupId>commons-lang</groupId>
@@ -433,23 +522,13 @@
                 <version>3.9</version>
             </dependency>
             <dependency>
-                <groupId>commons-configuration</groupId>
-                <artifactId>commons-configuration</artifactId>
-                <version>1.10</version>
-            </dependency>
-            <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
-                <version>2.6</version>
+                <version>2.4</version>
             </dependency>
 
             <!-- Logging -->
 
-            <dependency>
-                <groupId>org.slf4s</groupId>
-                <artifactId>slf4s-api_${scala.binary.version}</artifactId>
-                <version>${slf4j.version}</version>
-            </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-simple</artifactId>
@@ -479,9 +558,14 @@
             <!-- Others -->
 
             <dependency>
-                <groupId>org.scalaz</groupId>
-                <artifactId>scalaz-core_${scala.binary.version}</artifactId>
-                <version>7.2.29</version>
+                <groupId>com.fasterxml.uuid</groupId>
+                <artifactId>java-uuid-generator</artifactId>
+                <version>4.1.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.lihaoyi</groupId>
+                <artifactId>fastparse_${scala.binary.version}</artifactId>
+                <version>2.3.3</version>
             </dependency>
 
             <!-- Test scope dependencies -->
@@ -499,12 +583,36 @@
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
-                <version>3.2.0</version>
+                <version>3.12.4</version>
             </dependency>
+            <dependency>
+                <groupId>org.xerial.snappy</groupId>
+                <artifactId>snappy-java</artifactId>
+                <version>1.1.8.4</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
     <profiles>
+        <profile>
+            <id>all-modules</id>
+            <activation>
+                <property>
+                    <name>release</name>
+                </property>
+            </activation>
+            <modules>
+                <module>bundle-2.2</module>
+                <module>bundle-2.3</module>
+                <module>bundle-2.4</module>
+                <module>bundle-3.0</module>
+                <module>bundle-3.1</module>
+                <module>bundle-3.2</module>
+                <module>bundle-3.3</module>
+            </modules>
+        </profile>
+
         <!-- Cross-building profiles -->
 
         <profile>
@@ -516,14 +624,23 @@
             <modules>
                 <module>bundle-2.2</module>
                 <module>bundle-2.3</module>
+                <module>bundle-2.4</module>
             </modules>
         </profile>
+
         <profile>
             <id>scala-2.12</id>
             <properties>
                 <scala.binary.version>2.12</scala.binary.version>
                 <scala.version>${scala_2.12.version}</scala.version>
             </properties>
+            <modules>
+                <module>bundle-2.4</module>
+                <module>bundle-3.0</module>
+                <module>bundle-3.1</module>
+                <module>bundle-3.2</module>
+                <module>bundle-3.3</module>
+            </modules>
         </profile>
 
         <!-- Spark profiles -->
@@ -533,153 +650,215 @@
             <properties>
                 <spark.version>${spark-22.version}</spark.version>
                 <json4s.version>${json4s-32.version}</json4s.version>
+                <delta.version>${delta-03.version}</delta.version>
             </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>com.databricks</groupId>
+                    <artifactId>spark-avro_2.11</artifactId>
+                    <version>4.0.0</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.spark</groupId>
+                        <artifactId>spark-avro_${scala.binary.version}</artifactId>
+                        <!-- effectively ignore this dependency -->
+                        <version>2.4.4</version>
+                        <exclusions>
+                            <exclusion>
+                                <groupId>*</groupId>
+                                <artifactId>*</artifactId>
+                            </exclusion>
+                        </exclusions>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.antlr</groupId>
+                        <artifactId>antlr4-runtime</artifactId>
+                        <version>4.7</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.apache.spark</groupId>
+                        <artifactId>spark-parent_${scala.binary.version}</artifactId>
+                        <version>${spark.version}</version>
+                        <type>pom</type>
+                        <scope>import</scope>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
         </profile>
+
         <profile>
             <id>spark-2.3</id>
             <properties>
                 <spark.version>${spark-23.version}</spark.version>
                 <json4s.version>${json4s-32.version}</json4s.version>
+                <delta.version>${delta-03.version}</delta.version>
             </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>com.databricks</groupId>
+                    <artifactId>spark-avro_2.11</artifactId>
+                    <version>4.0.0</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.spark</groupId>
+                        <artifactId>spark-avro_${scala.binary.version}</artifactId>
+                        <!-- effectively ignore this dependency -->
+                        <version>2.4.4</version>
+                        <exclusions>
+                            <exclusion>
+                                <groupId>*</groupId>
+                                <artifactId>*</artifactId>
+                            </exclusion>
+                        </exclusions>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.apache.spark</groupId>
+                        <artifactId>spark-parent_${scala.binary.version}</artifactId>
+                        <version>${spark.version}</version>
+                        <type>pom</type>
+                        <scope>import</scope>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
         </profile>
+
         <profile>
             <id>spark-2.4</id>
             <properties>
                 <spark.version>${spark-24.version}</spark.version>
                 <json4s.version>${json4s-35.version}</json4s.version>
+                <delta.version>${delta-03.version}</delta.version>
+                <cassandra-connector.version>${cassandra-connector-24.version}</cassandra-connector.version>
             </properties>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.spark</groupId>
+                        <artifactId>spark-parent_${scala.binary.version}</artifactId>
+                        <version>${spark.version}</version>
+                        <type>pom</type>
+                        <scope>import</scope>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
         </profile>
 
-        <!-- Deployment profiles -->
+        <profile>
+            <id>spark-3.0</id>
+            <properties>
+                <spark.version>${spark-30.version}</spark.version>
+                <json4s.version>${json4s-36.version}</json4s.version>
+                <delta.version>${delta-08.version}</delta.version>
+                <cassandra-connector.version>${cassandra-connector-30.version}</cassandra-connector.version>
+            </properties>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.spark</groupId>
+                        <artifactId>spark-parent_${scala.binary.version}</artifactId>
+                        <version>${spark.version}</version>
+                        <type>pom</type>
+                        <scope>import</scope>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+        </profile>
 
         <profile>
-            <id>non-deploy</id>
-            <activation>
-                <property>
-                    <name>!deploy</name>
-                </property>
-            </activation>
-            <modules>
-                <module>examples</module>
-                <module>integration-tests</module>
-            </modules>
+            <id>spark-3.1</id>
+            <properties>
+                <spark.version>${spark-31.version}</spark.version>
+                <json4s.version>${json4s-37-M5.version}</json4s.version>
+                <delta.version>${delta-10.version}</delta.version>
+                <cassandra-connector.version>${cassandra-connector-31.version}</cassandra-connector.version>
+            </properties>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.spark</groupId>
+                        <artifactId>spark-parent_${scala.binary.version}</artifactId>
+                        <version>${spark.version}</version>
+                        <type>pom</type>
+                        <scope>import</scope>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
         </profile>
+
         <profile>
-            <id>deploy</id>
+            <id>spark-3.2</id>
+            <properties>
+                <spark.version>${spark-32.version}</spark.version>
+                <json4s.version>${json4s-37-M11.version}</json4s.version>
+                <delta.version>${delta-20.version}</delta.version>
+                <cassandra-connector.version>${cassandra-connector-32.version}</cassandra-connector.version>
+            </properties>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.spark</groupId>
+                        <artifactId>spark-parent_${scala.binary.version}</artifactId>
+                        <version>${spark.version}</version>
+                        <type>pom</type>
+                        <scope>import</scope>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+        </profile>
+
+        <profile>
+            <id>spark-3.3</id>
+            <properties>
+                <spark.version>${spark-33.version}</spark.version>
+                <json4s.version>${json4s-37-M11.version}</json4s.version>
+                <delta.version>${delta-21.version}</delta.version>
+                <!-- Cassandra connector for Spark 3.3 is not yet available, using the latest version -->
+                <cassandra-connector.version>${cassandra-connector-32.version}</cassandra-connector.version>
+            </properties>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.spark</groupId>
+                        <artifactId>spark-parent_${scala.binary.version}</artifactId>
+                        <version>${spark.version}</version>
+                        <type>pom</type>
+                        <scope>import</scope>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+        </profile>
+
+        <!-- Binary compatibility checking profile -->
+
+        <profile>
+            <id>binary-compat-check</id>
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
+                        <groupId>org.spurint.maven.plugins</groupId>
+                        <artifactId>mima-maven-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>attach-sources</id>
+                                <id>check-abi</id>
                                 <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>net.alchim31.maven</groupId>
-                        <artifactId>scala-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>attach-javadocs</id>
-                                <goals>
-                                    <goal>doc-jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <serverId>ossrh</serverId>
-                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                            <autoDropAfterRelease>true</autoDropAfterRelease>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <!-- Release profile -->
-
-        <profile>
-            <id>release</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-release-plugin</artifactId>
-                        <version>2.5.3</version>
-                        <configuration>
-                            <tagNameFormat>release/@{project.version}</tagNameFormat>
-                            <providerImplementations>
-                                <git>jgit</git>
-                            </providerImplementations>
-                        </configuration>
-                        <dependencies>
-                            <dependency>
-                                <groupId>org.apache.maven.scm</groupId>
-                                <artifactId>maven-scm-api</artifactId>
-                                <version>1.11.2</version>
-                            </dependency>
-                            <dependency>
-                                <groupId>org.apache.maven.scm</groupId>
-                                <artifactId>maven-scm-provider-jgit</artifactId>
-                                <version>1.11.2</version>
-                            </dependency>
-                            <dependency>
-                                <groupId>org.eclipse.jgit</groupId>
-                                <artifactId>org.eclipse.jgit</artifactId>
-                                <version>5.5.1.201910021850-r</version>
-                            </dependency>
-                        </dependencies>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <!-- Licence check profile -->
-
-        <profile>
-            <id>license-check</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.rat</groupId>
-                        <artifactId>apache-rat-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>check</goal>
+                                    <goal>check-abi</goal>
                                 </goals>
                             </execution>
                         </executions>
                         <configuration>
-                            <excludes>
-                                <exclude>**/*.json</exclude>
-                                <exclude>**/*.log</exclude>
-                                <exclude>dependency-reduced-pom.xml</exclude>
-                                <exclude>.sonarcloud.properties</exclude>
-                            </excludes>
+                            <!--
+                                disable MIMA because of too many false positives caused by cross-compilation
+                                that leads to MIMA comparing snapshots compiled against different Scala or Spark versions.
+                            -->
+                            <skip>true</skip>
                         </configuration>
                     </plugin>
                 </plugins>

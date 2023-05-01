@@ -33,162 +33,115 @@ _exec_plan_json=$(
   cat <<END
 {
   "id": "$(uuidgen)",
-  "agentInfo": {
-    "name": "Bash",
-    "version": "$BASH_VERSION"
-  },
+  "name": "Beer Consumption Stats",
   "systemInfo": {
-    "name": "Dummy Example",
+    "name": "Foo Bar",
     "version": "0.0.0"
   },
-  "extraInfo": {
-    "appName": "Beer Consumption Stats"
-  },
   "operations": {
+    "reads": [
+      {
+        "id": 10,
+        "inputSources": ["hdfs://.../country_codes"],
+        "name": "Read - Country Codes"
+      },
+      {
+        "id": 11,
+        "inputSources": ["hdfs://.../beer_consum_2003.csv"],
+        "name": "Get stats (year 2003)"
+      },
+      {
+        "id": 12,
+        "inputSources": ["hdfs://.../beer_consum_2004.csv"],
+        "name": "Get stats (year 2004)"
+      },
+      {
+        "id": 13,
+        "inputSources": ["hdfs://.../beer_consum_2005.csv"],
+        "name": "Get stats (year 2005)"
+      },
+      {
+        "id": 14,
+        "inputSources": ["hdfs://.../beer_consum_2006.csv"],
+        "name": "Get stats (year 2006)"
+      },
+      {
+        "id": 15,
+        "inputSources": ["hdfs://.../beer_consum_2007.csv"],
+        "name": "Get stats (year 2007)"
+      },
+      {
+        "id": 16,
+        "inputSources": ["hdfs://.../beer_consum_2008.csv"],
+        "name": "Get stats (year 2008)"
+      },
+      {
+        "id": 17,
+        "inputSources": ["hdfs://.../beer_consum_2009.csv"],
+        "name": "Get stats (year 2009)"
+      },
+      {
+        "id": 18,
+        "inputSources": ["hdfs://.../beer_consum_2010.csv"],
+        "name": "Get stats (year 2010)"
+      },
+      {
+        "id": 19,
+        "inputSources": ["hdfs://.../beer_consum_2011.csv"],
+        "name": "Get stats (year 2011)"
+      }
+    ],
     "write": {
       "id": 0,
       "outputSource": $_beer_source,
       "append": false,
-      "childIds": [1],
-      "extra": {
-        "name": "Write"
-      }
+      "childIds": [1]
     },
     "other": [
       {
         "id": 1,
         "childIds": [2, 19],
-        "extra": {
-          "name": "Join"
-        }
+        "name": "Join"
       },
       {
         "id": 2,
         "childIds": [3, 18],
-        "extra": {
-          "name": "Join"
-        }
+        "name": "Join"
       },
       {
         "id": 3,
         "childIds": [4, 17],
-        "extra": {
-          "name": "Join"
-        }
+        "name": "Join"
       },
       {
         "id": 4,
         "childIds": [5, 16],
-        "extra": {
-          "name": "Join"
-        }
+        "name": "Join"
       },
       {
         "id": 5,
         "childIds": [6, 15],
-        "extra": {
-          "name": "Join"
-        }
+        "name": "Join"
       },
       {
         "id": 6,
         "childIds": [7, 14],
-        "extra": {
-          "name": "Join"
-        }
+        "name": "Join"
       },
       {
         "id": 7,
         "childIds": [8, 13],
-        "extra": {
-          "name": "Join"
-        }
+        "name": "Join"
       },
       {
         "id": 8,
         "childIds": [9, 12],
-        "extra": {
-          "name": "Join"
-        }
+        "name": "Join"
       },
       {
         "id": 9,
         "childIds": [10, 11],
-        "extra": {
-          "name": "Join"
-        }
-      }
-    ],
-    "reads": [
-      {
-        "id": 10,
-        "inputSources": ["hdfs://.../country_codes"],
-        "extra": {
-          "name": "Read - Country Codes"
-        }
-      },
-      {
-        "id": 11,
-        "inputSources": ["hdfs://.../beer_consum_2003.csv"],
-        "extra": {
-          "name": "Get stats (year 2003)"
-        }
-      },
-      {
-        "id": 12,
-        "inputSources": ["hdfs://.../beer_consum_2004.csv"],
-        "extra": {
-          "name": "Get stats (year 2004)"
-        }
-      },
-      {
-        "id": 13,
-        "inputSources": ["hdfs://.../beer_consum_2005.csv"],
-        "extra": {
-          "name": "Get stats (year 2005)"
-        }
-      },
-      {
-        "id": 14,
-        "inputSources": ["hdfs://.../beer_consum_2006.csv"],
-        "extra": {
-          "name": "Get stats (year 2006)"
-        }
-      },
-      {
-        "id": 15,
-        "inputSources": ["hdfs://.../beer_consum_2007.csv"],
-        "extra": {
-          "name": "Get stats (year 2007)"
-        }
-      },
-      {
-        "id": 16,
-        "inputSources": ["hdfs://.../beer_consum_2008.csv"],
-        "extra": {
-          "name": "Get stats (year 2008)"
-        }
-      },
-      {
-        "id": 17,
-        "inputSources": ["hdfs://.../beer_consum_2009.csv"],
-        "extra": {
-          "name": "Get stats (year 2009)"
-        }
-      },
-      {
-        "id": 18,
-        "inputSources": ["hdfs://.../beer_consum_2010.csv"],
-        "extra": {
-          "name": "Get stats (year 2010)"
-        }
-      },
-      {
-        "id": 19,
-        "inputSources": ["hdfs://.../beer_consum_2011.csv"],
-        "extra": {
-          "name": "Get stats (year 2011)"
-        }
+        "name": "Join"
       }
     ]
   }
@@ -200,7 +153,7 @@ END
 
 
 # POST execution plan
-_exec_plan_id=$(curl -s -d "$_exec_plan_json" -H 'Content-Type: application/json' $_producer_url/execution-plans)
+_exec_plan_id=$(curl -s -d "$_exec_plan_json" -H 'Content-Type: application/vnd.absa.spline.producer.v1.1+json' $_producer_url/execution-plans)
 
 # Prepare execution event
 _exec_event_json=$(
@@ -213,7 +166,7 @@ END
 )
 
 # POST execution event
-curl -d "$_exec_event_json" -H 'Content-Type: application/json' $_producer_url/execution-events
+curl -d "$_exec_event_json" -H 'Content-Type: application/vnd.absa.spline.producer.v1.1+json' $_producer_url/execution-events
 
 echo "
   Non-Spark Lineage recorded:

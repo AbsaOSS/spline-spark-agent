@@ -26,14 +26,13 @@ object ModelConstants {
   object ExecutionPlanExtra {
     val AppName = "appName"
     val DataTypes = "dataTypes"
-    val Attributes = "attributes"
   }
 
   object ExecutionEventExtra {
     val AppId = "appId"
+    val User = "user"
     val WriteMetrics = "writeMetrics"
     val ReadMetrics = "readMetrics"
-    val DurationNs = "durationNs"
   }
 
   object OperationParams {
@@ -68,4 +67,7 @@ object ModelConstants {
     val RawString = "rawString"
   }
 
+  object CommonExtras {
+    val Synthetic = "synthetic"
+  }
 }

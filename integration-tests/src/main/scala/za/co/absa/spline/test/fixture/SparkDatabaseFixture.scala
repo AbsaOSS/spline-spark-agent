@@ -17,18 +17,39 @@
 package za.co.absa.spline.test.fixture
 
 import org.apache.spark.sql.SparkSession
+import org.scalatest.{Assertion, AsyncTestSuite}
+
+import scala.concurrent.Future
 
 trait SparkDatabaseFixture {
+  this: AsyncTestSuite =>
+
   private type DatabaseName = String
   private type TableName = String
   private type TableDef = String
   private type TableData = Seq[Any]
 
-  /**
-   * this function creates tables in a way that is hive dependent, therefore hive must be enabled for this to work
-   */
-  def withHiveDatabase[T](spark: SparkSession)(databaseName: DatabaseName, tableDefs: (TableName, TableDef, TableData)*)(testBody: => T): T = {
-    prepareDatabase(spark, databaseName)
+  def withDatabase
+    (databaseName: DatabaseName, tableDefs: (TableName, TableDef, TableData)*)
+    (testBody: => Future[Assertion])
+    (implicit spark: SparkSession): Future[Assertion] = {
+
+    val innerSpark = spark.newSession()
+
+    prepareDatabase(innerSpark, databaseName, tableDefs)
+    spark.sql(s"USE $databaseName")
+
+    testBody.andThen { case _ => dropDatabase(innerSpark, databaseName) }
+  }
+
+  private def prepareDatabase(
+    spark: SparkSession,
+    databaseName: DatabaseName,
+    tableDefs: Seq[(TableName, TableDef, TableData)]
+  ): Unit = {
+    dropDatabase(spark, databaseName)
+    spark.sql(s"CREATE DATABASE $databaseName")
+    spark.sql(s"USE $databaseName")
 
     tableDefs.foreach({
       case (tableName, tableDef, rows) =>
@@ -38,29 +59,9 @@ trait SparkDatabaseFixture {
           .foreach(values =>
             spark.sql(s"INSERT INTO $tableName VALUES (${values mkString ","})"))
     })
-
-    try
-      testBody
-    finally
-      dropDatabase(spark, databaseName)
   }
 
-  def withDatabase[T](spark: SparkSession)(databaseName: DatabaseName)(testBody: => T): T = {
-    prepareDatabase(spark, databaseName)
-
-    try
-      testBody
-    finally
-      dropDatabase(spark, databaseName)
-  }
-
-  private def prepareDatabase(spark: SparkSession, databaseName: DatabaseName) :Unit = {
-    spark.sql(s"DROP DATABASE IF EXISTS $databaseName CASCADE")
-    spark.sql(s"CREATE DATABASE $databaseName")
-    spark.sql(s"USE $databaseName")
-  }
-
-  private def dropDatabase(spark: SparkSession, databaseName: DatabaseName) :Unit = {
+  private def dropDatabase(spark: SparkSession, databaseName: DatabaseName): Unit = {
     spark.sql(s"DROP DATABASE IF EXISTS $databaseName CASCADE")
   }
 

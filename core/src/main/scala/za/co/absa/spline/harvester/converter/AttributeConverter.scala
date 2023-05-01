@@ -16,21 +16,34 @@
 
 package za.co.absa.spline.harvester.converter
 
-import java.util.UUID.randomUUID
-
-import org.apache.spark.sql.catalyst.expressions.{Attribute => SparkAttribute}
+import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
 import za.co.absa.commons.lang.Converter
-import za.co.absa.spline.model.Attribute
+import za.co.absa.spline.harvester.SequentialIdGenerator
+import za.co.absa.spline.producer.model.Attribute
 
-class AttributeConverter(dataTypeConverter: DataTypeConverter)
-  extends Converter {
-  override type From = SparkAttribute
+class AttributeConverter(
+  idGen: SequentialIdGenerator,
+  dataTypeConverter: DataTypeConverter,
+  resolveAttributeChild: sparkExprssions.Attribute => Option[sparkExprssions.Expression],
+  outputExprToAttMap: Map[sparkExprssions.ExprId, Attribute],
+  exprToRefConverter: => ExprToRefConverter
+) extends Converter {
+
+  override type From = sparkExprssions.Attribute
   override type To = Attribute
 
-  override def convert(attr: SparkAttribute): Attribute = {
-    Attribute(
-      id = randomUUID,
-      name = attr.name,
-      dataTypeId = dataTypeConverter.convert(attr.dataType, attr.nullable).id)
+  def convert(expr: From): To = expr match {
+    case attr: sparkExprssions.Attribute if outputExprToAttMap.contains(attr.exprId) =>
+      outputExprToAttMap(attr.exprId)
+
+    case attr: sparkExprssions.Attribute =>
+      Attribute(
+        id = idGen.nextId(),
+        dataType = Some(dataTypeConverter.convert(attr.dataType, attr.nullable).id),
+        childRefs = resolveAttributeChild(attr)
+          .map(expr => Seq(exprToRefConverter.convert(expr))).getOrElse(Seq.empty),
+        extra = Map.empty,
+        name = attr.name
+      )
   }
 }

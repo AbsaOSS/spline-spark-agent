@@ -16,9 +16,10 @@
 
 package za.co.absa.spline.harvester.plugin.embedded
 
-import javax.annotation.Priority
 import za.co.absa.spline.harvester.plugin.Plugin.Precedence
 import za.co.absa.spline.harvester.plugin.{DataSourceFormatNameResolving, Plugin}
+
+import javax.annotation.Priority
 
 @Priority(Precedence.Normal)
 class AvroPlugin extends Plugin with DataSourceFormatNameResolving {

@@ -1,0 +1,139 @@
+{
+    "uuid": "9a615804-0552-45f9-8caa-14d285240fce",
+    "lastMigration": 20,
+    "name": "Spline Producer API Mock",
+    "endpointPrefix": "spline",
+    "latency": 0,
+    "port": 8080,
+    "hostname": "127.0.0.1",
+    "routes": [
+        {
+            "uuid": "2ccc7382-c954-40a3-aa11-fd30ad7e1eb4",
+            "documentation": "",
+            "method": "post",
+            "endpoint": "producer/execution-events",
+            "responses": [
+                {
+                    "uuid": "c9b04956-7729-4de3-9d32-eb337f3a106a",
+                    "body": "\"a0610b7d-43f1-4145-a1e6-8550eebe15b3\"\n",
+                    "latency": 0,
+                    "statusCode": 201,
+                    "label": "",
+                    "headers": [
+                        {
+                            "key": "Content-Type",
+                            "value": " application/json; charset=utf-8"
+                        }
+                    ],
+                    "filePath": "",
+                    "sendFileAsBody": false,
+                    "rules": [],
+                    "rulesOperator": "OR",
+                    "disableTemplating": false,
+                    "fallbackTo404": false,
+                    "default": true
+                }
+            ],
+            "enabled": true,
+            "randomResponse": false,
+            "sequentialResponse": false
+        },
+        {
+            "uuid": "b6949076-7b99-40b2-9142-41c5e771dbae",
+            "documentation": "",
+            "method": "post",
+            "endpoint": "producer/execution-plans",
+            "responses": [
+                {
+                    "uuid": "82c9a181-22b8-4f69-9685-e2888e390f91",
+                    "body": "\"a0610b7d-43f1-4145-a1e6-8550eebe15b3\"\n",
+                    "latency": 0,
+                    "statusCode": 201,
+                    "label": "",
+                    "headers": [
+                        {
+                            "key": "Content-Type",
+                            "value": " application/json; charset=utf-8"
+                        }
+                    ],
+                    "filePath": "",
+                    "sendFileAsBody": false,
+                    "rules": [],
+                    "rulesOperator": "OR",
+                    "disableTemplating": false,
+                    "fallbackTo404": false,
+                    "default": true
+                }
+            ],
+            "enabled": true,
+            "randomResponse": false,
+            "sequentialResponse": false
+        },
+        {
+            "uuid": "76bf58c0-ad26-4f1c-ac57-6a82f5bda02c",
+            "documentation": "",
+            "method": "get",
+            "endpoint": "producer/status",
+            "responses": [
+                {
+                    "uuid": "12ce57a7-6d86-4780-9a14-ec413f14c948",
+                    "body": "",
+                    "latency": 0,
+                    "statusCode": 200,
+                    "label": "",
+                    "headers": [
+                        {
+                            "key": "ABSA-Spline-API-Version",
+                            "value": "1.1"
+                        },
+                        {
+                            "key": "Content-Length",
+                            "value": "0"
+                        }
+                    ],
+                    "filePath": "",
+                    "sendFileAsBody": false,
+                    "rules": [],
+                    "rulesOperator": "OR",
+                    "disableTemplating": false,
+                    "fallbackTo404": false,
+                    "default": true
+                }
+            ],
+            "enabled": true,
+            "randomResponse": false,
+            "sequentialResponse": false
+        }
+    ],
+    "proxyMode": false,
+    "proxyHost": "",
+    "proxyRemovePrefix": false,
+    "tlsOptions": {
+        "enabled": false,
+        "type": "CERT",
+        "pfxPath": "",
+        "certPath": "",
+        "keyPath": "",
+        "caPath": "",
+        "passphrase": ""
+    },
+    "cors": true,
+    "headers": [
+        {
+            "key": "Content-Type",
+            "value": "application/json"
+        }
+    ],
+    "proxyReqHeaders": [
+        {
+            "key": "",
+            "value": ""
+        }
+    ],
+    "proxyResHeaders": [
+        {
+            "key": "",
+            "value": ""
+        }
+    ]
+}

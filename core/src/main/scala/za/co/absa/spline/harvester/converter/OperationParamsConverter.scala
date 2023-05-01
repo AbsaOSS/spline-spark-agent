@@ -22,24 +22,24 @@ import org.apache.spark.sql.catalyst.plans.JoinType
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.types.DataType
 import za.co.absa.commons.lang.Converter
-import za.co.absa.commons.reflect.ReflectionUtils
 import za.co.absa.spline.harvester.converter.OperationParamsConverter._
+import za.co.absa.spline.harvester.converter.ReflectiveExtractor.extractProperties
 
 class OperationParamsConverter(
   dataConverter: DataConverter,
-  expressionConverter: ExpressionConverter
+  exprToRefConverter: ExprToRefConverter
 ) extends Converter {
   override type From = LogicalPlan
   override type To = Map[String, _]
 
-  private val renderer = ValueDecomposer.addHandler(_ => {
+  private def valueDecomposer = ValueDecomposer.addHandler(_ => {
     case (row: InternalRow, rowType: DataType) => Some(dataConverter.convert((row, rowType)))
     case (jt: JoinType, _) => Some(jt.sql)
     case (so: SortOrder, _) => Some(Map(
-      "expression" -> expressionConverter.convert(so.child),
+      "expression" -> exprToRefConverter.convert(so.child),
       "direction" -> so.direction.sql,
       "nullOrdering" -> so.nullOrdering.sql))
-    case (exp: Expression, _) => Some(expressionConverter.convert(exp))
+    case (exp: Expression, _) => Some(exprToRefConverter.convert(exp))
   })
 
   override def convert(operation: LogicalPlan): Map[String, _] = {
@@ -51,16 +51,16 @@ class OperationParamsConverter(
     }
 
     for {
-      (p, v) <- ReflectionUtils.extractProperties(operation)
+      (p, v) <- extractProperties(operation)
       if !KnownPropNames(p)
       if !IgnoredPropNames(p)
       if !isChildOperation(v)
     } yield
-      p -> renderer.decompose(v, operation.schema)
+      p -> valueDecomposer.decompose(v, operation.schema)
   }
 }
 
 object OperationParamsConverter {
-  private val KnownPropNames = Set("nodeName", "output", "children")
+  private val KnownPropNames = Set("nodeName", "output", "children", "child")
   private val IgnoredPropNames = Set("data")
 }

@@ -16,12 +16,14 @@
 
 package za.co.absa.spline.harvester.builder.write
 
+import org.apache.commons.lang3.StringUtils
+import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.command._
+import za.co.absa.spline.agent.SplineAgent.FuncName
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.builder.dsformat.DataSourceFormatResolver
-import za.co.absa.spline.harvester.builder.write.PluggableWriteCommandExtractor._
-import za.co.absa.spline.harvester.exception.UnsupportedSparkCommandException
+import za.co.absa.spline.harvester.builder.write.PluggableWriteCommandExtractor.warnIfUnimplementedCommand
 import za.co.absa.spline.harvester.plugin.Plugin.WriteNodeInfo
 import za.co.absa.spline.harvester.plugin.WriteNodeProcessing
 import za.co.absa.spline.harvester.plugin.registry.PluginRegistry
@@ -33,29 +35,29 @@ class PluggableWriteCommandExtractor(
   dataSourceFormatResolver: DataSourceFormatResolver
 ) extends WriteCommandExtractor {
 
-  private val processFn: LogicalPlan => Option[WriteNodeInfo] =
+  private val processFn: ((FuncName, LogicalPlan)) => Option[WriteNodeInfo] =
     pluginRegistry.plugins[WriteNodeProcessing]
       .map(_.writeNodeProcessor)
       .reduce(_ orElse _)
       .lift
 
-  @throws(classOf[UnsupportedSparkCommandException])
-  def asWriteCommand(operation: LogicalPlan): Option[WriteCommand] = {
-    val maybeCapturedResult = processFn(operation)
+  def asWriteCommand(funcName: FuncName, logicalPlan: LogicalPlan): Option[WriteCommand] = {
+    val maybeCapturedResult = processFn(funcName, logicalPlan)
 
-    if (maybeCapturedResult.isEmpty) alertWhenUnimplementedCommand(operation)
+    if (maybeCapturedResult.isEmpty) warnIfUnimplementedCommand(logicalPlan)
 
     maybeCapturedResult.map({
-      case (SourceIdentifier(maybeFormat, uris@_*), mode, plan, params) =>
+      case WriteNodeInfo(SourceIdentifier(maybeFormat, uris @ _*), mode, plan, params, extras, name) =>
         val maybeResolvedFormat = maybeFormat.map(dataSourceFormatResolver.resolve)
         val sourceId = SourceIdentifier(maybeResolvedFormat, uris: _*)
-        WriteCommand(operation.nodeName, sourceId, mode, plan, params)
+        val cmdName = StringUtils.defaultIfBlank(name, logicalPlan.nodeName)
+        WriteCommand(cmdName, sourceId, mode, plan, params, extras)
     })
   }
 
 }
 
-object PluggableWriteCommandExtractor {
+object PluggableWriteCommandExtractor extends Logging {
 
   private val commandsToBeImplemented = Seq(
     classOf[AlterTableAddColumnsCommand],
@@ -70,8 +72,10 @@ object PluggableWriteCommandExtractor {
     classOf[TruncateTableCommand]
   )
 
-  private def alertWhenUnimplementedCommand(c: LogicalPlan): Unit = {
-    if (commandsToBeImplemented.contains(c.getClass)) throw new UnsupportedSparkCommandException(c)
+  private def warnIfUnimplementedCommand(c: LogicalPlan): Unit = {
+    if (commandsToBeImplemented.contains(c.getClass)) {
+      logWarning(s"Spark command was intercepted, but is not yet implemented! Command:'${c.getClass}'")
+    }
   }
 
 }

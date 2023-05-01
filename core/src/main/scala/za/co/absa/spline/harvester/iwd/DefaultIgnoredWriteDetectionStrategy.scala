@@ -17,16 +17,16 @@
 package za.co.absa.spline.harvester.iwd
 
 import org.apache.commons.configuration.Configuration
+import za.co.absa.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
 import za.co.absa.spline.harvester.LineageHarvester.Metrics
-import za.co.absa.spline.harvester.iwd.DefaultIgnoredWriteDetectionStrategy.Behaviour
+import za.co.absa.spline.harvester.iwd.DefaultIgnoredWriteDetectionStrategy._
 
 object DefaultIgnoredWriteDetectionStrategy {
-  val OnMissingMetricsKey = "spline.iwd_strategy.default.on_missing_metrics"
+  val OnMissingMetricsKey = "onMissingMetrics"
 
-  object Behaviour {
+  private object Behaviour {
     val IgnoreLineage = "IGNORE_LINEAGE"
-    val CaptureLineage= "CAPTURE_LINEAGE"
-    val Default: String = IgnoreLineage
+    val CaptureLineage = "CAPTURE_LINEAGE"
   }
 }
 
@@ -34,9 +34,11 @@ class DefaultIgnoredWriteDetectionStrategy(ignoreLineageOnMissingMetric: Boolean
   extends IgnoredWriteDetectionStrategy {
 
   def this(configuration: Configuration) = this({
-    val behaviour = configuration.getString(DefaultIgnoredWriteDetectionStrategy.OnMissingMetricsKey, Behaviour.Default)
+    val behaviour = configuration.getRequiredString(OnMissingMetricsKey)
     behaviour == Behaviour.IgnoreLineage
   })
+
+  override def name = "Write metrics"
 
   override def wasWriteIgnored(writeMetrics: Metrics): Boolean = {
     writeMetrics.get("numFiles").map(_ == 0).getOrElse(ignoreLineageOnMissingMetric)

@@ -17,22 +17,25 @@
 package za.co.absa.spline.harvester.plugin.registry
 
 import io.github.classgraph.ClassGraph
-import javax.annotation.Priority
+import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.ClassUtils.{getAllInterfaces, getAllSuperclasses}
 import org.apache.spark.internal.Logging
 import za.co.absa.commons.lang.ARM
 import za.co.absa.spline.harvester.plugin.Plugin
 import za.co.absa.spline.harvester.plugin.Plugin.Precedence
-import za.co.absa.spline.harvester.plugin.registry.AutoDiscoveryPluginRegistry.{PluginClasses, getOnlyOrThrow}
+import za.co.absa.spline.harvester.plugin.registry.AutoDiscoveryPluginRegistry.{EnabledByDefault, EnabledConfProperty, PluginClasses, getOnlyOrThrow}
 
+import javax.annotation.Priority
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.util.Try
 import scala.util.control.NonFatal
 
-class AutoDiscoveryPluginRegistry(injectables: AnyRef*)
-  extends PluginRegistry
-    with Logging {
+class AutoDiscoveryPluginRegistry(
+  conf: Configuration,
+  injectables: AnyRef*
+) extends PluginRegistry
+  with Logging {
 
   private val injectablesByType: Map[Class[_], Seq[_ <: AnyRef]] = {
     val typedInjectables =
@@ -45,8 +48,8 @@ class AutoDiscoveryPluginRegistry(injectables: AnyRef*)
   }
 
   private val allPlugins: Seq[Plugin] =
-    for (pc <- PluginClasses) yield {
-      log.info(s"Loading plugin: $pc")
+    for (pc <- PluginClasses if isPluginEnabled(pc)) yield {
+      logInfo(s"Loading plugin: $pc")
       instantiatePlugin(pc)
         .recover({ case NonFatal(e) => throw new RuntimeException(s"Plugin instantiation failure: $pc", e) })
         .get
@@ -54,25 +57,40 @@ class AutoDiscoveryPluginRegistry(injectables: AnyRef*)
 
   override def plugins[A: ClassTag]: Seq[Plugin with A] = {
     val ct = implicitly[ClassTag[A]]
-    allPlugins.collect({ case p: Plugin with A if ct.runtimeClass.isInstance(p) => p })
+    allPlugins.collect({ case p: Plugin if ct.runtimeClass.isInstance(p) => p.asInstanceOf[Plugin with A] })
   }
 
   private def instantiatePlugin(pluginClass: Class[_]): Try[Plugin] = Try {
     val constrs = pluginClass.getConstructors
-    val constr = getOnlyOrThrow(constrs, s"Cannot instantiate plugin with multiple constructors: ${constrs.mkString(", ")}")
-    val args = constr.getParameterTypes.map(pt => {
-      val candidates = injectablesByType.getOrElse(pt, sys.error(s"Cannot bind $pt. No value found"))
-      getOnlyOrThrow(candidates, s"Ambiguous constructor parameter binding. Multiple values found for $pt: ${candidates.length}")
-    })
+    val constr = getOnlyOrThrow(constrs, s"Plugin class must have a single public constructor: ${constrs.mkString(", ")}")
+    val args = constr.getParameterTypes.map {
+      case ct if classOf[Configuration].isAssignableFrom(ct) =>
+        conf.subset(pluginClass.getName)
+      case pt =>
+        val candidates = injectablesByType.getOrElse(pt, sys.error(s"Cannot bind $pt. No value found"))
+        getOnlyOrThrow(candidates, s"Ambiguous constructor parameter binding. Multiple values found for $pt: ${candidates.length}")
+    }
     constr.newInstance(args: _*).asInstanceOf[Plugin]
+  }
+
+  private def isPluginEnabled(pc: Class[Plugin]): Boolean = {
+    val pluginConf = conf.subset(pc.getName)
+    val isEnabled = pluginConf.getBoolean(EnabledConfProperty, EnabledByDefault)
+    if (!isEnabled) {
+      logWarning(s"Plugin ${pc.getName} is disabled in the configuration.")
+    }
+    isEnabled
   }
 
 }
 
 object AutoDiscoveryPluginRegistry extends Logging {
 
+  private val EnabledConfProperty = "enabled"
+  private val EnabledByDefault = true
+
   private val PluginClasses: Seq[Class[Plugin]] = {
-    log.debug("Scanning for plugins")
+    logDebug("Scanning for plugins")
     val classGraph = new ClassGraph().enableClassInfo
     for {
       scanResult <- ARM.managed(classGraph.scan)
@@ -82,7 +100,7 @@ object AutoDiscoveryPluginRegistry extends Logging {
         .map(c => c -> priorityOf(c))
         .sortBy(_._2)
     } yield {
-      log.debug(s"Found plugin [priority=$prt]\t: $cls")
+      logDebug(s"Found plugin [priority=$prt]\t: $cls")
       cls
     }
   }

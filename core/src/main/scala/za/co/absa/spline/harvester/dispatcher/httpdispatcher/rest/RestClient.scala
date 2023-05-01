@@ -16,8 +16,12 @@
 
 package za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest
 
+import org.apache.commons.configuration.Configuration
 import org.apache.spark.internal.Logging
-import scalaj.http.BaseHttp
+import scalaj.http.HttpOptions.HttpOption
+import scalaj.http.{BaseHttp, HttpOptions}
+import za.co.absa.commons.lang.extensions.AnyExtension._
+import za.co.absa.spline.harvester.dispatcher.SplineHeaders
 
 import scala.concurrent.duration.Duration
 
@@ -27,26 +31,46 @@ trait RestClient {
 
 object RestClient extends Logging {
   /**
-   * @param baseHttp          HTTP client
-   * @param baseURL           REST endpoint base URL
-   * @param connectionTimeout timeout for establishing TCP connection
-   * @param readTimeout       timeout for each individual TCP packet (in already established connection)
+   * @param baseHttp    HTTP client
+   * @param baseURL     REST endpoint base URL
+   * @param connTimeout timeout for establishing TCP connection
+   * @param readTimeout timeout for each individual TCP packet (in already established connection)
    */
   def apply(
     baseHttp: BaseHttp,
     baseURL: String,
-    connectionTimeout: Duration,
-    readTimeout: Duration): RestClient = {
+    connTimeout: Duration,
+    readTimeout: Duration,
+    disableSslValidation: Boolean,
+    headers: Map[String, String],
+    authConfig: Configuration
+  ): RestClient = {
 
-    log.debug(s"baseURL = $baseURL")
-    log.debug(s"connectionTimeout = $connectionTimeout")
-    log.debug(s"readTimeout = $readTimeout")
+    logDebug(s"baseURL = $baseURL")
+    logDebug(s"connTimeout = $connTimeout")
+    logDebug(s"readTimeout = $readTimeout")
+    logDebug(s"disableSslValidation = $disableSslValidation")
+    logDebug(s"headers = $headers")
 
+    val maybeDisableSslValidationOption: Option[HttpOption] =
+      if (disableSslValidation) {
+        logWarning(s"SSL validation is DISABLED -- not recommended for production!")
+        Some(HttpOptions.allowUnsafeSSL)
+      } else {
+        None
+      }
+
+    //noinspection ConvertExpressionToSAM
     new RestClient {
       override def endpoint(resource: String): RestEndpoint = new RestEndpoint(
         baseHttp(s"$baseURL/$resource")
-          .timeout(connectionTimeout.toMillis.toInt, readTimeout.toMillis.toInt)
-          .compress(true))
+          .option(HttpOptions.connTimeout(connTimeout.toMillis.toInt))
+          .option(HttpOptions.readTimeout(readTimeout.toMillis.toInt))
+          .having(maybeDisableSslValidationOption)(_ option _)
+          .header(SplineHeaders.Timeout, readTimeout.toMillis.toString)
+          .headers(headers)
+          .compress(true),
+        authConfig)
     }
   }
 }

@@ -16,28 +16,26 @@
 
 package za.co.absa.spline.harvester
 
-import java.util.UUID
-
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.spark
 import org.apache.spark.internal.Logging
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.execution.{LeafExecNode, SparkPlan}
-import scalaz.Scalaz._
-import za.co.absa.commons.lang.OptionImplicits._
-import za.co.absa.commons.reflect.ReflectionUtils
-import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
-import za.co.absa.spline.harvester.ExtraMetadataImplicits._
+import za.co.absa.commons.CollectionImplicits._
+import za.co.absa.commons.graph.GraphImplicits._
+import za.co.absa.commons.lang.CachingConverter
+import za.co.absa.spline.agent.SplineAgent.FuncName
 import za.co.absa.spline.harvester.LineageHarvester._
 import za.co.absa.spline.harvester.ModelConstants.{AppMetaInfo, ExecutionEventExtra, ExecutionPlanExtra}
 import za.co.absa.spline.harvester.builder._
 import za.co.absa.spline.harvester.builder.read.ReadCommandExtractor
-import za.co.absa.spline.harvester.builder.write.WriteCommandExtractor
-import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode
-import za.co.absa.spline.harvester.conf.SplineConfigurer.SplineMode.SplineMode
-import za.co.absa.spline.harvester.extra.UserExtraMetadataProvider
+import za.co.absa.spline.harvester.builder.write.{WriteCommand, WriteCommandExtractor}
+import za.co.absa.spline.harvester.converter.DataTypeConverter
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
-import za.co.absa.spline.harvester.logging.ObjectStructureDumper
+import za.co.absa.spline.harvester.logging.ObjectStructureLogging
+import za.co.absa.spline.harvester.postprocessing.PostProcessor
 import za.co.absa.spline.producer.model._
 
 import scala.concurrent.duration.Duration
@@ -45,103 +43,122 @@ import scala.util.{Failure, Success, Try}
 
 class LineageHarvester(
   ctx: HarvestingContext,
-  splineMode: SplineMode,
   writeCommandExtractor: WriteCommandExtractor,
   readCommandExtractor: ReadCommandExtractor,
   iwdStrategy: IgnoredWriteDetectionStrategy,
-  userExtraMetadataProvider: UserExtraMetadataProvider
-) extends Logging {
+  postProcessor: PostProcessor,
+  dataTypeConverter: DataTypeConverter with CachingConverter,
+  opNodeBuilderFactory: OperationNodeBuilderFactory
+) extends Logging with ObjectStructureLogging {
 
-  private val componentCreatorFactory: ComponentCreatorFactory = new ComponentCreatorFactory
-  private val opNodeBuilderFactory = new OperationNodeBuilderFactory(userExtraMetadataProvider, componentCreatorFactory, ctx)
-
-  def harvest(result: Try[Duration]): HarvestResult = {
-    log.debug(s"Harvesting lineage from ${ctx.logicalPlan.getClass}")
+  def harvest(result: Either[Throwable, Duration]): HarvestResult = {
+    logDebug(s"Harvesting lineage from ${ctx.logicalPlan.getClass}")
 
     val (readMetrics: Metrics, writeMetrics: Metrics) = ctx.executedPlanOpt.
       map(getExecutedReadWriteMetrics).
       getOrElse((Map.empty, Map.empty))
 
-    val maybeCommand = Try(writeCommandExtractor.asWriteCommand(ctx.logicalPlan)) match {
-      case Success(result) => result
-      case Failure(e) => splineMode match {
-        case SplineMode.REQUIRED =>
-          throw e
-        case SplineMode.BEST_EFFORT =>
-          log.warn(e.getMessage)
-          None
-      }
-    }
-
-
-    if (maybeCommand.isEmpty) {
-      log.debug(s"${ctx.logicalPlan.getClass} was not recognized as a write-command. Skipping.")
-      log.trace(ObjectStructureDumper.dump(ctx.logicalPlan))
-    }
-
-    maybeCommand.flatMap(writeCommand => {
+    tryExtractWriteCommand(ctx.funcName, ctx.logicalPlan).flatMap(writeCommand => {
       val writeOpBuilder = opNodeBuilderFactory.writeNodeBuilder(writeCommand)
       val restOpBuilders = createOperationBuildersRecursively(writeCommand.query)
 
-      restOpBuilders.lastOption.foreach(writeOpBuilder.+=)
+      restOpBuilders.lastOption.foreach(writeOpBuilder.addChild)
+      val builders = restOpBuilders :+ writeOpBuilder
 
-      val writeOp = writeOpBuilder.build()
       val restOps = restOpBuilders.map(_.build())
+      val writeOp = writeOpBuilder.build()
 
       val (opReads, opOthers) =
-        ((List.empty[ReadOperation], List.empty[DataOperation]) /: restOps) {
+        restOps.foldLeft((Vector.empty[ReadOperation], Vector.empty[DataOperation])) {
           case ((accRead, accOther), opRead: ReadOperation) => (accRead :+ opRead, accOther)
           case ((accRead, accOther), opOther: DataOperation) => (accRead, accOther :+ opOther)
         }
 
-      val plan = {
-        val planExtra = Map[String, Any](
-          ExecutionPlanExtra.AppName -> ctx.session.sparkContext.appName,
-          ExecutionPlanExtra.DataTypes -> componentCreatorFactory.dataTypeConverter.values,
-          ExecutionPlanExtra.Attributes -> componentCreatorFactory.attributeConverter.values
-        )
-        val p = ExecutionPlan(
-          id = UUID.randomUUID,
-          operations = Operations(writeOp, opReads.asOption, opOthers.asOption),
-          systemInfo = SystemInfo(AppMetaInfo.Spark, spark.SPARK_VERSION),
-          agentInfo = Some(AgentInfo(AppMetaInfo.Spline, SplineBuildInfo.Version)),
-          extraInfo = planExtra.asOption
-        )
-        p.withAddedExtra(userExtraMetadataProvider.forExecPlan(p, ctx))
-      }
-
       if (writeCommand.mode == SaveMode.Ignore && iwdStrategy.wasWriteIgnored(writeMetrics)) {
-        log.debug(s"Ignored write detected. Skipping lineage.")
+        logDebug("Ignored write detected. Skipping lineage.")
         None
       }
       else {
-        val eventExtra = Map[String, Any](
-          ExecutionEventExtra.AppId -> ctx.session.sparkContext.applicationId,
-          ExecutionEventExtra.ReadMetrics -> readMetrics,
-          ExecutionEventExtra.WriteMetrics -> writeMetrics
-        ).optionally[Duration]((m, d) => m + (ExecutionEventExtra.DurationNs -> d.toNanos), result.toOption)
+        val planWithoutId = {
+          val planExtra = Map[String, Any](
+            ExecutionPlanExtra.AppName -> ctx.session.sparkContext.appName,
+            ExecutionPlanExtra.DataTypes -> dataTypeConverter.values
+          )
 
-        val ev = ExecutionEvent(
-          planId = plan.id,
-          timestamp = System.currentTimeMillis,
-          error = result.left.toOption,
-          extra = eventExtra.asOption)
+          val attributes = (builders.map(_.outputAttributes) :+ writeOpBuilder.additionalAttributes)
+            .reduce(_ ++ _)
+            .distinct
 
-        val eventUserExtra = userExtraMetadataProvider.forExecEvent(ev, ctx)
-        val event = ev.withAddedExtra(eventUserExtra)
+          val expressions = Expressions(
+            constants = builders.map(_.literals).reduce(_ ++ _),
+            functions = builders.map(_.functionalExpressions).reduce(_ ++ _)
+          )
 
-        log.debug(s"Successfully harvested lineage from ${ctx.logicalPlan.getClass}")
+          val p = ExecutionPlan(
+            id = None,
+            discriminator = None,
+            labels = Map.empty,
+            name = ctx.session.sparkContext.appName, // `appName` for now, but could be different (user defined) in the future
+            operations = Operations(writeOp, opReads, opOthers),
+            attributes = attributes,
+            expressions = expressions,
+            systemInfo = SparkVersionInfo,
+            agentInfo = SplineVersionInfo,
+            extraInfo = planExtra
+          )
+          postProcessor.process(p)
+        }
+
+        val planId = ctx.idGenerators.execPlanIdGenerator.nextId(planWithoutId)
+        val plan = planWithoutId.copy(id = Some(planId))
+
+        val event = {
+          val maybeDurationNs = result.right.toOption.map(_.toNanos)
+          val maybeErrorString = result.left.toOption.map(ExceptionUtils.getStackTrace)
+
+          val eventExtra = Map[String, Any](
+            ExecutionEventExtra.AppId -> ctx.session.sparkContext.applicationId,
+            ExecutionEventExtra.User -> ctx.session.sparkContext.sparkUser,
+            ExecutionEventExtra.ReadMetrics -> readMetrics,
+            ExecutionEventExtra.WriteMetrics -> writeMetrics
+          )
+
+          val ev = ExecutionEvent(
+            planId = planId,
+            discriminator = None,
+            labels = Map.empty,
+            timestamp = System.currentTimeMillis,
+            durationNs = maybeDurationNs,
+            error = maybeErrorString,
+            extra = eventExtra)
+
+          postProcessor.process(ev)
+        }
+
+        logDebug(s"Successfully harvested lineage from ${ctx.logicalPlan.getClass}")
         Some(plan -> event)
       }
     })
   }
 
+  private def tryExtractWriteCommand(funcName: FuncName, plan: LogicalPlan): Option[WriteCommand] =
+    Try(writeCommandExtractor.asWriteCommand(funcName, plan)) match {
+      case Success(Some(write)) => Some(write)
+      case Success(None) =>
+        logDebug(s"${plan.getClass} was not recognized as a write-command. Skipping.")
+        logObjectStructureAsTrace(plan)
+        None
+      case Failure(e) =>
+        logObjectStructureAsError(plan)
+        throw new RuntimeException(s"Write extraction failed for: ${plan.getClass}", e)
+    }
+
   private def createOperationBuildersRecursively(rootOp: LogicalPlan): Seq[OperationNodeBuilder] = {
     @scala.annotation.tailrec
     def traverseAndCollect(
       accBuilders: Seq[OperationNodeBuilder],
-      processedEntries: Map[LogicalPlan, OperationNodeBuilder],
-      enqueuedEntries: Seq[(LogicalPlan, OperationNodeBuilder)]
+      processedEntries: Map[PlanOrRdd, OperationNodeBuilder],
+      enqueuedEntries: Seq[(PlanOrRdd, OperationNodeBuilder)]
     ): Seq[OperationNodeBuilder] = {
       enqueuedEntries match {
         case Nil => accBuilders
@@ -149,11 +166,11 @@ class LineageHarvester(
           val maybeExistingBuilder = processedEntries.get(curOpNode)
           val curBuilder = maybeExistingBuilder.getOrElse(createOperationBuilder(curOpNode))
 
-          if (parentBuilder != null) parentBuilder += curBuilder
+          if (parentBuilder != null) parentBuilder.addChild(curBuilder)
 
           if (maybeExistingBuilder.isEmpty) {
 
-            val newNodesToProcess = extractChildren(curOpNode)
+            val newNodesToProcess = opNodeBuilderFactory.nodeChildren(curOpNode)
 
             traverseAndCollect(
               curBuilder +: accBuilders,
@@ -166,25 +183,41 @@ class LineageHarvester(
       }
     }
 
-    traverseAndCollect(Nil, Map.empty, Seq((rootOp, null)))
+    val builders = traverseAndCollect(Nil, Map.empty, Seq((PlanWrap(rootOp), null)))
+    builders.sortedTopologicallyBy(_.operationId, _.childIds, reverse = true)
   }
 
-  private def createOperationBuilder(op: LogicalPlan): OperationNodeBuilder =
-    readCommandExtractor.asReadCommand(op)
-      .map(opNodeBuilderFactory.readNodeBuilder)
-      .getOrElse(opNodeBuilderFactory.genericNodeBuilder(op))
+  private def createOperationBuilder(por: PlanOrRdd): OperationNodeBuilder =
+    readCommandExtractor.asReadCommand(por)
+      .map(rc => opNodeBuilderFactory.readNodeBuilder(rc, por))
+      .getOrElse(opNodeBuilderFactory.genericNodeBuilder(por))
 
-  private def extractChildren(plan: LogicalPlan) = plan match {
-    case AnalysisBarrierExtractor(_) =>
-      // special handling - spark 2.3 sometimes includes AnalysisBarrier in the plan
-      val child = ReflectionUtils.extractFieldValue[LogicalPlan](plan, "child")
-      Seq(child)
-
-    case _ => plan.children
-  }
 }
 
 object LineageHarvester {
+
+  import za.co.absa.commons.version.Version
+
+  trait PlanOrRdd
+
+  case class PlanWrap(plan: LogicalPlan) extends PlanOrRdd
+
+  case class RddWrap(rdd: RDD[_]) extends PlanOrRdd
+
+  val SparkVersionInfo: NameAndVersion = NameAndVersion(
+    name = AppMetaInfo.Spark,
+    version = spark.SPARK_VERSION
+  )
+
+  val SplineVersionInfo: NameAndVersion = NameAndVersion(
+    name = AppMetaInfo.Spline,
+    version = {
+      val splineSemver = Version.asSemVer(SplineBuildInfo.Version)
+      if (splineSemver.preRelease.isEmpty) SplineBuildInfo.Version
+      else s"${SplineBuildInfo.Version}+${SplineBuildInfo.Revision}"
+    }
+  )
+
   type Metrics = Map[String, Long]
   private type HarvestResult = Option[(ExecutionPlan, ExecutionEvent)]
 
@@ -208,8 +241,5 @@ object LineageHarvester {
 
     (cumulatedReadMetrics, getNodeMetrics(executedPlan))
   }
-
-  object AnalysisBarrierExtractor extends SafeTypeMatchingExtractor[LogicalPlan](
-    "org.apache.spark.sql.catalyst.plans.logical.AnalysisBarrier")
 
 }

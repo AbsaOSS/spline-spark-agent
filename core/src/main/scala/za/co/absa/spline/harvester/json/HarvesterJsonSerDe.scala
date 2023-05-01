@@ -16,23 +16,28 @@
 
 package za.co.absa.spline.harvester.json
 
-import za.co.absa.commons.json.AbstractJsonSerDe
-import za.co.absa.commons.reflect.ReflectionUtils
-
-import scala.reflect.runtime.universe._
+import org.json4s.Extraction.decompose
+import org.json4s.ext.JavaTypesSerializers
+import org.json4s.native.JsonMethods.{compact, parse, pretty, render}
+import org.json4s.{Formats, StringInput}
 
 object HarvesterJsonSerDe {
-  val impl: AbstractJsonSerDe = ReflectionUtils.compile(
-    q"""
-      import org.json4s.jackson._
-      import za.co.absa.commons.json._
-      import za.co.absa.commons.json.format._
-      import za.co.absa.spline.harvester.json._
 
-      new AbstractJsonSerDe
-        with JsonMethods
-        with ShortTypeHintForSpline03ModelSupport
-        with NoEmptyValuesSupport
-        with JavaTypesSupport
-    """)(Map.empty)
+  object impl {
+    private implicit val formats: Formats =
+      ShortTypeHintForSpline03ModelSupport.formats ++
+        JavaTypesSerializers.all
+
+    implicit class EntityToJson[B <: AnyRef](entity: B) {
+      def toJson: String = compact(render(decompose(entity)(formats)))
+    }
+
+    implicit class JsonToEntity(json: String) {
+      def fromJson[B: Manifest]: B = parseJson().extract(formats, implicitly[Manifest[B]])
+
+      def asPrettyJson: String = pretty(render(parseJson()))
+
+      private def parseJson() = parse(StringInput(json), formats.wantsBigDecimal, formats.wantsBigInt)
+    }
+  }
 }

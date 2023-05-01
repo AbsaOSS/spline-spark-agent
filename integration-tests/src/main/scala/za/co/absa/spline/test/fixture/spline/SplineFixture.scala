@@ -17,28 +17,19 @@ package za.co.absa.spline.test.fixture.spline
 
 import org.apache.commons.configuration.BaseConfiguration
 import org.apache.spark.sql.SparkSession
-import za.co.absa.spline.test.fixture.spline.SplineFixture.EMPTY_CONF
-import za.co.absa.spline.harvester.SparkLineageInitializer._
-import za.co.absa.spline.harvester.conf.DefaultSplineConfigurer
-import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 
-object SplineFixture {
-  def EMPTY_CONF = new BaseConfiguration
-}
 
 trait SplineFixture {
-
-  def withLineageTracking[T](session: SparkSession)(testBody: LineageCaptor.Getter => T): T = {
-    val lineageCaptor = new LineageCaptor
-
-    val testSplineConfigurer = new DefaultSplineConfigurer(session, EMPTY_CONF) {
-      override def lineageDispatcher: LineageDispatcher =
-        new LineageCapturingDispatcher(lineageCaptor.setter)
-    }
-
-    session.enableLineageTracking(testSplineConfigurer)
-
-    testBody(lineageCaptor.getter)
+  def withLineageTracking[T](testBody: LineageCaptor => T)(implicit session: SparkSession): T = {
+    testBody(new LineageCaptor)
   }
 }
 
+object SplineFixture {
+  def EmptyConf = new BaseConfiguration
+
+  def extractTableIdentifier(params: Map[String, Any]): Map[String, Any] =
+    params
+      .apply("table").asInstanceOf[Map[String, _]]
+      .apply("identifier").asInstanceOf[Map[String, _]]
+}

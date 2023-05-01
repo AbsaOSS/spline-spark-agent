@@ -16,19 +16,50 @@
 
 package za.co.absa.spline.harvester.conf
 
-import org.apache.commons.configuration.{CompositeConfiguration, Configuration, PropertiesConfiguration, SystemConfiguration}
+import org.apache.commons.configuration._
 import org.apache.spark.sql.SparkSession
 
 import scala.collection.JavaConverters._
 import scala.util.Try
 
+/**
+ * Standard Spline configuration comprises several configuration sources, prioritizing broader scopes over the narrower ones.
+ * E.g. a property defined in a Hadoop or Spark session would have higher priority than system settings or parameters passed into the method directly.
+ *
+ * It might look counter-intuitive, as logically explicitly provided params should override ones defined in the outer scope.
+ * But that was done in order to allow managed environment administrators to enforce Spline configuration properties.
+ * For example, a company could require lineage metadata from all jobs executed on a particular environment to be stored in a particular place
+ * (a database, file, Spline server etc). So even if some jobs happen to contain hardcoded properties (e.g. `System.setProperty(...)` or an embedded
+ * property files) that a job developer used during development but forgot to remove before submitting the job into a production environment,
+ * it should still work correctly. Those local settings need be ignored and overridden by the ones received from the execution environment.
+ * For instance, centrally managed settings could be enforced through the Spark Session config
+ * (if the Spark session is provided by the environment such as Databricks Notebook or alike), or a Hadoop config.
+ *
+ */
 object StandardSplineConfigurationStack {
-  private val propertiesFileName = "spline.properties"
+  private val PropertiesFileName = "spline.properties"
+  private val YamlFileName = "/spline.yaml"
+  private val DefaultPropertiesFileName = "/spline.default.yaml"
 
-  def apply(sparkSession: SparkSession): Configuration = new CompositeConfiguration(Seq(
-    Some(new HadoopConfiguration(sparkSession.sparkContext.hadoopConfiguration)),
-    Some(new SparkConfiguration(sparkSession.sparkContext.getConf)),
-    Some(new SystemConfiguration),
-    Try(new PropertiesConfiguration(propertiesFileName)).toOption
-  ).flatten.asJava)
+  def defaultConfig: Configuration = new YAMLConfiguration(getClass.getResource(DefaultPropertiesFileName))
+
+  def configStack(sparkSession: SparkSession, userConfig: Configuration = null): Seq[Configuration] = {
+    Seq(
+      Some(new HadoopConfiguration(sparkSession.sparkContext.hadoopConfiguration)),
+      Some(new SparkConfiguration(sparkSession.sparkContext.getConf)),
+      Some(new SystemConfiguration),
+      Try(new PropertiesConfiguration(PropertiesFileName)).toOption,
+      Try(new YAMLConfiguration(getClass.getResource(YamlFileName))).toOption,
+      Option(userConfig)
+    ).flatten
+      .map(withBackwardCompatibility)
+  }
+
+  private def withBackwardCompatibility(config: Configuration) = {
+    new CompositeConfiguration(Seq(
+      config,
+      new Spline05ConfigurationAdapter(config)
+    ).asJava)
+  }
+
 }

@@ -16,8 +16,8 @@
 
 package za.co.absa.spline.harvester.builder.read
 
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import za.co.absa.spline.harvester.LineageHarvester.PlanOrRdd
 
 trait ReadCommandExtractor {
-  def asReadCommand(operation: LogicalPlan): Option[ReadCommand]
+  def asReadCommand(planOrRdd: PlanOrRdd): Option[ReadCommand]
 }

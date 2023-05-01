@@ -19,28 +19,32 @@ package za.co.absa.spline
 import org.apache.spark.sql.{SQLContext, SQLImplicits, SparkSession}
 
 /**
-  * The class represents skeleton of a example application and looks after initialization of SparkSession, etc
-  * @param name A spark application name
-  * @param master A spark master
-  * @param conf Custom properties
-  */
+ * The class represents skeleton of a example application and looks after initialization of SparkSession, etc
+ *
+ * @param name   A spark application name
+ * @param master A spark master
+ * @param conf   Custom properties
+ */
 abstract class SparkApp
 (
   name: String,
   master: String = "local[*]",
-  conf: Seq[(String, String)] = Nil
+  conf: Seq[(String, String)] = Nil,
+  tags: Seq[String] = Nil
 ) extends SQLImplicits with App {
 
   private val sparkBuilder = SparkSession.builder()
 
   sparkBuilder.appName(name)
   sparkBuilder.master(master)
+  sparkBuilder.config("spark.driver.host", "localhost")
+  sparkBuilder.config("spline.example.tags", tags.mkString(","))
 
   for ((k, v) <- conf) sparkBuilder.config(k, v)
 
   /**
-    * A Spark session.
-    */
+   * A Spark session.
+   */
   val spark: SparkSession = sparkBuilder.getOrCreate()
 
   protected override def _sqlContext: SQLContext = spark.sqlContext

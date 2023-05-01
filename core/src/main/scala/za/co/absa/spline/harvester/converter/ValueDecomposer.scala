@@ -16,8 +16,10 @@
 
 package za.co.absa.spline.harvester.converter
 
-import za.co.absa.commons.lang.OptionImplicits._
-import za.co.absa.commons.reflect.ReflectionUtils.ModuleClassSymbolExtractor
+import za.co.absa.commons.lang.extensions.TraversableExtension._
+
+import scala.reflect.runtime.universe.ClassSymbol
+import scala.util.Try
 
 sealed trait ValueDecomposer {
   outer =>
@@ -47,9 +49,16 @@ object ValueDecomposer extends ValueDecomposer {
     case (b: Boolean, _) => Some(b)
     case (s: String, _) => Some(s)
     case (opt: Option[_], arg) => opt.flatMap(recursion(_, arg))
-    case (map: Map[_, _], arg) => (for ((k, v) <- map; r <- recursion(v, arg)) yield k.toString -> r).asOption
-    case (seq: Traversable[_], arg) => seq.map(item => recursion(item, arg).orNull).toVector.asOption
+    case (map: Map[_, _], arg) => (for ((k, v) <- map; r <- recursion(v, arg)) yield k.toString -> r).toNonEmptyOption
+    case (seq: Traversable[_], arg) => seq.map(item => recursion(item, arg).orNull).toVector.toNonEmptyOption
     case (ModuleClassSymbolExtractor(symbol), _) => Some(symbol.name.toString)
     case (x: Any, _) => Some(x.toString)
+  }
+
+  private object ModuleClassSymbolExtractor {
+    def unapply(o: Any): Option[ClassSymbol] = {
+      // a workaround for Scala bug #12190
+      Try(za.co.absa.commons.reflect.ReflectionUtils.ModuleClassSymbolExtractor.unapply(o)).toOption.flatten
+    }
   }
 }

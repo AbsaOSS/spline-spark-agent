@@ -16,33 +16,29 @@
 
 package za.co.absa.spline.harvester.json
 
-import org.json4s.{DefaultFormats, Formats}
-import za.co.absa.commons.json.format.FormatsBuilder
+import org.apache.commons.lang3.StringUtils._
+import org.json4s.{DefaultFormats, Formats, TypeHints}
 import za.co.absa.commons.reflect.ReflectionUtils._
-import za.co.absa.spline.harvester.json.ShortTypeHintForSpline03ModelSupport._
-import za.co.absa.spline.model
+import za.co.absa.spline.model.dt.DataType
 
-import scala.reflect.runtime.universe._
-
-trait ShortTypeHintForSpline03ModelSupport extends FormatsBuilder {
-  override protected def formats: Formats = createFormats(Map(
-    "typeHintFieldName" -> "_typeHint",
-    "typeHints" -> SplineShortTypeHints(Nil
-      ++ directSubClassesOf[model.dt.DataType]
-      ++ directSubClassesOf[model.expr.Expression]
-    ),
-    "dateFormatterFn" -> DefaultFormats.losslessDate.get _))
-}
+import java.text.SimpleDateFormat
 
 object ShortTypeHintForSpline03ModelSupport {
-  private val createFormats: Map[String, Any] => Formats = compile[Formats](
-    q"""
-      import java.text.SimpleDateFormat
-      import org.json4s.{DefaultFormats, TypeHints}
-      new DefaultFormats {
-        override val typeHints: TypeHints = args("typeHints")
-        override val typeHintFieldName: String = args("typeHintFieldName")
-        override def dateFormatter = args[() => SimpleDateFormat]("dateFormatterFn")()
+  val formats: Formats = new DefaultFormats {
+    override def dateFormatter: SimpleDateFormat = DefaultFormats.losslessDate.get
+
+    override val typeHintFieldName: String = "_typeHint"
+
+    override val typeHints: TypeHints = new TypeHints {
+      private val classes: Seq[Class[_ <: DataType]] = directSubClassesOf[DataType]
+      override val hints: List[Class[_]] = classes.toList
+
+      override def hintFor(clazz: Class[_]): String = {
+        val className = clazz.getName
+        className.substring(1 + lastOrdinalIndexOf(className, ".", 2))
       }
-    """)
+
+      def classFor(hint: String): Option[Class[_]] = classes find (hintFor(_) == hint)
+    }
+  }
 }

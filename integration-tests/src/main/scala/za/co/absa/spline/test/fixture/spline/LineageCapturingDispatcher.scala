@@ -16,16 +16,14 @@
 package za.co.absa.spline.test.fixture.spline
 
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
-import za.co.absa.spline.harvester.json.HarvesterJsonSerDe
 import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
 class LineageCapturingDispatcher(lineageCaptor: LineageCaptor.Setter) extends LineageDispatcher {
 
-  import HarvesterJsonSerDe.impl._
+  override def name = "Test"
 
-  override def send(plan: ExecutionPlan): String = {
+  override def send(plan: ExecutionPlan): Unit = {
     lineageCaptor.capture(plan)
-    plan.id.toJson
   }
 
   override def send(event: ExecutionEvent): Unit = {

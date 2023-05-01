@@ -20,7 +20,7 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.{ArrayData, MapData}
 import org.apache.spark.sql.types.{ArrayType, DataType, MapType, StructType}
 import za.co.absa.commons.lang.Converter
-import za.co.absa.commons.lang.OptionImplicits._
+import za.co.absa.commons.lang.extensions.TraversableExtension._
 
 class DataConverter
   extends Converter {
@@ -35,7 +35,7 @@ class DataConverter
       rowItems
         .zip(rowType)
         .map({ case (item, field) => recursion(item, field.dataType).orNull })
-        .asOption
+        .toNonEmptyOption
 
     case (md: MapData, MapType(keyType, valueType, _)) =>
       val keys = md
@@ -49,7 +49,7 @@ class DataConverter
       keys
         .zip(values)
         .toMap
-        .asOption
+        .toNonEmptyOption
 
     case (ad: ArrayData, ArrayType(elemType, _)) =>
       ad
@@ -59,13 +59,10 @@ class DataConverter
           maybeValue.orNull
         })
         .toSeq
-        .asOption
+        .toNonEmptyOption
   })
 
   override def convert(internalDataWithType: From): To = internalDataWithType match {
     case (v, t) => renderer.decompose(v, t).orNull
   }
 }
-
-
-

@@ -23,7 +23,7 @@ import scala.collection.mutable
 
 object SystemFixture {
 
-  class PropsBackup[A, B](props: => mutable.Map[A, B]) {
+  private class PropsBackup[A, B](props: => mutable.Map[A, B]) {
     private var bkp: Map[A, B] = _
 
     def backup(): Unit = {
@@ -52,12 +52,12 @@ object SystemFixture {
       finally this.suitePropsBackup.restore()
     }
 
-    override protected def beforeEach() {
+    override protected def beforeEach(): Unit = {
       this.testPropsBackup.backup()
       super.beforeEach()
     }
 
-    override protected def afterEach() {
+    override protected def afterEach(): Unit = {
       try super.afterEach()
       finally this.testPropsBackup.restore()
     }
