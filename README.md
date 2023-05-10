@@ -755,6 +755,15 @@ See [How to build Spline Docker images](https://github.com/AbsaOSS/spline-gettin
 
 <a id="references"></a>
 
+### How to measure code coverage
+```shell
+./mvn verify -Dcode-coverage
+```
+If module contains measurable data the code coverage report will be generated on path:
+```
+{local-path}\spline-spark-agent\{module}\target\site\jacoco
+```
+
 ## References and examples
 
 Although the primary goal of Spline agent is to be used in combination with the [Spline server](https://github.com/AbsaOSS/spline),
