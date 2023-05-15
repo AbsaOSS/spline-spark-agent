@@ -80,6 +80,29 @@ class HarvesterJsonSerDeSpec
     Seq(theType).toJson should include(""""dt.Simple"""")
     Seq(theType).toJson.fromJson[Seq[dt.DataType]] should equal(Seq(theType))
   }
+
+  "asPrettyJson" should "prettify given JSON string" in {
+    """{"a":42,"xs":[1,{"f":2},{"g":3},4],"b":{"c":{"z":5}}}""".asPrettyJson should equal(
+      """{
+        |  "a": 42,
+        |  "xs": [
+        |    1,
+        |    {
+        |      "f": 2
+        |    },
+        |    {
+        |      "g": 3
+        |    },
+        |    4
+        |  ],
+        |  "b": {
+        |    "c": {
+        |      "z": 5
+        |    }
+        |  }
+        |}""".stripMargin
+    )
+  }
 }
 
 object HarvesterJsonSerDeSpec {

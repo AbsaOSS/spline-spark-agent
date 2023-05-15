@@ -16,28 +16,52 @@
 
 package za.co.absa.spline.harvester.json
 
-import org.json4s.Extraction.decompose
-import org.json4s.ext.JavaTypesSerializers
-import org.json4s.native.JsonMethods.{compact, parse, pretty, render}
-import org.json4s.{Formats, StringInput}
+import com.fasterxml.jackson.annotation.JsonInclude.Include
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.util.{DefaultIndenter, DefaultPrettyPrinter}
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
 object HarvesterJsonSerDe {
 
   object impl {
-    private implicit val formats: Formats =
-      ShortTypeHintForSpline03ModelSupport.formats ++
-        JavaTypesSerializers.all
+    private val mapper = {
+      new ObjectMapper()
+        .registerModule(DefaultScalaModule)
+        .setSerializationInclusion(Include.NON_ABSENT)
+    }
+
+    private lazy val prettyWriter = {
+      class CustomPrettyPrinter extends DefaultPrettyPrinter {
+        this.indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE)
+
+        override def writeObjectFieldValueSeparator(jg: JsonGenerator): Unit = jg.writeRaw(": ")
+
+        override def createInstance = new CustomPrettyPrinter
+      }
+      mapper.writer(new CustomPrettyPrinter)
+    }
+
 
     implicit class EntityToJson[B <: AnyRef](entity: B) {
-      def toJson: String = compact(render(decompose(entity)(formats)))
+      def toJson: String = {
+        mapper.writeValueAsString(entity)
+      }
     }
 
     implicit class JsonToEntity(json: String) {
-      def fromJson[B: Manifest]: B = parseJson().extract(formats, implicitly[Manifest[B]])
+      def fromJson[B: Manifest]: B = {
+        mapper.readValue[B](
+          json,
+          implicitly[Manifest[B]].runtimeClass.asInstanceOf[Class[B]]
+        )
+      }
 
-      def asPrettyJson: String = pretty(render(parseJson()))
-
-      private def parseJson() = parse(StringInput(json), formats.wantsBigDecimal, formats.wantsBigInt)
+      def asPrettyJson: String = {
+        val jsonObject = mapper.readValue(json, classOf[AnyRef])
+        val prettyJson = prettyWriter.writeValueAsString(jsonObject)
+        prettyJson
+      }
     }
   }
 }
