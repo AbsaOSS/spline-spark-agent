@@ -353,7 +353,7 @@ spline.lineageDispatcher.composite.dispatchers=http,console
 ```
 
 By default, if some dispatchers in the list fail, the others are still attempted. If you want the error in any dispatcher to be treated as fatal,
-and be propagated to the main process, you set the `failOnError` property to `true`:
+and be propagated to the main process, you set the `failOnErrors` property to `true`:
 
 ```properties
 spline.lineageDispatcher.composite.failOnErrors=true
