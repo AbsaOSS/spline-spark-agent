@@ -16,19 +16,34 @@
 
 package za.co.absa.spline.harvester.json
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.util.{DefaultIndenter, DefaultPrettyPrinter}
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
+
+import za.co.absa.shaded.jackson.annotation.JsonInclude
+import za.co.absa.shaded.jackson.core.JsonGenerator
+import za.co.absa.shaded.jackson.core.util.{DefaultIndenter, DefaultPrettyPrinter}
+import za.co.absa.shaded.jackson.databind.{ObjectMapper, SerializationFeature}
+import za.co.absa.shaded.jackson.module.scala.DefaultScalaModule
 
 object HarvesterJsonSerDe {
 
   object impl {
     private val mapper = {
-      new ObjectMapper()
+      val m = new ObjectMapper()
         .registerModule(DefaultScalaModule)
-        .setSerializationInclusion(Include.NON_ABSENT)
+        .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+
+      m.configOverride(classOf[scala.Option[_]]).setInclude(
+        JsonInclude.Value.empty
+          .withValueInclusion(JsonInclude.Include.CUSTOM)
+          .withValueFilter(classOf[SplineOptionFilter]))
+
+      m
+    }
+
+    private class SplineOptionFilter {
+      override def equals(o: Any): Boolean = o match {
+        case None => true
+        case _ => false
+      }
     }
 
     private lazy val prettyWriter = {
