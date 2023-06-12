@@ -439,9 +439,9 @@ MetadataCollectingFilter provides a way to add additional data to lineage produc
 
 Data can be added to the following lineage entities: `executionPlan`, `executionEvent`, `operation`, `read` and `write`.
 
-Inside each entity two places can be used for user data: `labels` and `extra`.
-Labels are intended for identification and filtering on the server.
-Extra is for any other user defined data.
+Inside each entity is dedicated map named `extra` that can store any additional user data.
+
+`executionPlan` and `executionEvent` have additional map `labels`. Labels are intended for identification and filtering on the server.
 
 Example usage:
 
@@ -458,12 +458,15 @@ json-with-rules.json could look like this:
         "extra": {
             "my-extra-1": 42,
             "my-extra-2": [ "aaa", "bbb", "ccc" ]
-       }
+        },
+        "labels": {
+            "my-label": "my-value"
+        }
     },
     "write": {
-      "labels": {
-        "my-label": "my-value"
-      }
+        "extra": {
+            "foo": "extra-value"
+        }
     }
 }
 ```
@@ -482,16 +485,56 @@ See the following example:
             "my-extra-2": [ "aaa", "bbb", "ccc" ],
             "bar": { "$env": "BAR_HOME" },
             "baz": { "$jvm": "some.jvm.prop" },
-            "daz": { "$js": "session.conf().get('k')" }
+            "daz": { "$js": "session.conf().get('k')" },
+            "appName": { "$js":"session.sparkContext().appName()" }
        }
     }
 }
 ```
 
-For the javascript evaluation `org.apache.spark.sql.SparkSession` is available as `session`,
-internal Spark Logical Plan `org.apache.spark.sql.catalyst.plans.logical.LogicalPlan` ia available as `logicalPlan` and
-`Option[org.apache.spark.sql.execution.SparkPlan]` as `executedPlanOpt`.
+For the javascript evaluation following variables are available by default:
+
+| variable          | Scala Type                                                 |
+|-------------------|:-----------------------------------------------------------|
+| `session`         | `org.apache.spark.sql.SparkSession`                        |
+| `logicalPlan`     | `org.apache.spark.sql.catalyst.plans.logical.LogicalPlan`  | 
+| `executedPlanOpt` | `Option[org.apache.spark.sql.execution.SparkPlan]`         |
+
 Using those objects it should be possible to extract almost any relevant information from Spark.
+
+The rules can be conditional, meaning the specified params will be added only when some condition is met.
+See the following example:
+
+```json
+{
+    "executionEvent[@.timestamp > 65]": {
+        "extra": { "tux": 1 }
+    },
+    "executionEvent[@.extra['foo'] == 'a' && @.extra['bar'] == 'x']": {
+        "extra": { "bux": 2 }
+    },
+    "executionEvent[@.extra['foo'] == 'a' && !@.extra['bar']]": {
+        "extra": { "dux": 3 }
+    },
+    "executionEvent[@.extra['baz'][2] >= 3]": {
+        "extra": { "mux": 4 }
+    },
+    "executionEvent[@.extra['baz'][2] < 3]": {
+        "extra": { "fux": 5 }
+    },
+    "executionEvent[session.sparkContext.conf['spark.ui.enabled'] == 'false']": {
+      "extra": { "tux": 1 }
+    }
+}
+```
+
+The condition is enclosed by `[]` after entity name.
+Here the `@` serves as a reference to currently processed entity, in this case executionEvent.
+The `[]` inside the condition statement can also serve as a way to access maps and sequences.
+Logical and comparison operators are available.
+
+`session` and other variables available for js are available here as well.
+
 
 For more examples of usage please se `MetadataCollectingFilterSpec` test class.
 
