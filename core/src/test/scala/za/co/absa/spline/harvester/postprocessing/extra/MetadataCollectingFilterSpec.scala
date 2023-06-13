@@ -35,6 +35,7 @@ class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matc
   private val logicalPlan = mock[LogicalPlan]
   private val sparkSession = SparkSession.builder
     .master("local")
+    .appName("testApp")
     .config("spark.driver.host", "localhost")
     .config("spark.ui.enabled", "false")
     .config("k", "nice")
@@ -68,7 +69,9 @@ class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matc
         |            "foo": { "$js": "executionPlan.name()" },
         |            "bar": { "$env": "BAR_HOME" },
         |            "baz": { "$jvm": "some.jvm.prop" },
-        |            "daz": { "$js": "session.conf().get('k')" }
+        |            "daz": { "$js": "session.conf().get('k')" },
+        |            "appName1": { "$js": "session.conf().get('spark.app.name')" },
+        |            "appName2": { "$js":"session.sparkContext().appName()" }
         |       }
         |    }
         |}
@@ -93,7 +96,36 @@ class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matc
     extra("bar") shouldBe "rabbit"
     extra("baz") shouldBe "123"
     extra("daz") shouldBe "nice"
+    extra("appName1") shouldBe "testApp"
+    extra("appName2") shouldBe "testApp"
   }
+
+  it should "support extra in Write" in {
+    val configString =
+      """
+        |{
+        |  "write": {
+        |    "extra": {
+        |      "foo": "extra-value",
+        |      "appName": { "$js":"session.sparkContext().appName()" }
+        |    }
+        |  }
+        |}
+        |""".stripMargin
+
+    val config = new BaseConfiguration {
+      addPropertyDirect(InjectRulesKey, configString)
+    }
+
+    val filter = new MetadataCollectingFilter(config)
+
+    val processedWrite = filter.processWriteOperation(wop, harvestingContext)
+
+    val extra = processedWrite.extra
+    extra("foo") shouldBe "extra-value"
+    extra("appName") shouldBe "testApp"
+  }
+
 
   it should "support labels" in {
     val configString =
