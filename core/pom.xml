@@ -39,7 +39,6 @@
         -->
 
         <spark.version>${spark-24.version}</spark.version>
-        <json4s.version>${json4s-35.version}</json4s.version>
         <cassandra-connector.version>${cassandra-connector-24.version}</cassandra-connector.version>
     </properties>
 
@@ -85,13 +84,18 @@
             <artifactId>snakeyaml</artifactId>
             <version>1.33</version>
         </dependency>
+
+        <!-- dependencies shaded by us-->
+
         <dependency>
-            <groupId>org.json4s</groupId>
-            <artifactId>json4s-native_${scala.binary.version}</artifactId>
+            <groupId>za.co.absa.shaded</groupId>
+            <artifactId>absa-shaded-jackson</artifactId>
+            <version>0.0.1</version>
         </dependency>
         <dependency>
-            <groupId>org.json4s</groupId>
-            <artifactId>json4s-ext_${scala.binary.version}</artifactId>
+            <groupId>za.co.absa.shaded</groupId>
+            <artifactId>absa-shaded-jackson-module-scala_${scala.binary.version}</artifactId>
+            <version>0.0.2</version>
         </dependency>
 
         <!-- optional dependencies (for plugins) -->
@@ -253,37 +257,6 @@
             <plugin>
                 <groupId>com.github.cerveada</groupId>
                 <artifactId>scalatest-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <createDependencyReducedPom>false</createDependencyReducedPom>
-                    <minimizeJar>true</minimizeJar>
-                    <artifactSet>
-                        <includes>
-                            <include>org.json4s:json4s-native_${scala.binary.version}</include>
-                            <include>org.json4s:json4s-core_${scala.binary.version}</include>
-                            <include>org.json4s:json4s-ast_${scala.binary.version}</include>
-                            <include>org.json4s:json4s-scalap_${scala.binary.version}</include>
-                            <include>org.json4s:json4s-ext_${scala.binary.version}</include>
-                        </includes>
-                    </artifactSet>
-                    <relocations>
-                        <relocation>
-                            <pattern>org.json4s</pattern>
-                            <shadedPattern>za.co.absa.spline.shaded.org.json4s</shadedPattern>
-                        </relocation>
-                    </relocations>
-                </configuration>
             </plugin>
         </plugins>
     </build>

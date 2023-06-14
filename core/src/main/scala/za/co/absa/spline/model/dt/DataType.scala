@@ -26,18 +26,29 @@ sealed trait DataType {
   val nullable: Boolean
 
   def childDataTypeIds: Seq[UUID]
+
+  /**
+   * Hardcoded typeHint for json deserialization
+   */
+  val _typeHint: String
 }
 
 case class Simple(id: UUID, name: String, nullable: Boolean) extends DataType {
   override def childDataTypeIds: Seq[UUID] = Nil
+
+  val _typeHint = "dt.Simple"
 }
 
 case class Struct(id: UUID, fields: Seq[StructField], nullable: Boolean) extends DataType {
   override def childDataTypeIds: Seq[UUID] = fields.map(_.dataTypeId)
+
+  val _typeHint = "dt.Struct"
 }
 
 case class StructField(name: String, dataTypeId: UUID)
 
 case class Array(id: UUID, elementDataTypeId: UUID, nullable: Boolean) extends DataType {
   override def childDataTypeIds: Seq[UUID] = Seq(elementDataTypeId)
+
+  val _typeHint = "dt.Array"
 }

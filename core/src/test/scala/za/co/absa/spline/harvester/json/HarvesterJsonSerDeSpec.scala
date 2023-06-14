@@ -76,9 +76,38 @@ class HarvesterJsonSerDeSpec
 
   it should "support type hints for Spline 0.3 model entities" in {
     val theType = dt.Simple(UUID.randomUUID(), "test", nullable = true)
-    Seq(theType).toJson should include(""""_typeHint"""")
+
+    theType.toJson should include(""""_typeHint"""")
     Seq(theType).toJson should include(""""dt.Simple"""")
-    Seq(theType).toJson.fromJson[Seq[dt.DataType]] should equal(Seq(theType))
+
+    val map = Seq(theType).toJson.fromJson[Seq[Map[String, Any]]].head
+    map("id") shouldEqual(theType.id.toString)
+    map("name") shouldEqual(theType.name)
+    map("nullable") shouldEqual(theType.nullable)
+    map("_typeHint") shouldEqual(theType._typeHint)
+  }
+
+  "asPrettyJson" should "prettify given JSON string" in {
+    """{"a":42,"xs":[1,{"f":2},{"g":3},4],"b":{"c":{"z":5}}}""".asPrettyJson should equal(
+      """{
+        |  "a": 42,
+        |  "xs": [
+        |    1,
+        |    {
+        |      "f": 2
+        |    },
+        |    {
+        |      "g": 3
+        |    },
+        |    4
+        |  ],
+        |  "b": {
+        |    "c": {
+        |      "z": 5
+        |    }
+        |  }
+        |}""".stripMargin
+    )
   }
 }
 
