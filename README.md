@@ -474,6 +474,24 @@ json-with-rules.json could look like this:
 The `spline.postProcessingFilter.userExtraMeta.rules` can be either url pointing to json file or a json string.
 The rules definition can be quite long and when providing string directly a lot of escaping may be necessary so using a file is recommended.
 
+Example of escaping the rules string in Scala String:
+```
+.config("spline.postProcessingFilter.userExtraMeta.rules", "{\"executionPlan\":{\"extra\":{\"qux\":42\\,\"tags\":[\"aaa\"\\,\"bbb\"\\,\"ccc\"]}}}")
+```
+- `"` needs to be escaped because it would end the string
+- `,` needs to be escaped because when passing configuration via Java properties the comma is used as a separator under the hood 
+  and must be explicitly escaped.
+
+Example of escaping the rules string as VM option:
+```
+-Dspline.postProcessingFilter.userExtraMeta.rules={\"executionPlan\":{\"extra\":{\"qux\":42\,\"tags\":[\"aaa\"\,\"bbb\"\,\"ccc\"]}}}
+```
+
+A convenient way how to provide rules json without need for escaping may be to specify the property in yaml config file.
+An example of this can be seen in 
+[spline examples yaml config](https://github.com/AbsaOSS/spline-spark-agent/blob/develop/examples/src/main/resources/spline.yaml).
+
+
 There is also option to get environment variables using `$env`, jvm properties using `$jvm` and execute javascript using `$js`.
 See the following example:
 
