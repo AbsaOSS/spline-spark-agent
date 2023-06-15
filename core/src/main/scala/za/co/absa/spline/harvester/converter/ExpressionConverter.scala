@@ -79,6 +79,16 @@ class ExpressionConverter(
         name = e.prettyName,
         params = getExpressionParameters(e)
       )
+    
+    case e: sparkExprssions.ListQuery =>
+      FunctionalExpression(
+        id = idGen.nextId(),
+        dataType = convertDataTypeNonNullable(e),
+        childRefs = Seq.empty,
+        extra = createExtra(e, ExprV1.Types.GenericLeaf),
+        name = e.prettyName,
+        params = getExpressionParameters(e)
+      )
 
     case _: sparkExprssions.WindowSpecDefinition
          | _: sparkExprssions.WindowFrame =>
@@ -104,6 +114,11 @@ class ExpressionConverter(
 
   private def convertDataType(expr: sparkExprssions.Expression) = {
     val dataType = dataTypeConverter.convert(expr.dataType, expr.nullable)
+    Some(dataType.id)
+  }
+
+  private def convertDataTypeNonNullable(expr: sparkExprssions.Expression) = {
+    val dataType = dataTypeConverter.convert(expr.dataType, false)
     Some(dataType.id)
   }
 
