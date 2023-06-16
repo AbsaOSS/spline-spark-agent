@@ -118,7 +118,7 @@ class ExpressionConverter(
   }
 
   private def convertDataTypeNonNullable(expr: sparkExprssions.Expression) = {
-    val dataType = dataTypeConverter.convert(expr.dataType, false)
+    val dataType = dataTypeConverter.convert(expr.dataType, nullable = false)
     Some(dataType.id)
   }
 
