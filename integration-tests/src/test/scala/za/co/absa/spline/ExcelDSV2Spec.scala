@@ -31,7 +31,6 @@ class ExcelDSV2Spec
   extends AsyncFlatSpec
     with BeforeAndAfterAll
     with Matchers
-//    with HDFSFixture
     with SparkFixture
     with SplineFixture
     with ReleasableResourceFixture {
@@ -67,42 +66,5 @@ class ExcelDSV2Spec
         }
       }
     }
-
-
-//  it should "support HDFS as a Excel source V2" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in
-//    withHdfs { hdfsCluster =>
-//
-//      hdfsCluster
-//        .getFileSystem()
-//        .copyFromLocalFile(new Path("data/test.xlsx"), new Path("/"))
-//
-//      val xlsxFilePath = hdfsCluster.getFileSystem.getFileStatus(new Path("/test.xlsx")).getPath.toString
-//
-//      withNewSparkSession { implicit spark =>
-//        spark.sparkContext.hadoopConfiguration.addResource(hdfsCluster.getFileSystem().getConf)
-//
-//        withLineageTracking { captor =>
-//          for {
-//            (plan2, _) <- captor.lineageOf {
-//              val df = spark
-//                .read
-//                .format("excel")
-//                .option("header", "true")
-//                .load(xlsxFilePath)
-//
-//              df.write
-//                .format("excel")
-//                .save(s"${hdfsCluster.getFileSystem.getUri}/test-out.csv")
-//            }
-//          } yield {
-//            plan2.operations.reads.head.extra("sourceType") shouldBe Some("excel")
-//            plan2.operations.reads.head.inputSources.head shouldBe xlsxFilePath
-//
-//            plan2.operations.write.extra("destinationType") shouldBe Some("excel")
-//            plan2.operations.write.outputSource shouldBe s"${hdfsCluster.getFileSystem.getUri}/test-out.csv"
-//          }
-//        }
-//      }
-//    }
 
 }
