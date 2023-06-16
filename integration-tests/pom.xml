@@ -32,7 +32,7 @@
         <guava.version>14.0.1</guava.version>
         <elasticsearch.spark.sufix>20</elasticsearch.spark.sufix>
         <testcontainers.version>1.17.5</testcontainers.version>
-        <hadoop.version>3.3.5</hadoop.version>
+<!--        <hadoop.version>3.0.3</hadoop.version>-->
     </properties>
 
     <dependencies>
@@ -154,17 +154,17 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-client-minicluster</artifactId>
-            <version>${hadoop.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-minicluster</artifactId>
-            <version>${hadoop.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.apache.hadoop</groupId>-->
+<!--            <artifactId>hadoop-client-minicluster</artifactId>-->
+<!--            <version>${hadoop.version}</version>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.apache.hadoop</groupId>-->
+<!--            <artifactId>hadoop-minicluster</artifactId>-->
+<!--            <version>${hadoop.version}</version>-->
+<!--        </dependency>-->
 
         <!-- required for spark-cassandra-connector -->
         <dependency>
