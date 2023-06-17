@@ -206,6 +206,7 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
 
   it should "return dataTypeId of any value when a ListQuery expression is called" in {
     val expression = mock[ListQuery]
+    when(expression.dataType).thenReturn(StringType)
 
     inside(converter.convert(expression)) {
       case fe: FunctionalExpression =>
