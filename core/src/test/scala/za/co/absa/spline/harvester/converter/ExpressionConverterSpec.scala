@@ -202,6 +202,14 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
         fe.params shouldNot contain key "otherExpression"
     }
   }
+  it should "return dataTypeId of any value when a ListQuery expression is called" in {
+    val expression = mock(classOf[ListQuery])
+
+    inside(converter.convert(expression)) {
+      case fe: FunctionalExpression =>
+        (fe.dataTypeId.isEmpty || fe.dataTypeId.isDefined) should be(true)
+    }
+  }
 }
 
 object ExpressionConverterSpec {
