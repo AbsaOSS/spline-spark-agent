@@ -19,6 +19,7 @@ package za.co.absa.spline.harvester.converter
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.codegen.{CodegenContext, ExprCode}
 import org.apache.spark.sql.catalyst.expressions.{CaseWhen, Expression, Literal}
+import org.apache.spark.sql.catalyst.expressions.{CaseWhen, Expression, Literal,ListQuery}
 import org.apache.spark.sql.types.DataTypes.NullType
 import org.apache.spark.sql.types._
 import org.mockito.Mockito._
@@ -202,12 +203,13 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
         fe.params shouldNot contain key "otherExpression"
     }
   }
+
   it should "return dataTypeId of any value when a ListQuery expression is called" in {
-    val expression = mock(classOf[ListQuery])
+    val expression = mock[ListQuery]
 
     inside(converter.convert(expression)) {
       case fe: FunctionalExpression =>
-        (fe.dataTypeId.isEmpty || fe.dataTypeId.isDefined) should be(true)
+        (fe.dataType.isEmpty || fe.dataType.isDefined) should be(true)
     }
   }
 }
