@@ -204,13 +204,13 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
     }
   }
 
-  it should "return dataTypeId of any value when a ListQuery expression is called" in {
+  it should "throw exception when nullable property is accessed for ListQuery else should return a dataType" in {
     val expression = mock[ListQuery]
     when(expression.dataType).thenReturn(StringType)
-
+    when(expression.nullable).thenThrow(new RuntimeException("accessing nullable property not supported for ListQuery"))  // should not be called
     inside(converter.convert(expression)) {
       case fe: FunctionalExpression =>
-        (fe.dataType.isEmpty || fe.dataType.isDefined) should be(true)
+        fe.dataType.isDefined should be(true)
     }
   }
 }
