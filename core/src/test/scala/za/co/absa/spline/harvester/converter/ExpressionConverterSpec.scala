@@ -250,33 +250,8 @@ object ExpressionConverterSpec {
     protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = copy(children = newChildren)
   }
 
-
-  case class FooListQuery(
-    returnType: DataType,
-    nullable: Boolean,
-    children: Seq[Expression],
-    any: Any
-  ) extends ListQuery {
-
-    def this(aParamOfSecondaryConstructor: String) = this(NullType, true, Nil, null, null, null, -1, -1, null, None, null, null)
-
-    val additionalPropertyNotFromConstructor = "this should not be captured"
-
-    override def dataType: DataType = returnType
-
-    override def eval(input: InternalRow): Any = ()
-
-    override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = null
-
-    protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = copy(children = newChildren)
-  }
-
   object Foo {
     val empty = new Foo("does not matter")
-  }
-
-  object FooListQuery {
-    val empty = new FooListQuery("testing list query expression")
   }
 
   object Bar {
