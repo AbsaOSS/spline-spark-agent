@@ -85,7 +85,7 @@ class ExpressionConverter(
         id = idGen.nextId(),
         dataType = convertDataTypeNonNullable(e), //refer issue #700 for details why the standard method is not used
         childRefs = convertChildren(e),
-        extra = createExtra(e, ExprV1.Types.GenericLeaf),
+        extra = createExtra(e, ExprV1.Types.Generic),
         name = e.prettyName,
         params = getExpressionParameters(e)
       )
