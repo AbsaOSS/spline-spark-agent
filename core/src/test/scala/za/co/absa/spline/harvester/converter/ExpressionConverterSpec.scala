@@ -206,8 +206,10 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
 
   it should "throw exception when nullable property is accessed for ListQuery else should return a dataType" in {
     val expression = mock[ListQuery]
+    val aChild = Literal("this is a child")
     when(expression.dataType).thenReturn(StringType)
     when(expression.nullable).thenThrow(new RuntimeException("accessing nullable property not supported for ListQuery"))  // should not be called
+    when(expression.children).thenReturn(Seq(aChild))
     inside(converter.convert(expression)) {
       case fe: FunctionalExpression =>
         fe.dataType.isDefined should be(true)
@@ -248,8 +250,33 @@ object ExpressionConverterSpec {
     protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = copy(children = newChildren)
   }
 
+
+  case class FooListQuery(
+    returnType: DataType,
+    nullable: Boolean,
+    children: Seq[Expression],
+    any: Any
+  ) extends ListQuery {
+
+    def this(aParamOfSecondaryConstructor: String) = this(NullType, true, Nil, null, null, null, -1, -1, null, None, null, null)
+
+    val additionalPropertyNotFromConstructor = "this should not be captured"
+
+    override def dataType: DataType = returnType
+
+    override def eval(input: InternalRow): Any = ()
+
+    override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = null
+
+    protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = copy(children = newChildren)
+  }
+
   object Foo {
     val empty = new Foo("does not matter")
+  }
+
+  object FooListQuery {
+    val empty = new FooListQuery("testing list query expression")
   }
 
   object Bar {
