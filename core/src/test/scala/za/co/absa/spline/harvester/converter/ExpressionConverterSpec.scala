@@ -19,6 +19,7 @@ package za.co.absa.spline.harvester.converter
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.codegen.{CodegenContext, ExprCode}
 import org.apache.spark.sql.catalyst.expressions.{CaseWhen, Expression, Literal}
+import org.apache.spark.sql.catalyst.expressions.{CaseWhen, Expression, Literal,ListQuery}
 import org.apache.spark.sql.types.DataTypes.NullType
 import org.apache.spark.sql.types._
 import org.mockito.Mockito._
@@ -200,6 +201,18 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
     inside(converter.convert(expression)) {
       case fe: FunctionalExpression =>
         fe.params shouldNot contain key "otherExpression"
+    }
+  }
+
+  it should "throw exception when nullable property is accessed for ListQuery else should return a dataType" in {
+    val expression = mock[ListQuery]
+    val aChild = Literal("this is a child")
+    when(expression.dataType).thenReturn(StringType)
+    when(expression.nullable).thenThrow(new RuntimeException("accessing nullable property not supported for ListQuery"))  // should not be called
+    when(expression.children).thenReturn(Seq(aChild))
+    inside(converter.convert(expression)) {
+      case fe: FunctionalExpression =>
+        fe.dataType.isDefined should be(true)
     }
   }
 }
