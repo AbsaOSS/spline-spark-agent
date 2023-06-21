@@ -25,7 +25,7 @@
         <groupId>za.co.absa.spline.agent.spark</groupId>
         <artifactId>spline-spark-agent_2.12</artifactId>
         <relativePath>../pom.xml</relativePath>
-        <version>1.2.0-SNAPSHOT</version>
+        <version>1.3.0-SNAPSHOT</version>
     </parent>
 
     <properties>
@@ -187,7 +187,7 @@
                     <configOptions>
                         <modelPropertyNaming>original</modelPropertyNaming>
                     </configOptions>
-                    <inputSpec/>
+                    <inputSpec />
                 </configuration>
                 <executions>
                     <execution>
@@ -198,7 +198,7 @@
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/producer.api.v1.0.json</inputSpec>
                             <modelPackage>za.co.absa.spline.producer.dto.v1_0</modelPackage>
-                            <language/>
+                            <language />
                         </configuration>
                     </execution>
                     <execution>
@@ -209,7 +209,7 @@
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/producer.api.v1.1.json</inputSpec>
                             <modelPackage>za.co.absa.spline.producer.dto.v1_1</modelPackage>
-                            <language/>
+                            <language />
                         </configuration>
                     </execution>
                     <execution>
@@ -220,7 +220,7 @@
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/producer.api.v1.2.json</inputSpec>
                             <modelPackage>za.co.absa.spline.producer.dto.v1_2</modelPackage>
-                            <language/>
+                            <language />
                         </configuration>
                     </execution>
                     <execution>
@@ -231,7 +231,7 @@
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/api/openlineage/OpenLineage.yml</inputSpec>
                             <modelPackage>za.co.absa.spline.producer.model.openlineage.v0_3_1</modelPackage>
-                            <language/>
+                            <language />
                         </configuration>
                     </execution>
                 </executions>
