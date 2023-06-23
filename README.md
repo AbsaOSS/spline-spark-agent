@@ -16,6 +16,8 @@ The agent can be used with or without a Spline server, depending on your use cas
 [![SonarCloud Maintainability](https://sonarcloud.io/api/project_badges/measure?project=AbsaOSS_spline-spark-agent&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=AbsaOSS_spline-spark-agent)
 [![SonarCloud Reliability](https://sonarcloud.io/api/project_badges/measure?project=AbsaOSS_spline-spark-agent&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=AbsaOSS_spline-spark-agent)
 [![SonarCloud Security](https://sonarcloud.io/api/project_badges/measure?project=AbsaOSS_spline-spark-agent&metric=security_rating)](https://sonarcloud.io/dashboard?id=AbsaOSS_spline-spark-agent)
+[![Docker Pulls](https://badgen.net/docker/pulls/absaoss/spline-spark-agent?icon=docker&label=pulls)](https://hub.docker.com/r/absaoss/spline-spark-agent/)
+
 
 ## Table of Contents
 
