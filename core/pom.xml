@@ -57,6 +57,11 @@
             <artifactId>spark-sql_${scala.binary.version}</artifactId>
         </dependency>
         <dependency>
+            <groupId>commons-configuration</groupId>
+            <artifactId>commons-configuration</artifactId>
+            <version>1.6</version>
+        </dependency>
+        <dependency>
             <groupId>org.scalaj</groupId>
             <artifactId>scalaj-http_${scala.binary.version}</artifactId>
             <version>2.4.1</version>
@@ -87,11 +92,6 @@
 
         <!-- dependencies shaded by us-->
 
-        <dependency>
-            <groupId>za.co.absa.shaded</groupId>
-            <artifactId>absa-shaded-jackson</artifactId>
-            <version>0.0.1</version>
-        </dependency>
         <dependency>
             <groupId>za.co.absa.shaded</groupId>
             <artifactId>absa-shaded-jackson-module-scala_${scala.binary.version}</artifactId>

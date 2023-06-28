@@ -302,6 +302,55 @@
                                 </includes>
                             </filter>
                         </filters>
+                        <relocations>
+
+                            <!-- za.co.absa.commons:commons -->
+
+                            <relocation>
+                                <pattern>za.co.absa.commons</pattern>
+                                <shadedPattern>za.co.absa.spline.shaded.za.co.absa.commons</shadedPattern>
+                            </relocation>
+
+                            <!-- io.github.classgraph:glassgraph -->
+
+                            <relocation>
+                                <pattern>io.github.classgraph</pattern>
+                                <shadedPattern>za.co.absa.spline.shaded.io.github.classgraph</shadedPattern>
+                            </relocation>
+                            <relocation>
+                                <pattern>nonapi.io.github.classgraph</pattern>
+                                <shadedPattern>za.co.absa.spline.shaded.nonapi.io.github.classgraph</shadedPattern>
+                            </relocation>
+
+                            <!-- com.fasterxml.uuid:java-uuid-generator -->
+
+                            <relocation>
+                                <pattern>com.fasterxml.uuid</pattern>
+                                <shadedPattern>za.co.absa.spline.shaded.com.fasterxml.uuid</shadedPattern>
+                            </relocation>
+
+                            <!-- org.scalaj:scalaj-http -->
+
+                            <relocation>
+                                <pattern>scalaj.http</pattern>
+                                <shadedPattern>za.co.absa.spline.shaded.scalaj.http</shadedPattern>
+                            </relocation>
+
+                            <!-- com.lihaoyi:fastparse -->
+
+                            <relocation>
+                                <pattern>fastparse</pattern>
+                                <shadedPattern>za.co.absa.spline.shaded.fastparse</shadedPattern>
+                            </relocation>
+                            <relocation>
+                                <pattern>geny</pattern>
+                                <shadedPattern>za.co.absa.spline.shaded.geny</shadedPattern>
+                            </relocation>
+                            <relocation>
+                                <pattern>sourcecode</pattern>
+                                <shadedPattern>za.co.absa.spline.shaded.sourcecode</shadedPattern>
+                            </relocation>
+                        </relocations>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -330,11 +379,6 @@
             <version>${scala.version}</version>
         </dependency>
         <dependency>
-            <groupId>commons-configuration</groupId>
-            <artifactId>commons-configuration</artifactId>
-            <version>1.6</version>
-        </dependency>
-        <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.binary.version}</artifactId>
             <scope>test</scope>
@@ -349,11 +393,6 @@
             <artifactId>jsr305</artifactId>
             <version>3.0.2</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.bigwheel</groupId>
-            <artifactId>util-backports_${scala.binary.version}</artifactId>
-            <version>2.1</version>
         </dependency>
     </dependencies>
 
