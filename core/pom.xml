@@ -94,6 +94,11 @@
 
         <dependency>
             <groupId>za.co.absa.shaded</groupId>
+            <artifactId>absa-shaded-jackson</artifactId>
+            <version>0.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa.shaded</groupId>
             <artifactId>absa-shaded-jackson-module-scala_${scala.binary.version}</artifactId>
             <version>0.0.2</version>
         </dependency>

@@ -285,6 +285,12 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
                     <version>3.4.1</version>
+
+                    <!--
+                        Shade plugin is only activated in bundles.
+                        The configuration is placed here to reuse in bundle poms, and avoid duplication.
+                    -->
+
                     <configuration>
                         <createDependencyReducedPom>false</createDependencyReducedPom>
                         <minimizeJar>true</minimizeJar>
@@ -327,13 +333,6 @@
                             <relocation>
                                 <pattern>com.fasterxml.uuid</pattern>
                                 <shadedPattern>za.co.absa.spline.shaded.com.fasterxml.uuid</shadedPattern>
-                            </relocation>
-
-                            <!-- org.scalaj:scalaj-http -->
-
-                            <relocation>
-                                <pattern>scalaj.http</pattern>
-                                <shadedPattern>za.co.absa.spline.shaded.scalaj.http</shadedPattern>
                             </relocation>
 
                             <!-- com.lihaoyi:fastparse -->
