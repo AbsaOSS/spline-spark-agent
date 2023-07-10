@@ -48,6 +48,11 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.github.bigwheel</groupId>
+            <artifactId>util-backports_${scala.binary.version}</artifactId>
+            <version>2.1</version>
+        </dependency>
 
         <!-- Test scope -->
 
