@@ -88,6 +88,11 @@
             <artifactId>snakeyaml</artifactId>
             <version>1.33</version>
         </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>sqs</artifactId>
+            <version>2.20.18</version>
+        </dependency>
 
         <!-- dependencies shaded by us-->
 
