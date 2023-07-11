@@ -100,6 +100,15 @@ spline:
       topic:
 
     # -------------------------------------------
+    # Sqs dispatcher
+    # -------------------------------------------
+    sqs:
+      className: za.co.absa.spline.harvester.dispatcher.SqsLineageDispatcher
+      apiVersion: "1.2"
+      # fully qualified sqs queue url
+      queue.url:
+
+    # -------------------------------------------
     # Console dispatcher
     # -------------------------------------------
     console:
