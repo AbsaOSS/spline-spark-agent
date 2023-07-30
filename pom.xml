@@ -81,10 +81,6 @@
 
         <slf4j.version>1.7.25</slf4j.version>
 
-        <!-- Docker -->
-
-        <dockerfile.imageName>spline-spark-agent</dockerfile.imageName>
-
         <!-- Spark -->
 
         <spark.version>${spark-24.version}</spark.version>
@@ -243,15 +239,6 @@
                 </configuration>
             </plugin>
 
-            <!-- Enable docker build -->
-            <plugin>
-                <groupId>io.fabric8</groupId>
-                <artifactId>docker-maven-plugin</artifactId>
-                <inherited>false</inherited>
-                <configuration>
-                    <skip>false</skip>
-                </configuration>
-            </plugin>
         </plugins>
 
         <pluginManagement>
