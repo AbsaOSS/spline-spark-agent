@@ -69,7 +69,7 @@ class YAMLConfiguration(yaml: String)
 
   override def getProperty(key: String): AnyRef = confMap.get(key)
 
-  override def getKeys: ju.Iterator[_] = confMap.keySet.iterator
+  override def getKeys: ju.Iterator[String] = confMap.keySet.iterator
 
   override def containsKey(key: String): Boolean = confMap.containsKey(key)
 

@@ -55,6 +55,12 @@
         </dependency>
 
         <!-- Test scope -->
+        <dependency>
+            <groupId>za.co.absa.commons</groupId>
+            <artifactId>scalatest-extras_${scala.binary.version}</artifactId>
+            <scope>test</scope>
+        </dependency>
+
 
         <dependency>
             <groupId>org.apache.spark</groupId>
