@@ -33,7 +33,7 @@ object GitHub738Job extends SparkApp("GitHub spline-738") with Logging {
   val primarySourcePaths = primarySourceKeys.map(key => createMockCSV(s"Primary-$key"))
   val secondarySourcePaths = secondarySourceKeys.map(key => createMockCSV(s"Secondary-$key"))
 
-  val nIters: Int = if (args.length > 0) args(0).toInt else 4 // 20
+  val nIters: Int = if (args.length > 0) args(0).toInt else 2 // 20
   val nAppends: Int = if (args.length > 1) args(1).toInt else 2 // 10
   for {
     i <- 0 until nIters
