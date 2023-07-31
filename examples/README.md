@@ -33,43 +33,38 @@ Same as `pyspark` example above, but use `spark-shell` command instead.
 
 #### Scala / Java
 
-To run all available examples
+###### Build the project
 
 ```shell script
-mvn test -P examples
+# to build it with the default Spark version, simply run
+mvn install
+
+# or, if you want to specify a concrete Spark version from the 3.x series (i.e. `3.0`, `3.1` etc.)
+mvn install -Pspark-3.1
+
+# or, if you want to specify a concrete Spark version from the 2.x series (`2.2`, `2.3`, `2.4` only)
+# 1. switch the project to Scala 2.11 mode
+mvn scala-cross-build:change-version -Pscala-2.11
+# 2. then run Maven build with the `-Pspark-xxx` profile as above
+mvn install -Pspark-2.4
 ```
 
-To run examples with the specific Spark 2.x version (i.e. `2.2`, `2.3`, `2.4`)
+###### Run the examples
 
 ```shell script
-mvn test -P examples -P spark-2.4
+# Execute all available examples
+./run.sh --all -Dspline.producer.url=http://localhost:8080/producer
+
+# Execute individual example class
+./run.sh -Dspline.producer.url=http://localhost:8080/producer za.co.absa.spline.example.XXX
 ```
 
-To run examples with the specific Spark 3.x version (i.e. `3.0`, `3.1` or newer)
+To add JVM options
 
 ```shell script
-# switch the project to Scala 2.12 mode
-mvn scala-cross-build:change-version -Pscala-2.12
-# then run Maven with the `-Pspark-xxx` argument as above 
-mvn test -P examples -P spark-3.1
-```
-
-To run a selected example job (e.g. `Example1Job`)
-
-```shell script
-mvn test -P examples -D exampleClass=za.co.absa.spline.example.batch.Example1Job
-``` 
-
-To change the Spline Producer URL (default is http://localhost:8080/producer)
-
-```shell script
-mvn test -P examples -D spline.producer.url=http://localhost:8888/producer
-```
-
-To change the Spline Mode
-
-```shell script
-mvn test -P examples -D spline.mode=ENABLED
+./run.sh -jvm_opt1=xxx -jvm_opt2=yyy ... class.to.run.ClassName
+# or, if you run all examples, the '--all' argument should go first.
+./run.sh --all -jvm_opt1=xxx -jvm_opt2=yyy ...
 ```
 
 #### Examples source code
