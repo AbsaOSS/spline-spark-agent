@@ -21,7 +21,7 @@ import za.co.absa.commons.io.TempFile
 import za.co.absa.spline.SparkApp
 
 /**
- * THis is a test scenario for the lineage graph alignment on the UI
+ * This is a test scenario for the lineage graph alignment on the UI
  *
  * @see https://github.com/AbsaOSS/spline/issues/718
  */
