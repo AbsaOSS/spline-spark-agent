@@ -16,13 +16,12 @@
 
 package za.co.absa.spline
 
-import org.apache.hadoop.fs.Path
 import org.apache.spark.SPARK_VERSION
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.spline.commons.io.TempDirectory
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
+import za.co.absa.spline.commons.io.TempDirectory
 import za.co.absa.spline.commons.version.Version.VersionStringInterpolator
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{ReleasableResourceFixture, SparkFixture}

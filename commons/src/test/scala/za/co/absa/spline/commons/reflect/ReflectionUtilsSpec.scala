@@ -20,8 +20,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.spline.commons.reflect.ReflectionUtils.ModuleClassSymbolExtractor
-import ReflectionUtilsSpec._
-import za.co.absa.spline.commons.reflect.{CyclicAnnotationExample, JavaClassExample}
+import za.co.absa.spline.commons.reflect.ReflectionUtilsSpec._
 
 import scala.reflect.ClassTag
 

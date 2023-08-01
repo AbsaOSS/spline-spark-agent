@@ -19,7 +19,6 @@ package za.co.absa.spline.commons.config
 import org.apache.commons.configuration.{BaseConfiguration, MapConfiguration}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.spline.commons.config.ConfigurationImplicits
 
 import java.net.URI
 

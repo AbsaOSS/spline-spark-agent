@@ -17,7 +17,7 @@
 package za.co.absa.spline.commons.lang
 
 import org.scalatest.flatspec.AnyFlatSpec
-import TypeNegationConstraintSpec.LunchFixture
+import za.co.absa.spline.commons.lang.TypeNegationConstraintSpec.LunchFixture
 
 import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._

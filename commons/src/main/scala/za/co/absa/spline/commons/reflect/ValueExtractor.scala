@@ -18,7 +18,6 @@ package za.co.absa.spline.commons.reflect
 
 import za.co.absa.spline.commons.annotation.DeveloperApi
 import za.co.absa.spline.commons.reflect.ReflectionUtils.allInterfacesOf
-import za.co.absa.spline.commons.annotation.DeveloperApi
 
 import scala.annotation.tailrec
 import scala.reflect.ClassTag

@@ -21,7 +21,6 @@ import scala.collection.concurrent.TrieMap
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import scala.tools.reflect.ToolBox
-import scala.util.{Failure, Success, Try}
 
 /**
  * Reflection utils

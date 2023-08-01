@@ -18,8 +18,8 @@ package za.co.absa.spline.commons.reflect
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import EnumerationMacrosSpec.Color.{Blue, Green, Red}
-import EnumerationMacrosSpec._
+import za.co.absa.spline.commons.reflect.EnumerationMacrosSpec.Color.{Blue, Green, Red}
+import za.co.absa.spline.commons.reflect.EnumerationMacrosSpec._
 
 class EnumerationMacrosSpec extends AnyFlatSpec with Matchers {
 

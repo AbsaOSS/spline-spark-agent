@@ -16,15 +16,14 @@
 
 package za.co.absa.spline.commons.lang
 
-import java.io._
-import java.util.function.BiFunction
-import java.util.{Collections, Properties, function}
-
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import ImmutablePropertiesSpec._
+import za.co.absa.spline.commons.lang.ImmutablePropertiesSpec._
 
+import java.io._
+import java.util.function.BiFunction
+import java.util.{Collections, Properties, function}
 import scala.collection.JavaConverters._
 import scala.io.Source
 

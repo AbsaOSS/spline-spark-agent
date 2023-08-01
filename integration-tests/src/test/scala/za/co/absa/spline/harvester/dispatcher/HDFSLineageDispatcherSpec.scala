@@ -20,8 +20,8 @@ import org.apache.commons.io.FileUtils.readFileToString
 import org.apache.spark.SPARK_VERSION
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.spline.commons.io.TempDirectory
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
+import za.co.absa.spline.commons.io.TempDirectory
 import za.co.absa.spline.commons.version.Version._
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
 import za.co.absa.spline.test.fixture.SparkFixture

@@ -22,8 +22,8 @@ import org.apache.spark.sql.{DataFrame, Row, SaveMode}
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.testcontainers.containers.CassandraContainer
-import za.co.absa.spline.commons.io.TempDirectory
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
+import za.co.absa.spline.commons.io.TempDirectory
 import za.co.absa.spline.commons.version.Version.VersionStringInterpolator
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{ReleasableResourceFixture, SparkFixture}

@@ -17,8 +17,8 @@
 package za.co.absa.spline.harvester.dispatcher
 
 import org.apache.spark.internal.Logging
-import za.co.absa.spline.commons.config.ConfigurationImplicits._
 import za.co.absa.spline.HierarchicalObjectFactory
+import za.co.absa.spline.commons.config.ConfigurationImplicits._
 import za.co.absa.spline.harvester.dispatcher.CompositeLineageDispatcher._
 import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 

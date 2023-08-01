@@ -18,7 +18,7 @@ package za.co.absa.spline.commons.lang
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import CachingConverterSpec.{CountingConverter, StrToIntConverter}
+import za.co.absa.spline.commons.lang.CachingConverterSpec.{CountingConverter, StrToIntConverter}
 
 class CachingConverterSpec extends AnyFlatSpec with Matchers {
 

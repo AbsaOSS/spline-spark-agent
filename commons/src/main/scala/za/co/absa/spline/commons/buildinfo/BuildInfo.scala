@@ -19,7 +19,6 @@ package za.co.absa.spline.commons.buildinfo
 import za.co.absa.spline.commons.lang.ARM.using
 import za.co.absa.spline.commons.lang.ImmutableProperties
 import za.co.absa.spline.commons.lang.extensions.NonOptionExtension.NonOptionOps
-import za.co.absa.spline.commons.lang.ImmutableProperties
 
 import java.util.{MissingResourceException, Properties}
 

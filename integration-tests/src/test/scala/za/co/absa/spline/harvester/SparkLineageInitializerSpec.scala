@@ -27,10 +27,10 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{Assertion, BeforeAndAfter, Succeeded}
 import org.scalatestplus.mockito.MockitoSugar
-import za.co.absa.spline.commons.io.TempFile
 import za.co.absa.commons.scalatest.ConditionalTestTags._
-import za.co.absa.spline.commons.version.Version._
 import za.co.absa.spline.agent.AgentConfig.ConfProperty
+import za.co.absa.spline.commons.io.TempFile
+import za.co.absa.spline.commons.version.Version._
 import za.co.absa.spline.harvester.SparkLineageInitializer._
 import za.co.absa.spline.harvester.SparkLineageInitializerSpec._
 import za.co.absa.spline.harvester.conf.{SQLFailureCaptureMode, SplineMode}

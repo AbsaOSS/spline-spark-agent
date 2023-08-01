@@ -16,10 +16,9 @@
 
 package za.co.absa.spline.commons.graph
 
-import AbstractGraphImplicits_SortedTopologicallySpec.{TestNode, TestNodeId, TestRefNodeIds}
-import GraphImplicits_SortedTopologicallySpec.TestNodeIdMapping
-import za.co.absa.spline.commons.graph.GraphImplicits._
-import za.co.absa.spline.commons.graph.GraphImplicits.DAGNodeIdMapping
+import za.co.absa.spline.commons.graph.AbstractGraphImplicits_SortedTopologicallySpec.{TestNode, TestNodeId, TestRefNodeIds}
+import za.co.absa.spline.commons.graph.GraphImplicits.{DAGNodeIdMapping, _}
+import za.co.absa.spline.commons.graph.GraphImplicits_SortedTopologicallySpec.TestNodeIdMapping
 
 
 class GraphImplicits_SortedTopologicallySpec

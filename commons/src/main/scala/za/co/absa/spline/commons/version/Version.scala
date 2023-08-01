@@ -18,7 +18,6 @@ package za.co.absa.spline.commons.version
 
 import za.co.absa.spline.commons.version.impl.SemVer20Impl.SemanticVersion
 import za.co.absa.spline.commons.version.impl.{SemVer20Impl, SimpleVersionImpl}
-import za.co.absa.spline.commons.version.impl.{SemVer20Impl, SimpleVersionImpl}
 
 import scala.annotation.tailrec
 

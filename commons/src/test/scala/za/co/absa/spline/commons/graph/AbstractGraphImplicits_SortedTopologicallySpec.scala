@@ -19,7 +19,7 @@ package za.co.absa.spline.commons.graph
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers._
 import org.scalatest.matchers.should.Matchers
-import AbstractGraphImplicits_SortedTopologicallySpec.{TestNode, topologicallySorted}
+import za.co.absa.spline.commons.graph.AbstractGraphImplicits_SortedTopologicallySpec.{TestNode, topologicallySorted}
 
 import scala.collection.{Seq, mutable}
 

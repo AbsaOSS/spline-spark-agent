@@ -19,8 +19,8 @@ package za.co.absa.spline.commons
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.spline.commons.EnumUtils.EnumOps
-import EnumUtilsSpec.Fruit
-import EnumUtilsSpec.Fruit.{Apple, Kiwi, Orange}
+import za.co.absa.spline.commons.EnumUtilsSpec.Fruit
+import za.co.absa.spline.commons.EnumUtilsSpec.Fruit.{Apple, Kiwi, Orange}
 
 class EnumUtilsSpec
   extends AnyFlatSpec

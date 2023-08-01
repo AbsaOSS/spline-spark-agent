@@ -16,7 +16,5 @@
 
 package za.co.absa.spline.commons.reflect
 
-import za.co.absa.spline.commons.reflect.CyclicAnnotationExample
-
 @CyclicAnnotationExample.CyclicAnnotation
 class ClassWithCyclicAnnotation

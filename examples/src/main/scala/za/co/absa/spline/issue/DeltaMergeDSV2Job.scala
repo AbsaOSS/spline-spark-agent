@@ -16,8 +16,8 @@
 
 package za.co.absa.spline.issue
 
-import za.co.absa.spline.commons.io.TempDirectory
 import za.co.absa.spline.SparkApp
+import za.co.absa.spline.commons.io.TempDirectory
 
 /**
  * This Job requires Spark 3 or higher
