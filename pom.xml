@@ -288,21 +288,8 @@
                                     <include>**</include>
                                 </includes>
                             </filter>
-                            <filter>
-                                <artifact>za.co.absa.commons:commons_${scala.binary.version}</artifact>
-                                <includes>
-                                    <include>**</include>
-                                </includes>
-                            </filter>
                         </filters>
                         <relocations>
-
-                            <!-- za.co.absa.commons:commons -->
-
-                            <relocation>
-                                <pattern>za.co.absa.commons</pattern>
-                                <shadedPattern>za.co.absa.spline.shaded.za.co.absa.commons</shadedPattern>
-                            </relocation>
 
                             <!-- io.github.classgraph:glassgraph -->
 
