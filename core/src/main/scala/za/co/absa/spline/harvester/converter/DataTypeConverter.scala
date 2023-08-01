@@ -17,7 +17,7 @@
 package za.co.absa.spline.harvester.converter
 
 import org.apache.spark.sql.{types => st}
-import za.co.absa.commons.lang.Converter
+import za.co.absa.spline.commons.lang.Converter
 import za.co.absa.spline.harvester.DataTypeIdGenerator
 import za.co.absa.spline.model.dt._
 

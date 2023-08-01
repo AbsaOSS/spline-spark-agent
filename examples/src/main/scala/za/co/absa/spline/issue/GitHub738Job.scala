@@ -18,7 +18,7 @@ package za.co.absa.spline.issue
 
 import org.apache.commons.io.FileUtils
 import org.apache.spark.internal.Logging
-import za.co.absa.commons.io.TempFile
+import za.co.absa.spline.commons.io.TempFile
 import za.co.absa.spline.SparkApp
 
 import scala.util.Random

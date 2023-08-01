@@ -18,7 +18,7 @@ package za.co.absa.spline.harvester.dispatcher.kafkadispatcher
 
 import org.apache.kafka.clients.producer.{Producer, RecordMetadata}
 import org.apache.spark.internal.Logging
-import za.co.absa.commons.version.Version
+import za.co.absa.spline.commons.version.Version
 import za.co.absa.spline.harvester.dispatcher.SplineEntityType
 
 import java.util.UUID

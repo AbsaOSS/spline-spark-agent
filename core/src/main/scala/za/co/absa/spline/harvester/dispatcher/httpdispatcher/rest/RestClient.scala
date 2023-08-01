@@ -20,7 +20,7 @@ import org.apache.commons.configuration.Configuration
 import org.apache.spark.internal.Logging
 import scalaj.http.HttpOptions.HttpOption
 import scalaj.http.{BaseHttp, HttpOptions}
-import za.co.absa.commons.lang.extensions.AnyExtension._
+import za.co.absa.spline.commons.lang.extensions.AnyExtension._
 import za.co.absa.spline.harvester.dispatcher.SplineHeaders
 
 import scala.concurrent.duration.Duration

@@ -18,7 +18,7 @@ package za.co.absa.spline.harvester.builder.plan
 
 import org.apache.spark.sql.catalyst.expressions.{Expression => SparkExpression}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import za.co.absa.commons.reflect.ReflectionUtils.extractValue
+import za.co.absa.spline.commons.reflect.ReflectionUtils.extractValue
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.ModelConstants.CommonExtras
 import za.co.absa.spline.harvester.builder.OperationNodeBuilder.IOAttributes

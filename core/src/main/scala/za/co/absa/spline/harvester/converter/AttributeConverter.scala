@@ -17,7 +17,7 @@
 package za.co.absa.spline.harvester.converter
 
 import org.apache.spark.sql.catalyst.{expressions => sparkExprssions}
-import za.co.absa.commons.lang.Converter
+import za.co.absa.spline.commons.lang.Converter
 import za.co.absa.spline.harvester.SequentialIdGenerator
 import za.co.absa.spline.producer.model.Attribute
 

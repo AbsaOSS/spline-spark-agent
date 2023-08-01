@@ -16,9 +16,9 @@
 
 package za.co.absa.spline.harvester.dispatcher.modelmapper
 
-import za.co.absa.commons.lang.extensions.NonOptionExtension._
-import za.co.absa.commons.lang.extensions.TraversableExtension._
-import za.co.absa.commons.version.Version
+import za.co.absa.spline.commons.lang.extensions.NonOptionExtension._
+import za.co.absa.spline.commons.lang.extensions.TraversableExtension._
+import za.co.absa.spline.commons.version.Version
 import za.co.absa.spline.harvester.LineageHarvester
 import za.co.absa.spline.harvester.dispatcher.ProducerApiVersion.JsonSchemaURLs
 import za.co.absa.spline.harvester.dispatcher.modelmapper.OpenLineageModelMapper._

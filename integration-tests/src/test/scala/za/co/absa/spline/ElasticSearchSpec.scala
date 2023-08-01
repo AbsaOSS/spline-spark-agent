@@ -21,7 +21,7 @@ import org.apache.spark.sql.{DataFrame, Row, SaveMode}
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.testcontainers.elasticsearch.ElasticsearchContainer
-import za.co.absa.commons.io.TempDirectory
+import za.co.absa.spline.commons.io.TempDirectory
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{ReleasableResourceFixture, SparkFixture}
 

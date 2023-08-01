@@ -20,7 +20,7 @@ import org.apache.spark.Partition
 import org.apache.spark.rdd.{HadoopRDD, RDD}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.execution.datasources.FileScanRDD
-import za.co.absa.commons.reflect.ReflectionUtils
+import za.co.absa.spline.commons.reflect.ReflectionUtils
 import za.co.absa.spline.harvester.builder._
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo}
 import za.co.absa.spline.harvester.plugin.{Plugin, RddReadNodeProcessing}

@@ -17,7 +17,7 @@
 package za.co.absa.spline.harvester.postprocessing.metadata
 
 import org.apache.spark.internal.Logging
-import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
+import za.co.absa.spline.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.postprocessing.metadata.EvaluableNames._
 
 import javax.script.ScriptEngine

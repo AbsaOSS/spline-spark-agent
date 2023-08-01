@@ -23,7 +23,7 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.containers.wait.strategy.Wait
-import za.co.absa.commons.io.TempDirectory
+import za.co.absa.spline.commons.io.TempDirectory
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{ReleasableResourceFixture, SparkFixture}
 

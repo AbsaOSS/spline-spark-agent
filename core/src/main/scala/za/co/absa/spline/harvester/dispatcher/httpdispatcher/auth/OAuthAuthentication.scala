@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.dispatcher.httpdispatcher.auth
 import org.apache.commons.configuration.Configuration
 import org.apache.spark.internal.Logging
 import scalaj.http.{Http, HttpRequest}
-import za.co.absa.commons.config.ConfigurationImplicits._
+import za.co.absa.spline.commons.config.ConfigurationImplicits._
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.auth.OAuthAuthentication.{ConfProps, GrantTypes, Token}
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
 

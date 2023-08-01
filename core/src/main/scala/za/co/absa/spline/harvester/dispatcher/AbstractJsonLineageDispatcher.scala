@@ -16,8 +16,8 @@
 
 package za.co.absa.spline.harvester.dispatcher
 
-import za.co.absa.commons.EnumUtils.EnumOps
-import za.co.absa.commons.reflect.EnumerationMacros
+import za.co.absa.spline.commons.EnumUtils.EnumOps
+import za.co.absa.spline.commons.reflect.EnumerationMacros
 import za.co.absa.spline.harvester.dispatcher.modelmapper.ModelMapper
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe
 import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}

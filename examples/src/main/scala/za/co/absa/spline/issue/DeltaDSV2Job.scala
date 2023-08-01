@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.issue
 
-import za.co.absa.commons.io.TempDirectory
+import za.co.absa.spline.commons.io.TempDirectory
 import za.co.absa.spline.SparkApp
 
 /**

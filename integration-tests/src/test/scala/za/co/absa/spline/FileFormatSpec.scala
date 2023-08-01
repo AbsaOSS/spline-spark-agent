@@ -23,9 +23,9 @@ import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructT
 import org.apache.spark.sql.{DataFrame, Row}
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.commons.io.{TempDirectory, TempFile}
+import za.co.absa.spline.commons.io.{TempDirectory, TempFile}
 import za.co.absa.commons.scalatest.ConditionalTestTags._
-import za.co.absa.commons.version.Version._
+import za.co.absa.spline.commons.version.Version._
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 

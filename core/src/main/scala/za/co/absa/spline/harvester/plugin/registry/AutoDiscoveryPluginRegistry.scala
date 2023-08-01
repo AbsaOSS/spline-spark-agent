@@ -20,7 +20,7 @@ import io.github.classgraph.ClassGraph
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.ClassUtils.{getAllInterfaces, getAllSuperclasses}
 import org.apache.spark.internal.Logging
-import za.co.absa.commons.lang.ARM
+import za.co.absa.spline.commons.lang.ARM
 import za.co.absa.spline.harvester.plugin.Plugin
 import za.co.absa.spline.harvester.plugin.Plugin.Precedence
 import za.co.absa.spline.harvester.plugin.registry.AutoDiscoveryPluginRegistry.{EnabledByDefault, EnabledConfProperty, PluginClasses, getOnlyOrThrow}

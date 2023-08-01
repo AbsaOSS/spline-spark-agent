@@ -18,8 +18,8 @@ package za.co.absa.spline.harvester.dispatcher
 import org.apache.commons.configuration.Configuration
 import org.apache.spark.internal.Logging
 import scalaj.http.{Http, HttpStatusException}
-import za.co.absa.commons.lang.extensions.TraversableExtension._
-import za.co.absa.commons.version.Version
+import za.co.absa.spline.commons.lang.extensions.TraversableExtension._
+import za.co.absa.spline.commons.version.Version
 import za.co.absa.spline.harvester.dispatcher.ProducerApiVersion.SupportedApiRange
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.HttpConstants.Encoding
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher._

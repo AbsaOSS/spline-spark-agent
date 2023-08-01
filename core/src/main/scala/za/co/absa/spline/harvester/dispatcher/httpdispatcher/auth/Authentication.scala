@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.dispatcher.httpdispatcher.auth
 import org.apache.commons.configuration.Configuration
 import org.apache.spark.internal.Logging
 import scalaj.http.HttpRequest
-import za.co.absa.commons.ConfigurationImplicits.ConfOps
+import za.co.absa.spline.commons.ConfigurationImplicits.ConfOps
 import za.co.absa.spline.harvester.conf.AuthenticationType
 
 trait Authentication {

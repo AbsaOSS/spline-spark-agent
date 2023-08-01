@@ -19,8 +19,8 @@ package za.co.absa.spline.harvester.builder
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.execution.{ExternalRDD, LogicalRDD}
-import za.co.absa.commons.reflect.ReflectionUtils
-import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
+import za.co.absa.spline.commons.reflect.ReflectionUtils
+import za.co.absa.spline.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.LineageHarvester.{PlanOrRdd, PlanWrap, RddWrap}
 import za.co.absa.spline.harvester.builder.OperationNodeBuilderFactory.AnalysisBarrierExtractor

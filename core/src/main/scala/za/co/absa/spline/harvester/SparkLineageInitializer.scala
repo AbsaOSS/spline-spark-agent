@@ -20,8 +20,8 @@ import org.apache.spark
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.util.QueryExecutionListener
-import za.co.absa.commons.version.Version
-import za.co.absa.commons.version.Version._
+import za.co.absa.spline.commons.version.Version
+import za.co.absa.spline.commons.version.Version._
 import za.co.absa.spline.agent.{AgentBOM, AgentConfig, SplineAgent}
 import za.co.absa.spline.harvester.IdGenerator.{UUIDGeneratorFactory, UUIDNamespace}
 import za.co.absa.spline.harvester.SparkLineageInitializer.{InitFlagKey, SparkQueryExecutionListenersKey}

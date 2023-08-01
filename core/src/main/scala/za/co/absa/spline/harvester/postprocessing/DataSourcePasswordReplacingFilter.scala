@@ -17,8 +17,8 @@
 package za.co.absa.spline.harvester.postprocessing
 
 import org.apache.commons.configuration.Configuration
-import za.co.absa.commons.CaptureGroupReplacer
-import za.co.absa.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
+import za.co.absa.spline.commons.CaptureGroupReplacer
+import za.co.absa.spline.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
 import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.harvester.postprocessing.DataSourcePasswordReplacingFilter._
 import za.co.absa.spline.producer.model.{ReadOperation, WriteOperation}

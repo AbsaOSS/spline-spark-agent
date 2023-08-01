@@ -17,7 +17,7 @@
 package za.co.absa.spline.harvester.converter
 
 import org.apache.spark.internal.Logging
-import za.co.absa.commons.reflect.ReflectionUtils
+import za.co.absa.spline.commons.reflect.ReflectionUtils
 
 import java.lang.reflect.{Field, Method}
 import scala.util.control.NonFatal

@@ -19,7 +19,7 @@ package za.co.absa.spline
 import org.apache.commons.configuration.Configuration
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
-import za.co.absa.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
+import za.co.absa.spline.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
 import za.co.absa.spline.HierarchicalObjectFactory.ClassName
 
 import java.lang.reflect.InvocationTargetException

@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.harvester.converter
 
-import za.co.absa.commons.lang.extensions.TraversableExtension._
+import za.co.absa.spline.commons.lang.extensions.TraversableExtension._
 
 import scala.reflect.runtime.universe.ClassSymbol
 import scala.util.Try
@@ -58,7 +58,7 @@ object ValueDecomposer extends ValueDecomposer {
   private object ModuleClassSymbolExtractor {
     def unapply(o: Any): Option[ClassSymbol] = {
       // a workaround for Scala bug #12190
-      Try(za.co.absa.commons.reflect.ReflectionUtils.ModuleClassSymbolExtractor.unapply(o)).toOption.flatten
+      Try(za.co.absa.spline.commons.reflect.ReflectionUtils.ModuleClassSymbolExtractor.unapply(o)).toOption.flatten
     }
   }
 }

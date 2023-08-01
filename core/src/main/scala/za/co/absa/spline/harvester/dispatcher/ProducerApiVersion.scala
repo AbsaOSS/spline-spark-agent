@@ -16,8 +16,8 @@
 
 package za.co.absa.spline.harvester.dispatcher
 
-import za.co.absa.commons.version.Version
-import za.co.absa.commons.version.Version._
+import za.co.absa.spline.commons.version.Version
+import za.co.absa.spline.commons.version.Version._
 
 object ProducerApiVersion {
   val V1: Version = ver"1"

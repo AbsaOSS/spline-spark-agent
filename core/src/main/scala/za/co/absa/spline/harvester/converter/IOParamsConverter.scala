@@ -18,7 +18,7 @@ package za.co.absa.spline.harvester.converter
 
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.expressions.Expression
-import za.co.absa.commons.lang.Converter
+import za.co.absa.spline.commons.lang.Converter
 
 class IOParamsConverter(
   exprToRefConverter: ExprToRefConverter

@@ -20,8 +20,8 @@ import org.apache.commons.configuration.{Configuration, ConfigurationConverter}
 import org.apache.kafka.clients.producer.{KafkaProducer, Producer}
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
-import za.co.absa.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
-import za.co.absa.commons.version.Version
+import za.co.absa.spline.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
+import za.co.absa.spline.commons.version.Version
 import za.co.absa.spline.harvester.dispatcher.KafkaLineageDispatcher._
 import za.co.absa.spline.harvester.dispatcher.kafkadispatcher._
 import za.co.absa.spline.harvester.dispatcher.modelmapper.ModelMapper

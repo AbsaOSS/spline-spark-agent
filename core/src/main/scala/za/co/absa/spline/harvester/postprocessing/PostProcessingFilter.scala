@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.harvester.postprocessing
 
-import za.co.absa.commons.NamedEntity
+import za.co.absa.spline.commons.NamedEntity
 import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.producer.model._
 

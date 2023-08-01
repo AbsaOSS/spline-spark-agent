@@ -42,9 +42,9 @@ private[spline] trait AgentBOM {
 
 object AgentBOM {
 
-  import za.co.absa.commons.ConfigurationImplicits._
-  import za.co.absa.commons.config.ConfigurationImplicits._
-  import za.co.absa.commons.lang.extensions.TraversableExtension._
+  import za.co.absa.spline.commons.ConfigurationImplicits._
+  import za.co.absa.spline.commons.config.ConfigurationImplicits._
+  import za.co.absa.spline.commons.lang.extensions.TraversableExtension._
 
   def createFrom(defaultConfig: Configuration, configs: Seq[Configuration], sparkSession: SparkSession): AgentBOM = new AgentBOM {
     private val mergedConfig = new CompositeConfiguration((configs :+ defaultConfig).asJava)

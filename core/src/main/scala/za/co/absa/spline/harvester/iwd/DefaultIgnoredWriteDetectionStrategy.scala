@@ -17,7 +17,7 @@
 package za.co.absa.spline.harvester.iwd
 
 import org.apache.commons.configuration.Configuration
-import za.co.absa.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
+import za.co.absa.spline.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
 import za.co.absa.spline.harvester.LineageHarvester.Metrics
 import za.co.absa.spline.harvester.iwd.DefaultIgnoredWriteDetectionStrategy._
 
