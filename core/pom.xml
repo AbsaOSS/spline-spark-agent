@@ -45,7 +45,7 @@
     <dependencies>
         <dependency>
             <groupId>za.co.absa.spline.agent.spark</groupId>
-            <artifactId>agent-commons_2.12</artifactId>
+            <artifactId>agent-commons_${scala.binary.version}</artifactId>
             <version>1.3.0-SNAPSHOT</version>
         </dependency>
         <dependency>
