@@ -111,31 +111,6 @@ object ReflectionUtils {
    * @tparam B expected type of the field value to return
    * @return a field value
    */
-  @deprecated(message = "Use extractValue instead.")
-  def extractFieldValue[A: ClassTag, B](o: AnyRef, fieldName: String): B =
-    extractValue[A, B](o, fieldName)
-
-  /**
-   * A single type parameter alternative to {{{extractFieldValue[A, B](a, ...)}}} where {{{a.getClass == classOf[A]}}}
-   */
-  @deprecated(message = "Use extractValue instead.")
-  def extractFieldValue[T](o: AnyRef, fieldName: String): T = {
-    extractValue[AnyRef, T](o, fieldName)(ClassTag(o.getClass))
-  }
-
-  /**
-   * Extract a value from a given field or parameterless method regardless of its visibility.
-   * This method utilizes a mix of Java and Scala reflection mechanisms,
-   * and can extract from a compiler generated fields as well.
-   * Note: if the field has an associated Scala accessor one will be called.
-   * Consequently if the filed is lazy it will be initialized.
-   *
-   * @param o         target object
-   * @param fieldName field name to extract value from
-   * @tparam A type in which the given field is declared
-   * @tparam B expected type of the field value to return
-   * @return a field value
-   */
   def extractValue[A: ClassTag, B](o: AnyRef, fieldName: String): B =
     new ValueExtractor[A, B](o, fieldName).extract()
 
@@ -143,7 +118,7 @@ object ReflectionUtils {
    * A single type parameter alternative to {{{extractValue[A, B](a, ...)}}} where {{{a.getClass == classOf[A]}}}
    */
   def extractValue[T](o: AnyRef, fieldName: String): T = {
-    extractFieldValue[AnyRef, T](o, fieldName)(ClassTag(o.getClass))
+    extractValue[AnyRef, T](o, fieldName)(ClassTag(o.getClass))
   }
 
   /**
