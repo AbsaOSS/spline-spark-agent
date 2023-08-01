@@ -51,15 +51,11 @@
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-reflect</artifactId>
-            <version>${scala.version}</version>
         </dependency>
-
-        <!-- Test scope -->
-
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-compiler</artifactId>
-            <scope>test</scope>
         </dependency>
+
     </dependencies>
 </project>
