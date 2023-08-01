@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 ABSA Group Limited
+ * Copyright 2023 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.commons
+package za.co.absa.spline
 
 import org.apache.commons.configuration.{Configuration, MapConfiguration}
 import org.apache.spark.sql.SparkSession
@@ -22,7 +22,7 @@ import org.scalatest.Inside.inside
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import za.co.absa.commons.HierarchicalObjectFactorySpec.{BarComponent, DummyComponenet, Foo2Component, FooComponent}
+import za.co.absa.spline.HierarchicalObjectFactorySpec.{BarComponent, DummyComponenet, Foo2Component, FooComponent}
 
 class HierarchicalObjectFactorySpec extends AnyFlatSpec with Matchers with MockitoSugar {
 

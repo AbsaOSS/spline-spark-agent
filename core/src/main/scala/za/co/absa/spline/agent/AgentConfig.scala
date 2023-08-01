@@ -17,7 +17,7 @@
 package za.co.absa.spline.agent
 
 import org.apache.commons.configuration.{BaseConfiguration, Configuration}
-import za.co.absa.commons.HierarchicalObjectFactory
+import za.co.absa.spline.HierarchicalObjectFactory
 import za.co.absa.spline.harvester.conf.{SQLFailureCaptureMode, SplineMode}
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy

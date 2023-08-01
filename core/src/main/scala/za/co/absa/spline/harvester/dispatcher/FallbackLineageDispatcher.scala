@@ -16,7 +16,7 @@
 package za.co.absa.spline.harvester.dispatcher
 
 import org.apache.spark.internal.Logging
-import za.co.absa.commons.HierarchicalObjectFactory
+import za.co.absa.spline.HierarchicalObjectFactory
 import za.co.absa.spline.harvester.dispatcher.FallbackLineageDispatcher.{FallbackDispatcherKey, PrimaryDispatcherKey}
 import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 

@@ -17,7 +17,7 @@
 package za.co.absa.spline.harvester.postprocessing
 
 import org.apache.spark.internal.Logging
-import za.co.absa.commons.HierarchicalObjectFactory
+import za.co.absa.spline.HierarchicalObjectFactory
 import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.harvester.postprocessing.CompositePostProcessingFilter.FiltersKey
 import za.co.absa.spline.producer.model._
