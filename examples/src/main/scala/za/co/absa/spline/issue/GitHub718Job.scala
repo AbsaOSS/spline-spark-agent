@@ -20,6 +20,11 @@ import org.apache.commons.io.FileUtils
 import za.co.absa.commons.io.TempFile
 import za.co.absa.spline.SparkApp
 
+/**
+ * THis is a test scenario for the lineage graph alignment on the UI
+ *
+ * @see https://github.com/AbsaOSS/spline/issues/718
+ */
 object GitHub718Job extends SparkApp("GitHub spline-718") {
 
   import za.co.absa.spline.harvester.SparkLineageInitializer._

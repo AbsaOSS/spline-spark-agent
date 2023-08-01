@@ -23,6 +23,12 @@ import za.co.absa.spline.SparkApp
 
 import scala.util.Random
 
+/**
+ * This example was provided by one of our community member.
+ * It resembles a real production use case that generates quite a complex end-to-end lineage graph.
+ *
+ * @see https://github.com/AbsaOSS/spline/issues/738
+ */
 object GitHub738Job extends SparkApp("GitHub spline-738") with Logging {
 
   import za.co.absa.spline.harvester.SparkLineageInitializer._
