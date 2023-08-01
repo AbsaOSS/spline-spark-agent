@@ -23,6 +23,12 @@ import za.co.absa.spline.SparkApp
 
 import scala.util.Random
 
+/**
+ * This example was provided by one of our community member.
+ * It resembles a real production use case that generates quite a complex end-to-end lineage graph.
+ *
+ * @see https://github.com/AbsaOSS/spline/issues/738
+ */
 object GitHub738Job extends SparkApp("GitHub spline-738") with Logging {
 
   import za.co.absa.spline.harvester.SparkLineageInitializer._
@@ -33,8 +39,8 @@ object GitHub738Job extends SparkApp("GitHub spline-738") with Logging {
   val primarySourcePaths = primarySourceKeys.map(key => createMockCSV(s"Primary-$key"))
   val secondarySourcePaths = secondarySourceKeys.map(key => createMockCSV(s"Secondary-$key"))
 
-  val nIters = 20
-  val nAppends = 10
+  val nIters: Int = if (args.length > 0) args(0).toInt else 2 // 20
+  val nAppends: Int = if (args.length > 1) args(1).toInt else 2 // 10
   for {
     i <- 0 until nIters
     j <- primarySourcePaths.indices
