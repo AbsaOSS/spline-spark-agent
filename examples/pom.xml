@@ -27,6 +27,10 @@
         <version>1.3.0-SNAPSHOT</version>
     </parent>
 
+    <properties>
+        <docker.imageName>spline-spark-agent</docker.imageName>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>za.co.absa.spline.agent.spark</groupId>
@@ -94,53 +98,37 @@
                     </excludes>
                 </configuration>
             </plugin>
+            <!-- Copy dependencies -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/libs</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Enable docker build -->
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <inherited>false</inherited>
+                <configuration>
+                    <skip>false</skip>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
     <profiles>
-        <profile>
-            <id>examples</id>
-            <properties>
-                <skipTests>true</skipTests>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <phase>test</phase>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <configuration>
-                                    <target>
-                                        <property name="classpath" refid="maven.runtime.classpath" />
-                                        <ant antfile="${basedir}/run-example.xml">
-                                            <target name="main" />
-                                        </ant>
-                                    </target>
-                                </configuration>
-                            </execution>
-                        </executions>
-                        <dependencies>
-                            <dependency>
-                                <groupId>ant-contrib</groupId>
-                                <artifactId>ant-contrib</artifactId>
-                                <version>1.0b3</version>
-                                <exclusions>
-                                    <exclusion>
-                                        <artifactId>ant</artifactId>
-                                        <groupId>ant</groupId>
-                                    </exclusion>
-                                </exclusions>
-                            </dependency>
-                        </dependencies>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
         <profile>
             <id>google</id>
             <!-- the profile is required to run `BigQueryExample` -->

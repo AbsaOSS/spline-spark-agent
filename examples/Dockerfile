@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM maven:3.6.0-jdk-8-slim
+FROM eclipse-temurin:11-jre-jammy
 
 LABEL \
     vendor="ABSA" \
@@ -22,9 +22,27 @@ LABEL \
     license="Apache License, version 2.0" \
     name="Spline Agent for Apache Spark - Example suite"
 
-COPY . /opt/spline-spark-agent
+# Install Tini
+RUN apt-get update  \
+    && apt-get install -y --no-install-recommends tini  \
+    && rm -rf /var/lib/apt/lists/*
 
-ENV SPLINE_PRODUCER_URL=http://host.docker.internal:8080/producer
+# Set working directry
+WORKDIR /opt/spline-agent-examples
+
+# Copy local directories to container
+COPY target/libs target/libs
+COPY target/classes target/classes
+COPY data data
+COPY run.sh .
+COPY entrypoint.sh /entrypoint.sh
+
+# ensure execute permissions on scripts
+RUN chmod a+x run.sh
+RUN chmod a+x /entrypoint.sh
+
+# Bind environment variables
+ENV SPLINE_PRODUCER_URL=
 ENV SPLINE_MODE=ENABLED
 ENV DISABLE_SSL_VALIDATION=false
 
@@ -32,21 +50,4 @@ ENV HTTP_PROXY_HOST=
 ENV HTTP_PROXY_PORT=
 ENV HTTP_NON_PROXY_HOSTS=
 
-RUN cd /opt/spline-spark-agent && \
-    mvn install -D skipTests && \
-    cd ./examples && \
-    # it's for dry-run maven caching
-    mvn test -P examples -D spline.mode=DISABLED
-
-ENV WORKDIR=/opt/spline-spark-agent/examples
-
-WORKDIR $WORKDIR
-
-CMD exec mvn test -P examples \
-    -D spline.lineageDispatcher=http \
-    -D spline.lineageDispatcher.http.producer.url=$SPLINE_PRODUCER_URL \
-    -D spline.lineageDispatcher.http.disableSslValidation=$DISABLE_SSL_VALIDATION \
-    -D spline.mode=$SPLINE_MODE \
-    -D http.proxyHost=$HTTP_PROXY_HOST \
-    -D http.proxyPort=$HTTP_PROXY_PORT \
-    -D http.nonProxyHosts=$HTTP_NON_PROXY_HOSTS \
+ENTRYPOINT ["tini", "-g", "--", "sh", "/entrypoint.sh"]
