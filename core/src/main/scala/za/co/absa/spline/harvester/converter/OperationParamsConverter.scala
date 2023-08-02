@@ -21,7 +21,7 @@ import org.apache.spark.sql.catalyst.expressions.{Expression, SortOrder}
 import org.apache.spark.sql.catalyst.plans.JoinType
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.types.DataType
-import za.co.absa.commons.lang.Converter
+import za.co.absa.spline.commons.lang.Converter
 import za.co.absa.spline.harvester.converter.OperationParamsConverter._
 import za.co.absa.spline.harvester.converter.ReflectiveExtractor.extractProperties
 

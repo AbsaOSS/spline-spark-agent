@@ -18,7 +18,7 @@ package za.co.absa.spline.test.fixture
 
 import org.apache.spark.sql.SparkSession
 import org.scalatest.AsyncTestSuite
-import za.co.absa.commons.io.TempDirectory
+import za.co.absa.spline.commons.io.TempDirectory
 import za.co.absa.spline.test.fixture.SparkFixture._
 
 import java.sql.DriverManager

@@ -24,9 +24,9 @@ import org.scalatest.OneInstancePerTest
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import za.co.absa.commons.io.{TempDirectory, TempFile}
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
-import za.co.absa.commons.version.Version._
+import za.co.absa.spline.commons.io.{TempDirectory, TempFile}
+import za.co.absa.spline.commons.version.Version._
 import za.co.absa.spline.model.dt
 import za.co.absa.spline.producer.model._
 import za.co.absa.spline.test.LineageWalker

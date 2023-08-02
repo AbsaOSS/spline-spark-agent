@@ -23,10 +23,10 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.execution.{LeafExecNode, SparkPlan}
-import za.co.absa.commons.CollectionImplicits._
-import za.co.absa.commons.graph.GraphImplicits._
-import za.co.absa.commons.lang.CachingConverter
 import za.co.absa.spline.agent.SplineAgent.FuncName
+import za.co.absa.spline.commons.CollectionImplicits._
+import za.co.absa.spline.commons.graph.GraphImplicits._
+import za.co.absa.spline.commons.lang.CachingConverter
 import za.co.absa.spline.harvester.LineageHarvester._
 import za.co.absa.spline.harvester.ModelConstants.{AppMetaInfo, ExecutionEventExtra, ExecutionPlanExtra}
 import za.co.absa.spline.harvester.builder._
@@ -196,7 +196,7 @@ class LineageHarvester(
 
 object LineageHarvester {
 
-  import za.co.absa.commons.version.Version
+  import za.co.absa.spline.commons.version.Version
 
   trait PlanOrRdd
 

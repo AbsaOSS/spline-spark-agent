@@ -19,8 +19,8 @@ package za.co.absa.spline.harvester.plugin.embedded
 import com.crealytics.spark.excel.{DefaultSource, ExcelRelation}
 import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.sources.BaseRelation
-import za.co.absa.commons.reflect.ReflectionUtils.extractValue
-import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
+import za.co.absa.spline.commons.reflect.ReflectionUtils.extractValue
+import za.co.absa.spline.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo}
 import za.co.absa.spline.harvester.plugin.embedded.ExcelPlugin._

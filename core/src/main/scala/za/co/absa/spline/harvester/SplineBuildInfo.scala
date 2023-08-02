@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.harvester
 
-import za.co.absa.commons.buildinfo.{BuildInfo, PropMapping}
+import za.co.absa.spline.commons.buildinfo.{BuildInfo, PropMapping}
 
 /**
  * By using 'spline-build.properties' we should avoid name conflicts with libraries properties.

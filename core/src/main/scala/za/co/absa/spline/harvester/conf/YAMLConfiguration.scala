@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.conf
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.yaml.snakeyaml.Yaml
-import za.co.absa.commons.lang.ARM
+import za.co.absa.spline.commons.lang.ARM
 
 import java.net.URL
 import java.{util => ju}
@@ -69,7 +69,7 @@ class YAMLConfiguration(yaml: String)
 
   override def getProperty(key: String): AnyRef = confMap.get(key)
 
-  override def getKeys: ju.Iterator[_] = confMap.keySet.iterator
+  override def getKeys: ju.Iterator[String] = confMap.keySet.iterator
 
   override def containsKey(key: String): Boolean = confMap.containsKey(key)
 

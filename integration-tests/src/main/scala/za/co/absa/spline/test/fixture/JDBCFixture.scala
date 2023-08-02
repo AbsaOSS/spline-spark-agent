@@ -18,7 +18,7 @@
 package za.co.absa.spline.test.fixture
 
 import org.scalatest.Suite
-import za.co.absa.commons.io.TempFile
+import za.co.absa.spline.commons.io.TempFile
 
 /**
  * Using SQLite (whole database is stored in a single file without need for a db server)

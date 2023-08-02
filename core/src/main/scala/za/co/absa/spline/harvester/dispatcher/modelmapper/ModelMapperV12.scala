@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.harvester.dispatcher.modelmapper
 
-import za.co.absa.commons.SplineTraversableExtension._
+import za.co.absa.spline.commons.SplineTraversableExtension._
 import za.co.absa.spline.producer.dto.v1_2
 import za.co.absa.spline.producer.model._
 

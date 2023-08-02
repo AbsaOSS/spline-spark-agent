@@ -18,7 +18,7 @@ package za.co.absa.spline.agent
 
 import org.apache.commons.configuration.{CompositeConfiguration, Configuration}
 import org.apache.spark.sql.SparkSession
-import za.co.absa.commons.HierarchicalObjectFactory
+import za.co.absa.spline.HierarchicalObjectFactory
 import za.co.absa.spline.agent.AgentConfig.ConfProperty
 import za.co.absa.spline.harvester.IdGenerator.UUIDVersion
 import za.co.absa.spline.harvester.conf.{SQLFailureCaptureMode, SplineMode}
@@ -42,9 +42,9 @@ private[spline] trait AgentBOM {
 
 object AgentBOM {
 
-  import za.co.absa.commons.ConfigurationImplicits._
-  import za.co.absa.commons.config.ConfigurationImplicits._
-  import za.co.absa.commons.lang.extensions.TraversableExtension._
+  import za.co.absa.spline.commons.ConfigurationImplicits._
+  import za.co.absa.spline.commons.config.ConfigurationImplicits._
+  import za.co.absa.spline.commons.lang.extensions.TraversableExtension._
 
   def createFrom(defaultConfig: Configuration, configs: Seq[Configuration], sparkSession: SparkSession): AgentBOM = new AgentBOM {
     private val mergedConfig = new CompositeConfiguration((configs :+ defaultConfig).asJava)

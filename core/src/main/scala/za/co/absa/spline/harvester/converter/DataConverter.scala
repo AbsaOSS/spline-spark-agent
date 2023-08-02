@@ -19,8 +19,8 @@ package za.co.absa.spline.harvester.converter
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.{ArrayData, MapData}
 import org.apache.spark.sql.types.{ArrayType, DataType, MapType, StructType}
-import za.co.absa.commons.lang.Converter
-import za.co.absa.commons.lang.extensions.TraversableExtension._
+import za.co.absa.spline.commons.lang.Converter
+import za.co.absa.spline.commons.lang.extensions.TraversableExtension._
 
 class DataConverter
   extends Converter {

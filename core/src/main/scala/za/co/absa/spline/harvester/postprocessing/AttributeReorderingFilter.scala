@@ -18,8 +18,8 @@ package za.co.absa.spline.harvester.postprocessing
 
 import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import za.co.absa.commons.reflect.ReflectionUtils._
-import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
+import za.co.absa.spline.commons.reflect.ReflectionUtils._
+import za.co.absa.spline.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.harvester.ModelConstants.CommonExtras
 import za.co.absa.spline.harvester.plugin.embedded.DataSourceV2Plugin.{IsByName, `_: V2WriteCommand`}

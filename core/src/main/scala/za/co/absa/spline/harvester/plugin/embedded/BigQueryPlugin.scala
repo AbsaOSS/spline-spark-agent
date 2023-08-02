@@ -23,8 +23,8 @@ import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoData
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.sources.BaseRelation
 import org.apache.spark.sql.types.StructType
-import za.co.absa.commons.reflect.ReflectionUtils.extractValue
-import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
+import za.co.absa.spline.commons.reflect.ReflectionUtils.extractValue
+import za.co.absa.spline.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.embedded.BigQueryPlugin.SparkBigQueryConfig.ImmutableMap
@@ -45,7 +45,7 @@ class BigQueryPlugin(spark: SparkSession)
     with BaseRelationProcessing
     with RelationProviderProcessing {
 
-  import za.co.absa.commons.ExtractorImplicits._
+  import za.co.absa.spline.commons.ExtractorImplicits._
 
   override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: DirectBigQueryRelation`(bq), _) =>

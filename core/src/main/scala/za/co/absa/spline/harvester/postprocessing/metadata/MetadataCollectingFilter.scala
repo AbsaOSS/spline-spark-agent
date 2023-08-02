@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.postprocessing.metadata
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.io.IOUtils
 import org.apache.spark.internal.Logging
-import za.co.absa.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
+import za.co.absa.spline.commons.config.ConfigurationImplicits.ConfigurationRequiredWrapper
 import za.co.absa.spline.harvester.ExtraMetadataImplicits._
 import za.co.absa.spline.harvester.HarvestingContext
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._

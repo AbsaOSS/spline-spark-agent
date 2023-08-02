@@ -18,8 +18,8 @@ package za.co.absa.spline.harvester.plugin.embedded
 
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.sources.BaseRelation
-import za.co.absa.commons.reflect.ReflectionUtils.extractValue
-import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
+import za.co.absa.spline.commons.reflect.ReflectionUtils.extractValue
+import za.co.absa.spline.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.embedded.CassandraPlugin._
@@ -34,7 +34,7 @@ class CassandraPlugin
     with BaseRelationProcessing
     with RelationProviderProcessing {
 
-  import za.co.absa.commons.ExtractorImplicits._
+  import za.co.absa.spline.commons.ExtractorImplicits._
 
   override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: CassandraSourceRelation`(casr), _) =>

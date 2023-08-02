@@ -17,8 +17,8 @@
 package za.co.absa.spline.issue
 
 import org.apache.commons.io.FileUtils
-import za.co.absa.commons.io.TempFile
 import za.co.absa.spline.SparkApp
+import za.co.absa.spline.commons.io.TempFile
 
 /**
  * This is a test scenario for the lineage graph alignment on the UI

@@ -20,10 +20,10 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.catalog.CatalogUtils
 import org.apache.spark.sql.catalyst.plans.logical._
-import za.co.absa.commons.reflect.ReflectionUtils
-import za.co.absa.commons.reflect.ReflectionUtils.extractValue
-import za.co.absa.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.agent.SplineAgent.FuncName
+import za.co.absa.spline.commons.reflect.ReflectionUtils
+import za.co.absa.spline.commons.reflect.ReflectionUtils.extractValue
+import za.co.absa.spline.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Params, Precedence, ReadNodeInfo, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.embedded.DataSourceV2Plugin._

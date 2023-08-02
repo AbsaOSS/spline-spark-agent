@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.postprocessing.metadata
 import org.apache.spark.SparkConf
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.RuntimeConfig
-import za.co.absa.commons.reflect.ReflectionUtils
+import za.co.absa.spline.commons.reflect.ReflectionUtils
 import za.co.absa.spline.harvester.postprocessing.metadata.ComparisonSymbol._
 
 import scala.annotation.tailrec

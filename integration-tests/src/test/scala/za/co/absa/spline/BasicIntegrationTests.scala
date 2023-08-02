@@ -23,7 +23,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{IntegerType, StructField, StructType}
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.commons.io.TempDirectory
+import za.co.absa.spline.commons.io.TempDirectory
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 

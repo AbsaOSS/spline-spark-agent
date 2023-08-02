@@ -21,7 +21,7 @@ import org.mockito.{ArgumentCaptor, ArgumentMatchers, Mockito}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import za.co.absa.commons.version.Version._
+import za.co.absa.spline.commons.version.Version._
 import za.co.absa.spline.harvester.dispatcher.SplineEntityType.ExecutionEvent
 import za.co.absa.spline.harvester.dispatcher.kafkadispatcher.SplineRecordSenderSpec.Foo
 

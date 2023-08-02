@@ -17,9 +17,9 @@
 package za.co.absa.spline.harvester.dispatcher
 
 import org.apache.commons.configuration.Configuration
-import za.co.absa.commons.EnumUtils.EnumOps
-import za.co.absa.commons.config.ConfigurationImplicits._
-import za.co.absa.commons.reflect.EnumerationMacros
+import za.co.absa.spline.commons.EnumUtils.EnumOps
+import za.co.absa.spline.commons.config.ConfigurationImplicits._
+import za.co.absa.spline.commons.reflect.EnumerationMacros
 import za.co.absa.spline.harvester.dispatcher.ConsoleLineageDispatcher._
 
 import java.io.PrintStream

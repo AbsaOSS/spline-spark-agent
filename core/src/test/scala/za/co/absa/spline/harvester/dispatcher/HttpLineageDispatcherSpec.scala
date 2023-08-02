@@ -23,7 +23,7 @@ import org.mockito.Mockito._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.mockito.MockitoSugar
 import scalaj.http._
-import za.co.absa.commons.version.Version.VersionStringInterpolator
+import za.co.absa.spline.commons.version.Version.VersionStringInterpolator
 import za.co.absa.spline.harvester.conf.AuthenticationType
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.RESTResource
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.auth.Authentication

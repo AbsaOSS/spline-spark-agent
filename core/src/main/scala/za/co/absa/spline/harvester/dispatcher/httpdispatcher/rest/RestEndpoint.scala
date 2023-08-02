@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest
 import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpHeaders
 import scalaj.http.{HttpRequest, HttpResponse}
-import za.co.absa.commons.lang.ARM.using
+import za.co.absa.spline.commons.lang.ARM.using
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.HttpConstants.Encoding
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.auth.Authentication
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest.RestEndpoint._

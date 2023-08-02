@@ -18,7 +18,7 @@ package za.co.absa.spline.harvester.builder.plan
 
 import org.apache.spark.sql.catalyst.expressions.{Attribute, Expression, NamedExpression}
 import org.apache.spark.sql.catalyst.plans.logical.Window
-import za.co.absa.commons.reflect.extractors.AccessorMethodValueExtractor
+import za.co.absa.spline.commons.reflect.extractors.AccessorMethodValueExtractor
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.postprocessing.PostProcessor

@@ -21,10 +21,10 @@ import org.apache.hadoop.fs.permission.FsPermission
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.SparkContext
 import org.apache.spark.internal.Logging
-import za.co.absa.commons.annotation.Experimental
-import za.co.absa.commons.config.ConfigurationImplicits._
-import za.co.absa.commons.lang.ARM._
-import za.co.absa.commons.s3.SimpleS3Location.SimpleS3LocationExt
+import za.co.absa.spline.commons.annotation.Experimental
+import za.co.absa.spline.commons.config.ConfigurationImplicits._
+import za.co.absa.spline.commons.lang.ARM._
+import za.co.absa.spline.commons.s3.SimpleS3Location.SimpleS3LocationExt
 import za.co.absa.spline.harvester.dispatcher.HDFSLineageDispatcher._
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe
 import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}

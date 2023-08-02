@@ -23,7 +23,7 @@ import org.scalatest.OptionValues._
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
-import za.co.absa.commons.version.Version.VersionStringInterpolator
+import za.co.absa.spline.commons.version.Version.VersionStringInterpolator
 import za.co.absa.spline.producer.model.ExprRef
 import za.co.absa.spline.test.LineageWalker
 import za.co.absa.spline.test.ProducerModelImplicits._

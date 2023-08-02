@@ -18,8 +18,7 @@ package za.co.absa.spline.harvester.converter
 
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.codegen.{CodegenContext, ExprCode}
-import org.apache.spark.sql.catalyst.expressions.{CaseWhen, Expression, Literal}
-import org.apache.spark.sql.catalyst.expressions.{CaseWhen, Expression, Literal,ListQuery}
+import org.apache.spark.sql.catalyst.expressions.{CaseWhen, Expression, ListQuery, Literal}
 import org.apache.spark.sql.types.DataTypes.NullType
 import org.apache.spark.sql.types._
 import org.mockito.Mockito._

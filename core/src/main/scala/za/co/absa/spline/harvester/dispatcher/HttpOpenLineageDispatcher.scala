@@ -18,7 +18,7 @@ package za.co.absa.spline.harvester.dispatcher
 import org.apache.commons.configuration.Configuration
 import org.apache.spark.internal.Logging
 import scalaj.http.{Http, HttpStatusException}
-import za.co.absa.commons.version.Version
+import za.co.absa.spline.commons.version.Version
 import za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest.{RestClient, RestEndpoint}
 import za.co.absa.spline.harvester.dispatcher.modelmapper.{ModelMapper, OpenLineageModelMapper}
 import za.co.absa.spline.harvester.dispatcher.openlineage.{HttpOpenLineageDispatcherConfig, RESTResource}

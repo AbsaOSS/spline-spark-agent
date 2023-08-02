@@ -16,8 +16,8 @@
 
 package za.co.absa.spline.harvester.logging
 
-import za.co.absa.commons.ThrowableImplicits._
-import za.co.absa.commons.reflect.ReflectionUtils
+import za.co.absa.spline.commons.ThrowableImplicits._
+import za.co.absa.spline.commons.reflect.ReflectionUtils
 
 import java.lang.reflect.{Field, Modifier}
 import scala.annotation.tailrec

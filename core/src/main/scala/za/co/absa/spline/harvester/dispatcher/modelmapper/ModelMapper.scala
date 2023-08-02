@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.harvester.dispatcher.modelmapper
 
-import za.co.absa.commons.version.Version
+import za.co.absa.spline.commons.version.Version
 import za.co.absa.spline.harvester.dispatcher.ProducerApiVersion
 import za.co.absa.spline.producer.model._
 

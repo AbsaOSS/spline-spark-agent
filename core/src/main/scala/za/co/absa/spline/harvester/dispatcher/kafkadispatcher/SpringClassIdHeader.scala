@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.harvester.dispatcher.kafkadispatcher
 
-import za.co.absa.commons.version.Version
+import za.co.absa.spline.commons.version.Version
 import za.co.absa.spline.harvester.dispatcher.{SplineEntityType, SplineHeaders}
 
 class SpringClassIdHeader(entityType: SplineEntityType, version: Version)

@@ -20,8 +20,8 @@ import org.apache.commons.codec.binary.Hex
 import org.apache.commons.configuration.Configuration
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import za.co.absa.commons.config.ConfigurationImplicits._
 import za.co.absa.spline.agent.SplineAgent.FuncName
+import za.co.absa.spline.commons.config.ConfigurationImplicits._
 import za.co.absa.spline.harvester.ModelConstants.CommonExtras
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, WriteNodeInfo}

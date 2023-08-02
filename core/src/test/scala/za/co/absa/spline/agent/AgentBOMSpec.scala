@@ -21,9 +21,10 @@ import org.apache.spark.sql.SparkSession
 import org.scalatest.OptionValues._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.commons.{HierarchicalObjectFactory, NamedEntity}
+import za.co.absa.spline.HierarchicalObjectFactory
 import za.co.absa.spline.agent.AgentBOMSpec.{MockLineageDispatcher, MockPostProcessingFilter, SimpleConfig, createBOM}
 import za.co.absa.spline.agent.AgentConfig.ConfProperty
+import za.co.absa.spline.commons.NamedEntity
 import za.co.absa.spline.harvester.conf.{SQLFailureCaptureMode, SplineMode}
 import za.co.absa.spline.harvester.dispatcher.{CompositeLineageDispatcher, KafkaLineageDispatcher, LineageDispatcher}
 import za.co.absa.spline.harvester.postprocessing.{AbstractPostProcessingFilter, CompositePostProcessingFilter}

@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.harvester.iwd
 
-import za.co.absa.commons.NamedEntity
+import za.co.absa.spline.commons.NamedEntity
 import za.co.absa.spline.harvester.LineageHarvester.Metrics
 
 /**

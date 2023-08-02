@@ -29,7 +29,7 @@ trait MapLikeConfigurationAdapter {
 
   override def getProperty(key: String): AnyRef = mapConf.getProperty(key)
 
-  override def getKeys: util.Iterator[_] = mapConf.getKeys()
+  override def getKeys: util.Iterator[String] = mapConf.getKeys()
 
   override def containsKey(key: String): Boolean = mapConf.containsKey(key)
 

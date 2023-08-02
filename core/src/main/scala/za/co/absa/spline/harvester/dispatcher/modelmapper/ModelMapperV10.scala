@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.harvester.dispatcher.modelmapper
 
-import za.co.absa.commons.lang.extensions.NonOptionExtension.NonOptionOps
+import za.co.absa.spline.commons.lang.extensions.NonOptionExtension.NonOptionOps
 import za.co.absa.spline.harvester.IdGeneratorsBundle
 import za.co.absa.spline.harvester.converter.ExpressionConverter.{ExprExtra, ExprV1}
 import za.co.absa.spline.producer.dto.v1_0

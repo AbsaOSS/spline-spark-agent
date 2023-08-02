@@ -18,8 +18,8 @@ package za.co.absa.spline.harvester.plugin.composite
 
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources.SaveIntoDataSourceCommand
-import za.co.absa.commons.reflect.extractors.AccessorMethodValueExtractor
 import za.co.absa.spline.agent.SplineAgent.FuncName
+import za.co.absa.spline.commons.reflect.extractors.AccessorMethodValueExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, WriteNodeInfo}
 import za.co.absa.spline.harvester.plugin.composite.SaveIntoDataSourceCommandPlugin._
