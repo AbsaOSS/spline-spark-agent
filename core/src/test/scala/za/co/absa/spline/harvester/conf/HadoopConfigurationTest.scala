@@ -29,5 +29,8 @@ object HadoopConfigurationTest {
   Configuration.addDefaultResource(
     s"${this.getClass.getPackage.getName.replaceAllLiterally(".", "/")}/hdfs-test-conf.xml")
 
-  def init(): Unit = {}
+  def init(): Unit = {
+    // A singleton activator.
+    // Called from the class instances to ensure execution of the companion object's constructor code.
+  }
 }

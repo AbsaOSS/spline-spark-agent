@@ -15,7 +15,6 @@
 
 package za.co.absa.spline.test.fixture.spline
 
-import org.apache.commons.configuration.BaseConfiguration
 import org.apache.spark.sql.SparkSession
 
 
@@ -26,8 +25,6 @@ trait SplineFixture {
 }
 
 object SplineFixture {
-  def EmptyConf = new BaseConfiguration
-
   def extractTableIdentifier(params: Map[String, Any]): Map[String, Any] =
     params
       .apply("table").asInstanceOf[Map[String, _]]
