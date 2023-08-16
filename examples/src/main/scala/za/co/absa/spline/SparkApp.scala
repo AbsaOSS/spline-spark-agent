@@ -47,5 +47,5 @@ abstract class SparkApp
    */
   val spark: SparkSession = sparkBuilder.getOrCreate()
 
-  protected override def _sqlContext: SQLContext = spark.sqlContext
+  protected override def _sqlContext: SQLContext = spark.sqlContext // NOSONAR
 }

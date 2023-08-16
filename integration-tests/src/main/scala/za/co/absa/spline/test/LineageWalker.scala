@@ -38,14 +38,9 @@ class LineageWalker(
 
   private def dependsOnRec(ref: AttrOrExprRef, id: String): Boolean = ref match {
     case AttrRef(attrIfd) =>
-      if (attrIfd == id) true
-      else dependsOnRec(attrMap(attrIfd).childRefs, id)
+      attrIfd == id || dependsOnRec(attrMap(attrIfd).childRefs, id)
     case ExprRef(exprId) =>
-      if (exprId == id) true
-      else {
-        if (litMap.contains("exprId")) false
-        else dependsOnRec(funMap(exprId).childRefs, id)
-      }
+      exprId == id || !litMap.contains("exprId") && dependsOnRec(funMap(exprId).childRefs, id)
   }
 
 }

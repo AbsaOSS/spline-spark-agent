@@ -77,12 +77,12 @@ class DataSourcePasswordReplacingFilterSpec extends AnyFlatSpec with Matchers wi
       "b" -> Seq(null),
       "c" -> None,
       "m" -> Map(
-        "url" -> "jdbc:postgresql://bob:secret@someHost:somePort/someDB",
+        "url" -> "jdbc:postgresql://bob:secret@someHost:somePort/someDB", // NOSONAR
         "dbtable" -> "someTable",
         "user" -> "someUser",
         "PASSPHRASE" -> "somePassword" // NOSONAR
       ),
-      "url" -> "jdbc:postgresql://bob:secret@someHost:somePort/someDB",
+      "url" -> "jdbc:postgresql://bob:secret@someHost:somePort/someDB", // NOSONAR
       "dbtable" -> "someTable",
       "user" -> "someUser",
       "password" -> "somePassword" // NOSONAR
@@ -92,14 +92,14 @@ class DataSourcePasswordReplacingFilterSpec extends AnyFlatSpec with Matchers wi
       "a" -> 42,
       "b" -> Seq(null),
       "c" -> None,
-      "url" -> "jdbc:postgresql://bob:*****@someHost:somePort/someDB",
+      "url" -> "jdbc:postgresql://bob:*****@someHost:somePort/someDB", // NOSONAR
       "m" -> Map(
-        "url" -> "jdbc:postgresql://bob:*****@someHost:somePort/someDB",
+        "url" -> "jdbc:postgresql://bob:*****@someHost:somePort/someDB", // NOSONAR
         "dbtable" -> "someTable",
         "user" -> "someUser",
         "PASSPHRASE" -> "*****" // NOSONAR
       ),
-      "url" -> "jdbc:postgresql://bob:*****@someHost:somePort/someDB",
+      "url" -> "jdbc:postgresql://bob:*****@someHost:somePort/someDB", // NOSONAR
       "dbtable" -> "someTable",
       "user" -> "someUser",
       "password" -> "*****" // NOSONAR
