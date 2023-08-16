@@ -1,7 +1,7 @@
-Spark Agent / Harvester
+Spline Agent for Apache Spark&trade;
 ===
 
-The Spline agent for Apache Spark is a complementary module to the [Spline project](https://absaoss.github.io/spline/)
+The _Spline Agent for Apache Spark&trade;_ is a complementary module to the [Spline project](https://absaoss.github.io/spline/)
 that captures runtime lineage information from the Apache Spark jobs.
 
 The agent is a Scala library that is embedded into the Spark driver, listening to Spark events, and capturing logical execution plans.
