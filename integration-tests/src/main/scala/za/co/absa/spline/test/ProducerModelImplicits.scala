@@ -26,11 +26,11 @@ object ProducerModelImplicits {
   implicit class OperationOps(val operation: Operation) extends AnyVal {
 
     def outputAttributes(implicit walker: LineageWalker): IOAttributes = {
-      operation.output.map(walker.attributeById)
+      operation.output.map(walker.getAttributeById)
     }
 
     def childOperations(implicit walker: LineageWalker): Seq[Operation] = {
-      operation.childIds.map(walker.operationById)
+      operation.childIds.map(walker.getOperationById)
     }
 
     def childOperation(implicit walker: LineageWalker): Operation = {
