@@ -107,6 +107,7 @@
         <cassandra-connector-30.version>3.0.1</cassandra-connector-30.version>
         <cassandra-connector-31.version>3.1.0</cassandra-connector-31.version>
         <cassandra-connector-32.version>3.2.0</cassandra-connector-32.version>
+        <cassandra-connector-33.version>3.3.0</cassandra-connector-33.version>
 
         <spark-excel.version>0.13.7</spark-excel.version>
 
@@ -799,9 +800,7 @@
                 <spark.version>${spark-33.version}</spark.version>
                 <delta.version>${delta-21.version}</delta.version>
                 <spark-excel.version>${spark-33.version}_0.18.7</spark-excel.version>
-
-                <!-- Cassandra connector for Spark 3.3 is not yet available, using the latest version -->
-                <cassandra-connector.version>${cassandra-connector-32.version}</cassandra-connector.version>
+                <cassandra-connector.version>${cassandra-connector-33.version}</cassandra-connector.version>
             </properties>
             <dependencyManagement>
                 <dependencies>
