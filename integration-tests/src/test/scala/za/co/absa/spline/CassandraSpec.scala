@@ -91,8 +91,8 @@ class CassandraSpec
     }
   }
 
-  it should "support Cassandra on Spark 3.0, 3.1 and 3.2" taggedAs
-    ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0" || ver"$SPARK_VERSION" >= ver"3.3.0") in {
+  it should "support Cassandra on Spark 3.0 and higher" taggedAs
+    ignoreIf(ver"$SPARK_VERSION" < ver"3.0.0") in {
     usingResource(new CassandraContainer("cassandra:3.11.2")) { container =>
       container.start()
 
