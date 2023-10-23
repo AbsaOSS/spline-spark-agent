@@ -26,6 +26,11 @@ spline:
   # (DON'T MODIFY UNLESS YOU UNDERSTAND THE IMPLICATIONS)
   internal.execPlan.uuid.version: 5
 
+  # How the agent should respond to initialization errors:
+  # - LOG        (log the error and disable the agent. Spark job continues unaffected without lineage tracking.)
+  # - BREAK      (propagate the error to the Spark process.)
+  onInitFailure: LOG
+
   # Should the agent capture failed executions:
   # - NONE        (only capture successful executions)
   # - NON_FATAL   (capture successful executions, and failed executions, but only when the error is non-fatal)
