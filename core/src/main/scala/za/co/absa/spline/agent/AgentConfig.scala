@@ -81,6 +81,16 @@ object AgentConfig {
       this
     }
 
+    def pluginsEnabledByDefault(enabled: Boolean): this.type = synchronized {
+      options += ConfProperty.PluginsEnabledByDefault -> enabled
+      this
+    }
+
+    def enablePlugin(name: String): this.type = synchronized {
+      options += s"${ConfProperty.PluginsConfigNamespace}.$name.enabled" -> true
+      this
+    }
+
     def build(): AgentConfig = new AgentConfig {
       options.foreach(tupled(addProperty))
     }
@@ -122,6 +132,11 @@ object AgentConfig {
      * Strategy used to detect ignored writes
      */
     val IgnoreWriteDetectionStrategy = "spline.IWDStrategy"
+
+    /**
+     * Should plugins be enabled by default
+     */
+    val PluginsEnabledByDefault = "spline.pluginsEnabledByDefault"
 
     val PluginsConfigNamespace = "spline.plugins"
 

@@ -34,12 +34,14 @@ class PluggableReadCommandExtractor(
   private val planProcessFn =
     pluginRegistry.plugins[ReadNodeProcessing]
       .map(_.readNodeProcessor)
-      .reduce(_ orElse _)
+      .reduceOption(_ orElse _)
+      .getOrElse(PartialFunction.empty)
 
   private val rddProcessFn =
     pluginRegistry.plugins[RddReadNodeProcessing]
       .map(_.rddReadNodeProcessor)
-      .reduce(_ orElse _)
+      .reduceOption(_ orElse _)
+      .getOrElse(PartialFunction.empty)
 
   override def asReadCommand(planOrRdd: PlanOrRdd): Option[ReadCommand] = {
     val res = planOrRdd match {

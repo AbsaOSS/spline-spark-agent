@@ -111,13 +111,15 @@ class AgentConfigSpec
       .lineageDispatcher(mockDispatcher)
       .postProcessingFilter(mockFilter)
       .ignoredWriteDetectionStrategy(mockIwdStrategy)
+      .pluginsEnabledByDefault(false)
       .build()
 
     config should not be empty
-    config.getKeys.asScala should have length 3
+    config.getKeys.asScala should have length 4
     config.getProperty(ConfProperty.RootLineageDispatcher) should be theSameInstanceAs mockDispatcher
     config.getProperty(ConfProperty.RootPostProcessingFilter) should be theSameInstanceAs mockFilter
     config.getProperty(ConfProperty.IgnoreWriteDetectionStrategy) should be theSameInstanceAs mockIwdStrategy
+    config.getProperty(ConfProperty.PluginsEnabledByDefault) shouldBe false
   }
 
 }

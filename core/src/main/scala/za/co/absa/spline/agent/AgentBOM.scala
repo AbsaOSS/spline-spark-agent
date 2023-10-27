@@ -24,6 +24,7 @@ import za.co.absa.spline.harvester.IdGenerator.UUIDVersion
 import za.co.absa.spline.harvester.conf.{SQLFailureCaptureMode, SplineMode}
 import za.co.absa.spline.harvester.dispatcher.{CompositeLineageDispatcher, LineageDispatcher}
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
+import za.co.absa.spline.harvester.plugin.PluginsConfiguration
 import za.co.absa.spline.harvester.postprocessing.{CompositePostProcessingFilter, PostProcessingFilter}
 
 import scala.collection.JavaConverters._
@@ -37,7 +38,7 @@ private[spline] trait AgentBOM {
   def lineageDispatcher: LineageDispatcher
   def iwdStrategy: IgnoredWriteDetectionStrategy
   def execPlanUUIDVersion: UUIDVersion
-  def pluginsConfig: Configuration
+  def pluginsConfig: PluginsConfiguration
 }
 
 object AgentBOM {
@@ -62,8 +63,11 @@ object AgentBOM {
       mergedConfig.getRequiredInt(ConfProperty.ExecPlanUUIDVersion)
     }
 
-    override def pluginsConfig: Configuration = {
-      mergedConfig.subset(ConfProperty.PluginsConfigNamespace)
+    override def pluginsConfig: PluginsConfiguration = {
+      PluginsConfiguration(
+        mergedConfig.getRequiredBoolean(ConfProperty.PluginsEnabledByDefault),
+        mergedConfig.subset(ConfProperty.PluginsConfigNamespace)
+      )
     }
 
     override lazy val postProcessingFilter: Option[PostProcessingFilter] = {
