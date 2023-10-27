@@ -40,7 +40,7 @@ class BasicIntegrationTests extends AsyncFlatSpec
 
   "saveAsTable" should "process all operations" in
     withNewSparkSession(implicit spark =>
-      withLineageTracking { captor =>
+      withLineageTracking({ captor =>
         import spark.implicits._
 
         withNewSparkSession {
@@ -57,7 +57,11 @@ class BasicIntegrationTests extends AsyncFlatSpec
           plan.operations.other should have length 2
           plan.operations.write should not be null
         }
-      }
+      },{
+        // To enable the SQL plugin only
+        _.pluginsEnabledByDefault(false)
+          .enablePlugin("za.co.absa.spline.harvester.plugin.embedded.SQLPlugin")
+      })
     )
 
   "save_to_fs" should "process all operations" in
