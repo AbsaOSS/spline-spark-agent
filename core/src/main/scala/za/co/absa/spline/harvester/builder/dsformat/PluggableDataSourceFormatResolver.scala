@@ -25,7 +25,8 @@ class PluggableDataSourceFormatResolver(pluginRegistry: PluginRegistry) extends 
   private val processFn =
     pluginRegistry.plugins[DataSourceFormatNameResolving]
       .map(_.formatNameResolver)
-      .reduce(_ orElse _)
+      .reduceOption(_ orElse _)
+      .getOrElse(PartialFunction.empty)
       .orElse[AnyRef, String] {
         case dsr: DataSourceRegister => dsr.shortName
         case o => o.toString
