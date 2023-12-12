@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.plugin.embedded
 import org.apache.spark.Partition
 import org.apache.spark.rdd.{HadoopRDD, RDD}
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.execution.datasources.FileScanRDD
+import org.apache.spark.sql.execution.datasources.{FileScanRDD, PartitionedFile}
 import za.co.absa.spline.commons.reflect.ReflectionUtils
 import za.co.absa.spline.harvester.builder._
 import za.co.absa.spline.harvester.plugin.Plugin.{Precedence, ReadNodeInfo}
@@ -39,12 +39,20 @@ class RDDPlugin(
 
   override def rddReadNodeProcessor: PartialFunction[RDD[_], ReadNodeInfo] = {
     case fsr: FileScanRDD =>
-      val uris = fsr.filePartitions.flatMap(_.files.map(_.filePath))
+      val files = fsr.filePartitions.flatMap(_.files)
+      val uris = files.map(extractPath(_))
       ReadNodeInfo(SourceIdentifier(None, uris: _*), Map.empty)
     case hr: HadoopRDD[_, _] =>
       val partitions = ReflectionUtils.extractValue[Array[Partition]](hr, "partitions_")
       val uris = partitions.map(hadoopPartitionToUriString)
       ReadNodeInfo(SourceIdentifier(None, uris: _*), Map.empty)
+  }
+
+  private def extractPath(file: PartitionedFile): String = {
+    val path = ReflectionUtils.extractValue[AnyRef](file, "filePath")
+    // for Spark 3.3 and lower path is a String
+    // for Spark 3.4 path is org.apache.spark.paths.SparkPath
+    path.toString
   }
 
   private def hadoopPartitionToUriString(hadoopPartition: Partition): String = {
@@ -56,5 +64,4 @@ class RDDPlugin(
 
     uri.toString
   }
-
 }
