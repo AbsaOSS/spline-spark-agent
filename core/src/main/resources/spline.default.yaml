@@ -259,3 +259,6 @@ spline:
         - collect
         - collectAsList
         - toLocalIterator
+
+  # Should plugins be enabled by default.
+  pluginsEnabledByDefault: true # true | false

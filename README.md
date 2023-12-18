@@ -698,9 +698,12 @@ When one of these commands occurs spline will let you know by logging a warning.
 ### Plugin API
 
 Using a plugin API you can capture lineage from a 3rd party data source provider.
-Spline discover plugins automatically by scanning a classpath, so no special steps required to register and configure a plugin.
+By default, Spline discover plugins automatically by scanning a classpath, so no special steps required to register and configure a plugin.
 All you need is to create a class extending the `za.co.absa.spline.harvester.plugin.Plugin` marker trait
 mixed with one or more `*Processing` traits, depending on your intention.
+
+To disable automatic plugin discovery and speed up initialization, set `spline.pluginsEnabledByDefault` to `false` in your configuration file.
+Then, you will need to register all necessary plugins one by one, using `spline.plugins` configuration property.
 
 There are three general processing traits:
 

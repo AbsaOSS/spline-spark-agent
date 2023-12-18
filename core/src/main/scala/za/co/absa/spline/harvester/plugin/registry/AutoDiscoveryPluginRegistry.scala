@@ -23,7 +23,8 @@ import org.apache.spark.internal.Logging
 import za.co.absa.spline.commons.lang.ARM
 import za.co.absa.spline.harvester.plugin.Plugin
 import za.co.absa.spline.harvester.plugin.Plugin.Precedence
-import za.co.absa.spline.harvester.plugin.registry.AutoDiscoveryPluginRegistry.{EnabledByDefault, EnabledConfProperty, PluginClasses, getOnlyOrThrow}
+import za.co.absa.spline.harvester.plugin.PluginsConfiguration
+import za.co.absa.spline.harvester.plugin.registry.AutoDiscoveryPluginRegistry.{EnabledConfProperty, PluginClasses, getOnlyOrThrow}
 
 import javax.annotation.Priority
 import scala.collection.JavaConverters._
@@ -32,7 +33,7 @@ import scala.util.Try
 import scala.util.control.NonFatal
 
 class AutoDiscoveryPluginRegistry(
-  conf: Configuration,
+  conf: PluginsConfiguration,
   injectables: AnyRef*
 ) extends PluginRegistry
   with Logging {
@@ -47,13 +48,29 @@ class AutoDiscoveryPluginRegistry(
     typedInjectables.groupBy(_._1).mapValues(_.map(_._2))
   }
 
-  private val allPlugins: Seq[Plugin] =
-    for (pc <- PluginClasses if isPluginEnabled(pc)) yield {
+  private val allPlugins: Seq[Plugin] = {
+    val enabledPlugins = if(conf.pluginsEnabledByDefault) {
+      PluginClasses.filter(pc => isPluginEnabled(pc.getName))
+    } else {
+      conf.plugins.getKeys.asScala
+        .filter(_.endsWith(s".$EnabledConfProperty")) // Looking for keys ending with ".enabled", since plugins must be explicitly enabled
+        .map(_.dropRight(EnabledConfProperty.length + 1)) // Dropping ".enabled" to get plugin class name
+        .filter(isPluginEnabled)
+        .map(Class.forName)
+        .toSeq
+    }
+
+    if(enabledPlugins.isEmpty) {
+      throw new RuntimeException("No plugins enabled")
+    }
+
+    for (pc <- enabledPlugins) yield {
       logInfo(s"Loading plugin: $pc")
       instantiatePlugin(pc)
         .recover({ case NonFatal(e) => throw new RuntimeException(s"Plugin instantiation failure: $pc", e) })
         .get
     }
+  }
 
   override def plugins[A: ClassTag]: Seq[Plugin with A] = {
     val ct = implicitly[ClassTag[A]]
@@ -65,7 +82,7 @@ class AutoDiscoveryPluginRegistry(
     val constr = getOnlyOrThrow(constrs, s"Plugin class must have a single public constructor: ${constrs.mkString(", ")}")
     val args = constr.getParameterTypes.map {
       case ct if classOf[Configuration].isAssignableFrom(ct) =>
-        conf.subset(pluginClass.getName)
+        conf.plugins.subset(pluginClass.getName)
       case pt =>
         val candidates = injectablesByType.getOrElse(pt, sys.error(s"Cannot bind $pt. No value found"))
         getOnlyOrThrow(candidates, s"Ambiguous constructor parameter binding. Multiple values found for $pt: ${candidates.length}")
@@ -73,11 +90,11 @@ class AutoDiscoveryPluginRegistry(
     constr.newInstance(args: _*).asInstanceOf[Plugin]
   }
 
-  private def isPluginEnabled(pc: Class[Plugin]): Boolean = {
-    val pluginConf = conf.subset(pc.getName)
-    val isEnabled = pluginConf.getBoolean(EnabledConfProperty, EnabledByDefault)
+  private def isPluginEnabled(pcn: String): Boolean = {
+    val pluginConf = conf.plugins.subset(pcn)
+    val isEnabled = pluginConf.getBoolean(EnabledConfProperty, conf.pluginsEnabledByDefault)
     if (!isEnabled) {
-      logWarning(s"Plugin ${pc.getName} is disabled in the configuration.")
+      logWarning(s"Plugin ${pcn} is disabled in the configuration.")
     }
     isEnabled
   }
@@ -87,7 +104,6 @@ class AutoDiscoveryPluginRegistry(
 object AutoDiscoveryPluginRegistry extends Logging {
 
   private val EnabledConfProperty = "enabled"
-  private val EnabledByDefault = true
 
   private val PluginClasses: Seq[Class[Plugin]] = {
     logDebug("Scanning for plugins")

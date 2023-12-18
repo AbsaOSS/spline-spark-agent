@@ -30,7 +30,8 @@ class LogicalRelationPlugin(pluginRegistry: PluginRegistry) extends Plugin with 
   private lazy val baseRelProcessor =
     pluginRegistry.plugins[BaseRelationProcessing]
       .map(_.baseRelationProcessor)
-      .reduce(_ orElse _)
+      .reduceOption(_ orElse _)
+      .getOrElse(PartialFunction.empty)
 
   override val readNodeProcessor: PartialFunction[LogicalPlan, ReadNodeInfo] = {
     case lr: LogicalRelation
