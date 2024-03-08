@@ -76,7 +76,7 @@ class KafkaSinkSpec
 
           (plan2, _) <- captor.lineageOf(
             reader
-              .option("subscribe", s"$topicName,anotherTopic")
+              .option("subscribe", s"$topicName")
               .load()
               .write.mode(Overwrite).save(TempFile(pathOnly = true).deleteOnExit().path.toString))
 
