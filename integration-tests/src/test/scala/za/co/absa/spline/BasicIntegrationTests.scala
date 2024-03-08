@@ -16,6 +16,7 @@
 
 package za.co.absa.spline
 
+import org.apache.spark.SPARK_VERSION
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SaveMode._
@@ -24,8 +25,12 @@ import org.apache.spark.sql.types.{IntegerType, StructField, StructType}
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.spline.commons.io.TempDirectory
+import za.co.absa.spline.commons.version.Version.VersionStringInterpolator
+import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
+
+import scala.concurrent.Future
 
 class BasicIntegrationTests extends AsyncFlatSpec
   with Matchers
@@ -117,15 +122,41 @@ class BasicIntegrationTests extends AsyncFlatSpec
               .write.mode(Append).saveAsTable(tableName)
           }
 
-          (plan2, _) <- captor.lineageOf {
+          // Spark 3.4+ is creating 2 commands for both writes here so we need to ignore one
+          // We only want the one that is from CreateDataSourceTableAsSelectCommand
+          // The one we ignore here is an extra InsertIntoHadoopFsRelationCommand
+          // They can come out of order so we need to filter out which one is which.
+          (plan2, _) <- if (ver"$SPARK_VERSION" >= ver"3.4.0") {
+            captor.lineageOf {
+              Thread.sleep(5000)
+            }
+          } else Future[(ExecutionPlan, Seq[ExecutionEvent])](null, null)
+
+          (plan3, _) <- captor.lineageOf {
             spark
               .read.table(tableName)
               .write.mode(Overwrite).saveAsTable("somewhere")
           }
+
+          (plan4, _) <- if (ver"$SPARK_VERSION" >= ver"3.4.0") {
+            captor.lineageOf {
+              Thread.sleep(5000)
+            }
+          } else Future[(ExecutionPlan, Seq[ExecutionEvent])](null, null)
         } yield {
           println("yield")
-          val writeUri = plan1.operations.write.outputSource
-          val readUri = plan2.operations.reads.head.inputSources.head
+
+          val writePlan = Seq(plan1, plan2)
+            .filter(null.!=)
+            .find(_.operations.write.name == "CreateDataSourceTableAsSelectCommand")
+            .get
+          val readPlan = Seq(plan3, plan4)
+            .filter(null.!=)
+            .find(_.operations.write.name == "CreateDataSourceTableAsSelectCommand")
+            .get
+
+          val writeUri = writePlan.operations.write.outputSource
+          val readUri = readPlan.operations.reads.head.inputSources.head
 
           writeUri shouldEqual readUri
         }

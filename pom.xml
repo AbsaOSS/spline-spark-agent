@@ -214,6 +214,7 @@
                 <groupId>com.github.cerveada</groupId>
                 <artifactId>scalatest-maven-plugin</artifactId>
                 <configuration>
+                    <stdout>I</stdout>
                     <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
                     <junitxml>.</junitxml>
                     <filereports>WDF TestSuite.txt</filereports>
