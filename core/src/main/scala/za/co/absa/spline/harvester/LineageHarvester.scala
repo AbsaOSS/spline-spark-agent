@@ -54,9 +54,6 @@ class LineageHarvester(
   def harvest(result: Either[Throwable, Duration]): HarvestResult = {
     logDebug(s"Harvesting lineage from ${ctx.logicalPlan.getClass}")
 
-    println("MINE: ")
-    println(ctx.logicalPlan.toJSON)
-
     val (readMetrics: Metrics, writeMetrics: Metrics) = ctx.executedPlanOpt.
       map(getExecutedReadWriteMetrics).
       getOrElse((Map.empty, Map.empty))
