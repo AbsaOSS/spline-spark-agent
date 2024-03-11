@@ -36,6 +36,7 @@ import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 
 import java.util.UUID
+import scala.concurrent.Future
 import scala.language.reflectiveCalls
 import scala.util.Try
 
@@ -376,11 +377,25 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           val df = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
 
           for {
-            (plan, _) <- captor.lineageOf {
+            (plan1, _) <- captor.lineageOf {
               df.createOrReplaceTempView("tempView")
               spark.sql("CREATE TABLE users_sales AS SELECT i, d, s FROM tempView ")
             }
+            // Spark 3.4+ is creating 2 commands for this CTAS here so we need to ignore one
+            // We only want the one that is from CreateHiveTableAsSelectCommand
+            // The one we ignore here is an extra InsertIntoHiveTableCommand
+            // They can come out of order so we need to filter out which one is which.
+            (plan2, _) <- if (ver"$SPARK_VERSION" >= ver"3.4.0") {
+              captor.lineageOf {
+                Thread.sleep(5000)
+              }
+            } else Future[(ExecutionPlan, Seq[ExecutionEvent])](null, null)
           } yield {
+            val plan = Seq(plan1, plan2)
+              .filter(null.!=)
+              .find(_.operations.write.name == "CreateHiveTableAsSelectCommand")
+              .get
+
             val writeOperation = plan.operations.write
             writeOperation.id shouldEqual "op-0"
             writeOperation.append shouldEqual false
@@ -500,7 +515,7 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           plan should not be null
           event.durationNs should be(empty)
           event.error should not be empty
-          event.error.get.toString should include(s"path ${tmpLocal.toURI.toString.stripSuffix("/")} already exists")
+          event.error.get.toString.toLowerCase should include(s"path ${tmpLocal.toURI.toString.stripSuffix("/")} already exists")
         }
       }
     }

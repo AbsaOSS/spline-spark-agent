@@ -48,8 +48,9 @@ class KafkaSinkSpec
     EmbeddedKafka.stop()
   }
 
-  it should "support Kafka as a write source" in {
+  it should "support Kafka as a write source while reading from multiple Kafka read sources" in {
     val topicName = "bananas"
+    val otherTopicName = "anotherTopic"
 
     withNewSparkSession { implicit spark =>
       withLineageTracking { captor =>
@@ -72,6 +73,16 @@ class KafkaSinkSpec
               .format("kafka")
               .option("kafka.bootstrap.servers", kafkaUrl)
               .option("topic", topicName)
+              .save())
+
+          // Write to another topic seeding lineage for a downstream read
+          (_, _) <- captor.lineageOf(
+            testData
+              .selectExpr("CAST (name AS STRING) AS value")
+              .write
+              .format("kafka")
+              .option("kafka.bootstrap.servers", kafkaUrl)
+              .option("topic", otherTopicName)
               .save())
 
           (plan2, _) <- captor.lineageOf(
@@ -98,6 +109,7 @@ class KafkaSinkSpec
 
           plan2.operations.reads.head.extra("sourceType") shouldBe Some("kafka")
           plan2.operations.reads.head.inputSources should contain(s"kafka:$topicName")
+          plan2.operations.reads.head.inputSources should contain(s"kafka:$otherTopicName")
           plan2.operations.reads.head.params should contain key "subscribe"
 
           plan3.operations.reads.head.extra("sourceType") shouldBe Some("kafka")
