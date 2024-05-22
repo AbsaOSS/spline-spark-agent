@@ -120,7 +120,7 @@
         <scala_2.12.version>2.12.17</scala_2.12.version>
 
         <!-- Controlled by `scala-cross-build` plugin -->
-        <scala.version>2.12.17</scala.version>
+        <scala.version>2.13.14</scala.version>
         <scala.binary.version>2.12</scala.binary.version>
     </properties>
 
@@ -602,7 +602,7 @@
             <id>scala-2.11</id>
             <properties>
                 <scala.binary.version>2.11</scala.binary.version>
-                <scala.version>${scala_2.11.version}</scala.version>
+                <scala.version>2.13.14</scala.version>
             </properties>
             <modules>
                 <module>bundle-2.2</module>
@@ -615,7 +615,7 @@
             <id>scala-2.12</id>
             <properties>
                 <scala.binary.version>2.12</scala.binary.version>
-                <scala.version>${scala_2.12.version}</scala.version>
+                <scala.version>2.13.14</scala.version>
             </properties>
             <modules>
                 <module>bundle-2.4</module>
