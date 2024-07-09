@@ -33,12 +33,13 @@ abstract class SparkApp
   tags: Seq[String] = Nil
 ) extends SQLImplicits with App {
 
-  private val sparkBuilder = SparkSession.builder()
-
-  sparkBuilder.appName(name)
-  sparkBuilder.master(master)
-  sparkBuilder.config("spark.driver.host", "localhost")
-  sparkBuilder.config("spline.example.tags", tags.mkString(","))
+  private val sparkBuilder =
+    SparkSession.builder()
+      .appName(name)
+      .master(master)
+      .config("spark.driver.host", "localhost")
+      .config("spark.ui.enabled", "false")
+      .config("spline.example.tags", tags.mkString(","))
 
   for ((k, v) <- conf) sparkBuilder.config(k, v)
 
