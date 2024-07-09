@@ -515,7 +515,8 @@ class LineageHarvesterSpec extends AsyncFlatSpec
           plan should not be null
           event.durationNs should be(empty)
           event.error should not be empty
-          event.error.get.toString.toLowerCase should include(s"path ${tmpLocal.toURI.toString.stripSuffix("/")} already exists")
+          event.error.get.toString.toLowerCase should
+            include(s"path ${tmpLocal.toURI.toString.stripSuffix("/")} already exists".toLowerCase)
         }
       }
     }
