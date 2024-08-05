@@ -143,15 +143,6 @@ object BigQueryPlugin {
       def getParentProjectId: String
     }
     private val clazz = findPossiblyShadedClass("com.google.cloud", "com.google.cloud.spark.bigquery.SparkBigQueryConfig")
-    val from: (java.util.Map[_, _], ImmutableMap.ImmutableMap, Configuration, ImmutableMap.ImmutableMap, Integer, SQLConf, String, Optional[StructType], java.lang.Boolean) => SparkBigQueryConfig = {
-      case (a, b, c, d, e, f, g, h, i) =>
-        if (methodFrom7.isDefined)
-          methodFrom7.get.invoke(clazz, a, b, c, e, f, g, h).asInstanceOf[SparkBigQueryConfig]
-        else if (methodFrom8.isDefined)
-          methodFrom8.get.invoke(clazz, a, b, c, e, f, g, h, i).asInstanceOf[SparkBigQueryConfig]
-        else
-          methodFrom9.get.invoke(clazz, a, b, c, d, e, f, g, h, i).asInstanceOf[SparkBigQueryConfig]
-    }
     private val methodFrom7: Option[Method] = clazz
       .getMethods
       .find(
@@ -176,6 +167,15 @@ object BigQueryPlugin {
           && m.getParameterTypes.length == 9
           && m.getReturnType.getSimpleName == "SparkBigQueryConfig"
       )
+    val from: (java.util.Map[_, _], ImmutableMap.ImmutableMap, Configuration, ImmutableMap.ImmutableMap, Integer, SQLConf, String, Optional[StructType], java.lang.Boolean) => SparkBigQueryConfig = {
+      case (a, b, c, d, e, f, g, h, i) =>
+        if (methodFrom7.isDefined)
+          methodFrom7.get.invoke(clazz, a, b, c, e, f, g, h).asInstanceOf[SparkBigQueryConfig]
+        else if (methodFrom8.isDefined)
+          methodFrom8.get.invoke(clazz, a, b, c, e, f, g, h, i).asInstanceOf[SparkBigQueryConfig]
+        else
+          methodFrom9.get.invoke(clazz, a, b, c, d, e, f, g, h, i).asInstanceOf[SparkBigQueryConfig]
+    }
 
     object ImmutableMap {
       type ImmutableMap = AnyRef
@@ -191,7 +191,6 @@ object BigQueryPlugin {
           .invoke(imClass)
           .asInstanceOf[ImmutableMap]
     }
-
     private val methodFrom: Method = methodFrom7
       .orElse(methodFrom8)
       .orElse(methodFrom9)
