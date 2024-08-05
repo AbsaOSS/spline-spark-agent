@@ -167,15 +167,10 @@ object BigQueryPlugin {
           && m.getParameterTypes.length == 9
           && m.getReturnType.getSimpleName == "SparkBigQueryConfig"
       )
-    val from: (java.util.Map[_, _], ImmutableMap.ImmutableMap, Configuration, ImmutableMap.ImmutableMap, Integer, SQLConf, String, Optional[StructType], java.lang.Boolean) => SparkBigQueryConfig = {
-      case (a, b, c, d, e, f, g, h, i) =>
-        if (methodFrom7.isDefined)
-          methodFrom7.get.invoke(clazz, a, b, c, e, f, g, h).asInstanceOf[SparkBigQueryConfig]
-        else if (methodFrom8.isDefined)
-          methodFrom8.get.invoke(clazz, a, b, c, e, f, g, h, i).asInstanceOf[SparkBigQueryConfig]
-        else
-          methodFrom9.get.invoke(clazz, a, b, c, d, e, f, g, h, i).asInstanceOf[SparkBigQueryConfig]
-    }
+    private val methodFrom: Method = methodFrom7
+      .orElse(methodFrom8)
+      .orElse(methodFrom9)
+      .getOrElse(sys.error(s"Cannot find method `public static SparkBigQueryConfig from(... {7|8|9 args} ...)` in the class `$clazz`"))
 
     object ImmutableMap {
       type ImmutableMap = AnyRef
@@ -191,10 +186,16 @@ object BigQueryPlugin {
           .invoke(imClass)
           .asInstanceOf[ImmutableMap]
     }
-    private val methodFrom: Method = methodFrom7
-      .orElse(methodFrom8)
-      .orElse(methodFrom9)
-      .getOrElse(sys.error(s"Cannot find method `public static SparkBigQueryConfig from(... {7|8|9 args} ...)` in the class `$clazz`"))
+
+    val from: (java.util.Map[_, _], ImmutableMap.ImmutableMap, Configuration, ImmutableMap.ImmutableMap, Integer, SQLConf, String, Optional[StructType], java.lang.Boolean) => SparkBigQueryConfig = {
+      case (a, b, c, d, e, f, g, h, i) =>
+        if (methodFrom7.isDefined)
+          methodFrom7.get.invoke(clazz, a, b, c, e, f, g, h).asInstanceOf[SparkBigQueryConfig]
+        else if (methodFrom8.isDefined)
+          methodFrom8.get.invoke(clazz, a, b, c, e, f, g, h, i).asInstanceOf[SparkBigQueryConfig]
+        else
+          methodFrom9.get.invoke(clazz, a, b, c, d, e, f, g, h, i).asInstanceOf[SparkBigQueryConfig]
+    }
   }
 
   private object `_: DirectBigQueryRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.google.cloud.spark.bigquery.direct.DirectBigQueryRelation")
