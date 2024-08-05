@@ -16,7 +16,12 @@
 
 package za.co.absa.spline.harvester.plugin.embedded
 
+import java.lang.reflect.Method
+import java.lang.reflect.Modifier.isStatic
+import java.util.Optional
+
 import io.github.classgraph.ClassGraph
+import javax.annotation.Priority
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
@@ -31,10 +36,6 @@ import za.co.absa.spline.harvester.plugin.embedded.BigQueryPlugin.SparkBigQueryC
 import za.co.absa.spline.harvester.plugin.embedded.BigQueryPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, Plugin, RelationProviderProcessing}
 
-import java.lang.reflect.Method
-import java.lang.reflect.Modifier.isStatic
-import java.util.Optional
-import javax.annotation.Priority
 import scala.collection.JavaConverters._
 import scala.language.reflectiveCalls
 
@@ -142,14 +143,39 @@ object BigQueryPlugin {
       def getParentProjectId: String
     }
     private val clazz = findPossiblyShadedClass("com.google.cloud", "com.google.cloud.spark.bigquery.SparkBigQueryConfig")
-    private val methodFrom: Method = clazz
+    val from: (java.util.Map[_, _], ImmutableMap.ImmutableMap, Configuration, ImmutableMap.ImmutableMap, Integer, SQLConf, String, Optional[StructType], java.lang.Boolean) => SparkBigQueryConfig = {
+      case (a, b, c, d, e, f, g, h, i) =>
+        if (methodFrom7.isDefined)
+          methodFrom7.get.invoke(clazz, a, b, c, e, f, g, h).asInstanceOf[SparkBigQueryConfig]
+        else if (methodFrom8.isDefined)
+          methodFrom8.get.invoke(clazz, a, b, c, e, f, g, h, i).asInstanceOf[SparkBigQueryConfig]
+        else
+          methodFrom9.get.invoke(clazz, a, b, c, d, e, f, g, h, i).asInstanceOf[SparkBigQueryConfig]
+    }
+    private val methodFrom7: Option[Method] = clazz
+      .getMethods
+      .find(
+        m => m.getName == "from"
+          && isStatic(m.getModifiers)
+          && m.getParameterTypes.length == 7
+          && m.getReturnType.getSimpleName == "SparkBigQueryConfig"
+      )
+    private val methodFrom8: Option[Method] = clazz
+      .getMethods
+      .find(
+        m => m.getName == "from"
+          && isStatic(m.getModifiers)
+          && m.getParameterTypes.length == 8
+          && m.getReturnType.getSimpleName == "SparkBigQueryConfig"
+      )
+    private val methodFrom9: Option[Method] = clazz
       .getMethods
       .find(
         m => m.getName == "from"
           && isStatic(m.getModifiers)
           && m.getParameterTypes.length == 9
           && m.getReturnType.getSimpleName == "SparkBigQueryConfig"
-      ).getOrElse(sys.error(s"Cannot find method `public static SparkBigQueryConfig from(... {9 args} ...)` in the class `$clazz`"))
+      )
 
     object ImmutableMap {
       type ImmutableMap = AnyRef
@@ -166,10 +192,10 @@ object BigQueryPlugin {
           .asInstanceOf[ImmutableMap]
     }
 
-    val from: (java.util.Map[_, _], ImmutableMap.ImmutableMap, Configuration, ImmutableMap.ImmutableMap, Integer, SQLConf, String, Optional[StructType], java.lang.Boolean) => SparkBigQueryConfig =
-      methodFrom
-        .invoke(clazz, _, _, _, _, _, _, _, _, _)
-        .asInstanceOf[SparkBigQueryConfig]
+    private val methodFrom: Method = methodFrom7
+      .orElse(methodFrom8)
+      .orElse(methodFrom9)
+      .getOrElse(sys.error(s"Cannot find method `public static SparkBigQueryConfig from(... {7|8|9 args} ...)` in the class `$clazz`"))
   }
 
   private object `_: DirectBigQueryRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.google.cloud.spark.bigquery.direct.DirectBigQueryRelation")
