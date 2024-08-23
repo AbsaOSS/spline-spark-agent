@@ -771,6 +771,7 @@
             <properties>
                 <spark.version>${spark-30.version}</spark.version>
                 <delta.version>${delta-30.version}</delta.version>
+                <guava.version>${guava-3x.version}</guava.version>
                 <spark-excel.version>${spark-excel-30.version}</spark-excel.version>
                 <cassandra-connector.version>${cassandra-connector-30.version}</cassandra-connector.version>
             </properties>
@@ -792,6 +793,7 @@
             <properties>
                 <spark.version>${spark-31.version}</spark.version>
                 <delta.version>${delta-31.version}</delta.version>
+                <guava.version>${guava-3x.version}</guava.version>
                 <spark-excel.version>${spark-excel-31.version}</spark-excel.version>
                 <cassandra-connector.version>${cassandra-connector-31.version}</cassandra-connector.version>
             </properties>
@@ -813,6 +815,7 @@
             <properties>
                 <spark.version>${spark-32.version}</spark.version>
                 <delta.version>${delta-32.version}</delta.version>
+                <guava.version>${guava-3x.version}</guava.version>
                 <spark-excel.version>${spark-excel-32.version}</spark-excel.version>
                 <cassandra-connector.version>${cassandra-connector-32.version}</cassandra-connector.version>
             </properties>
@@ -834,6 +837,7 @@
             <properties>
                 <spark.version>${spark-33.version}</spark.version>
                 <delta.version>${delta-33.version}</delta.version>
+                <guava.version>${guava-3x.version}</guava.version>
                 <spark-excel.version>${spark-excel-33.version}</spark-excel.version>
                 <cassandra-connector.version>${cassandra-connector-33.version}</cassandra-connector.version>
             </properties>
@@ -855,6 +859,7 @@
             <properties>
                 <spark.version>${spark-34.version}</spark.version>
                 <delta.version>${delta-34.version}</delta.version>
+                <guava.version>${guava-3x.version}</guava.version>
                 <spark-excel.version>${spark-excel-34.version}</spark-excel.version>
                 <cassandra-connector.version>${cassandra-connector-34.version}</cassandra-connector.version>
             </properties>
@@ -875,8 +880,9 @@
             <id>spark-3.5</id>
             <properties>
                 <spark.version>${spark-35.version}</spark.version>
-                <delta.version>${delta-35.version}</delta.version>
                 <delta.artifactId>delta-spark_${scala.binary.version}</delta.artifactId>
+                <delta.version>${delta-35.version}</delta.version>
+                <guava.version>${guava-3x.version}</guava.version>
                 <spark-excel.version>${spark-excel-35.version}</spark-excel.version>
                 <cassandra-connector.version>${cassandra-connector-35.version}</cassandra-connector.version>
             </properties>
