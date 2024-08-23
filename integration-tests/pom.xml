@@ -29,9 +29,9 @@
     <packaging>jar</packaging>
 
     <properties>
-        <guava.version>14.0.1</guava.version>
         <elasticsearch.spark.sufix>20</elasticsearch.spark.sufix>
         <testcontainers.version>1.17.5</testcontainers.version>
+        <delta.artifactId>delta-core_${scala.binary.version}</delta.artifactId>
     </properties>
 
     <dependencies>
@@ -93,7 +93,7 @@
         </dependency>
         <dependency>
             <groupId>io.delta</groupId>
-            <artifactId>delta-core_${scala.binary.version}</artifactId>
+            <artifactId>${delta.artifactId}</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -164,14 +164,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- required for spark-cassandra-connector -->
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <scope>test</scope>
-            <version>${guava.version}</version>
-        </dependency>
-
         <dependency>
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch-spark-${elasticsearch.spark.sufix}_${scala.binary.version}</artifactId>
@@ -210,7 +202,6 @@
         <profile>
             <id>spark-3.0</id>
             <properties>
-                <guava.version>16.0.1</guava.version>
                 <elasticsearch.spark.sufix>30</elasticsearch.spark.sufix>
             </properties>
             <dependencies>
@@ -225,14 +216,13 @@
         <profile>
             <id>spark-3.1</id>
             <properties>
-                <guava.version>16.0.1</guava.version>
                 <elasticsearch.spark.sufix>30</elasticsearch.spark.sufix>
             </properties>
             <dependencies>
                 <dependency>
                     <groupId>org.apache.iceberg</groupId>
                     <artifactId>iceberg-spark-runtime-3.1_${scala.binary.version}</artifactId>
-                    <version>1.0.0</version>
+                    <version>1.3.1</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -240,14 +230,13 @@
         <profile>
             <id>spark-3.2</id>
             <properties>
-                <guava.version>16.0.1</guava.version>
                 <elasticsearch.spark.sufix>30</elasticsearch.spark.sufix>
             </properties>
             <dependencies>
                 <dependency>
                     <groupId>org.apache.iceberg</groupId>
                     <artifactId>iceberg-spark-runtime-3.2_${scala.binary.version}</artifactId>
-                    <version>1.0.0</version>
+                    <version>1.4.3</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -255,14 +244,13 @@
         <profile>
             <id>spark-3.3</id>
             <properties>
-                <guava.version>16.0.1</guava.version>
                 <elasticsearch.spark.sufix>30</elasticsearch.spark.sufix>
             </properties>
             <dependencies>
                 <dependency>
                     <groupId>org.apache.iceberg</groupId>
                     <artifactId>iceberg-spark-runtime-3.3_${scala.binary.version}</artifactId>
-                    <version>1.0.0</version>
+                    <version>1.6.0</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -270,14 +258,28 @@
         <profile>
             <id>spark-3.4</id>
             <properties>
-                <guava.version>16.0.1</guava.version>
                 <elasticsearch.spark.sufix>30</elasticsearch.spark.sufix>
             </properties>
             <dependencies>
                 <dependency>
                     <groupId>org.apache.iceberg</groupId>
                     <artifactId>iceberg-spark-runtime-3.4_${scala.binary.version}</artifactId>
-                    <version>1.3.1</version>
+                    <version>1.6.0</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>spark-3.5</id>
+            <properties>
+                <elasticsearch.spark.sufix>30</elasticsearch.spark.sufix>
+                <delta.artifactId>delta-spark_${scala.binary.version}</delta.artifactId>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.iceberg</groupId>
+                    <artifactId>iceberg-spark-runtime-3.5_${scala.binary.version}</artifactId>
+                    <version>1.6.0</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>

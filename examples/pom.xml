@@ -29,6 +29,7 @@
 
     <properties>
         <docker.imageName>spline-spark-agent</docker.imageName>
+        <delta.artifactId>delta-core_${scala.binary.version}</delta.artifactId>
     </properties>
 
     <dependencies>
@@ -78,13 +79,12 @@
         </dependency>
         <dependency>
             <groupId>io.delta</groupId>
-            <artifactId>delta-core_${scala.binary.version}</artifactId>
+            <artifactId>${delta.artifactId}</artifactId>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>14.0.1</version>
             <scope>runtime</scope>
         </dependency>
     </dependencies>
@@ -150,6 +150,13 @@
                     <scope>runtime</scope>
                 </dependency>
             </dependencies>
+        </profile>
+
+        <profile>
+            <id>spark-3.5</id>
+            <properties>
+                <delta.artifactId>delta-spark_${scala.binary.version}</delta.artifactId>
+            </properties>
         </profile>
     </profiles>
 
