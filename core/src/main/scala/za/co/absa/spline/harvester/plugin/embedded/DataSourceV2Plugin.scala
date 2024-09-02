@@ -164,6 +164,8 @@ class DataSourceV2Plugin
       SourceIdentifier(Some(format), pathUris: _*)
 
     case `_: TableV2`(tv2) => extractSourceIdFromDeltaTableV2(tv2)
+
+    case `_: OdpsTable`(ot) => SourceIdentifier(Some("odpstable"),s"odpstable:${extractValue[String](ot,"name")}")
   }
 
   private def extractSourceIdFromDeltaTableV2(table: AnyRef): SourceIdentifier = {
@@ -230,5 +232,8 @@ object DataSourceV2Plugin {
 
   private object `_: TableV2` extends SafeTypeMatchingExtractor[AnyRef](
     "org.apache.spark.sql.connector.catalog.Table")
+
+  private object `_: OdpsTable` extends SafeTypeMatchingExtractor[AnyRef](
+    "org.apache.spark.sql.execution.datasources.v2.odps.OdpsTable")
 
 }
