@@ -163,9 +163,9 @@ class DataSourceV2Plugin
       val pathUris = paths.map(prependFileSchemaIfMissing)
       SourceIdentifier(Some(format), pathUris: _*)
 
-    case `_: TableV2`(tv2) => extractSourceIdFromDeltaTableV2(tv2)
-
     case `_: OdpsTable`(ot) => SourceIdentifier(Some("odpstable"),s"odpstable:${extractValue[String](ot,"name")}")
+
+    case `_: TableV2`(tv2) => extractSourceIdFromDeltaTableV2(tv2)
   }
 
   private def extractSourceIdFromDeltaTableV2(table: AnyRef): SourceIdentifier = {
