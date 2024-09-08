@@ -46,7 +46,10 @@ class ElasticSearchPlugin
   }
 
   override def relationProviderProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
-    case (rp, cmd) if rp == "es" || `_: org.elasticsearch.spark.sql.DefaultSource`.matches(rp) =>
+    case (rp, cmd)
+      if rp == "es"
+        || rp == "org.elasticsearch.spark.sql"
+        || `_: org.elasticsearch.spark.sql.DefaultSource`.matches(rp) =>
 
       val server = cmd
         .options.getOrElse("es.nodes", sys.error(s"ElasticSearch: Cannot extract server from the options keys: ${cmd.options.keySet mkString ","}"))
