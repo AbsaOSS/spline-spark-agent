@@ -49,7 +49,7 @@ class ElasticSearchSpec
       val esOptions = Map(
         "es.nodes" -> esNodes,
         "es.port" -> esPort.toString,
-        "es.nodes.wan.only" -> "true",
+        "es.nodes.wan.only" -> "true"
       )
 
       withNewSparkSession(implicit spark => {
@@ -106,7 +106,7 @@ class ElasticSearchSpec
         "es.nodes" -> esNodes,
         "es.port" -> esPort.toString,
         "es.nodes.wan.only" -> "true",
-        "es.resource" -> s"$index/$docType",
+        "es.resource" -> s"$index/$docType"
       )
 
       withNewSparkSession(implicit spark => {
