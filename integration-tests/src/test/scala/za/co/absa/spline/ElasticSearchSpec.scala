@@ -21,10 +21,15 @@ import org.apache.spark.sql.{DataFrame, Row, SaveMode}
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.testcontainers.elasticsearch.ElasticsearchContainer
+import za.co.absa.spline.ElasticSearchSpec.Formats
 import za.co.absa.spline.commons.io.TempDirectory
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{ReleasableResourceFixture, SparkFixture}
 
+
+object ElasticSearchSpec {
+  private val Formats = Seq("es", "org.elasticsearch.spark.sql")
+}
 
 class ElasticSearchSpec
   extends AsyncFlatSpec
@@ -33,7 +38,7 @@ class ElasticSearchSpec
     with SplineFixture
     with ReleasableResourceFixture {
 
-  it should "support ES" in {
+  for (format <- Formats) it should s"""support `format("$format")` with `save/load("<index>")`""" in {
     usingResource(new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:7.9.2")) { container =>
       container.start()
 
@@ -41,7 +46,11 @@ class ElasticSearchSpec
       val docType = "test"
       val esNodes = container.getHost
       val esPort = container.getFirstMappedPort
-      val esOptions = Map("es.nodes" -> esNodes, "es.port" -> esPort.toString, "es.nodes.wan.only" -> "true")
+      val esOptions = Map(
+        "es.nodes" -> esNodes,
+        "es.port" -> esPort.toString,
+        "es.nodes.wan.only" -> "true"
+      )
 
       withNewSparkSession(implicit spark => {
         withLineageTracking { captor =>
@@ -57,7 +66,7 @@ class ElasticSearchSpec
                 .write
                 .mode(SaveMode.Append)
                 .options(esOptions)
-                .format("es")
+                .format(format)
                 .save(s"$index/$docType")
             }
 
@@ -65,7 +74,7 @@ class ElasticSearchSpec
               val df = spark
                 .read
                 .options(esOptions)
-                .format("es")
+                .format(format)
                 .load(s"$index/$docType")
 
               df.write.save(TempDirectory(pathOnly = true).deleteOnExit().path.toString)
@@ -85,4 +94,60 @@ class ElasticSearchSpec
     }
   }
 
+  for (format <- Formats) it should s"""support `format("$format")` with `option("es.resource", "<index>")`""" in {
+    usingResource(new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:7.9.2")) { container =>
+      container.start()
+
+      val index = "test"
+      val docType = "test"
+      val esNodes = container.getHost
+      val esPort = container.getFirstMappedPort
+      val esOptions = Map(
+        "es.nodes" -> esNodes,
+        "es.port" -> esPort.toString,
+        "es.nodes.wan.only" -> "true",
+        "es.resource" -> s"$index/$docType"
+      )
+
+      withNewSparkSession(implicit spark => {
+        withLineageTracking { captor =>
+          val testData: DataFrame = {
+            val schema = StructType(StructField("id", IntegerType, nullable = false) :: StructField("name", StringType, nullable = false) :: Nil)
+            val rdd = spark.sparkContext.parallelize(Row(1014, "Warsaw") :: Row(1002, "Corte") :: Nil)
+            spark.sqlContext.createDataFrame(rdd, schema)
+          }
+
+          for {
+            (plan1, _) <- captor.lineageOf {
+              testData
+                .write
+                .mode(SaveMode.Append)
+                .options(esOptions)
+                .format(format)
+                .save()
+            }
+
+            (plan2, _) <- captor.lineageOf {
+              val df = spark
+                .read
+                .options(esOptions)
+                .format(format)
+                .load()
+
+              df.write.save(TempDirectory(pathOnly = true).deleteOnExit().path.toString)
+            }
+          } yield {
+
+            plan1.operations.write.append shouldBe true
+            plan1.operations.write.extra("destinationType") shouldBe Some("elasticsearch")
+            plan1.operations.write.outputSource shouldBe s"elasticsearch://$esNodes/$index/$docType"
+
+            plan2.operations.reads.head.inputSources.head shouldBe plan1.operations.write.outputSource
+            plan2.operations.reads.head.extra("sourceType") shouldBe Some("elasticsearch")
+            plan2.operations.write.append shouldBe false
+          }
+        }
+      })
+    }
+  }
 }

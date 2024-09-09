@@ -38,7 +38,7 @@ class ElasticSearchPlugin
   import za.co.absa.spline.commons.ExtractorImplicits._
 
   override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
-    case (`_: ElasticsearchRelation`(esr), _) =>
+    case (`_: org.elasticsearch.spark.sql.ElasticsearchRelation`(esr), _) =>
       val parameters = extractValue[SparkSettings](esr, "cfg")
       val server = parameters.getProperty("es.nodes")
       val indexDocType = parameters.getProperty("es.resource")
@@ -46,18 +46,30 @@ class ElasticSearchPlugin
   }
 
   override def relationProviderProcessor: PartialFunction[(AnyRef, SaveIntoDataSourceCommand), WriteNodeInfo] = {
-    case (rp, cmd) if rp == "es" || ElasticSearchSourceExtractor.matches(rp) =>
-      val indexDocType = cmd.options("path")
-      val server = cmd.options("es.nodes")
+    case (rp, cmd)
+      if rp == "es"
+        || rp == "org.elasticsearch.spark.sql"
+        || `_: org.elasticsearch.spark.sql.DefaultSource`.matches(rp) =>
+
+      val server = cmd
+        .options.getOrElse("es.nodes", sys.error(s"ElasticSearch: Cannot extract server from the options keys: ${cmd.options.keySet mkString ","}"))
+
+      val indexDocType = cmd
+        .options.get("path")
+        .orElse(cmd.options.get("es.resource"))
+        .getOrElse(sys.error(s"ElasticSearch: Cannot extract index and doc type from the options keys: ${cmd.options.keySet mkString ","}"))
+
       WriteNodeInfo(asSourceId(server, indexDocType), cmd.mode, cmd.query, cmd.options)
   }
 }
 
 object ElasticSearchPlugin {
 
-  private object `_: ElasticsearchRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.elasticsearch.spark.sql.ElasticsearchRelation")
+  private object `_: org.elasticsearch.spark.sql.ElasticsearchRelation`
+    extends SafeTypeMatchingExtractor[AnyRef]("org.elasticsearch.spark.sql.ElasticsearchRelation")
 
-  private object ElasticSearchSourceExtractor extends SafeTypeMatchingExtractor(classOf[org.elasticsearch.spark.sql.DefaultSource15])
+  private object `_: org.elasticsearch.spark.sql.DefaultSource`
+    extends SafeTypeMatchingExtractor[AnyRef]("org.elasticsearch.spark.sql.DefaultSource")
 
   private def asSourceId(server: String, indexDocType: String) =
     SourceIdentifier(Some("elasticsearch"), s"elasticsearch://$server/$indexDocType")
