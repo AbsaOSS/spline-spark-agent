@@ -30,6 +30,7 @@ import za.co.absa.spline.harvester.builder.write.PluggableWriteCommandExtractor
 import za.co.absa.spline.harvester.converter.{DataConverter, DataTypeConverter}
 import za.co.absa.spline.harvester.dispatcher.LineageDispatcher
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
+import za.co.absa.spline.harvester.plugin.PluginsConfiguration
 import za.co.absa.spline.harvester.plugin.registry.AutoDiscoveryPluginRegistry
 import za.co.absa.spline.harvester.postprocessing._
 import za.co.absa.spline.harvester.qualifier.HDFSPathQualifier
@@ -54,7 +55,7 @@ object SplineAgent extends Logging {
   )
 
   def create(
-    pluginsConfig: Configuration,
+    pluginsConfig: PluginsConfiguration,
     session: SparkSession,
     lineageDispatcher: LineageDispatcher,
     userPostProcessingFilter: Option[PostProcessingFilter],
