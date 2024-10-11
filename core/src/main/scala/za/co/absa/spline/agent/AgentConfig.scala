@@ -34,7 +34,7 @@ object AgentConfig {
 
   def from(configuration: Configuration): AgentConfig = from(
     configuration
-      .getKeys.asScala.toSeq.asInstanceOf[Seq[String]]
+      .getKeys.asScala.toSeq
       .map(k => k -> configuration.getProperty(k)))
 
   def from(options: Iterable[(String, Any)]): AgentConfig =
@@ -96,9 +96,16 @@ object AgentConfig {
     val Mode = "spline.mode"
 
     /**
+     * How Spline should handle initialization errors.
+     *
+     * @see [[za.co.absa.spline.harvester.conf.InitFailureHandlingMode]]
+     */
+    val InitFailureHandlingMode = "spline.onInitFailure"
+
+    /**
      * How Spline should handle failed SQL executions.
      *
-     * @see [[SQLFailureCaptureMode]]
+     * @see [[za.co.absa.spline.harvester.conf.SQLFailureCaptureMode]]
      */
     val SQLFailureCaptureMode = "spline.sql.failure.capture"
 
