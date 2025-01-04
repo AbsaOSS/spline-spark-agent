@@ -24,6 +24,7 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.commons.scalatest.ConditionalTestTags.ignoreIf
 import za.co.absa.spline.commons.version.Version.VersionStringInterpolator
+import za.co.absa.spline.harvester.converter.ExpressionConverter.{ExprExtra, ExprV1}
 import za.co.absa.spline.producer.model.ExprRef
 import za.co.absa.spline.test.LineageWalker
 import za.co.absa.spline.test.ProducerModelImplicits._
@@ -337,7 +338,7 @@ class DeltaDSV2Spec extends AsyncFlatSpec
                   | ON dst.id = src.id
                   | WHEN MATCHED THEN
                   |   UPDATE SET
-                  |     text = src.name
+                  |     text = lower(src.name)
                   | WHEN NOT MATCHED
                   |  THEN INSERT (id, text)
                   |  VALUES (src.id, src.name)
@@ -371,6 +372,11 @@ class DeltaDSV2Spec extends AsyncFlatSpec
             mergeOutput(2) should dependOn(twoColumnsRead0Output(1))
             mergeOutput(2) should dependOn(twoColumnsRead1Output(1))
             mergeOutput(2) should dependOn(threeColumnsRead2Output(2))
+
+            val expectedLowerFunctionMetadata = Map(ExprV1.TypeHint -> ExprV1.Types.Generic, ExprExtra.SimpleClassName -> "Lower")
+            val functionalExpressionsMetadata = plan.expressions.functions.map(_.extra)
+
+            functionalExpressionsMetadata should contain(expectedLowerFunctionMetadata)
           }
         }
       }

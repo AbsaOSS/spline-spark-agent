@@ -32,36 +32,26 @@ class MergeIntoNodeBuilder
   (idGenerators: IdGeneratorsBundle, dataTypeConverter: DataTypeConverter, dataConverter: DataConverter, postProcessor: PostProcessor)
   extends GenericPlanNodeBuilder(logicalPlan)(idGenerators, dataTypeConverter, dataConverter, postProcessor) {
 
-  override lazy val functionalExpressions: Seq[FunctionalExpression] = Seq.empty
+  private lazy val target: LogicalPlan = extractTarget(logicalPlan)
+  private lazy val trgAttrs: IOAttributes = target.output.map(attributeConverter.convert)
 
-  override lazy val outputAttributes: IOAttributes = {
-    val target: LogicalPlan = extractTarget(logicalPlan)
-    val trgAttrs: IOAttributes = target.output.map(attributeConverter.convert)
+  private lazy val dependenciesByAttrName: Map[String, Seq[AttrOrExprRef]] =
+    (extractMatchedClauses(logicalPlan) ++ extractNonMatchedClauses(logicalPlan))
+      .flatMap(extractClauseActions)
+      .map((a: DeltaMergeAction) => {
+        val trgAttrName = extractActionTargetAttrName(a)
+        val srcExpr = extractActionSourceExpression(a)
+        trgAttrName -> exprToRefConverter.convert(srcExpr)
+      })
+      .groupBy { case (attrName, _) => attrName }
+      .mapValues(_.map({ case (_, ref) => ref }).distinct)
 
-    val dependenciesByAttrName: Map[String, Seq[AttrOrExprRef]] =
-      (extractMatchedClauses(logicalPlan) ++ extractNonMatchedClauses(logicalPlan))
-        .flatMap(extractClauseActions)
-        .map((a: DeltaMergeAction) => {
-          val trgAttrName = extractActionTargetAttrName(a)
-          val srcExpr = extractActionSourceExpression(a)
-          trgAttrName -> exprToRefConverter.convert(srcExpr)
-        })
-        .groupBy { case (attrName, _) => attrName }
-        .mapValues(_.map({ case (_, ref) => ref }).distinct)
+  private lazy val syntheticFunctionalExprs: Seq[FunctionalExpression] = trgAttrs.map(buildFunctionalExpression)
 
-    val outAttrs = trgAttrs.map(trgAttr => {
-      val targetRef = AttrRef(trgAttr.id)
-      val sourceRefs: Seq[AttrOrExprRef] = dependenciesByAttrName(trgAttr.name)
-      Attribute(
-        id = idGenerators.attributeIdGenerator.nextId(),
-        dataType = trgAttr.dataType,
-        childRefs = (targetRef +: sourceRefs).distinct,
-        extra = Map(CommonExtras.Synthetic -> true),
-        name = trgAttr.name
-      )
-    })
+  override lazy val functionalExpressions: Seq[FunctionalExpression] = syntheticFunctionalExprs ++ expressionConverter.values
 
-    outAttrs
+  override lazy val outputAttributes: IOAttributes = trgAttrs.zip(syntheticFunctionalExprs).map { case (trgAttr, functionalExpr) =>
+      buildOutputAttribute(trgAttr, functionalExpr)
   }
 
   override def build(): DataOperation = {
@@ -83,12 +73,37 @@ class MergeIntoNodeBuilder
 
     postProcessor.process(dop)
   }
+
+  private def buildFunctionalExpression(targetAttribute: Attribute): FunctionalExpression = {
+    val targetRef = AttrRef(targetAttribute.id)
+    val sourceRefs = dependenciesByAttrName(targetAttribute.name)
+    FunctionalExpression(
+      id = idGenerators.expressionIdGenerator.nextId(),
+      dataType = targetAttribute.dataType,
+      childRefs = targetRef +: sourceRefs,
+      extra = Map(CommonExtras.Synthetic -> true),
+      name = MergeIntoNodeBuilder.SyntheticFunctionName,
+      params = Map.empty
+    )
+  }
+
+  private def buildOutputAttribute(targetAttribute: Attribute, function: FunctionalExpression): Attribute = {
+    Attribute(
+      id = idGenerators.attributeIdGenerator.nextId(),
+      dataType = function.dataType,
+      childRefs = List(ExprRef(function.id)),
+      extra = Map(CommonExtras.Synthetic -> true),
+      name = targetAttribute.name
+    )
+  }
 }
 
 object MergeIntoNodeBuilder {
 
   type DeltaMergeIntoClause = SparkExpression
   type DeltaMergeAction = SparkExpression
+
+  private val SyntheticFunctionName: String = "Merge"
 
   def extractChildren(mergeNode: LogicalPlan): Seq[LogicalPlan] = Seq(extractSource(mergeNode), extractTarget(mergeNode))
 
