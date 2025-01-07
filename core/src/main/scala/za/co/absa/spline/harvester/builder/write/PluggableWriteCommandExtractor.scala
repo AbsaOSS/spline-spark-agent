@@ -38,7 +38,8 @@ class PluggableWriteCommandExtractor(
   private val processFn: ((FuncName, LogicalPlan)) => Option[WriteNodeInfo] =
     pluginRegistry.plugins[WriteNodeProcessing]
       .map(_.writeNodeProcessor)
-      .reduce(_ orElse _)
+      .reduceOption(_ orElse _)
+      .getOrElse(PartialFunction.empty)
       .lift
 
   def asWriteCommand(funcName: FuncName, logicalPlan: LogicalPlan): Option[WriteCommand] = {

@@ -39,8 +39,8 @@ class SaveIntoDataSourceCommandPlugin(
   private lazy val rpProcessor =
     pluginRegistry.plugins[RelationProviderProcessing]
       .map(_.relationProviderProcessor)
-      .reduce(_ orElse _)
-
+      .reduceOption(_ orElse _)
+      .getOrElse(PartialFunction.empty)
 
   override def writeNodeProcessor: PartialFunction[(FuncName, LogicalPlan), WriteNodeInfo] = {
     case (_, cmd: SaveIntoDataSourceCommand) => cmd match {
