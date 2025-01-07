@@ -65,7 +65,7 @@ object AgentBOM {
 
     override def pluginsConfig: PluginsConfiguration = {
       PluginsConfiguration(
-        mergedConfig.getRequiredBoolean(ConfProperty.PluginsEnabledByDefault),
+        mergedConfig.getRequiredBoolean(ConfProperty.ScanClasspath),
         mergedConfig.subset(ConfProperty.PluginsConfigNamespace)
       )
     }

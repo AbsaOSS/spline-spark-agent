@@ -16,7 +16,6 @@
 
 package za.co.absa.spline.agent
 
-import org.apache.commons.configuration.Configuration
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.execution.QueryExecution

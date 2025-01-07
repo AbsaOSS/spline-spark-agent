@@ -111,7 +111,7 @@ class AgentConfigSpec
       .lineageDispatcher(mockDispatcher)
       .postProcessingFilter(mockFilter)
       .ignoredWriteDetectionStrategy(mockIwdStrategy)
-      .pluginsEnabledByDefault(false)
+      .scanClasspath(false)
       .build()
 
     config should not be empty
@@ -119,7 +119,7 @@ class AgentConfigSpec
     config.getProperty(ConfProperty.RootLineageDispatcher) should be theSameInstanceAs mockDispatcher
     config.getProperty(ConfProperty.RootPostProcessingFilter) should be theSameInstanceAs mockFilter
     config.getProperty(ConfProperty.IgnoreWriteDetectionStrategy) should be theSameInstanceAs mockIwdStrategy
-    config.getProperty(ConfProperty.PluginsEnabledByDefault) shouldBe false
+    config.getProperty(ConfProperty.ScanClasspath) shouldBe false
   }
 
 }

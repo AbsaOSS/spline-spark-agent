@@ -81,8 +81,8 @@ object AgentConfig {
       this
     }
 
-    def pluginsEnabledByDefault(enabled: Boolean): this.type = synchronized {
-      options += ConfProperty.PluginsEnabledByDefault -> enabled
+    def scanClasspath(enabled: Boolean): this.type = synchronized {
+      options += ConfProperty.ScanClasspath -> enabled
       this
     }
 
@@ -134,9 +134,9 @@ object AgentConfig {
     val IgnoreWriteDetectionStrategy = "spline.IWDStrategy"
 
     /**
-     * Should plugins be enabled by default
+     * Should the classpath be scanned at startup
      */
-    val PluginsEnabledByDefault = "spline.pluginsEnabledByDefault"
+    val ScanClasspath = "spline.scanClasspath"
 
     val PluginsConfigNamespace = "spline.plugins"
 

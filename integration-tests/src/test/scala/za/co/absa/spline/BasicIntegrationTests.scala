@@ -26,6 +26,7 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.spline.commons.io.TempDirectory
 import za.co.absa.spline.commons.version.Version.VersionStringInterpolator
+import za.co.absa.spline.harvester.plugin.embedded.SQLPlugin
 import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
@@ -40,28 +41,30 @@ class BasicIntegrationTests extends AsyncFlatSpec
 
   "saveAsTable" should "process all operations" in
     withNewSparkSession(implicit spark =>
-      withLineageTracking({ captor =>
-        import spark.implicits._
+      withLineageTracking(
+        testBody = { captor =>
+          import spark.implicits._
 
-        withNewSparkSession {
-          _.sql("DROP TABLE IF EXISTS someTable")
-        }
-
-        for {
-          (plan, _) <- captor.lineageOf {
-            val df = Seq((1, 2), (3, 4)).toDF().agg(concat(sum('_1), min('_2)) as "forty_two")
-            df.write.saveAsTable("someTable")
+          withNewSparkSession {
+            _.sql("DROP TABLE IF EXISTS someTable")
           }
-        } yield {
-          plan.operations.reads should be(Seq.empty)
-          plan.operations.other should have length 2
-          plan.operations.write should not be null
-        }
-      },{
-        // To enable the SQL plugin only
-        _.pluginsEnabledByDefault(false)
-          .enablePlugin("za.co.absa.spline.harvester.plugin.embedded.SQLPlugin")
-      })
+
+          for {
+            (plan, _) <- captor.lineageOf {
+              val df = Seq((1, 2), (3, 4)).toDF().agg(concat(sum('_1), min('_2)) as "forty_two")
+              df.write.saveAsTable("someTable")
+            }
+          } yield {
+            plan.operations.reads should be(Seq.empty)
+            plan.operations.other should have length 2
+            plan.operations.write should not be null
+          }
+        },
+        builderCustomizer = {
+          // enable the SQL plugin only
+          _.scanClasspath(false)
+            .enablePlugin(classOf[SQLPlugin].getName)
+        })
     )
 
   "save_to_fs" should "process all operations" in

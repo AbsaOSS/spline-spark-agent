@@ -242,7 +242,17 @@ spline:
       # can be a json string or url to json file
       rules: { }
 
+  # ===========================================
   # Plugins configuration.
+  # ===========================================
+
+  # Classpath scanning is required for auto-discovery of Spline agent plugins.
+  # It might however take up some of the job's startup time depending on the size
+  # of your Spark application classpath.
+  # If you are experiencing long job startup times, try to disable classpath
+  # scanning, and instead register your custom plugins explicitly in the configuration.
+  scanClasspath: true # true | false
+
   # The `key` is the fully specified plugin class name.
   # For example:
   # ---
@@ -251,6 +261,58 @@ spline:
   #      prop1: foo
   #      prop2: bar
   plugins:
+
+    za.co.absa.spline.harvester.plugin.composite.LogicalRelationPlugin:
+      enabled: true
+
+    za.co.absa.spline.harvester.plugin.composite.SaveIntoDataSourceCommandPlugin:
+      enabled: true
+
+    za.co.absa.spline.harvester.plugin.embedded.CobrixPlugin:
+      enabled: true
+
+    za.co.absa.spline.harvester.plugin.embedded.ExcelPlugin:
+      enabled: true
+
+    za.co.absa.spline.harvester.plugin.embedded.BigQueryPlugin:
+      enabled: true
+
+    za.co.absa.spline.harvester.plugin.embedded.DataSourceV2Plugin:
+      enabled: true
+
+    za.co.absa.spline.harvester.plugin.embedded.RDDPlugin:
+      enabled: true
+
+    za.co.absa.spline.harvester.plugin.embedded.MongoPlugin:
+      enabled: true
+
+    za.co.absa.spline.harvester.plugin.embedded.AvroPlugin:
+      enabled: true
+
+    za.co.absa.spline.harvester.plugin.embedded.CassandraPlugin:
+      enabled: true
+
+    za.co.absa.spline.harvester.plugin.embedded.DatabricksPlugin:
+      enabled: true
+
+    za.co.absa.spline.harvester.plugin.embedded.SQLPlugin:
+      enabled: true
+
+    za.co.absa.spline.harvester.plugin.embedded.JDBCPlugin:
+      enabled: true
+
+    za.co.absa.spline.harvester.plugin.embedded.KafkaPlugin:
+      enabled: true
+
+    za.co.absa.spline.harvester.plugin.embedded.XMLPlugin:
+      enabled: true
+
+    za.co.absa.spline.harvester.plugin.embedded.DeltaPlugin:
+      enabled: true
+
+    za.co.absa.spline.harvester.plugin.embedded.ElasticSearchPlugin:
+      enabled: true
+
     za.co.absa.spline.harvester.plugin.embedded.NonPersistentActionsCapturePlugin:
       enabled: false
       funcNames:
@@ -259,6 +321,3 @@ spline:
         - collect
         - collectAsList
         - toLocalIterator
-
-  # Should plugins be enabled by default.
-  pluginsEnabledByDefault: true # true | false

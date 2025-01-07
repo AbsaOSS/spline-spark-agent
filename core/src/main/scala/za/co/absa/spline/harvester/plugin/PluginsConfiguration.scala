@@ -19,6 +19,6 @@ package za.co.absa.spline.harvester.plugin
 import org.apache.commons.configuration.Configuration
 
 case class PluginsConfiguration(
-  pluginsEnabledByDefault: Boolean,
-  plugins: Configuration
+  classpathScanEnabled: Boolean,
+  config: Configuration
 )
