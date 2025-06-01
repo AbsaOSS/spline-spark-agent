@@ -109,7 +109,7 @@
 
         <!-- Cassandra -->
 
-        <cassandra-connector.version>${cassandra-connector-24.version}</cassandra-connector.version>
+        <cassandra-connector.version>2.5.0</cassandra-connector.version>
         <cassandra-connector-24.version>2.4.2</cassandra-connector-24.version>
         <cassandra-connector-30.version>3.0.1</cassandra-connector-30.version>
         <cassandra-connector-31.version>3.1.0</cassandra-connector-31.version>
@@ -751,7 +751,7 @@
             <properties>
                 <spark.version>${spark-24.version}</spark.version>
                 <delta.version>${delta-2x.version}</delta.version>
-                <cassandra-connector.version>${cassandra-connector-24.version}</cassandra-connector.version>
+                <cassandra-connector.version>2.5.0</cassandra-connector.version>
             </properties>
             <dependencyManagement>
                 <dependencies>
@@ -773,7 +773,7 @@
                 <delta.version>${delta-30.version}</delta.version>
                 <guava.version>${guava-3x.version}</guava.version>
                 <spark-excel.version>${spark-excel-30.version}</spark-excel.version>
-                <cassandra-connector.version>${cassandra-connector-30.version}</cassandra-connector.version>
+                <cassandra-connector.version>2.5.0</cassandra-connector.version>
             </properties>
             <dependencyManagement>
                 <dependencies>
@@ -795,7 +795,7 @@
                 <delta.version>${delta-31.version}</delta.version>
                 <guava.version>${guava-3x.version}</guava.version>
                 <spark-excel.version>${spark-excel-31.version}</spark-excel.version>
-                <cassandra-connector.version>${cassandra-connector-31.version}</cassandra-connector.version>
+                <cassandra-connector.version>2.5.0</cassandra-connector.version>
             </properties>
             <dependencyManagement>
                 <dependencies>
@@ -817,7 +817,7 @@
                 <delta.version>${delta-32.version}</delta.version>
                 <guava.version>${guava-3x.version}</guava.version>
                 <spark-excel.version>${spark-excel-32.version}</spark-excel.version>
-                <cassandra-connector.version>${cassandra-connector-32.version}</cassandra-connector.version>
+                <cassandra-connector.version>2.5.0</cassandra-connector.version>
             </properties>
             <dependencyManagement>
                 <dependencies>
@@ -839,7 +839,7 @@
                 <delta.version>${delta-33.version}</delta.version>
                 <guava.version>${guava-3x.version}</guava.version>
                 <spark-excel.version>${spark-excel-33.version}</spark-excel.version>
-                <cassandra-connector.version>${cassandra-connector-33.version}</cassandra-connector.version>
+                <cassandra-connector.version>2.5.0</cassandra-connector.version>
             </properties>
             <dependencyManagement>
                 <dependencies>
@@ -861,7 +861,7 @@
                 <delta.version>${delta-34.version}</delta.version>
                 <guava.version>${guava-3x.version}</guava.version>
                 <spark-excel.version>${spark-excel-34.version}</spark-excel.version>
-                <cassandra-connector.version>${cassandra-connector-34.version}</cassandra-connector.version>
+                <cassandra-connector.version>2.5.0</cassandra-connector.version>
             </properties>
             <dependencyManagement>
                 <dependencies>
@@ -884,7 +884,7 @@
                 <delta.version>${delta-35.version}</delta.version>
                 <guava.version>${guava-3x.version}</guava.version>
                 <spark-excel.version>${spark-excel-35.version}</spark-excel.version>
-                <cassandra-connector.version>${cassandra-connector-35.version}</cassandra-connector.version>
+                <cassandra-connector.version>2.5.0</cassandra-connector.version>
             </properties>
             <dependencyManagement>
                 <dependencies>
