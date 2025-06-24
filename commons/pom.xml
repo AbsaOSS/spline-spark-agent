@@ -21,6 +21,8 @@
     <artifactId>agent-commons_2.12</artifactId>
     <packaging>jar</packaging>
 
+    <name>Spline Spark Agent Commons</name>
+
     <parent>
         <groupId>za.co.absa.spline.agent.spark</groupId>
         <artifactId>spline-spark-agent_2.12</artifactId>

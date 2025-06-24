@@ -20,6 +20,8 @@
     <artifactId>examples_2.12</artifactId>
     <packaging>jar</packaging>
 
+    <name>Spline Spark Agent Examples</name>
+
     <parent>
         <groupId>za.co.absa.spline.agent.spark</groupId>
         <artifactId>spline-spark-agent_2.12</artifactId>

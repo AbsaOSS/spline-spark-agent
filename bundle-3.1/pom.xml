@@ -20,6 +20,8 @@
     <artifactId>spark-3.1-spline-agent-bundle_2.12</artifactId>
     <packaging>jar</packaging>
 
+    <name>Spline Spark Agent Bundle for Spark 3.1</name>
+
     <parent>
         <groupId>za.co.absa.spline.agent.spark</groupId>
         <artifactId>spline-spark-agent_2.12</artifactId>
