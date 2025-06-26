@@ -380,11 +380,6 @@
                 <scope>provided</scope>
             </dependency>
             <dependency>
-                <groupId>org.apache.hive</groupId>
-                <artifactId>hive-shims</artifactId>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
                 <groupId>org.apache.hive.shims</groupId>
                 <artifactId>hive-shims-common</artifactId>
                 <scope>provided</scope>
@@ -922,16 +917,6 @@
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-transport-native-epoll</artifactId>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-transport-native-epoll</artifactId>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-transport-native-kqueue</artifactId>
                 <scope>provided</scope>
             </dependency>
             <dependency>
