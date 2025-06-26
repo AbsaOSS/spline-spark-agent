@@ -28,6 +28,8 @@
     <artifactId>integration-tests_2.12</artifactId>
     <packaging>jar</packaging>
 
+    <name>Spline Spark Agent Integration Tests</name>
+
     <properties>
         <elasticsearch.spark.sufix>20</elasticsearch.spark.sufix>
         <testcontainers.version>1.17.5</testcontainers.version>

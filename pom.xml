@@ -152,7 +152,7 @@
         <url>https://github.com/AbsaOSS/spline-spark-agent</url>
         <connection>${scm.connection}</connection>
         <developerConnection>${scm.developerConnection}</developerConnection>
-        <tag>release/2.2.2</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <modules>
