@@ -45,7 +45,7 @@
                 <groupId>io.airlift</groupId>
                 <artifactId>aircompressor</artifactId>
                 <scope>provided</scope>
-                <version>0.10</version>
+                <version>0.27</version>
             </dependency>
             <dependency>
                 <groupId>org.antlr</groupId>
