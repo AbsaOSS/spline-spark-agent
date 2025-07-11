@@ -83,7 +83,7 @@
 
         <!-- Spark -->
 
-        <spark.version>${spark-24.version}</spark.version>
+        <spark.version>3.0.0</spark.version>
         <spark-22.version>2.2.3</spark-22.version>
         <spark-23.version>2.3.4</spark-23.version>
         <spark-24.version>2.4.8</spark-24.version>
@@ -666,7 +666,7 @@
         <profile>
             <id>spark-2.2</id>
             <properties>
-                <spark.version>${spark-22.version}</spark.version>
+                <spark.version>3.0.0</spark.version>
                 <delta.version>${delta-2x.version}</delta.version>
             </properties>
             <dependencies>
@@ -710,7 +710,7 @@
         <profile>
             <id>spark-2.3</id>
             <properties>
-                <spark.version>${spark-23.version}</spark.version>
+                <spark.version>3.0.0</spark.version>
                 <delta.version>${delta-2x.version}</delta.version>
             </properties>
             <dependencies>
@@ -749,7 +749,7 @@
         <profile>
             <id>spark-2.4</id>
             <properties>
-                <spark.version>${spark-24.version}</spark.version>
+                <spark.version>3.0.0</spark.version>
                 <delta.version>${delta-2x.version}</delta.version>
                 <cassandra-connector.version>${cassandra-connector-24.version}</cassandra-connector.version>
             </properties>
@@ -769,7 +769,7 @@
         <profile>
             <id>spark-3.0</id>
             <properties>
-                <spark.version>${spark-30.version}</spark.version>
+                <spark.version>3.0.0</spark.version>
                 <delta.version>${delta-30.version}</delta.version>
                 <guava.version>${guava-3x.version}</guava.version>
                 <spark-excel.version>${spark-excel-30.version}</spark-excel.version>
@@ -791,7 +791,7 @@
         <profile>
             <id>spark-3.1</id>
             <properties>
-                <spark.version>${spark-31.version}</spark.version>
+                <spark.version>3.0.0</spark.version>
                 <delta.version>${delta-31.version}</delta.version>
                 <guava.version>${guava-3x.version}</guava.version>
                 <spark-excel.version>${spark-excel-31.version}</spark-excel.version>
@@ -813,7 +813,7 @@
         <profile>
             <id>spark-3.2</id>
             <properties>
-                <spark.version>${spark-32.version}</spark.version>
+                <spark.version>3.0.0</spark.version>
                 <delta.version>${delta-32.version}</delta.version>
                 <guava.version>${guava-3x.version}</guava.version>
                 <spark-excel.version>${spark-excel-32.version}</spark-excel.version>
@@ -835,7 +835,7 @@
         <profile>
             <id>spark-3.3</id>
             <properties>
-                <spark.version>${spark-33.version}</spark.version>
+                <spark.version>3.0.0</spark.version>
                 <delta.version>${delta-33.version}</delta.version>
                 <guava.version>${guava-3x.version}</guava.version>
                 <spark-excel.version>${spark-excel-33.version}</spark-excel.version>
@@ -857,7 +857,7 @@
         <profile>
             <id>spark-3.4</id>
             <properties>
-                <spark.version>${spark-34.version}</spark.version>
+                <spark.version>3.0.0</spark.version>
                 <delta.version>${delta-34.version}</delta.version>
                 <guava.version>${guava-3x.version}</guava.version>
                 <spark-excel.version>${spark-excel-34.version}</spark-excel.version>
@@ -879,7 +879,7 @@
         <profile>
             <id>spark-3.5</id>
             <properties>
-                <spark.version>${spark-35.version}</spark.version>
+                <spark.version>3.0.0</spark.version>
                 <delta.artifactId>delta-spark_${scala.binary.version}</delta.artifactId>
                 <delta.version>${delta-35.version}</delta.version>
                 <guava.version>${guava-3x.version}</guava.version>
