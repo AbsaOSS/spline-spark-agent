@@ -81,6 +81,16 @@ object AgentConfig {
       this
     }
 
+    def scanClasspath(enabled: Boolean): this.type = synchronized {
+      options += ConfProperty.ScanClasspath -> enabled
+      this
+    }
+
+    def enablePlugin(name: String): this.type = synchronized {
+      options += s"${ConfProperty.PluginsConfigNamespace}.$name.enabled" -> true
+      this
+    }
+
     def build(): AgentConfig = new AgentConfig {
       options.foreach(tupled(addProperty))
     }
@@ -122,6 +132,11 @@ object AgentConfig {
      * Strategy used to detect ignored writes
      */
     val IgnoreWriteDetectionStrategy = "spline.IWDStrategy"
+
+    /**
+     * Should the classpath be scanned at startup
+     */
+    val ScanClasspath = "spline.scanClasspath"
 
     val PluginsConfigNamespace = "spline.plugins"
 

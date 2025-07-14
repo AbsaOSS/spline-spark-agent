@@ -16,11 +16,12 @@
 package za.co.absa.spline.test.fixture.spline
 
 import org.apache.spark.sql.SparkSession
+import za.co.absa.spline.agent.AgentConfig
 
 
 trait SplineFixture {
-  def withLineageTracking[T](testBody: LineageCaptor => T)(implicit session: SparkSession): T = {
-    testBody(new LineageCaptor)
+  def withLineageTracking[T](testBody: LineageCaptor => T, builderCustomizer: AgentConfig.Builder => AgentConfig.Builder = identity)(implicit session: SparkSession): T = {
+    testBody(new LineageCaptor(builderCustomizer))
   }
 }
 
