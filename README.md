@@ -11,12 +11,12 @@ The collected metadata is then handed over to the lineage dispatcher, from where
 The agent can be used with or without a Spline server, depending on your use case. See [References](#references).
 
 ![Maven Central Version](https://img.shields.io/maven-central/v/za.co.absa.spline.agent.spark/agent-core_2.12?link=https%3A%2F%2Fcentral.sonatype.com%2Fnamespace%2Fza.co.absa.spline.agent.spark)
+[![Docker Pulls](https://badgen.net/docker/pulls/absaoss/spline-spark-agent?icon=docker&label=pulls)](https://hub.docker.com/r/absaoss/spline-spark-agent/)
 [![TeamCity build](https://teamcity.jetbrains.com/app/rest/builds/aggregated/strob:%28locator:%28buildType:%28id:OpenSourceProjects_AbsaOSS_SplineAgentSpark_AutoBuildSpark24scala212%29,branch:develop%29%29/statusIcon.svg)](https://teamcity.jetbrains.com/viewType.html?buildTypeId=OpenSourceProjects_AbsaOSS_SplineAgentSpark_AutoBuildSpark24scala212&branch=develop&tab=buildTypeStatusDiv)
 [![Sonarcloud Status](https://sonarcloud.io/api/project_badges/measure?project=AbsaOSS_spline-spark-agent&metric=alert_status)](https://sonarcloud.io/dashboard?id=AbsaOSS_spline-spark-agent)
 [![SonarCloud Maintainability](https://sonarcloud.io/api/project_badges/measure?project=AbsaOSS_spline-spark-agent&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=AbsaOSS_spline-spark-agent)
 [![SonarCloud Reliability](https://sonarcloud.io/api/project_badges/measure?project=AbsaOSS_spline-spark-agent&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=AbsaOSS_spline-spark-agent)
 [![SonarCloud Security](https://sonarcloud.io/api/project_badges/measure?project=AbsaOSS_spline-spark-agent&metric=security_rating)](https://sonarcloud.io/dashboard?id=AbsaOSS_spline-spark-agent)
-[![Docker Pulls](https://badgen.net/docker/pulls/absaoss/spline-spark-agent?icon=docker&label=pulls)](https://hub.docker.com/r/absaoss/spline-spark-agent/)
 
 
 ## Table of Contents
