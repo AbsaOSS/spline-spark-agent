@@ -130,11 +130,6 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
    * This format optimizes for operational debugging use cases:
    * - Timestamp FIRST: Ensures natural chronological sorting (most recent files appear together)
    * - Application ID: Full traceability to specific Spark application run
-   * Benefits:
-   * - Natural chronological sorting by default
-   * - Easy date-based filtering
-   * - Human-readable: Immediately see when each lineage file was created
-   * - Millisecond precision for uniqueness
    *
    * @param planId The execution plan ID (unused, kept for interface compatibility)
    * @return A unique filename optimized for filtering and sorting
@@ -179,11 +174,9 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
       try {
         // Create directories with multi-user friendly permissions to allow all service accounts to write
         // This uses the same permission object that's already configured for files
-        val permissions = this.permission.toString
-        val dirPermission = new FsPermission(permissions)
-        val created = fs.mkdirs(parentDir, dirPermission)
+        val created = fs.mkdirs(parentDir, permission)
         if (created) {
-          logInfo(s"Created parent directories: $parentDir with permissions $permissions")
+          logInfo(s"Created parent directories: $parentDir with permissions $permission")
         }
       } catch {
         case e: org.apache.hadoop.fs.FileAlreadyExistsException =>

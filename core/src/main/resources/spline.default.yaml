@@ -165,8 +165,6 @@ spline:
       #   Output: s3://my-bucket/lineage/2025-10-12_14-30-45-123_my_file.parq_LINEAGE_app-20251012143045-0001
       # - GCS: customLineagePath: gs://my-bucket/lineage
       #   Output: gs://my-bucket/lineage/2025-10-12_14-30-45-123_my_file.parq_LINEAGE_app-20251012143045-0001
-      # - Azure: customLineagePath: abfss://container@account.dfs.core.windows.net/lineage
-      #   Output: abfss://container@account.dfs.core.windows.net/lineage/2025-10-12_14-30-45-123_my_file.parq_LINEAGE_app-20251012143045-0001
       # - HDFS: customLineagePath: hdfs://cluster/lineage
       #   Output: hdfs://cluster/lineage/2025-10-12_14-30-45-123_my_file.parq_LINEAGE_app-20251012143045-0001
     # -------------------------------------------
