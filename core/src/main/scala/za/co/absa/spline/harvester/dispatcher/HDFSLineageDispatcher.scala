@@ -30,6 +30,8 @@ import za.co.absa.spline.harvester.json.HarvesterJsonSerDe
 import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
 import java.net.URI
+import java.time.format.DateTimeFormatter
+import java.time.{Instant, ZoneId}
 import scala.concurrent.blocking
 
 /**
@@ -41,10 +43,22 @@ import scala.concurrent.blocking
  *
  * It is NOT thread-safe, strictly synchronous assuming a predefined order of method calls: `send(plan)` and then `send(event)`
  *
- * When using centralized lineage storage (customLineagePath), filenames are guaranteed to be unique by including:
- * - Original filename (as prefix)
- * - Timestamp (epoch milliseconds)
- * Since each execution plan produces exactly one line message, the timestamp alone ensures uniqueness and provides chronological ordering.
+ * TWO MODES OF OPERATION:
+ *
+ * 1. DEFAULT MODE (customLineagePath = None, null, or empty string):
+ *    Lineage files are written alongside the target data files.
+ *    Example: Writing to /data/output/file.parquet creates /data/output/_LINEAGE
+ *
+ * 2. CENTRALIZED MODE (customLineagePath set to a valid path):
+ *    All lineage files are written to a single centralized location with unique filenames.
+ *    Filename format: {timestamp}_{fileName}_{appId}
+ *    - timestamp: Human-readable UTC timestamp (yyyy-MM-dd_HH-mm-ss-SSS) for chronological sorting and filtering
+ *    - fileName: The configured fileName value (e.g., "my_file.parq_LINEAGE")
+ *    - appId: Spark application ID for traceability
+ *
+ *    The timestamp-first format ensures natural chronological sorting and easy date-based filtering.
+ *    Parent directories are automatically created with proper permissions for multi-user access (HDFS/local).
+ *    For object storage (S3, GCS, Azure), directory creation is skipped since they use key prefixes.
  */
 @Experimental
 class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSize: Int, customLineagePath: Option[String])
@@ -102,27 +116,92 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
         val uniqueFilename = generateUniqueFilename(planId)
         s"$cleanCustomPath/$uniqueFilename"
       case None =>
-        // Legacy mode: write alongside target data file
+        // Default mode: write alongside target data file
         s"${this._lastSeenPlan.operations.write.outputSource.stripSuffix("/")}/$filename"
     }
   }
 
   /**
    * Generates a unique filename for centralized lineage storage.
-   * Uses original filename as prefix, followed by timestamp to ensure uniqueness and chronological ordering.
-   * Since each execution plan produces exactly one lineage message, the timestamp alone ensures uniqueness.
+   * 
+   * Format: {timestamp}_{fileName}_{appId}
+   * Example: 2025-10-12_14-30-45-123_lineage_app-20251012143045-0001
+   *
+   * This format optimizes for operational debugging use cases:
+   * - Timestamp FIRST: Ensures natural chronological sorting (most recent files appear together)
+   * - Application ID: Full traceability to specific Spark application run
+   * Benefits:
+   * - Natural chronological sorting by default
+   * - Easy date-based filtering
+   * - Human-readable: Immediately see when each lineage file was created
+   * - Millisecond precision for uniqueness
    *
    * @param planId The execution plan ID (unused, kept for interface compatibility)
-   * @return A unique filename with original filename as prefix, followed by timestamp
+   * @return A unique filename optimized for filtering and sorting
    */
   private def generateUniqueFilename(planId: String): String = {
-    val timestamp = System.currentTimeMillis()
-    s"${filename}_${timestamp}"
+    val sparkContext = SparkContext.getOrCreate()
+    val appId = sparkContext.applicationId
+    val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-SSS").withZone(ZoneId.of("UTC"))
+    val timestamp = dateFormatter.format(Instant.now())
+    s"${timestamp}_${filename}_${appId}"
+  }
+
+  /**
+   * Ensures that parent directories exist with proper permissions for multi-user access.
+   * This is critical for centralized lineage storage where different service accounts need write access.
+   *
+   * Note: Object storage systems (S3, GCS, Azure Blob) don't have true directories - they use key prefixes.
+   * Directory creation is automatically skipped for these systems to avoid unnecessary operations.
+   *
+   * @param fs The Hadoop FileSystem
+   * @param path The target file path whose parent directories should be created
+   */
+  private def ensureParentDirectoriesExist(fs: FileSystem, path: Path): Unit = {
+    // Object storage systems (S3, GCS, Azure Blob) don't have real directories - they're just key prefixes
+    // Skip directory creation for these systems to avoid unnecessary operations
+    val fsScheme = fs.getUri.getScheme
+    val isObjectStorage = fsScheme != null && (
+      fsScheme.startsWith("s3") ||      // S3: s3, s3a, s3n
+      fsScheme.startsWith("gs") ||      // Google Cloud Storage: gs
+      fsScheme.startsWith("wasb") ||    // Azure Blob Storage: wasb, wasbs
+      fsScheme.startsWith("abfs") ||    // Azure Data Lake Storage Gen2: abfs, abfss
+      fsScheme.startsWith("adl")        // Azure Data Lake Storage Gen1: adl
+    )
+    
+    if (isObjectStorage) {
+      logDebug(s"Skipping directory creation for object storage filesystem ($fsScheme) - directories are implicit key prefixes")
+      return
+    }
+
+    val parentDir = path.getParent
+    if (parentDir != null && !fs.exists(parentDir)) {
+      try {
+        // Create directories with multi-user friendly permissions to allow all service accounts to write
+        // This uses the same permission object that's already configured for files
+        val permissions = this.permission.toString
+        val dirPermission = new FsPermission(permissions)
+        val created = fs.mkdirs(parentDir, dirPermission)
+        if (created) {
+          logInfo(s"Created parent directories: $parentDir with permissions $permissions")
+        }
+      } catch {
+        case e: org.apache.hadoop.fs.FileAlreadyExistsException =>
+          // Race condition: another process created the directory - this is fine
+          logDebug(s"Directory $parentDir already exists (created by another process)")
+        case e: Exception =>
+          logWarning(s"Failed to create parent directories: $parentDir", e)
+          throw e
+      }
+    }
   }
 
   private def persistToHadoopFs(content: String, fullLineagePath: String): Unit = blocking {
     val (fs, path) = pathStringToFsWithPath(fullLineagePath)
     logDebug(s"Opening HadoopFs output stream to $path")
+
+    // Ensure parent directories exist with proper permissions for multi-user access
+    ensureParentDirectoriesExist(fs, path)
 
     val replication = fs.getDefaultReplication(path)
     val blockSize = fs.getDefaultBlockSize(path)
