@@ -154,7 +154,7 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
     // Object storage systems (S3, GCS, Azure Blob) don't have real directories - they're just key prefixes
     // Skip directory creation for these systems to avoid unnecessary operations
     val fsScheme = fs.getUri.getScheme
-    val scheme = Option(fsSchemeRaw).map(_.toLowerCase(java.util.Locale.ROOT)).orNull
+    val scheme = Option(fsScheme).map(_.toLowerCase(java.util.Locale.ROOT)).orNull
     val isObjectStorage = scheme != null && (
       scheme.startsWith("s3") ||      // S3: s3, s3a, s3n
       scheme.startsWith("gs") ||      // Google Cloud Storage: gs
