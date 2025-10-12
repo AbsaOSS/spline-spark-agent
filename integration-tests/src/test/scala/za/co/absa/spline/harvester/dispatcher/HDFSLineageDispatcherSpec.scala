@@ -43,7 +43,7 @@ class HDFSLineageDispatcherSpec
   val lineageDispatcherConfigCustomLineagePathKeyName = s"$lineageDispatcherConfigKeyName.$lineageDispatcherConfigValueName.customLineagePath"
   val destFilePathExtension = ".parquet"
 
-  it should "save lineage file to a filesystem in DEFAULT mode (no customLineagePath)" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
+  it should "save lineage file to a filesystem in DEFAULT mode" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
     withIsolatedSparkSession(_
       .config(lineageDispatcherConfigKeyName, lineageDispatcherConfigValueName)
       .config(lineageDispatcherConfigClassNameKeyName, classOf[HDFSLineageDispatcher].getName)
@@ -98,10 +98,10 @@ class HDFSLineageDispatcherSpec
           val lineageFile = lineageFiles(0)
           lineageFile.length should be > 0L
 
-          // Verify filename format: {timestamp}_{fileName}_{appId}
+          // Verify filename format: {timestamp}_{appName}_{appId}
           val filename = lineageFile.getName
-          // Should match pattern: yyyy-MM-dd_HH-mm-ss-SSS__LINEAGE_app-...
-          filename should include("_LINEAGE_")
+          // Should match pattern: yyyy-MM-dd_HH-mm-ss-SSS_{appName}_app-...
+          // AppName and AppId are part of the filename
           filename should startWith regex """\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}-\d{3}"""
 
           val lineageJson = readFileToString(lineageFile, "UTF-8").fromJson[Map[String, Map[String, _]]]

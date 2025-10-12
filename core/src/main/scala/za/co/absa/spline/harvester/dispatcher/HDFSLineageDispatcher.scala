@@ -51,9 +51,9 @@ import scala.concurrent.blocking
  *
  * 2. CENTRALIZED MODE (customLineagePath set to a valid path):
  *    All lineage files are written to a single centralized location with unique filenames.
- *    Filename format: {timestamp}_{fileName}_{appId}
+ *    Filename format: {timestamp}_{appName}_{appId}
  *    - timestamp: Human-readable UTC timestamp (yyyy-MM-dd_HH-mm-ss-SSS) for chronological sorting and filtering
- *    - fileName: The configured fileName value (e.g., "my_file.parq_LINEAGE")
+ *    - appName: Spark application name for easy identification
  *    - appId: Spark application ID for traceability
  *
  *    The timestamp-first format ensures natural chronological sorting and easy date-based filtering.
@@ -87,7 +87,7 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
       throw new IllegalStateException("send(event) must be called strictly after send(plan) method with matching plan ID")
 
     try {
-      val path = resolveLineagePath(event.planId.toString)
+      val path = resolveLineagePath()
       val planWithEvent = Map(
         "executionPlan" -> this._lastSeenPlan,
         "executionEvent" -> event
@@ -108,6 +108,7 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
    * @return The full path where the lineage file should be written
    */
   private def resolveLineagePath(): String = {
+    val outputSource = s"${this._lastSeenPlan.operations.write.outputSource}"
     customLineagePath match {
       case Some(customPath) =>
         // Centralized mode: write to custom path with unique filename
@@ -116,28 +117,30 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
         s"$cleanCustomPath/$uniqueFilename"
       case None =>
         // Default mode: write alongside target data file
-        s"${this._lastSeenPlan.operations.write.outputSource.stripSuffix("/")}/$filename"
+        s"${outputSource.stripSuffix("/")}/$filename"
     }
   }
 
   /**
    * Generates a unique filename for centralized lineage storage.
    * 
-   * Format: {timestamp}_{fileName}_{appId}
-   * Example: 2025-10-12_14-30-45-123_lineage_app-20251012143045-0001
+   * Format: {timestamp}_{appName}_{appId}
+   * Example: 2025-10-12_14-30-45-123_MySparkJob_app-20251012143045-0001
    *
    * This format optimizes for operational debugging use cases:
    * - Timestamp FIRST: Ensures natural chronological sorting (most recent files appear together)
+   * - Application Name: Easy identification of which job generated the lineage
    * - Application ID: Full traceability to specific Spark application run
    *
    * @return A unique filename optimized for filtering and sorting
    */
   private def generateUniqueFilename(): String = {
     val sparkContext = SparkContext.getOrCreate()
+    val appName = sparkContext.appName
     val appId = sparkContext.applicationId
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-SSS").withZone(ZoneId.of("UTC"))
     val timestamp = dateFormatter.format(Instant.now())
-    s"${timestamp}_${filename}_${appId}"
+    s"${timestamp}_${appName}_${appId}"
   }
 
   /**
