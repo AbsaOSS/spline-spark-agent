@@ -40,16 +40,22 @@ import scala.concurrent.blocking
  * for every generic use case in a real production application.
  *
  * It is NOT thread-safe, strictly synchronous assuming a predefined order of method calls: `send(plan)` and then `send(event)`
+ *
+ * When using centralized lineage storage (customLineagePath), filenames are guaranteed to be unique by including:
+ * - Original filename (as prefix)
+ * - Timestamp (epoch milliseconds)
+ * Since each execution plan produces exactly one line message, the timestamp alone ensures uniqueness and provides chronological ordering.
  */
 @Experimental
-class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSize: Int)
+class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSize: Int, customLineagePath: Option[String])
   extends LineageDispatcher
     with Logging {
 
   def this(conf: Configuration) = this(
     filename = conf.getRequiredString(FileNameKey),
     permission = new FsPermission(conf.getRequiredObject(FilePermissionsKey).toString),
-    bufferSize = conf.getRequiredInt(BufferSizeKey)
+    bufferSize = conf.getRequiredInt(BufferSizeKey),
+    customLineagePath = conf.getOptionalString(CustomLineagePathKey)
   )
 
   @volatile
@@ -67,7 +73,7 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
       throw new IllegalStateException("send(event) must be called strictly after send(plan) method with matching plan ID")
 
     try {
-      val path = s"${this._lastSeenPlan.operations.write.outputSource.stripSuffix("/")}/$filename"
+      val path = resolveLineagePath(event.planId)
       val planWithEvent = Map(
         "executionPlan" -> this._lastSeenPlan,
         "executionEvent" -> event
@@ -78,6 +84,40 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
     } finally {
       this._lastSeenPlan = null
     }
+  }
+
+  /**
+   * Resolves the lineage file path based on configuration.
+   * If customLineagePath is specified, lineage files are written to that centralized location.
+   * Otherwise, lineage files are written alongside the target data file (current behavior).
+   *
+   * @param planId The execution plan ID used for generating unique filenames in centralized mode
+   * @return The full path where the lineage file should be written
+   */
+  private def resolveLineagePath(planId: String): String = {
+    customLineagePath match {
+      case Some(customPath) =>
+        // Centralized mode: write to custom path with unique filename
+        val cleanCustomPath = customPath.stripSuffix("/")
+        val uniqueFilename = generateUniqueFilename(planId)
+        s"$cleanCustomPath/$uniqueFilename"
+      case None =>
+        // Legacy mode: write alongside target data file
+        s"${this._lastSeenPlan.operations.write.outputSource.stripSuffix("/")}/$filename"
+    }
+  }
+
+  /**
+   * Generates a unique filename for centralized lineage storage.
+   * Uses original filename as prefix, followed by timestamp to ensure uniqueness and chronological ordering.
+   * Since each execution plan produces exactly one lineage message, the timestamp alone ensures uniqueness.
+   *
+   * @param planId The execution plan ID (unused, kept for interface compatibility)
+   * @return A unique filename with original filename as prefix, followed by timestamp
+   */
+  private def generateUniqueFilename(planId: String): String = {
+    val timestamp = System.currentTimeMillis()
+    s"${filename}_${timestamp}"
   }
 
   private def persistToHadoopFs(content: String, fullLineagePath: String): Unit = blocking {
@@ -104,6 +144,7 @@ object HDFSLineageDispatcher {
   private val FileNameKey = "fileName"
   private val FilePermissionsKey = "filePermissions"
   private val BufferSizeKey = "fileBufferSize"
+  private val CustomLineagePathKey = "customLineagePath"
 
   /**
    * Converts string full path to Hadoop FS and Path, e.g.

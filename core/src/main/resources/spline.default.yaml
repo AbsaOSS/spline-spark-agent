@@ -146,6 +146,15 @@ spline:
       fileBufferSize: 4096
       # file/directory permissions, provided as umask string, either in octal or symbolic format
       filePermissions: 777
+      # customLineagePath:
+      # OPTIONAL: Custom path for centralized lineage storage. If specified, all lineage files will be written to this location instead of alongside
+      # the target data files. Filenames will include original filename as prefix, followed by timestamp to ensure uniqueness and chronological ordering.
+      # Since each execution plan produces exactly one lineage message, the timestamp alone ensures uniqueness.
+      # Example Output: {fileName}_{timestamp} where filename is location.parq_LINEAGE and timestamp is 1703123456789
+      # Thus, full example includes:
+      # - "/my/unique/location.parq_LINEAGE_1703123456789",
+      # - "s3://my-bucket-locatioon/file.parq_LINEAGE_1703123456789",
+      # - "hdfs://cluster/my/unique/location.parq_LINEAGE_1703123456789"
 
     # -------------------------------------------
     # Open Lineage HTTP dispatcher
