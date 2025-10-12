@@ -37,10 +37,15 @@ class HDFSLineageDispatcherSpec
 
   behavior of "HDFSLineageDispatcher"
 
+  val lineageDispatcherConfigKeyName = "spark.spline.lineageDispatcher"
+  val lineageDispatcherConfigValueName = "hdfs"
+  val lineageDispatcherConfigClassNameKeyName = s"$lineageDispatcherConfigKeyName.$lineageDispatcherConfigValueName.className"
+  val lineageDispatcherConfigCustomLineagePathKeyName = s"$lineageDispatcherConfigKeyName.$lineageDispatcherConfigValueName.customLineagePath"
+
   it should "save lineage file to a filesystem in DEFAULT mode (no customLineagePath)" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
     withIsolatedSparkSession(_
-      .config("spark.spline.lineageDispatcher", "hdfs")
-      .config("spark.spline.lineageDispatcher.hdfs.className", classOf[HDFSLineageDispatcher].getName)
+      .config(lineageDispatcherConfigKeyName, lineageDispatcherConfigValueName)
+      .config(lineageDispatcherConfigClassNameKeyName, classOf[HDFSLineageDispatcher].getName)
     ) { implicit spark =>
       withLineageTracking { captor =>
         import spark.implicits._
@@ -67,9 +72,9 @@ class HDFSLineageDispatcherSpec
     val centralizedPath = TempDirectory("spline_centralized_", "", pathOnly = true).deleteOnExit()
 
     withIsolatedSparkSession(_
-      .config("spark.spline.lineageDispatcher", "hdfs")
-      .config("spark.spline.lineageDispatcher.hdfs.className", classOf[HDFSLineageDispatcher].getName)
-      .config("spark.spline.lineageDispatcher.hdfs.customLineagePath", centralizedPath.asString)
+      .config(lineageDispatcherConfigKeyName, lineageDispatcherConfigValueName)
+      .config(lineageDispatcherConfigClassNameKeyName, classOf[HDFSLineageDispatcher].getName)
+      .config(lineageDispatcherConfigCustomLineagePathKeyName, centralizedPath.asString)
     ) { implicit spark =>
       withLineageTracking { captor =>
         import spark.implicits._
@@ -109,9 +114,9 @@ class HDFSLineageDispatcherSpec
 
   it should "use DEFAULT mode when customLineagePath is empty string" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
     withIsolatedSparkSession(_
-      .config("spark.spline.lineageDispatcher", "hdfs")
-      .config("spark.spline.lineageDispatcher.hdfs.className", classOf[HDFSLineageDispatcher].getName)
-      .config("spark.spline.lineageDispatcher.hdfs.customLineagePath", "") // Empty string
+      .config(lineageDispatcherConfigKeyName, lineageDispatcherConfigValueName)
+      .config(lineageDispatcherConfigClassNameKeyName, classOf[HDFSLineageDispatcher].getName)
+      .config(lineageDispatcherConfigCustomLineagePathKeyName, "") // Empty string
     ) { implicit spark =>
       withLineageTracking { captor =>
         import spark.implicits._
@@ -136,9 +141,9 @@ class HDFSLineageDispatcherSpec
 
   it should "use DEFAULT mode when customLineagePath is whitespace only" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
     withIsolatedSparkSession(_
-      .config("spark.spline.lineageDispatcher", "hdfs")
-      .config("spark.spline.lineageDispatcher.hdfs.className", classOf[HDFSLineageDispatcher].getName)
-      .config("spark.spline.lineageDispatcher.hdfs.customLineagePath", "   ") // Whitespace only
+      .config(lineageDispatcherConfigKeyName, lineageDispatcherConfigValueName)
+      .config(lineageDispatcherConfigClassNameKeyName, classOf[HDFSLineageDispatcher].getName)
+      .config(lineageDispatcherConfigCustomLineagePathKeyName, "   ") // Whitespace only
     ) { implicit spark =>
       withLineageTracking { captor =>
         import spark.implicits._

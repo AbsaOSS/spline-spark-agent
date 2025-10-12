@@ -69,7 +69,7 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
     filename = conf.getRequiredString(FileNameKey),
     permission = new FsPermission(conf.getRequiredObject(FilePermissionsKey).toString),
     bufferSize = conf.getRequiredInt(BufferSizeKey),
-    customLineagePath = conf.getOptionalString(CustomLineagePathKey)
+    customLineagePath = conf.getOptionalString(CustomLineagePathKey).map(_.trim).filter(_.nonEmpty)
   )
 
   @volatile
@@ -105,15 +105,14 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
    * If customLineagePath is specified, lineage files are written to that centralized location.
    * Otherwise, lineage files are written alongside the target data file (current behavior).
    *
-   * @param planId The execution plan ID used for generating unique filenames in centralized mode
    * @return The full path where the lineage file should be written
    */
-  private def resolveLineagePath(planId: String): String = {
+  private def resolveLineagePath(): String = {
     customLineagePath match {
       case Some(customPath) =>
         // Centralized mode: write to custom path with unique filename
         val cleanCustomPath = customPath.stripSuffix("/")
-        val uniqueFilename = generateUniqueFilename(planId)
+        val uniqueFilename = generateUniqueFilename()
         s"$cleanCustomPath/$uniqueFilename"
       case None =>
         // Default mode: write alongside target data file
@@ -131,10 +130,9 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
    * - Timestamp FIRST: Ensures natural chronological sorting (most recent files appear together)
    * - Application ID: Full traceability to specific Spark application run
    *
-   * @param planId The execution plan ID (unused, kept for interface compatibility)
    * @return A unique filename optimized for filtering and sorting
    */
-  private def generateUniqueFilename(planId: String): String = {
+  private def generateUniqueFilename(): String = {
     val sparkContext = SparkContext.getOrCreate()
     val appId = sparkContext.applicationId
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-SSS").withZone(ZoneId.of("UTC"))
@@ -156,16 +154,17 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
     // Object storage systems (S3, GCS, Azure Blob) don't have real directories - they're just key prefixes
     // Skip directory creation for these systems to avoid unnecessary operations
     val fsScheme = fs.getUri.getScheme
-    val isObjectStorage = fsScheme != null && (
-      fsScheme.startsWith("s3") ||      // S3: s3, s3a, s3n
-      fsScheme.startsWith("gs") ||      // Google Cloud Storage: gs
-      fsScheme.startsWith("wasb") ||    // Azure Blob Storage: wasb, wasbs
-      fsScheme.startsWith("abfs") ||    // Azure Data Lake Storage Gen2: abfs, abfss
-      fsScheme.startsWith("adl")        // Azure Data Lake Storage Gen1: adl
+    val scheme = Option(fsSchemeRaw).map(_.toLowerCase(java.util.Locale.ROOT)).orNull
+    val isObjectStorage = scheme != null && (
+      scheme.startsWith("s3") ||      // S3: s3, s3a, s3n
+      scheme.startsWith("gs") ||      // Google Cloud Storage: gs
+      scheme.startsWith("wasb") ||    // Azure Blob Storage: wasb, wasbs
+      scheme.startsWith("abfs") ||    // Azure Data Lake Storage Gen2: abfs, abfss
+      scheme.startsWith("adl")        // Azure Data Lake Storage Gen1: adl
     )
-    
+  
     if (isObjectStorage) {
-      logDebug(s"Skipping directory creation for object storage filesystem ($fsScheme) - directories are implicit key prefixes")
+      logDebug(s"Skipping directory creation for object storage filesystem ($scheme) - directories are implicit key prefixes")
       return
     }
 
