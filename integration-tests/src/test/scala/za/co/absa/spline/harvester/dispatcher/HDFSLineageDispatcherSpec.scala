@@ -41,6 +41,7 @@ class HDFSLineageDispatcherSpec
   val lineageDispatcherConfigValueName = "hdfs"
   val lineageDispatcherConfigClassNameKeyName = s"$lineageDispatcherConfigKeyName.$lineageDispatcherConfigValueName.className"
   val lineageDispatcherConfigCustomLineagePathKeyName = s"$lineageDispatcherConfigKeyName.$lineageDispatcherConfigValueName.customLineagePath"
+  val destFilePathExtension = ".parquet"
 
   it should "save lineage file to a filesystem in DEFAULT mode (no customLineagePath)" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
     withIsolatedSparkSession(_
@@ -50,7 +51,7 @@ class HDFSLineageDispatcherSpec
       withLineageTracking { captor =>
         import spark.implicits._
         val dummyDF = Seq((1, 2)).toDF
-        val destPath = TempDirectory("spline_", ".parquet", pathOnly = true).deleteOnExit()
+        val destPath = TempDirectory("spline_", destFilePathExtension, pathOnly = true).deleteOnExit()
 
         for {
           (_, _) <- captor.lineageOf(dummyDF.write.save(destPath.asString))
@@ -79,7 +80,7 @@ class HDFSLineageDispatcherSpec
       withLineageTracking { captor =>
         import spark.implicits._
         val dummyDF = Seq((1, 2)).toDF
-        val destPath = TempDirectory("spline_", ".parquet", pathOnly = true).deleteOnExit()
+        val destPath = TempDirectory("spline_", destFilePathExtension, pathOnly = true).deleteOnExit()
 
         for {
           (_, _) <- captor.lineageOf(dummyDF.write.save(destPath.asString))
@@ -121,7 +122,7 @@ class HDFSLineageDispatcherSpec
       withLineageTracking { captor =>
         import spark.implicits._
         val dummyDF = Seq((1, 2)).toDF
-        val destPath = TempDirectory("spline_", ".parquet", pathOnly = true).deleteOnExit()
+        val destPath = TempDirectory("spline_", destFilePathExtension, pathOnly = true).deleteOnExit()
 
         for {
           (_, _) <- captor.lineageOf(dummyDF.write.save(destPath.asString))
@@ -148,7 +149,7 @@ class HDFSLineageDispatcherSpec
       withLineageTracking { captor =>
         import spark.implicits._
         val dummyDF = Seq((1, 2)).toDF
-        val destPath = TempDirectory("spline_", ".parquet", pathOnly = true).deleteOnExit()
+        val destPath = TempDirectory("spline_", destFilePathExtension, pathOnly = true).deleteOnExit()
 
         for {
           (_, _) <- captor.lineageOf(dummyDF.write.save(destPath.asString))
