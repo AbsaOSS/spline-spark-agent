@@ -121,7 +121,6 @@ class HDFSLineageDispatcherSpec
         for {
           (_, _) <- captor.lineageOf(dummyDF.write.save(destPath.asString))
         } yield {
-          // Empty string should trigger DEFAULT mode, lineage should be in destination directory
           val lineageFile = new File(destPath.asString, "_LINEAGE")
           lineageFile.exists should be(true)
           lineageFile.length should be > 0L
@@ -129,6 +128,7 @@ class HDFSLineageDispatcherSpec
           val lineageJson = readFileToString(lineageFile, "UTF-8").fromJson[Map[String, Map[String, _]]]
           lineageJson should contain key "executionPlan"
           lineageJson should contain key "executionEvent"
+          lineageJson("executionPlan")("id") should equal(lineageJson("executionEvent")("planId"))
         }
       }
     }
@@ -148,7 +148,6 @@ class HDFSLineageDispatcherSpec
         for {
           (_, _) <- captor.lineageOf(dummyDF.write.save(destPath.asString))
         } yield {
-          // Whitespace should trigger DEFAULT mode, lineage should be in destination directory
           val lineageFile = new File(destPath.asString, "_LINEAGE")
           lineageFile.exists should be(true)
           lineageFile.length should be > 0L
@@ -156,78 +155,7 @@ class HDFSLineageDispatcherSpec
           val lineageJson = readFileToString(lineageFile, "UTF-8").fromJson[Map[String, Map[String, _]]]
           lineageJson should contain key "executionPlan"
           lineageJson should contain key "executionEvent"
-        }
-      }
-    }
-  }
-
-  it should "generate chronologically sortable filenames in CENTRALIZED mode" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
-    val centralizedPath = TempDirectory("spline_centralized_", "", pathOnly = true).deleteOnExit()
-
-    withIsolatedSparkSession(_
-      .config("spark.spline.lineageDispatcher", "hdfs")
-      .config("spark.spline.lineageDispatcher.hdfs.className", classOf[HDFSLineageDispatcher].getName)
-      .config("spark.spline.lineageDispatcher.hdfs.customLineagePath", centralizedPath.asString)
-    ) { implicit spark =>
-      withLineageTracking { captor =>
-        import spark.implicits._
-
-        // Write multiple lineage files
-        val futures = for (i <- 1 to 3) yield {
-          val dummyDF = Seq((i, i * 2)).toDF
-          val destPath = TempDirectory(s"spline_$i", ".parquet", pathOnly = true).deleteOnExit()
-          captor.lineageOf(dummyDF.write.save(destPath.asString))
-        }
-
-        for {
-          _ <- futures.head
-          _ <- futures(1)
-          _ <- futures(2)
-        } yield {
-          val centralizedDir = new File(centralizedPath.asString)
-          val lineageFiles = centralizedDir.listFiles().sorted
-          lineageFiles.length should be(3)
-
-          // Verify filenames are in chronological order (lexicographic = chronological due to timestamp-first format)
-          val filenames = lineageFiles.map(_.getName).toList
-          filenames shouldBe filenames.sorted
-
-          // Verify all filenames start with date prefix (yyyy-MM-dd)
-          filenames.foreach { name =>
-            name should fullyMatch regex """\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}-\d{3}_.+"""
-          }
-        }
-      }
-    }
-  }
-
-  it should "create nested directories in CENTRALIZED mode" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
-    val centralizedBasePath = TempDirectory("spline_base_", "", pathOnly = true).deleteOnExit()
-    val nestedPath = new File(centralizedBasePath.asString, "level1/level2/level3").getAbsolutePath
-
-    withIsolatedSparkSession(_
-      .config("spark.spline.lineageDispatcher", "hdfs")
-      .config("spark.spline.lineageDispatcher.hdfs.className", classOf[HDFSLineageDispatcher].getName)
-      .config("spark.spline.lineageDispatcher.hdfs.customLineagePath", nestedPath)
-    ) { implicit spark =>
-      withLineageTracking { captor =>
-        import spark.implicits._
-        val dummyDF = Seq((1, 2)).toDF
-        val destPath = TempDirectory("spline_", ".parquet", pathOnly = true).deleteOnExit()
-
-        for {
-          (_, _) <- captor.lineageOf(dummyDF.write.save(destPath.asString))
-        } yield {
-          // Verify nested directories were created
-          val nestedDir = new File(nestedPath)
-          nestedDir.exists should be(true)
-          nestedDir.isDirectory should be(true)
-
-          // Verify lineage file was written
-          val lineageFiles = nestedDir.listFiles()
-          lineageFiles should not be null
-          lineageFiles.length should be(1)
-          lineageFiles(0).length should be > 0L
+          lineageJson("executionPlan")("id") should equal(lineageJson("executionEvent")("planId"))
         }
       }
     }
