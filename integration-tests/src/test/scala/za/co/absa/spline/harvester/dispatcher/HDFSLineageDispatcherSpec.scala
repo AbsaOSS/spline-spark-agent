@@ -26,7 +26,7 @@ import za.co.absa.spline.commons.version.Version._
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
-
+import org.apache.spark.sql.SparkSession
 import java.io.File
 
 class HDFSLineageDispatcherSpec
@@ -132,13 +132,13 @@ class HDFSLineageDispatcherSpec
           
           val appId = spark.sparkContext.applicationId
           val appName = spark.sparkContext.appName
-          val appNameCleaned = appName.replaceAll(r"[^a-zA-Z0-9_-]".r, "_")
+          val appNameCleaned = appName.replaceAll("[^a-zA-Z0-9_-]", "_")
 
           val lineageFiles = Option(centralizedDir.listFiles()).getOrElse(Array.empty[File])
           println(lineageFiles.map(_.getName).mkString(", "))
 
           // Verify naming convention aligns with centralized lineage pattern (timestamp_appName_appId)
-          val filenamePattern = """\\d{4}-\\d{2}-\\d{2}_\\d{2}-\\d{2}-\\d{2}-\\d{3}_.+_.+""".r
+          val filenamePattern = """\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}-\d{3}_.+_.+""".r
           lineageFiles.foreach { file =>
             val name = file.getName
             println(name)
