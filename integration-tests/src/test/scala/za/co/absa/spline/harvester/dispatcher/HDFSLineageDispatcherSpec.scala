@@ -93,21 +93,26 @@ class HDFSLineageDispatcherSpec
           val centralizedDir = new File(centralizedPath.asString)
           val lineageFiles = Option(centralizedDir.listFiles())
           lineageFiles should be(defined)
-          lineageFiles.get.length should be(1)
+          
+          lineageFiles match {
+            case Some(files) =>
+              files.length should be(1)
+              val lineageFile = files(0)
+              lineageFile.length should be > 0L
 
-          val lineageFile = lineageFiles.get(0)
-          lineageFile.length should be > 0L
+              // Verify filename format: {timestamp}_{appName}_{appId}
+              val filename = lineageFile.getName
+              // Should match pattern: yyyy-MM-dd_HH-mm-ss-SSS_{appName}_app-...
+              // AppName and AppId are part of the filename
+              filename should startWith regex """\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}-\d{3}"""
 
-          // Verify filename format: {timestamp}_{appName}_{appId}
-          val filename = lineageFile.getName
-          // Should match pattern: yyyy-MM-dd_HH-mm-ss-SSS_{appName}_app-...
-          // AppName and AppId are part of the filename
-          filename should startWith regex """\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}-\d{3}"""
-
-          val lineageJson = readFileToString(lineageFile, "UTF-8").fromJson[Map[String, Map[String, _]]]
-          lineageJson should contain key "executionPlan"
-          lineageJson should contain key "executionEvent"
-          lineageJson("executionPlan")("id") should equal(lineageJson("executionEvent")("planId"))
+              val lineageJson = readFileToString(lineageFile, "UTF-8").fromJson[Map[String, Map[String, _]]]
+              lineageJson should contain key "executionPlan"
+              lineageJson should contain key "executionEvent"
+              lineageJson("executionPlan")("id") should equal(lineageJson("executionEvent")("planId"))
+            case None =>
+              fail("Expected lineage files to be present in centralized directory")
+          }
         }
       }
     }
