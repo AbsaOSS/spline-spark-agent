@@ -33,6 +33,7 @@ import java.net.URI
 import java.time.format.DateTimeFormatter
 import java.time.{Instant, ZoneId}
 import scala.concurrent.blocking
+import scala.util.{Try, Success, Failure}
 
 /**
  * A port of https://github.com/AbsaOSS/spline/tree/release/0.3.9/persistence/hdfs/src/main/scala/za/co/absa/spline/persistence/hdfs
@@ -144,8 +145,8 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
   }
 
   /**
-   * Ensures that parent directories exist with proper permissions for multi-user access.
-   * This is critical for centralized lineage storage where different service accounts need write access.
+   * Ensures that parent directories exist with proper permissions for centralized lineage storage.
+   * This is only called when customLineagePath is specified and is critical for multi-user access.
    *
    * Note: Object storage systems (S3, GCS, Azure Blob) don't have true directories - they use key prefixes.
    * Directory creation is automatically skipped for these systems to avoid unnecessary operations.
@@ -168,25 +169,27 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
   
     if (isObjectStorage) {
       logDebug(s"Skipping directory creation for object storage filesystem ($scheme) - directories are implicit key prefixes")
-      return
-    }
-
-    val parentDir = path.getParent
-    if (parentDir != null && !fs.exists(parentDir)) {
-      try {
-        // Create directories with multi-user friendly permissions to allow all service accounts to write
-        // This uses the same permission object that's already configured for files
-        val created = fs.mkdirs(parentDir, permission)
-        if (created) {
-          logInfo(s"Created parent directories: $parentDir with permissions $permission")
+    } else {
+      logDebug(s"Ensuring parent directories exist for centralized lineage storage: $path")
+      val parentDir = path.getParent
+      if (parentDir != null && !fs.exists(parentDir)) {
+        Try {
+          // Create directories with multi-user friendly permissions to allow all service accounts to write
+          // This uses the same permission object that's already configured for files
+          val created = fs.mkdirs(parentDir, permission)
+          if (created) {
+            logInfo(s"Created parent directories: $parentDir with permissions $permission")
+          }
+        } match {
+          case Success(_) =>
+            // Directory creation succeeded
+          case Failure(e: org.apache.hadoop.fs.FileAlreadyExistsException) =>
+            // Race condition: another process created the directory - this is fine
+            logDebug(s"Directory $parentDir already exists (created by another process)")
+          case Failure(e: RuntimeException) =>
+            logWarning(s"Failed to create parent directories: $parentDir", e)
+            throw e
         }
-      } catch {
-        case e: org.apache.hadoop.fs.FileAlreadyExistsException =>
-          // Race condition: another process created the directory - this is fine
-          logDebug(s"Directory $parentDir already exists (created by another process)")
-        case e: Exception =>
-          logWarning(s"Failed to create parent directories: $parentDir", e)
-          throw e
       }
     }
   }
@@ -195,8 +198,11 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
     val (fs, path) = pathStringToFsWithPath(fullLineagePath)
     logDebug(s"Opening HadoopFs output stream to $path")
 
-    // Ensure parent directories exist with proper permissions for multi-user access
-    ensureParentDirectoriesExist(fs, path)
+    // Only ensure parent directories exist when using centralized mode (customLineagePath is specified)
+    // In default mode, the parent directories should already exist as they're alongside the data files
+    if (customLineagePath.isDefined) {
+      ensureParentDirectoriesExist(fs, path)
+    }
 
     val replication = fs.getDefaultReplication(path)
     val blockSize = fs.getDefaultBlockSize(path)

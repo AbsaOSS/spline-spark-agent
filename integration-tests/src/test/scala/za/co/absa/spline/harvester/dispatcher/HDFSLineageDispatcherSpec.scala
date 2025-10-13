@@ -91,11 +91,11 @@ class HDFSLineageDispatcherSpec
 
           // Lineage should be in centralized directory with timestamp-based filename
           val centralizedDir = new File(centralizedPath.asString)
-          val lineageFiles = centralizedDir.listFiles()
-          lineageFiles should not be null
-          lineageFiles.length should be(1)
+          val lineageFiles = Option(centralizedDir.listFiles())
+          lineageFiles should be(defined)
+          lineageFiles.get.length should be(1)
 
-          val lineageFile = lineageFiles(0)
+          val lineageFile = lineageFiles.get(0)
           lineageFile.length should be > 0L
 
           // Verify filename format: {timestamp}_{appName}_{appId}
