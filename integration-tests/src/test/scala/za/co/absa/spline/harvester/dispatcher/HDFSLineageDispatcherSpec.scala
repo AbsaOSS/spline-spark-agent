@@ -161,10 +161,11 @@ class HDFSLineageDispatcherSpec
           }
 
           // Verify no lineage files in destination directories
-          val lineageFileInDest1 = new File(destPath1.asString, "_LINEAGE")
-          val lineageFileInDest2 = new File(destPath2.asString, "_LINEAGE")
-          lineageFileInDest1.exists should be(false)
-          lineageFileInDest2.exists should be(false)
+          val dest1Files = Option(new File(destPath1.asString).listFiles()).getOrElse(Array.empty[File])
+          val dest2Files = Option(new File(destPath2.asString).listFiles()).getOrElse(Array.empty[File])
+          
+          dest1Files.exists(_.getName.contains("_LINEAGE")) should be(false)
+          dest2Files.exists(_.getName.contains("_LINEAGE")) should be(false)
         }
       }
     }
