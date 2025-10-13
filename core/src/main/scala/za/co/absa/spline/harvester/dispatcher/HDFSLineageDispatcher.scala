@@ -137,7 +137,7 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
    */
   private def generateUniqueFilename(): String = {
     val sparkContext = SparkContext.getOrCreate()
-    val appName = sparkContext.appName
+    val appName = sparkContext.appName.replaceAll("[^a-zA-Z0-9_-]", "_")
     val appId = sparkContext.applicationId
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-SSS").withZone(ZoneId.of("UTC"))
     val timestamp = dateFormatter.format(Instant.now())
