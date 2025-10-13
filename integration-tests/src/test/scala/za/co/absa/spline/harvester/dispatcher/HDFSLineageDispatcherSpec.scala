@@ -135,7 +135,7 @@ class HDFSLineageDispatcherSpec
           val appNameCleaned = appName.replaceAll("[^a-zA-Z0-9_-]", "_")
 
           val lineageFiles = Option(centralizedDir.listFiles()).getOrElse(Array.empty[File])
-          println(lineageFiles.map(_.getName).mkString(", "))
+          println("lineageFiles: " + lineageFiles.map(_.getName).mkString(", "))
 
           // Verify naming convention aligns with centralized lineage pattern (timestamp_appName_appId)
           val filenamePattern = """\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}-\d{3}_.+_.+""".r
@@ -149,7 +149,7 @@ class HDFSLineageDispatcherSpec
           }
 
           // Verify each file has the correct format and content
-          lineageFilesOnly.map { lineageFile =>
+          lineageFiles.foreach { lineageFile =>
             val lineageJson = readFileToString(lineageFile, "UTF-8").fromJson[Map[String, Map[String, _]]]
             lineageJson should contain key "executionPlan"
             lineageJson should contain key "executionEvent"
