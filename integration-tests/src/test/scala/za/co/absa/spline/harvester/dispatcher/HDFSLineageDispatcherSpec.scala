@@ -107,7 +107,8 @@ class HDFSLineageDispatcherSpec
 
   it should "save lineage files in a custom lineage path" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
     val centralizedPath = TempDirectory("spline_centralized").deleteOnExit()
-
+    centralizedPath.delete()
+    
     withIsolatedSparkSession(_
       .config(lineageDispatcherConfigKeyName, lineageDispatcherConfigValueName)
       .config(lineageDispatcherConfigClassNameKeyName, classOf[HDFSLineageDispatcher].getName)
@@ -129,24 +130,27 @@ class HDFSLineageDispatcherSpec
           val centralizedDir = new File(centralizedPath.asString)
           centralizedDir.exists should be(true)
           centralizedDir.isDirectory should be(true)
-          
+
           val appId = spark.sparkContext.applicationId
-          val appName = spark.sparkContext.appName
-          val appNameCleaned = appName.replaceAll("[^a-zA-Z0-9_-]", "_")
 
           val lineageFiles = Option(centralizedDir.listFiles()).getOrElse(Array.empty[File])
           val lineageFilesOnly = lineageFiles.filter(f => f.isFile && !f.getName.endsWith(".crc"))
           lineageFilesOnly.length should be(2)
 
-          // Verify naming convention aligns with centralized lineage pattern (timestamp_appName_appId)
+          // Verify naming convention aligns with centralized lineage pattern (timestamp_planId_appId)
+          // Format: {timestamp}_{planId}_{appId}
+          // Example: 2025-10-12_14-30-45-123_550e8400-e29b-41d4-a716-446655440000_app-20251012143045-0001
           val filenamePattern = """\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}-\d{3}_.+_.+"""
           lineageFilesOnly.foreach { file =>
             val name = file.getName
-            withClue(s"Lineage filename '$name' should follow the timestamp_appName_appId pattern") {
+            withClue(s"Lineage filename '$name' should follow the timestamp_planId_appId pattern") {
               name.matches(filenamePattern) shouldBe true
             }
-            name should include appId
-            name should include appNameCleaned
+            // Verify the appId appears in the filename (ends with appId)
+            withClue(s"Lineage filename '$name' should end with application ID '$appId'") {
+              name.endsWith(appId) shouldBe true
+            }
+
           }
 
           // Verify each file has the correct format and content

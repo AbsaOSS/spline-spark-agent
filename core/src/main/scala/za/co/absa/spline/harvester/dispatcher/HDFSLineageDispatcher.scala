@@ -52,10 +52,10 @@ import scala.util.{Try, Success, Failure}
  *
  * 2. CENTRALIZED MODE (customLineagePath set to a valid path):
  *    All lineage files are written to a single centralized location with unique filenames.
- *    Filename format: {timestamp}_{appName}_{appId}
+ *    Filename format: {timestamp}_{planId}_{appId}
  *    - timestamp: Human-readable UTC timestamp (yyyy-MM-dd_HH-mm-ss-SSS) for chronological sorting and filtering
- *    - appName: Spark application name for easy identification
- *    - appId: Spark application ID for traceability
+ *    - planId: Execution plan UUID for guaranteed uniqueness (prevents collisions from concurrent writes)
+ *    - appId: Spark application ID for traceability to Spark UI, logs, and monitoring systems
  *
  *    The timestamp-first format ensures natural chronological sorting and easy date-based filtering.
  *    Parent directories are automatically created with proper permissions for multi-user access (HDFS/local).
@@ -125,23 +125,32 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
   /**
    * Generates a unique filename for centralized lineage storage.
    * 
-   * Format: {timestamp}_{appName}_{appId}
-   * Example: 2025-10-12_14-30-45-123_MySparkJob_app-20251012143045-0001
+   * Format: {timestamp}_{planId}_{appId}
+   * Example: 2025-10-12_14-30-45-123_550e8400-e29b-41d4-a716-446655440000_app-20251012143045-0001
    *
    * This format optimizes for operational debugging use cases:
    * - Timestamp FIRST: Ensures natural chronological sorting (most recent files appear together)
-   * - Application Name: Easy identification of which job generated the lineage
-   * - Application ID: Full traceability to specific Spark application run
+   * - Plan ID: Guarantees uniqueness even for concurrent writes from the same application
+   * - Application ID: Enables immediate filtering by Spark application (correlates with Spark UI, logs, monitoring)
    *
-   * @return A unique filename optimized for filtering and sorting
+   * The planId ensures zero collision risk even when:
+   * - Multiple writes happen in the same millisecond
+   * - The same application writes multiple datasets concurrently
+   * - Different applications run simultaneously
+   *
+   * The appId enables operators to quickly filter all lineage files from a specific Spark application run,
+   * making it trivial to correlate with Spark UI, logs, and monitoring systems where the human-readable
+   * application name is already available.
+   *
+   * @return A unique filename optimized for filtering, sorting, and guaranteed uniqueness
    */
   private def generateUniqueFilename(): String = {
     val sparkContext = SparkContext.getOrCreate()
-    val appName = sparkContext.appName.replaceAll("[^a-zA-Z0-9_-]", "_")
+    val planId = this._lastSeenPlan.id.get.toString
     val appId = sparkContext.applicationId
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-SSS").withZone(ZoneId.of("UTC"))
     val timestamp = dateFormatter.format(Instant.now())
-    s"${timestamp}_${appName}_${appId}"
+    s"${timestamp}_${planId}_${appId}"
   }
 
   /**
