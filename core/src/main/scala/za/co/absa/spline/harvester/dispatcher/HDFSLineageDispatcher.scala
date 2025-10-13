@@ -79,24 +79,13 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
   override def name = "HDFS"
 
   override def send(plan: ExecutionPlan): Unit = {
-    require(plan != null, "Execution plan cannot be null")
-    require(plan.id.isDefined, "Execution plan must have an ID")
     this._lastSeenPlan = plan
   }
 
   override def send(event: ExecutionEvent): Unit = {
     // check state
-    if (this._lastSeenPlan == null) {
-      throw new IllegalStateException("send(event) must be called strictly after send(plan) method")
-    }
-    
-    val planId = this._lastSeenPlan.id.getOrElse(
-      throw new IllegalStateException("Execution plan ID is missing")
-    )
-    
-    if (planId != event.planId) {
-      throw new IllegalStateException(s"Plan ID mismatch: expected $planId but event has ${event.planId}")
-    }
+    if (this._lastSeenPlan == null || this._lastSeenPlan.id.get != event.planId)
+      throw new IllegalStateException("send(event) must be called strictly after send(plan) method with matching plan ID")
 
     try {
       val path = resolveLineagePath()
