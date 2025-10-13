@@ -189,6 +189,10 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
           case Failure(e: RuntimeException) =>
             logWarning(s"Failed to create parent directories: $parentDir", e)
             throw e
+          case Failure(e) =>
+            // Handle any other exceptions (IOException, etc.)
+            logWarning(s"Failed to create parent directories: $parentDir", e)
+            throw new RuntimeException(s"Failed to create parent directories: $parentDir", e)
         }
       }
     }
