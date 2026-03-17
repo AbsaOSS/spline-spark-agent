@@ -576,7 +576,7 @@
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-core_2.12</artifactId>
                 <scope>provided</scope>
-                <version>2.4.8</version>
+                <version>3.5.7</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
