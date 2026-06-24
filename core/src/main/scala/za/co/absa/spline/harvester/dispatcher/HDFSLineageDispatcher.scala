@@ -127,45 +127,16 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
    */
   private def persistRunFolderAtomically(finalRunDirStr: String, fileName: String, content: String): Unit = blocking {
     val (fs, finalRunDir) = pathStringToFsWithPath(finalRunDirStr)
-    val parent = finalRunDir.getParent
 
-    // 1) Ensure parent exists
-    if (!fs.exists(parent)) {
-      fs.mkdirs(parent)
-      try fs.setPermission(parent, permission) catch { case _: Throwable => () }
-    }
-
-    // 2) Create temp sibling directory
-    val tmpDir = new Path(parent, s".tmp-${finalRunDir.getName}-${UUID.randomUUID().toString}")
-    var tmpDirCreated = false
-    try {
-      if (!fs.mkdirs(tmpDir)) {
-        throw new RuntimeException(s"Failed to create temp directory: $tmpDir")
-      }
-      tmpDirCreated = true
-      try fs.setPermission(tmpDir, permission) catch { case _: Throwable => () }
-
-      // 3) Write the file atomically inside the temp dir
-      val finalFileInTmp = new Path(tmpDir, fileName)
-      writeFileAtomically(fs, finalFileInTmp, content.getBytes(StandardCharsets.UTF_8))
-
-      // 4) Rename the temp dir -> final dir (atomic on HDFS)
-      if (fs.exists(finalRunDir)) {
-        throw new IllegalStateException(s"Final run directory already exists: $finalRunDir")
-      }
-      logDebug(s"Renaming $tmpDir -> $finalRunDir (atomic on HDFS)")
-      if (!fs.rename(tmpDir, finalRunDir)) {
-        throw new RuntimeException(s"Failed to atomically rename $tmpDir to $finalRunDir")
-      }
-
+    // Ensure final run directory exists
+    if (!fs.exists(finalRunDir)) {
+      fs.mkdirs(finalRunDir)
       try fs.setPermission(finalRunDir, permission) catch { case _: Throwable => () }
-    } catch {
-      case e: Throwable =>
-        if (tmpDirCreated) {
-          try fs.delete(tmpDir, true) catch { case _: Throwable => () }
-        }
-        throw e
     }
+
+    // Write the file atomically inside the run directory
+    val finalFileInRunDir = new Path(finalRunDir, fileName)
+    writeFileAtomically(fs, finalFileInRunDir, content.getBytes(StandardCharsets.UTF_8))
   }
 
   /**
