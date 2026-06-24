@@ -70,6 +70,9 @@ object SplineAgent extends Logging {
 
     new SplineAgent {
       def handle(funcName: FuncName, qe: QueryExecution, result: Either[Throwable, Duration]): Unit = withErrorHandling {
+        // --- SIMULATED ERROR ---
+        throw new RuntimeException("Simulated Spline error for testing to ensure Spark job doesn't fail")
+
         val idGenerators = new IdGeneratorsBundle(execPlanUUIDGeneratorFactory)
         val harvestingContext = new HarvestingContext(funcName, qe.analyzed, Some(qe.executedPlan), session, idGenerators)
         val postProcessor = new PostProcessor(filters, harvestingContext)
