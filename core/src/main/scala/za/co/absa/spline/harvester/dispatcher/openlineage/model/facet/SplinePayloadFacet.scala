@@ -16,7 +16,8 @@
 
 package za.co.absa.spline.harvester.dispatcher.openlineage.model.facet
 
-import za.co.absa.spline.producer.model.openlineage.v0_3_1.RunFacet
+import za.co.absa.spline.harvester.dispatcher.openlineage.model.openlineage.v2_0_2.RunFacet
+
 
 class SplinePayloadFacet(
   override val _producer: String,

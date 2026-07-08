@@ -49,7 +49,6 @@ class HttpOpenLineageDispatcher(restClient: RestClient, apiVersion: Version, ope
 
   private val lineageEndpoint = restClient.endpoint(RESTResource.Lineage)
   private val modelMapper = ModelMapper.forApiVersion(apiVersion)
-  private val openLineageModelMapper = new OpenLineageModelMapper(modelMapper, apiVersion, openLineageNamespace)
 
   private var cachedPlan: ExecutionPlan = _
 
@@ -61,7 +60,15 @@ class HttpOpenLineageDispatcher(restClient: RestClient, apiVersion: Version, ope
     assert(cachedPlan != null)
     val plan = cachedPlan
 
-    val runEvents = openLineageModelMapper.toDtos(plan, event)
+    val openLineageModelMapper = new OpenLineageModelMapper(
+      modelMapper,
+      apiVersion,
+      openLineageNamespace,
+      plan,
+      event
+    )
+
+    val runEvents = openLineageModelMapper.toDtos()
 
     runEvents.foreach { event =>
       sendJson(event.toJson, lineageEndpoint)

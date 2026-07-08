@@ -32,7 +32,7 @@
 
     <properties>
         <elasticsearch.spark.sufix>20</elasticsearch.spark.sufix>
-        <testcontainers.version>1.17.5</testcontainers.version>
+        <testcontainers.version>1.21.4</testcontainers.version>
         <delta.artifactId>delta-core_${scala.binary.version}</delta.artifactId>
     </properties>
 
