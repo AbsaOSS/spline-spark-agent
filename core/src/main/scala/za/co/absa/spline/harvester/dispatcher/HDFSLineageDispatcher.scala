@@ -33,6 +33,7 @@ import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.util.UUID
 import scala.concurrent.blocking
+import scala.util.control.NonFatal
 
 @Experimental
 class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSize: Int)
@@ -106,13 +107,18 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
         val statuses = fs.listStatus(appPath)
         statuses.foreach { status =>
           if (status.isDirectory && status.getPath.getName != currentRunID) {
-            logInfo(s"Deleting old runID folder: ${status.getPath}")
-            fs.delete(status.getPath, true) // recursive delete
+            try {
+              logInfo(s"Deleting old runID folder: ${status.getPath}")
+              fs.delete(status.getPath, true) // recursive delete
+            } catch {
+              case NonFatal(e) =>
+                logWarning(s"Failed to delete old runID folder: ${status.getPath}", e)
+            }
           }
         }
       }
     } catch {
-      case e: Exception =>
+      case NonFatal(e) =>
         logWarning(s"Failed to cleanup old run folders in $appDirPath", e)
     }
   }
