@@ -186,6 +186,7 @@
                 <configuration>
                     <scalaVersion>${scala.version}</scalaVersion>
                     <args>
+                        <arg>-nobootcp</arg>
                         <arg>-target:jvm-${java.version}</arg>
                         <arg>-feature</arg>
                         <arg>-deprecation</arg>
