@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.dispatcher.openlineage.model.openlineage.v2_0_2
+package za.co.absa.spline.harvester.dispatcher.openlineage.model.facet.column
 
-/**
- * @param namespace The namespace containing that job for example: '''my-scheduler-namespace'''
- * @param name The unique name for that job within that namespace for example: '''myjob.mytask'''
- * @param facets The job facets.
- */
-case class Job (
-  namespace: String,
-  name: String,
-  facets: Option[Map[String, JobFacet]]
+case class InputFieldTransformation(
+  /* The type of the transformation. Allowed values are: DIRECT, INDIRECT */
+  `type`: String,
+  /* The subtype of the transformation */
+  subtype: Option[String] = None,
+  /* a string representation of the transformation applied */
+  description: Option[String] = None,
+  /* is transformation masking the data or not */
+  masking: Option[Boolean] = None
 )

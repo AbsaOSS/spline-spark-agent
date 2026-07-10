@@ -14,15 +14,8 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.dispatcher.openlineage.model.openlineage.v2_0_2
+package za.co.absa.spline.harvester.dispatcher.openlineage.model.facet.column
 
-/**
- * @param namespace The namespace containing that job for example: '''my-scheduler-namespace'''
- * @param name The unique name for that job within that namespace for example: '''myjob.mytask'''
- * @param facets The job facets.
- */
-case class Job (
-  namespace: String,
-  name: String,
-  facets: Option[Map[String, JobFacet]]
+case class ColumnLineage(
+  inputFields: Seq[InputField]
 )

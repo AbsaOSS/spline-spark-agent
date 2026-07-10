@@ -20,10 +20,12 @@ import za.co.absa.spline.commons.lang.extensions.NonOptionExtension._
 import za.co.absa.spline.commons.lang.extensions.TraversableExtension._
 import za.co.absa.spline.commons.version.Version
 import za.co.absa.spline.harvester.LineageHarvester
+import za.co.absa.spline.harvester.converter.ExpressionConverter.ExprV1
 import za.co.absa.spline.harvester.dispatcher.ProducerApiVersion.JsonSchemaURLs
 import za.co.absa.spline.harvester.dispatcher.modelmapper.OpenLineageModelMapper._
+import za.co.absa.spline.harvester.dispatcher.openlineage.model.facet._
+import za.co.absa.spline.harvester.dispatcher.openlineage.model.facet.column.{ColumnLineage, ColumnLineageDatasetFacet, InputField, InputFieldTransformation}
 import za.co.absa.spline.harvester.dispatcher.openlineage.model.facet.schema.{SchemaDatasetFacet, SchemaDatasetFacetField}
-import za.co.absa.spline.harvester.dispatcher.openlineage.model.facet.{ColumnLineage, ColumnLineageDatasetFacet, InputField, SplinePayloadFacet}
 import za.co.absa.spline.harvester.dispatcher.openlineage.model.openlineage.v2_0_2._
 import za.co.absa.spline.model.dt.DataType
 import za.co.absa.spline.producer.model._
@@ -185,41 +187,70 @@ class OpenLineageModelMapper(
       val attr = attrMap(attrId)
 
       attr.name -> ColumnLineage(
-        inputFields = getDependencies(attr).map { dep =>
+        inputFields = getDependencies(attr, Nil).map { case (dep, funChain) =>
           InputField(
             namespace = namespace,
             name = plan.operations.reads.find(_.output.contains(dep.id)).map(_.inputSources.head).getOrElse("unknown"),
             field = dep.name,
-            transformations = None
-          )
-        }
+            transformations =
+              Option(funChain.map{
+                f =>
+                  InputFieldTransformation(
+                    `type` = "DIRECT",
+                    subtype = Option(getTransformationSubtype(f)),
+                    description = Option(getTransformationName(f))
+                  )
+              }
+          ))
+        }.toSeq
       )
     }.toMap
 
     map
   }
 
-  private def getDependencies(attr: Attribute): Seq[Attribute] = {
+  private def getDependencies(attr: Attribute, funChain: List[FunctionalExpression]): Map[Attribute, Seq[FunctionalExpression]] = {
     if (attr.childRefs.isEmpty) {
-      Seq(attr)
+      Map(attr -> funChain)
     } else {
       attr.childRefs.map(_.id).map {
         case attrId: String if attrId.startsWith("attr") =>
-          getDependencies(attrMap(attrId))
+          getDependencies(attrMap(attrId), funChain)
         case exprId: String if exprId.startsWith("expr") =>
-          getDependencies(funcMap(exprId))
-      }.flatten
+          getDependencies(funcMap(exprId), funChain)
+      }.reduce(_ ++ _)
     }
   }
 
-  private def getDependencies(func: FunctionalExpression): Seq[Attribute] = {
+  private def getDependencies(func: FunctionalExpression, funChain: List[FunctionalExpression]): Map[Attribute, Seq[FunctionalExpression]] = {
     func.childRefs.map(_.id).map {
       case attrId: String if attrId.startsWith("attr") =>
-        getDependencies(attrMap(attrId))
+        getDependencies(attrMap(attrId), func :: funChain)
       case exprId: String if exprId.startsWith("expr") =>
-        funcMap.get(exprId).map(getDependencies).getOrElse(Seq.empty)
-    }.flatten
+        funcMap.get(exprId).map(getDependencies(_, func :: funChain)).getOrElse(Map.empty)
+    }.reduce(_ ++ _)
   }
+
+  private def getTransformationSubtype(func: FunctionalExpression): String = {
+    func.extra.get(ExprV1.TypeHint).getOrElse("") match {
+      case ExprV1.Types.Alias => "IDENTITY"
+      case ExprV1.Types.Binary => "TRANSFORMATION"
+      case ExprV1.Types.UDF => "TRANSFORMATION"
+      case ExprV1.Types.GenericLeaf => "TRANSFORMATION"
+      case ExprV1.Types.Generic =>
+        if (func.name == "aggregateexpression")
+          "AGGREGATION"
+        else
+          "TRANSFORMATION"
+      case ExprV1.Types.UntypedExpression => "TRANSFORMATION"
+      case _ => "TRANSFORMATION"
+    }
+  }
+
+  private def getTransformationName(func: FunctionalExpression): String = {
+    func.extra.get(ExprV1.TypeHint).map(_ + ": ").getOrElse("").concat(func.name)
+  }
+
 
 
     sealed trait Dependency
