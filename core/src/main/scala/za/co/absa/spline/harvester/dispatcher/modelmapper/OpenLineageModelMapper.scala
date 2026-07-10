@@ -32,6 +32,7 @@ import za.co.absa.spline.producer.model._
 
 import java.time.{Duration, Instant}
 import java.util.UUID
+import scala.annotation.tailrec
 
 class OpenLineageModelMapper(
   splineModelMapper: ModelMapper[_, _],
@@ -42,8 +43,11 @@ class OpenLineageModelMapper(
 ) {
   private val attrMap = plan.attributes.map(a => a.id -> a).toMap
   private val funcMap = plan.expressions.functions.map(f => f.id -> f).toMap
-  private val constMap = plan.expressions.constants.map(f => f.id -> f).toMap
   private val typeMap = plan.extraInfo("dataTypes").asInstanceOf[Seq[DataType]].map(t => t.id.toString -> t).toMap
+
+  private val writeChild = plan.operations.write.childIds.head
+  private val writeOutput = plan.operations.other.find(_.id == writeChild)
+    .orElse(plan.operations.reads.find(_.id == writeChild)).get.output
 
 
   def toDtos(): Seq[RunEvent] = {
@@ -74,9 +78,9 @@ class OpenLineageModelMapper(
       ))),
       job = job,
       inputs = plan.operations.reads
-        .flatMap(ro => ro.inputSources.map(createInputDataset(ro, plan, _)))
+        .flatMap(ro => ro.inputSources.map(createInputDataset(ro, _)))
         .toNonEmptyOption,
-      outputs = Some(Seq(createOutputDataset(plan))),
+      outputs = Option(Seq(createOutputDataset)),
       producer = Producer,
       schemaURL = SchemaUrl
     )
@@ -92,41 +96,30 @@ class OpenLineageModelMapper(
       payload = payload
     )
 
-  private def createInputDataset(op: ReadOperation, plan: ExecutionPlan, source: String): InputDataset = {
+  private def createInputDataset(op: ReadOperation, source: String): InputDataset = {
     val (namespace, name) = OpenLineageUriMapper.uriToNamespaceAndName(source)
     InputDataset(
       namespace = namespace,
       name = name,
-      facets = Some(Map("schema" -> createInputSchema(op, plan))),
+      facets = Some(Map("schema" -> createSchema(op.output))),
       inputFacets = None
     )
   }
 
-  private def createOutputDataset(plan: ExecutionPlan): OutputDataset = {
+  private def createOutputDataset: OutputDataset = {
     val (namespace, name) = OpenLineageUriMapper.uriToNamespaceAndName(plan.operations.write.outputSource)
     OutputDataset(
       namespace = namespace,
       name = name,
       facets = Some(Map(
-        "schema" -> createOutpuSchema(plan.operations.write, plan),
+        "schema" -> createSchema(writeOutput),
         "columnLineage" -> createColumnLineageFacet(plan)
       )),
       outputFacets = None
     )
   }
 
-  private def createInputSchema(op: ReadOperation, plan: ExecutionPlan): SchemaDatasetFacet =
-    createSchema(op.output, plan)
-
-  private def createOutpuSchema(op: WriteOperation, plan: ExecutionPlan): SchemaDatasetFacet = {
-    val childId = op.childIds.head
-    val childOp = plan.operations.other.find(_.id == childId)
-      .orElse(plan.operations.reads.find(_.id == childId)).get
-
-    createSchema(childOp.output, plan)
-  }
-
-  private def createSchema(output: Seq[String], plan: ExecutionPlan): SchemaDatasetFacet =
+  private def createSchema(output: Seq[String]): SchemaDatasetFacet =
     SchemaDatasetFacet(
       _producer = Producer,
       _schemaURL = SchemaDatasetFacetUrl,
@@ -174,23 +167,24 @@ class OpenLineageModelMapper(
     ColumnLineageDatasetFacet(
       _producer = Producer,
       _schemaURL = columnLineageFacetSchemaUrl,
-      fields = createFieldMap(plan),
-      dataset = None //TODO: Option[Seq[InputField]],
+      fields = createFieldMap,
+      dataset = None,
     )
 
-  private def createFieldMap(plan: ExecutionPlan): Map[String, ColumnLineage] = {
-    val writeChild = plan.operations.write.childIds.head
-    val childOp = plan.operations.other.find(_.id == writeChild)
-      .orElse(plan.operations.reads.find(_.id == writeChild)).get
-
-    val map = childOp.output.map { attrId =>
+  private def createFieldMap: Map[String, ColumnLineage] = {
+    writeOutput.map { attrId =>
       val attr = attrMap(attrId)
 
       attr.name -> ColumnLineage(
-        inputFields = getDependencies(attr, Nil).map { case (dep, funChain) =>
+        inputFields = getLeaves(attr)
+          .filter{ case (dep, _) => plan.operations.reads.exists(_.output.contains(dep.id)) }
+          .map { case (dep, funChain) =>
           InputField(
             namespace = namespace,
-            name = plan.operations.reads.find(_.output.contains(dep.id)).map(_.inputSources.head).getOrElse("unknown"),
+            name = plan.operations.reads
+              .find(_.output.contains(dep.id))
+              .map(_.inputSources.mkString(", "))
+              .getOrElse("N/A"),
             field = dep.name,
             transformations =
               Option(funChain.map{
@@ -205,31 +199,35 @@ class OpenLineageModelMapper(
         }.toSeq
       )
     }.toMap
-
-    map
   }
 
-  private def getDependencies(attr: Attribute, funChain: List[FunctionalExpression]): Map[Attribute, Seq[FunctionalExpression]] = {
-    if (attr.childRefs.isEmpty) {
-      Map(attr -> funChain)
-    } else {
-      attr.childRefs.map(_.id).map {
-        case attrId: String if attrId.startsWith("attr") =>
-          getDependencies(attrMap(attrId), funChain)
-        case exprId: String if exprId.startsWith("expr") =>
-          getDependencies(funcMap(exprId), funChain)
-      }.reduce(_ ++ _)
+  private def getLeaves(attr: Attribute): Map[Attribute, Seq[FunctionalExpression]] = {
+    getLeavesRec(attr.childRefs.map(_.id).toList, Nil, Map.empty)
+  }
+
+  @tailrec
+  private def getLeavesRec(
+    ids: List[String],
+    funChain: List[FunctionalExpression],
+    deps: Map[Attribute, Seq[FunctionalExpression]]
+  ): Map[Attribute, Seq[FunctionalExpression]] =
+    ids match {
+      case Nil => deps
+      case attrId :: tail if attrId.startsWith("attr") =>
+        val attr = attrMap(attrId)
+        if (attr.childRefs.isEmpty) {
+          val newDeps = deps + (attr -> funChain)
+          getLeavesRec(tail, funChain, newDeps)
+        } else {
+          val newIds = tail ++ attr.childRefs.map(_.id)
+          getLeavesRec(newIds, funChain, deps)
+        }
+      case exprId :: tail  if exprId.startsWith("expr") =>
+        val funcOption = funcMap.get(exprId)
+        val newIds = tail ++ funcOption.map(_.childRefs.map(_.id)).getOrElse(Nil)
+        val newFunChain = funcOption.map(f => f :: funChain).getOrElse(funChain)
+        getLeavesRec(newIds, newFunChain, deps)
     }
-  }
-
-  private def getDependencies(func: FunctionalExpression, funChain: List[FunctionalExpression]): Map[Attribute, Seq[FunctionalExpression]] = {
-    func.childRefs.map(_.id).map {
-      case attrId: String if attrId.startsWith("attr") =>
-        getDependencies(attrMap(attrId), func :: funChain)
-      case exprId: String if exprId.startsWith("expr") =>
-        funcMap.get(exprId).map(getDependencies(_, func :: funChain)).getOrElse(Map.empty)
-    }.reduce(_ ++ _)
-  }
 
   private def getTransformationSubtype(func: FunctionalExpression): String = {
     func.extra.get(ExprV1.TypeHint).getOrElse("") match {
@@ -250,13 +248,6 @@ class OpenLineageModelMapper(
   private def getTransformationName(func: FunctionalExpression): String = {
     func.extra.get(ExprV1.TypeHint).map(_ + ": ").getOrElse("").concat(func.name)
   }
-
-
-
-    sealed trait Dependency
-  case class DirectDep(subtype: String, masking: Boolean) extends Dependency
-  case class IndirectDep(subtype: String, masking: Boolean) extends Dependency
-
 
 }
 
