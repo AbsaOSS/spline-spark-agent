@@ -50,7 +50,7 @@ class OpenLineageModelMapper(
     .orElse(plan.operations.reads.find(_.id == writeChild)).get.output
 
 
-  def toDtos(): Seq[RunEvent] = {
+  def toDtos: Seq[RunEvent] = {
     val runId = UUID.randomUUID()
     val job = Job(namespace = namespace, name = plan.name, facets = None)
 
@@ -230,7 +230,7 @@ class OpenLineageModelMapper(
     }
 
   private def getTransformationSubtype(func: FunctionalExpression): String = {
-    func.extra.get(ExprV1.TypeHint).getOrElse("") match {
+    func.extra.getOrElse(ExprV1.TypeHint, "") match {
       case ExprV1.Types.Alias => "IDENTITY"
       case ExprV1.Types.Binary => "TRANSFORMATION"
       case ExprV1.Types.UDF => "TRANSFORMATION"
