@@ -68,7 +68,7 @@ class HttpOpenLineageDispatcher(restClient: RestClient, apiVersion: Version, ope
       event
     )
 
-    val runEvents = openLineageModelMapper.toDtos()
+    val runEvents = openLineageModelMapper.toDtos
 
     runEvents.foreach { event =>
       sendJson(event.toJson, lineageEndpoint)

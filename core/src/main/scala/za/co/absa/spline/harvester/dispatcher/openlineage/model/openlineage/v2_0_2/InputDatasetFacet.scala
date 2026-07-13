@@ -24,5 +24,6 @@ package za.co.absa.spline.harvester.dispatcher.openlineage.model.openlineage.v2_
  */
 case class InputDatasetFacet (
   _producer: String,
-  _schemaURL: String
+  _schemaURL: String,
+  _deleted: Option[Boolean]
 )

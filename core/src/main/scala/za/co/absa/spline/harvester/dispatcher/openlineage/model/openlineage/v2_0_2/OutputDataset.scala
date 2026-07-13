@@ -28,5 +28,5 @@ case class OutputDataset (
   namespace: String,
   name: String,
   facets: Option[Map[String, Any]],
-  outputFacets: Option[Map[String, Any]]
+  outputFacets: Option[Map[String, OutputDatasetFacet]]
 )

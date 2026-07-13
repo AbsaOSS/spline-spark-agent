@@ -20,6 +20,7 @@ import za.co.absa.spline.commons.lang.extensions.NonOptionExtension._
 import za.co.absa.spline.commons.lang.extensions.TraversableExtension._
 import za.co.absa.spline.commons.version.Version
 import za.co.absa.spline.harvester.LineageHarvester
+import za.co.absa.spline.harvester.ModelConstants.ExecutionPlanExtra
 import za.co.absa.spline.harvester.converter.ExpressionConverter.ExprV1
 import za.co.absa.spline.harvester.dispatcher.ProducerApiVersion.JsonSchemaURLs
 import za.co.absa.spline.harvester.dispatcher.modelmapper.OpenLineageModelMapper._
@@ -37,13 +38,14 @@ import scala.annotation.tailrec
 class OpenLineageModelMapper(
   splineModelMapper: ModelMapper[_, _],
   apiVersion: Version,
-  namespace: String,
+  jobNamespace: String,
   plan: ExecutionPlan,
   event: ExecutionEvent
 ) {
   private val attrMap = plan.attributes.map(a => a.id -> a).toMap
   private val funcMap = plan.expressions.functions.map(f => f.id -> f).toMap
-  private val typeMap = plan.extraInfo("dataTypes").asInstanceOf[Seq[DataType]].map(t => t.id.toString -> t).toMap
+  private val typeMap = plan.extraInfo(ExecutionPlanExtra.DataTypes).asInstanceOf[Seq[DataType]]
+    .map(t => t.id.toString -> t).toMap
 
   private val writeChild = plan.operations.write.childIds.head
   private val writeOutput = plan.operations.other.find(_.id == writeChild)
@@ -52,7 +54,7 @@ class OpenLineageModelMapper(
 
   def toDtos: Seq[RunEvent] = {
     val runId = UUID.randomUUID()
-    val job = Job(namespace = namespace, name = plan.name, facets = None)
+    val job = Job(namespace = jobNamespace, name = plan.name, facets = None)
 
     val completeTime = Instant.ofEpochMilli(event.timestamp)
     val duration = Duration.ofNanos(event.durationNs.getOrElse(0))
@@ -167,81 +169,88 @@ class OpenLineageModelMapper(
     ColumnLineageDatasetFacet(
       _producer = Producer,
       _schemaURL = columnLineageFacetSchemaUrl,
-      fields = createFieldMap,
-      dataset = None,
+      fields = createColumnLineageMap,
+      dataset = None
     )
 
-  private def createFieldMap: Map[String, ColumnLineage] = {
+  private def createColumnLineageMap: Map[String, ColumnLineage] = {
     writeOutput.map { attrId =>
       val attr = attrMap(attrId)
 
       attr.name -> ColumnLineage(
         inputFields = getLeaves(attr)
-          .filter{ case (dep, _) => plan.operations.reads.exists(_.output.contains(dep.id)) }
-          .map { case (dep, funChain) =>
-          InputField(
-            namespace = namespace,
-            name = plan.operations.reads
-              .find(_.output.contains(dep.id))
-              .map(_.inputSources.mkString(", "))
-              .getOrElse("N/A"),
-            field = dep.name,
-            transformations =
-              Option(funChain.map{
-                f =>
-                  InputFieldTransformation(
-                    `type` = "DIRECT",
-                    subtype = Option(getTransformationSubtype(f)),
-                    description = Option(getTransformationName(f))
-                  )
-              }
-          ))
-        }.toSeq
+          .flatMap { case (attr, funChain) =>
+            plan.operations.reads
+              .find(_.output.contains(attr.id))
+              .map(_.inputSources)
+              .getOrElse(Seq.empty)
+              .map(createLineageInputField(attr, funChain, _))
+          }.toSeq
       )
     }.toMap
   }
 
+  private def createLineageInputField(
+    attr: Attribute,
+    funChain: Seq[FunctionalExpression],
+    inputSource: String
+  ): InputField = {
+    val (namespace, name) = OpenLineageUriMapper.uriToNamespaceAndName(inputSource)
+    InputField(
+      namespace = namespace,
+      name = name,
+      field = attr.name,
+      transformations =
+        Option(funChain.map {
+          f =>
+            InputFieldTransformation(
+              `type` = "DIRECT",
+              subtype = Option(getTransformationSubtype(f)),
+              description = Option(getTransformationName(f))
+            )
+        })
+    )
+  }
+
   private def getLeaves(attr: Attribute): Map[Attribute, Seq[FunctionalExpression]] = {
-    getLeavesRec(attr.childRefs.map(_.id).toList, Nil, Map.empty)
+    getLeavesRec(attr.childRefs.map(ref =>(ref.id, Nil)).toList, Map.empty)
   }
 
   @tailrec
   private def getLeavesRec(
-    ids: List[String],
-    funChain: List[FunctionalExpression],
+    ids: List[(String, List[FunctionalExpression])],
     deps: Map[Attribute, Seq[FunctionalExpression]]
-  ): Map[Attribute, Seq[FunctionalExpression]] =
-    ids match {
-      case Nil => deps
-      case attrId :: tail if attrId.startsWith("attr") =>
-        val attr = attrMap(attrId)
-        if (attr.childRefs.isEmpty) {
-          val newDeps = deps + (attr -> funChain)
-          getLeavesRec(tail, funChain, newDeps)
-        } else {
-          val newIds = tail ++ attr.childRefs.map(_.id)
-          getLeavesRec(newIds, funChain, deps)
-        }
-      case exprId :: tail  if exprId.startsWith("expr") =>
-        val funcOption = funcMap.get(exprId)
-        val newIds = tail ++ funcOption.map(_.childRefs.map(_.id)).getOrElse(Nil)
-        val newFunChain = funcOption.map(f => f :: funChain).getOrElse(funChain)
-        getLeavesRec(newIds, newFunChain, deps)
-    }
+  ): Map[Attribute, Seq[FunctionalExpression]] = ids match {
+    case Nil => deps
+    case (attrId, funChain) :: tail if attrId.startsWith("attr") =>
+      val attr = attrMap(attrId)
+      if (attr.childRefs.isEmpty) {
+        val newDeps = deps + (attr -> funChain)
+        getLeavesRec(tail, newDeps)
+      } else {
+        val newIds = tail ++ attr.childRefs.map(ref => (ref.id, funChain))
+        getLeavesRec(newIds, deps)
+      }
+    case (exprId, funChain) :: tail  if exprId.startsWith("expr") =>
+      val funcOption = funcMap.get(exprId) // when expr is constant we ignore it
+      val newFunChain = funcOption.map(f => f :: funChain).getOrElse(funChain)
+      val newIds = tail ++ funcOption.map(_.childRefs.map(ref => (ref.id, newFunChain))).getOrElse(Nil)
+      getLeavesRec(newIds, deps)
+  }
 
   private def getTransformationSubtype(func: FunctionalExpression): String = {
     func.extra.getOrElse(ExprV1.TypeHint, "") match {
-      case ExprV1.Types.Alias => "IDENTITY"
-      case ExprV1.Types.Binary => "TRANSFORMATION"
-      case ExprV1.Types.UDF => "TRANSFORMATION"
-      case ExprV1.Types.GenericLeaf => "TRANSFORMATION"
+      case ExprV1.Types.Alias => DirectTransformationSubtype.Identity
+      case ExprV1.Types.Binary => DirectTransformationSubtype.Transformation
+      case ExprV1.Types.UDF =>  DirectTransformationSubtype.Transformation
+      case ExprV1.Types.GenericLeaf =>  DirectTransformationSubtype.Transformation
       case ExprV1.Types.Generic =>
         if (func.name == "aggregateexpression")
-          "AGGREGATION"
+          DirectTransformationSubtype.Aggregation
         else
-          "TRANSFORMATION"
-      case ExprV1.Types.UntypedExpression => "TRANSFORMATION"
-      case _ => "TRANSFORMATION"
+          DirectTransformationSubtype.Transformation
+      case ExprV1.Types.UntypedExpression =>  DirectTransformationSubtype.Transformation
+      case _ =>  DirectTransformationSubtype.Transformation
     }
   }
 
@@ -256,13 +265,20 @@ object OpenLineageModelMapper {
   private val SchemaUrl = "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/RunEvent"
   private val PayloadFacetSchemaUrl = "https://cdn.jsdelivr.net/gh/AbsaOSS/spline@api-doc/schemas/openlineage/spline-payload-facet-1.0.json"
   private val columnLineageFacetSchemaUrl = "https://openlineage.io/spec/facets/1-2-0/ColumnLineageDatasetFacet.json"
-  private val SchemaDatasetFacetUrl = "https://openlineage.io/spec/facets/1-2-0/ColumnLineageDatasetFacet.json"
+  private val SchemaDatasetFacetUrl = "https://openlineage.io/spec/facets/1-1-1/SchemaDatasetFacet.json"
 
   object EventType {
     val Start = "START"
     val Complete = "COMPLETE"
     val Fail = "FAIL"
   }
+
+  object DirectTransformationSubtype {
+    val Identity = "IDENTITY"
+    val Transformation = "TRANSFORMATION"
+    val Aggregation = "AGGREGATION"
+  }
+
 
   private val SplineEvent = "splineEvent"
   private val SplinePlan = "splineEvent"
