@@ -18,7 +18,6 @@ package za.co.absa.spline.harvester.dispatcher.openlineage
 
 import org.apache.commons.configuration.Configuration
 import za.co.absa.spline.commons.config.ConfigurationImplicits._
-import za.co.absa.spline.commons.version.Version
 import za.co.absa.spline.harvester.dispatcher.openlineage.HttpOpenLineageDispatcherConfig._
 
 import scala.concurrent.duration._
@@ -28,7 +27,6 @@ object HttpOpenLineageDispatcherConfig {
   val ConnectionTimeoutMsKey = "timeout.connection"
   val ReadTimeoutMsKey = "timeout.read"
   val DisableSslValidation = "disableSslValidation"
-  val ApiVersion = "apiVersion"
   val Namespace = "namespace"
   val Header = "header"
   val AuthenticationProperty = "authentication"
@@ -41,7 +39,6 @@ class HttpOpenLineageDispatcherConfig(config: Configuration) {
   val connTimeout: Duration = config.getRequiredLong(ConnectionTimeoutMsKey).millis
   val readTimeout: Duration = config.getRequiredLong(ReadTimeoutMsKey).millis
   val disableSslValidation: Boolean = config.getRequiredBoolean(DisableSslValidation)
-  val apiVersion: Version = Version.asSimple(config.getRequiredString(ApiVersion))
   val namespace: String = config.getRequiredString(Namespace)
   val headers: Map[String, String] = config.subset(Header).toMap[String]
   val authConfig: Configuration = config.subset(AuthenticationProperty)

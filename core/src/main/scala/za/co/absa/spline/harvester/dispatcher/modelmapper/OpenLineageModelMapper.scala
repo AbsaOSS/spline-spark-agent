@@ -18,13 +18,10 @@ package za.co.absa.spline.harvester.dispatcher.modelmapper
 
 import za.co.absa.spline.commons.lang.extensions.NonOptionExtension._
 import za.co.absa.spline.commons.lang.extensions.TraversableExtension._
-import za.co.absa.spline.commons.version.Version
 import za.co.absa.spline.harvester.LineageHarvester
 import za.co.absa.spline.harvester.ModelConstants.ExecutionPlanExtra
 import za.co.absa.spline.harvester.converter.ExpressionConverter.ExprV1
-import za.co.absa.spline.harvester.dispatcher.ProducerApiVersion.JsonSchemaURLs
 import za.co.absa.spline.harvester.dispatcher.modelmapper.OpenLineageModelMapper._
-import za.co.absa.spline.harvester.dispatcher.openlineage.model.facet._
 import za.co.absa.spline.harvester.dispatcher.openlineage.model.facet.column.{ColumnLineage, ColumnLineageDatasetFacet, InputField, InputFieldTransformation}
 import za.co.absa.spline.harvester.dispatcher.openlineage.model.facet.schema.{SchemaDatasetFacet, SchemaDatasetFacetField}
 import za.co.absa.spline.harvester.dispatcher.openlineage.model.openlineage.v2_0_2._
@@ -36,8 +33,6 @@ import java.util.UUID
 import scala.annotation.tailrec
 
 class OpenLineageModelMapper(
-  splineModelMapper: ModelMapper[_, _],
-  apiVersion: Version,
   jobNamespace: String,
   plan: ExecutionPlan,
   event: ExecutionEvent
@@ -74,10 +69,7 @@ class OpenLineageModelMapper(
     val eventCompleted = RunEvent(
       eventType = event.error.map(_ => EventType.Fail).orElse(EventType.Complete.toOption),
       eventTime = java.util.Date.from(completeTime),
-      run = Run(runId = runId, facets = Some(Map(
-        SplinePlan -> createSplinePayloadFacet(splineModelMapper.toDTO(plan), JsonSchemaURLs.planSchemaForAPIVersion(apiVersion)),
-        SplineEvent -> createSplinePayloadFacet(splineModelMapper.toDTO(event), JsonSchemaURLs.eventSchemaForAPIVersion(apiVersion))
-      ))),
+      run = Run(runId = runId, facets = None),
       job = job,
       inputs = plan.operations.reads
         .flatMap(ro => ro.inputSources.map(createInputDataset(ro, _)))
@@ -89,14 +81,6 @@ class OpenLineageModelMapper(
 
     Seq(eventStart, eventCompleted)
   }
-
-  private def createSplinePayloadFacet(payload: AnyRef, payloadSchemaUrl: String) =
-    new SplinePayloadFacet(
-      _producer = Producer,
-      _schemaURL = PayloadFacetSchemaUrl,
-      payloadSchemaURL = payloadSchemaUrl,
-      payload = payload
-    )
 
   private def createInputDataset(op: ReadOperation, source: String): InputDataset = {
     val (namespace, name) = OpenLineageUriMapper.uriToNamespaceAndName(source)
@@ -115,7 +99,7 @@ class OpenLineageModelMapper(
       name = name,
       facets = Some(Map(
         "schema" -> createSchema(writeOutput),
-        "columnLineage" -> createColumnLineageFacet(plan)
+        "columnLineage" -> createColumnLineageFacet
       )),
       outputFacets = None
     )
@@ -165,7 +149,7 @@ class OpenLineageModelMapper(
     )
   }
 
-  private def createColumnLineageFacet(plan: ExecutionPlan): ColumnLineageDatasetFacet =
+  private def createColumnLineageFacet: ColumnLineageDatasetFacet =
     ColumnLineageDatasetFacet(
       _producer = Producer,
       _schemaURL = columnLineageFacetSchemaUrl,
@@ -263,7 +247,6 @@ class OpenLineageModelMapper(
 object OpenLineageModelMapper {
   private val Producer = s"https://github.com/AbsaOSS/spline-spark-agent/tree/release/${LineageHarvester.SplineVersionInfo.version}"
   private val SchemaUrl = "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/RunEvent"
-  private val PayloadFacetSchemaUrl = "https://cdn.jsdelivr.net/gh/AbsaOSS/spline@api-doc/schemas/openlineage/spline-payload-facet-1.0.json"
   private val columnLineageFacetSchemaUrl = "https://openlineage.io/spec/facets/1-2-0/ColumnLineageDatasetFacet.json"
   private val SchemaDatasetFacetUrl = "https://openlineage.io/spec/facets/1-1-1/SchemaDatasetFacet.json"
 
@@ -278,8 +261,4 @@ object OpenLineageModelMapper {
     val Transformation = "TRANSFORMATION"
     val Aggregation = "AGGREGATION"
   }
-
-
-  private val SplineEvent = "splineEvent"
-  private val SplinePlan = "splineEvent"
 }
