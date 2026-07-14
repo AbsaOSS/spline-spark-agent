@@ -147,6 +147,8 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
 
   /**
    * Write a single file atomically via temp-sibling + rename.
+   * If the final file already exists, it is removed first so repeated attempts
+   * for the same Spark application can refresh the lineage payload.
    * The rename is retried up to [[RenameRetries]] times with a short delay to handle
    * transient HDFS failures (e.g. a bad datanode causing a slow or failed pipeline ack).
    */
@@ -172,6 +174,11 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
     }
 
     try fs.setPermission(tmpFile, permission) catch { case _: Throwable => () }
+
+    if (fs.exists(finalPath) && !fs.delete(finalPath, false)) {
+      try fs.delete(tmpFile, false) catch { case _: Throwable => () }
+      throw new RuntimeException(s"Failed to delete existing lineage file before rewrite: $finalPath")
+    }
 
     logDebug(s"Renaming $tmpFile -> $finalPath (atomic on HDFS)")
 
