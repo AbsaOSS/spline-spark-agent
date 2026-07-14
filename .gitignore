@@ -77,3 +77,6 @@ metastore_db/
 
 #JEnv
 .java-version
+
+# Project specific
+local/

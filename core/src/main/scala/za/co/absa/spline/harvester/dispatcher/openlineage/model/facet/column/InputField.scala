@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 
-package za.co.absa.spline.harvester.dispatcher.openlineage.model.facet
+package za.co.absa.spline.harvester.dispatcher.openlineage.model.facet.column
 
-import za.co.absa.spline.producer.model.openlineage.v0_3_1.RunFacet
-
-class SplinePayloadFacet(
-  override val _producer: String,
-  override val _schemaURL: String,
-  val payloadSchemaURL: String,
-  val payload: AnyRef
-) extends RunFacet(_producer, _schemaURL)
+/**
+   * Represents a single dependency on some field (column).
+   */
+case class InputField(
+  /* The input dataset namespace */
+  namespace: String,
+  /* The input dataset name */
+  name: String,
+  /* The input field */
+  field: String,
+  transformations: Option[Seq[InputFieldTransformation]] = None
+)
