@@ -147,6 +147,8 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
 
   /**
    * Write a single file atomically via temp-sibling + rename.
+   * The rename is retried up to [[RenameRetries]] times with a short delay to handle
+   * transient HDFS failures (e.g. a bad datanode causing a slow or failed pipeline ack).
    */
   private def writeFileAtomically(fs: FileSystem, finalPath: Path, bytes: Array[Byte]): Unit = {
     val parent = finalPath.getParent
@@ -172,10 +174,23 @@ class HDFSLineageDispatcher(filename: String, permission: FsPermission, bufferSi
     try fs.setPermission(tmpFile, permission) catch { case _: Throwable => () }
 
     logDebug(s"Renaming $tmpFile -> $finalPath (atomic on HDFS)")
-    if (!fs.rename(tmpFile, finalPath)) {
-      try fs.delete(tmpFile, false) catch { case _: Throwable => () }
-      throw new RuntimeException(s"Failed to atomically rename $tmpFile to $finalPath")
+
+    @scala.annotation.tailrec
+    def renameWithRetry(attemptsLeft: Int): Unit = {
+      if (fs.rename(tmpFile, finalPath)) {
+        logDebug(s"Rename succeeded: $tmpFile -> $finalPath")
+      } else if (attemptsLeft > 0) {
+        logWarning(s"Rename failed for $tmpFile -> $finalPath, retrying in ${RenameRetryDelayMs}ms ($attemptsLeft attempt(s) left)")
+        Thread.sleep(RenameRetryDelayMs)
+        renameWithRetry(attemptsLeft - 1)
+      } else {
+        try fs.delete(tmpFile, false) catch { case _: Throwable => () }
+        throw new RuntimeException(
+          s"Failed to atomically rename $tmpFile to $finalPath after ${RenameRetries + 1} attempt(s)")
+      }
     }
+
+    renameWithRetry(RenameRetries)
   }
 
   // Kept for compatibility: atomic-at-file-level write for a direct full path
@@ -195,6 +210,9 @@ object HDFSLineageDispatcher {
   private val FileNameKey = "fileName"
   private val FilePermissionsKey = "filePermissions"
   private val BufferSizeKey = "fileBufferSize"
+
+  private val RenameRetries = 3
+  private val RenameRetryDelayMs = 1000L
 
   /**
    * Converts string full path to Hadoop FS and Path, e.g.

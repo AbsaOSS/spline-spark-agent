@@ -111,8 +111,26 @@ class DataSourceV2Plugin
     val catalog = extractCatalog(ctc)
     val identifier = extractValue[AnyRef](ctc, "tableName")
     val loadTableMethods = catalog.getClass.getMethods.filter(_.getName == "loadTable")
-    val table = loadTableMethods.flatMap(m => Try(m.invoke(catalog, identifier)).toOption).head
-    val sourceId = extractSourceIdFromTable(table)
+    val maybeTable = loadTableMethods.flatMap(m => Try(m.invoke(catalog, identifier)).toOption).headOption
+
+    val sourceId = maybeTable
+      .map(extractSourceIdFromTable)
+      .getOrElse {
+        // Table does not exist yet (e.g. Iceberg CTAS before table is created).
+        // Fall back to location from tableSpec if available.
+        val locationOpt = Try {
+          val tableSpec = extractValue[AnyRef](ctc, "tableSpec")
+          val locationOption = extractValue[AnyRef](tableSpec, "location")
+          extractValue[Option[String]](locationOption, "x")
+        }.toOption.flatten
+        val provider = Try {
+          val tableSpec = extractValue[AnyRef](ctc, "tableSpec")
+          val providerOption = extractValue[AnyRef](tableSpec, "provider")
+          extractValue[Option[String]](providerOption, "x")
+        }.toOption.flatten
+        val uri = locationOpt.getOrElse(identifier.toString)
+        SourceIdentifier(provider, uri)
+      }
 
     val query = extractValue[LogicalPlan](ctc, "query")
 
