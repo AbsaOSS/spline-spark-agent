@@ -101,6 +101,16 @@ class ExpressionConverter(
         params = getExpressionParameters(sparkExpr)
       )
 
+    case e if UntypedExpressionClassNames(e.getClass.getSimpleName) =>
+      FunctionalExpression(
+        id = idGen.nextId(),
+        dataType = None,
+        childRefs = convertChildren(e),
+        extra = createExtra(e, ExprV1.Types.UntypedExpression),
+        name = e.prettyName,
+        params = getExpressionParameters(e)
+      )
+
     case e: sparkExprssions.Expression =>
       FunctionalExpression(
         id = idGen.nextId(),
@@ -148,6 +158,9 @@ object ExpressionConverter {
     }
 
   }
+
+  // matched by name, not type, to keep compiling against Spark < 3.1 where these classes don't exist
+  private val UntypedExpressionClassNames: Set[String] = Set("WithField", "DropField")
 
   private val IgnoredSparkExprPropNames: Set[String] = Set("children", "dataType", "nullable")
   private val IgnoredSparkExprPropTypes: Set[Class[_]] = Set(classOf[ExprId])

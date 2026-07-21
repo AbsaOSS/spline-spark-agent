@@ -28,7 +28,7 @@ import org.scalatest.{Inside, OneInstancePerTest}
 import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.spline.harvester.SequentialIdGenerator
 import za.co.absa.spline.model.dt
-import za.co.absa.spline.producer.model.FunctionalExpression
+import za.co.absa.spline.producer.model.{ExprRef, FunctionalExpression}
 
 import java.util.UUID
 
@@ -214,6 +214,36 @@ class ExpressionConverterSpec extends AnyFlatSpec with OneInstancePerTest with M
         fe.dataType.isDefined should be(true)
     }
   }
+
+  it should "convert WithField without accessing its data type and preserve its child reference" in {
+    val child = Literal("this is a child")
+    val childRef = ExprRef("child_id")
+    val expression = WithField(child)
+    when(exprToRefConverterMock.convert(child)).thenReturn(childRef)
+
+    inside(converter.convert(expression)) {
+      case fe: FunctionalExpression =>
+        fe.dataType shouldBe None
+        fe.extra should contain("_typeHint" -> "expr.UntypedExpression")
+        fe.childRefs shouldEqual Seq(childRef)
+    }
+
+    verify(exprToRefConverterMock).convert(child)
+    verifyNoInteractions(dtConverterMock)
+  }
+
+  it should "convert DropField without accessing its data type" in {
+    val expression = DropField()
+
+    inside(converter.convert(expression)) {
+      case fe: FunctionalExpression =>
+        fe.dataType shouldBe None
+        fe.extra should contain("_typeHint" -> "expr.UntypedExpression")
+        fe.childRefs shouldBe empty
+    }
+
+    verifyNoInteractions(dtConverterMock, exprToRefConverterMock)
+  }
 }
 
 object ExpressionConverterSpec {
@@ -251,6 +281,41 @@ object ExpressionConverterSpec {
 
   object Foo {
     val empty = new Foo("does not matter")
+  }
+
+  case class WithField(valExpr: Expression) extends Expression {
+
+    override def children: Seq[Expression] = Seq(valExpr)
+
+    override def dataType: DataType = throw new IllegalStateException(
+      "StructFieldsOperation.dataType should not be called.")
+
+    override def nullable: Boolean = throw new IllegalStateException(
+      "StructFieldsOperation.nullable should not be called.")
+
+    override def eval(input: InternalRow): Any = ()
+
+    override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = null
+
+    protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression =
+      copy(valExpr = newChildren.head)
+  }
+
+  case class DropField() extends Expression {
+
+    override def children: Seq[Expression] = Seq.empty
+
+    override def dataType: DataType = throw new IllegalStateException(
+      "StructFieldsOperation.dataType should not be called.")
+
+    override def nullable: Boolean = throw new IllegalStateException(
+      "StructFieldsOperation.nullable should not be called.")
+
+    override def eval(input: InternalRow): Any = ()
+
+    override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = null
+
+    protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = this
   }
 
   object Bar {
