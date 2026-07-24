@@ -60,7 +60,7 @@ class DataSourceV2Plugin
 
       val tableName = extractValue[AnyRef](namedRelation, "name")
       val output = extractValue[AnyRef](namedRelation, "output")
-      val writeOptions = extractValue[Map[String, String]](writeCommand, "writeOptions")
+      val writeOptions = Try(extractValue[Map[String, String]](writeCommand, "writeOptions")).getOrElse(Map.empty)
       val isByName = extractValue[Boolean](writeCommand, IsByName)
 
       val props = Map(
@@ -99,6 +99,9 @@ class DataSourceV2Plugin
 
     case `_: OverwritePartitionsDynamic`(_) =>
       WriteNodeInfo(sourceId, SaveMode.Overwrite, query, props)
+
+    case _ =>
+      WriteNodeInfo(sourceId, SaveMode.Append, query, props)
   }
 
   private def processV2CreateTableCommand(
@@ -108,14 +111,32 @@ class DataSourceV2Plugin
     val catalog = extractCatalog(ctc)
     val identifier = extractValue[AnyRef](ctc, "tableName")
     val loadTableMethods = catalog.getClass.getMethods.filter(_.getName == "loadTable")
-    val table = loadTableMethods.flatMap(m => Try(m.invoke(catalog, identifier)).toOption).head
-    val sourceId = extractSourceIdFromTable(table)
+    val maybeTable = loadTableMethods.flatMap(m => Try(m.invoke(catalog, identifier)).toOption).headOption
+
+    val sourceId = maybeTable
+      .map(extractSourceIdFromTable)
+      .getOrElse {
+        // Table does not exist yet (e.g. Iceberg CTAS before table is created).
+        // Fall back to location from tableSpec if available.
+        val locationOpt = Try {
+          val tableSpec = extractValue[AnyRef](ctc, "tableSpec")
+          val locationOption = extractValue[AnyRef](tableSpec, "location")
+          extractValue[Option[String]](locationOption, "x")
+        }.toOption.flatten
+        val provider = Try {
+          val tableSpec = extractValue[AnyRef](ctc, "tableSpec")
+          val providerOption = extractValue[AnyRef](tableSpec, "provider")
+          extractValue[Option[String]](providerOption, "x")
+        }.toOption.flatten
+        val uri = locationOpt.getOrElse(identifier.toString)
+        SourceIdentifier(provider, uri)
+      }
 
     val query = extractValue[LogicalPlan](ctc, "query")
 
     val partitioning = extractValue[AnyRef](ctc, "partitioning")
     val properties = Try(extractValue[Map[String, String]](ctc, "properties")).getOrElse(Map.empty)
-    val writeOptions = extractValue[Map[String, String]](ctc, "writeOptions")
+    val writeOptions = Try(extractValue[Map[String, String]](ctc, "writeOptions")).getOrElse(Map.empty)
     val props = Map(
       "table" -> Map("identifier" -> identifier.toString),
       "partitioning" -> partitioning,
@@ -169,7 +190,7 @@ class DataSourceV2Plugin
   }
 
   private def extractSourceIdFromDeltaTableV2(table: AnyRef): SourceIdentifier = {
-    val tableProps = extractValue[java.util.Map[String, String]](table, "properties")
+    val tableProps = Try(extractValue[java.util.Map[String, String]](table, "properties")).getOrElse(new java.util.HashMap[String, String]())
 
     // for org.apache.spark.sql.delta.catalog.DeltaTableV2 delta v 1.2.0+
     val maybePath = Try(ReflectionUtils.extractValue[Path](table, "path")).toOption
@@ -178,14 +199,17 @@ class DataSourceV2Plugin
       .map(p => CatalogUtils.URIToString(p.toUri))
       .getOrElse(tableProps.get("location"))
 
-    val uri =
+    val uri = if (location != null) {
       if (URI.create(location).getScheme == null) {
         s"file:$location"
       } else {
         location
       }
-    val provider = tableProps.get("provider")
-    SourceIdentifier(Some(provider), uri)
+    } else {
+      "unknown"
+    }
+    val provider = Option(tableProps.get("provider"))
+    SourceIdentifier(provider, uri)
   }
 
   private def prependFileSchemaIfMissing(uri: String): String =
