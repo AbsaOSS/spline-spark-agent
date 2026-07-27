@@ -21,7 +21,7 @@ import org.apache.spark.sql.SparkSession
 import za.co.absa.spline.HierarchicalObjectFactory
 import za.co.absa.spline.agent.AgentConfig.ConfProperty
 import za.co.absa.spline.harvester.IdGenerator.UUIDVersion
-import za.co.absa.spline.harvester.conf.{SQLFailureCaptureMode, SplineMode}
+import za.co.absa.spline.harvester.conf.{InitFailureHandlingMode, SQLFailureCaptureMode, SplineMode}
 import za.co.absa.spline.harvester.dispatcher.{CompositeLineageDispatcher, LineageDispatcher}
 import za.co.absa.spline.harvester.iwd.IgnoredWriteDetectionStrategy
 import za.co.absa.spline.harvester.plugin.PluginsConfiguration
@@ -33,6 +33,7 @@ import scala.reflect.ClassTag
 
 private[spline] trait AgentBOM {
   def splineMode: SplineMode
+  def initFailureHandlingMode: InitFailureHandlingMode
   def sqlFailureCaptureMode: SQLFailureCaptureMode
   def postProcessingFilter: Option[PostProcessingFilter]
   def lineageDispatcher: LineageDispatcher
@@ -57,6 +58,10 @@ object AgentBOM {
 
     override def sqlFailureCaptureMode: SQLFailureCaptureMode = {
       mergedConfig.getRequiredEnum[SQLFailureCaptureMode](ConfProperty.SQLFailureCaptureMode)
+    }
+
+    override def initFailureHandlingMode: InitFailureHandlingMode = {
+      mergedConfig.getRequiredEnum[InitFailureHandlingMode](ConfProperty.InitFailureHandlingMode)
     }
 
     override def execPlanUUIDVersion: UUIDVersion = {
