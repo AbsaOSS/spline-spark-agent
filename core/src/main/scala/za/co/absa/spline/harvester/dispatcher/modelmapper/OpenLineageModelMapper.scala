@@ -197,7 +197,11 @@ class OpenLineageModelMapper(
   }
 
   private def getLeaves(attr: Attribute): Map[Attribute, Seq[FunctionalExpression]] = {
-    getLeavesRec(attr.childRefs.map(ref =>(ref.id, Nil)).toList, Map.empty)
+    if (attr.childRefs.isEmpty) {
+      Map(attr -> Seq.empty)
+    } else {
+      getLeavesRec(attr.childRefs.map(ref =>(ref.id, Nil)).toList, Map.empty)
+    }
   }
 
   @tailrec
