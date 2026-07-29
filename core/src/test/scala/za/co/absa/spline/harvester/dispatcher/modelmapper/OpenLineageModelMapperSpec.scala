@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 ABSA Group Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package za.co.absa.spline.harvester.dispatcher.modelmapper
 
 import org.scalatest.flatspec.AnyFlatSpec
@@ -6,6 +22,8 @@ import org.scalatestplus.mockito.MockitoSugar
 import za.co.absa.spline.commons.lang.extensions.NonOptionExtension._
 import za.co.absa.spline.commons.lang.extensions.TraversableExtension._
 import za.co.absa.spline.harvester.ModelConstants.ExecutionPlanExtra
+import za.co.absa.spline.harvester.dispatcher.openlineage.model.facet.column.ColumnLineageDatasetFacet
+import za.co.absa.spline.harvester.dispatcher.openlineage.model.facet.schema.SchemaDatasetFacet
 import za.co.absa.spline.harvester.dispatcher.openlineage.model.openlineage.v2_0_2.Job
 import za.co.absa.spline.model.dt.Simple
 import za.co.absa.spline.producer.model._
@@ -71,7 +89,7 @@ class OpenLineageModelMapperSpec
       labels = Map("lbl1" -> Seq("a", "b")),
       operations = Operations(
         write = WriteOperation(
-          outputSource = "aaa",
+          outputSource = "file:/data/output/batch/job1_results",
           append = true,
           id = "op-0",
           name = "Write Operation",
@@ -80,7 +98,7 @@ class OpenLineageModelMapperSpec
           extra = Map.empty
         ),
         reads = Seq(ReadOperation(
-          inputSources = Seq("bbb"),
+          inputSources = Seq("file:/data/input/batch/wikidata.csv"),
           id = "op-2",
           name = "Read Operation",
           output = Seq(inputAttr1.id, inputAttr2.id, passThroughAttr.id),
@@ -144,7 +162,42 @@ class OpenLineageModelMapperSpec
     completeEvent.eventTime shouldBe "2026-07-28T16:00Z"
     completeEvent.job shouldBe Job("local", "Foo Plan", None)
 
+    val inputDataset = completeEvent.inputs.get(0)
+    inputDataset.namespace shouldBe "file"
+    inputDataset.name shouldBe "/data/input/batch/wikidata.csv"
 
+    val inSchemaFacet = inputDataset.facets.get("schema").asInstanceOf[SchemaDatasetFacet]
+    inSchemaFacet.fields(0).name shouldEqual "inA"
+    inSchemaFacet.fields(0).`type`.get shouldEqual "StringType"
+    inSchemaFacet.fields(1).name shouldEqual "inB"
+    inSchemaFacet.fields(1).`type`.get shouldEqual "StringType"
+    inSchemaFacet.fields(2).name shouldEqual "passThrough"
+    inSchemaFacet.fields(2).`type`.get shouldEqual "IntegerType"
+
+    val outputDataset = completeEvent.outputs.get(0)
+    outputDataset.namespace shouldBe "file"
+    outputDataset.name shouldBe "/data/output/batch/job1_results"
+    val outSchemaFacet = outputDataset.facets.get("schema").asInstanceOf[SchemaDatasetFacet]
+    outSchemaFacet.fields(0).name shouldEqual "outC"
+    outSchemaFacet.fields(0).`type`.get shouldEqual "StringType"
+    outSchemaFacet.fields(1).name shouldEqual "passThrough"
+    outSchemaFacet.fields(1).`type`.get shouldEqual "IntegerType"
+
+    val lineageFacet = outputDataset.facets.get("columnLineage").asInstanceOf[ColumnLineageDatasetFacet]
+    lineageFacet.fields("outC") should not be null
+    val outCLineage = lineageFacet.fields("outC")
+    val inAField = outCLineage.inputFields.find(_.field == "inA").get
+    inAField.namespace shouldBe "file"
+    inAField.name shouldEqual "/data/input/batch/wikidata.csv"
+    val inBField = outCLineage.inputFields.find(_.field == "inB").get
+    inBField.namespace shouldBe "file"
+    inBField.name shouldEqual "/data/input/batch/wikidata.csv"
+
+    lineageFacet.fields("passThrough") should not be null
+    val passThroughLineage = lineageFacet.fields("passThrough")
+    val passThroughField = passThroughLineage.inputFields.find(_.field == "passThrough").get
+    passThroughField.namespace shouldBe "file"
+    passThroughField.name shouldEqual "/data/input/batch/wikidata.csv"
 
   }
 }
