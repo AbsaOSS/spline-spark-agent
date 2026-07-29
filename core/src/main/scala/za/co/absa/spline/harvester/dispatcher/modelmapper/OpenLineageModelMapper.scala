@@ -28,7 +28,7 @@ import za.co.absa.spline.harvester.dispatcher.openlineage.model.openlineage.v2_0
 import za.co.absa.spline.model.dt.DataType
 import za.co.absa.spline.producer.model._
 
-import java.time.{Duration, Instant}
+import java.time.{Duration, Instant, ZoneOffset, ZonedDateTime}
 import java.util.UUID
 import scala.annotation.tailrec
 
@@ -57,7 +57,7 @@ class OpenLineageModelMapper(
 
     val eventStart = RunEvent(
       eventType = EventType.Start.toOption,
-      eventTime = java.util.Date.from(startTime),
+      eventTime = toEventTime(startTime),
       run = Run(runId = runId, facets = None),
       job = job,
       inputs = None,
@@ -68,7 +68,7 @@ class OpenLineageModelMapper(
 
     val eventCompleted = RunEvent(
       eventType = event.error.map(_ => EventType.Fail).orElse(EventType.Complete.toOption),
-      eventTime = java.util.Date.from(completeTime),
+      eventTime = toEventTime(completeTime),
       run = Run(runId = runId, facets = None),
       job = job,
       inputs = plan.operations.reads
@@ -81,6 +81,9 @@ class OpenLineageModelMapper(
 
     Seq(eventStart, eventCompleted)
   }
+
+  private def toEventTime(instant: Instant): String =
+    ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).toString
 
   private def createInputDataset(op: ReadOperation, source: String): InputDataset = {
     val (namespace, name) = OpenLineageUriMapper.uriToNamespaceAndName(source)
@@ -249,10 +252,10 @@ class OpenLineageModelMapper(
 }
 
 object OpenLineageModelMapper {
-  private val Producer = s"https://github.com/AbsaOSS/spline-spark-agent/tree/release/${LineageHarvester.SplineVersionInfo.version}"
-  private val SchemaUrl = "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/RunEvent"
-  private val columnLineageFacetSchemaUrl = "https://openlineage.io/spec/facets/1-2-0/ColumnLineageDatasetFacet.json"
-  private val SchemaDatasetFacetUrl = "https://openlineage.io/spec/facets/1-1-1/SchemaDatasetFacet.json"
+  val Producer = s"https://github.com/AbsaOSS/spline-spark-agent/tree/release/${LineageHarvester.SplineVersionInfo.version}"
+  val SchemaUrl = "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/RunEvent"
+  val columnLineageFacetSchemaUrl = "https://openlineage.io/spec/facets/1-2-0/ColumnLineageDatasetFacet.json"
+  val SchemaDatasetFacetUrl = "https://openlineage.io/spec/facets/1-1-1/SchemaDatasetFacet.json"
 
   object EventType {
     val Start = "START"
