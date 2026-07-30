@@ -1,0 +1,99 @@
+name: Build
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  spark-4:
+    name: Scala 2.13 / Spark 4.0 / JDK 17
+    runs-on: ubuntu-latest
+    env:
+      # required by the swagger-codegen plugin on JDK 17
+      MAVEN_OPTS: "--add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Switch to Scala 2.13
+        run: mvn -B scala-cross-build:change-version -Pscala-2.13
+      - name: Compile example main sources
+        run: mvn -B -pl examples -am -Pscala-2.13,spark-4.0 -Dmaven.test.skip=true compile
+      - name: Build and test
+        # the root POM is in the list because the other modules resolve their parent from it
+        run: mvn -B -pl .,commons,core,bundle-4.0 -Pscala-2.13,spark-4.0 clean install
+      - name: Check the bundle
+        run: |
+          set -eu
+          jar=$(ls bundle-4.0/target/spark-4.0-spline-agent-bundle_*.jar | grep -Ev 'original-|-sources|-javadoc')
+          echo "checking $jar"
+
+          # Spark 4 only exists for Scala 2.13, so a _2.12 artifact would be unusable
+          case "$jar" in
+            *_2.13-*) ;;
+            *) echo "expected a _2.13 artifact, got $jar" >&2; exit 1 ;;
+          esac
+
+          # everything Spark provides has to stay out of the fat jar
+          if unzip -l "$jar" | grep -qE ' (org/apache/spark|org/apache/hadoop)/'; then
+            echo "the bundle contains classes that Spark provides:" >&2
+            unzip -l "$jar" | grep -oE ' (org/apache/spark|org/apache/hadoop)/[^ ]*' | head >&2
+            exit 1
+          fi
+
+          # ...but javax.annotation.Priority isn't one of them since Spark 4, and the plugins need it
+          unzip -l "$jar" | grep -q 'javax/annotation/Priority.class' \
+            || { echo "the bundle is missing javax.annotation.Priority" >&2; exit 1; }
+      - name: Check the published POM resolves
+        run: |
+          set -eu
+          # profile property values don't reach the installed POM, so it can name coordinates
+          # that have no Scala 2.13 build while the build itself stays green
+          ver=$(mvn -B -q -N -DforceStdout -Dexpression=project.version help:evaluate)
+          work=$(mktemp -d)
+          printf '%s' \
+            '<project><modelVersion>4.0.0</modelVersion>' \
+            '<groupId>za.co.absa.spline.test</groupId><artifactId>bundle-consumer</artifactId>' \
+            '<version>1</version><dependencies><dependency>' \
+            '<groupId>za.co.absa.spline.agent.spark</groupId>' \
+            '<artifactId>spark-4.0-spline-agent-bundle_2.13</artifactId>' \
+            "<version>$ver</version>" \
+            '</dependency></dependencies></project>' > "$work/pom.xml"
+          mvn -B -f "$work/pom.xml" dependency:resolve
+      - name: Integration tests
+        run: >
+          mvn -B -pl integration-tests -Pscala-2.13,spark-4.0 test
+          -Dsuites='za.co.absa.spline.XmlSpec,za.co.absa.spline.SQLCommandsSpec,za.co.absa.spline.harvester.LineageHarvesterSpec,za.co.absa.spline.harvester.SparkUnimplementedCommandsSpec'
+
+  spark-3:
+    name: Scala 2.12 / Spark 3.5 / JDK 8
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+          cache: maven
+      - name: Compile example main sources
+        run: mvn -B -pl examples -am -Pscala-2.12,spark-3.5 -Dmaven.test.skip=true compile
+      # the sources are shared with the Spark 4 build, this is what catches a regression in them
+      - name: Build and test
+        # the bundles are listed by the cross-build profiles, so scala-2.12 is what puts
+        # bundle-3.5 in the reactor, and the root POM is the parent the modules resolve from
+        run: mvn -B -pl .,commons,core,bundle-3.5 -Pscala-2.12,spark-3.5 clean install
+      - name: Integration tests
+        run: >
+          mvn -B -pl integration-tests -Pspark-3.5 test
+          -Dsuites='za.co.absa.spline.XmlSpec,za.co.absa.spline.SQLCommandsSpec,za.co.absa.spline.harvester.LineageHarvesterSpec,za.co.absa.spline.harvester.SparkUnimplementedCommandsSpec'

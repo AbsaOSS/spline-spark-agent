@@ -27,6 +27,7 @@ import za.co.absa.spline.commons.io.TempFile
  */
 object GitHub718Job extends SparkApp("GitHub spline-718") {
 
+  import spark.implicits._
   import za.co.absa.spline.harvester.SparkLineageInitializer._
 
   spark.enableLineageTracking()

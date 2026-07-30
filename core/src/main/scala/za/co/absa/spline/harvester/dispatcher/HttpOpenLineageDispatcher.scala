@@ -23,7 +23,6 @@ import za.co.absa.spline.harvester.dispatcher.modelmapper.OpenLineageModelMapper
 import za.co.absa.spline.harvester.dispatcher.openlineage.{HttpOpenLineageDispatcherConfig, RESTResource}
 import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
-import javax.ws.rs.core.MediaType
 import scala.util.control.NonFatal
 
 
@@ -70,7 +69,7 @@ class HttpOpenLineageDispatcher(restClient: RestClient, openLineageNamespace: St
 
     try {
       endpoint
-        .post(json, MediaType.APPLICATION_JSON, enableRequestCompression = false)
+        .post(json, RestEndpoint.MediaTypeApplicationJson, enableRequestCompression = false)
         .throwError
 
     } catch {

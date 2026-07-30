@@ -23,6 +23,7 @@ import scala.util.Try
 
 object Example1FailingJob extends SparkApp("Example 1 (failing)") {
 
+  import spark.implicits._
   import za.co.absa.spline.harvester.SparkLineageInitializer._
 
   spark.enableLineageTracking()

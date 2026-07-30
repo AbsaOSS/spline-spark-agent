@@ -200,4 +200,40 @@ class ModelMapperV10Spec
 
     mapper.toDTO(mockEvent) shouldEqual None
   }
+
+  it should "strictly convert refs nested inside a map param value" in {
+    val planEntity = ExecutionPlan(
+      id = Some(UUID.fromString("00000000-0000-0000-0000-000000000001")),
+      name = "Nested Map Plan",
+      discriminator = None,
+      labels = Map.empty,
+      operations = Operations(
+        write = WriteOperation(
+          outputSource = "aaa",
+          append = true,
+          id = "op-0",
+          name = "Write Operation",
+          childIds = Nil,
+          params = Map("outer" -> Map("inner" -> AttrRef("attr-1"))),
+          extra = Map.empty
+        ),
+        reads = Nil,
+        other = Nil
+      ),
+      attributes = Seq(
+        Attribute(id = "attr-1", dataType = None, childRefs = Nil, extra = Map.empty, name = "A")
+      ),
+      expressions = Expressions(functions = Nil, constants = Nil),
+      systemInfo = NameAndVersion("xxx", "777"),
+      agentInfo = NameAndVersion("yyy", "777"),
+      extraInfo = Map.empty
+    )
+
+    val actualParams = mapper.toDTO(planEntity).get.operations.write.params.get
+
+    // a lazily mapped view neither converts the nested ref nor equals a Map
+    actualParams("outer") shouldEqual Map(
+      "inner" -> Map("_typeHint" -> "expr.AttrRef", "refId" -> "attr-1")
+    )
+  }
 }

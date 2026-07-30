@@ -24,6 +24,7 @@ object J2ConformanceJob
     tags = Seq("dce")
   ) {
 
+  import spark.implicits._
   import za.co.absa.spline.harvester.SparkLineageInitializer._
 
   spark.enableLineageTracking()

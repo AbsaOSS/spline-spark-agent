@@ -21,6 +21,7 @@ import za.co.absa.spline.SparkApp
 
 object UnionJob extends SparkApp("Union Job") {
 
+  import spark.implicits._
   import za.co.absa.spline.harvester.SparkLineageInitializer._
 
   spark.enableLineageTracking()

@@ -20,6 +20,8 @@ import za.co.absa.spline.SparkApp
 
 object ExcelJob extends SparkApp("Excel Job", conf = Seq("spark.sql.shuffle.partitions" -> "4")) {
 
+  import spark.implicits._
+
   // Initializing library to hook up to Apache Spark
 
   import za.co.absa.spline.harvester.SparkLineageInitializer._

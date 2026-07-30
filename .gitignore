@@ -80,3 +80,6 @@ metastore_db/
 
 # Project specific
 local/
+
+#flatten-maven-plugin
+.flattened-pom.xml

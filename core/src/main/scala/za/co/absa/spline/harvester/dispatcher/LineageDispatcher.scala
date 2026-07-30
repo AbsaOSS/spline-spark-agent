@@ -18,7 +18,6 @@ package za.co.absa.spline.harvester.dispatcher
 
 import za.co.absa.spline.agent.AgentConfig.ConfProperty
 import za.co.absa.spline.commons.NamedEntity
-import za.co.absa.spline.harvester.exception.SplineInitializationException
 import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
 /**
@@ -49,7 +48,6 @@ import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
  *
  *
  */
-@throws[SplineInitializationException]
 trait LineageDispatcher extends NamedEntity {
   def send(plan: ExecutionPlan): Unit
   def send(event: ExecutionEvent): Unit

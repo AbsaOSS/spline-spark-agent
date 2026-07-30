@@ -45,7 +45,7 @@ class AutoDiscoveryPluginRegistry(
         c = o.getClass
         t <- getAllSuperclasses(c).asScala ++ getAllInterfaces(c).asScala :+ c
       } yield t.asInstanceOf[Class[_]] -> o
-    typedInjectables.groupBy(_._1).mapValues(_.map(_._2))
+    typedInjectables.groupBy(_._1).map { case (k, v) => k -> v.map(_._2) }.toMap
   }
 
   private val allPlugins: Seq[Plugin] = {
@@ -114,7 +114,7 @@ object AutoDiscoveryPluginRegistry extends Logging {
       scanResult <- ARM.managed(classGraph.scan)
       cls <- scanResult
         .getClassesImplementing(classOf[Plugin].getName)
-        .loadClasses.asScala.asInstanceOf[Seq[Class[Plugin]]]
+        .loadClasses.asScala.toSeq.asInstanceOf[Seq[Class[Plugin]]]
     } yield {
       logDebug(s"Discovered plugin: $cls")
       cls
@@ -126,7 +126,13 @@ object AutoDiscoveryPluginRegistry extends Logging {
       key <- conf.getKeys.asScala.toSeq
       if key.endsWith(s".$EnabledConfProperty") // Looking for keys ending with ".enabled", since plugins must be explicitly enabled
       className = key.dropRight(EnabledConfProperty.length + 1) // Dropping ".enabled" to get plugin class name
-      cls = Class.forName(className)
+      // a configured plugin, or a library it depends on, may be absent from the classpath
+      // of a particular build, e.g. MongoPlugin that isn't compiled for Scala 2.13
+      cls <- try Some(Class.forName(className)) catch {
+        case _: NoClassDefFoundError | _: ClassNotFoundException =>
+          logWarning(s"Configured plugin class is not available, skipping: $className")
+          None
+      }
       if classOf[Plugin].isAssignableFrom(cls)
     } yield {
       logDebug(s"Found registered plugin: $cls")

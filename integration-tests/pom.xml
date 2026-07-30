@@ -286,6 +286,78 @@
                 </dependency>
             </dependencies>
         </profile>
+        <profile>
+            <id>spark-4.0</id>
+            <properties>
+                <elasticsearch.spark.sufix>30</elasticsearch.spark.sufix>
+                <delta.artifactId>delta-spark_${scala.binary.version}</delta.artifactId>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.iceberg</groupId>
+                    <artifactId>iceberg-spark-runtime-4.0_${scala.binary.version}</artifactId>
+                    <version>1.10.0</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+            <!--
+                Re-pinned here, because when this module is built standalone the agent-core
+                artifact is resolved externally, and the scala-2.13 profile no longer applies
+                to it, so these fall back to the default versions that have no Scala 2.13 build.
+            -->
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.scalaj</groupId>
+                        <artifactId>scalaj-http_${scala.binary.version}</artifactId>
+                        <version>2.4.2</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.scala-graph</groupId>
+                        <artifactId>graph-core_${scala.binary.version}</artifactId>
+                        <version>1.13.6</version>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.cerveada</groupId>
+                        <artifactId>scalatest-maven-plugin</artifactId>
+                        <configuration>
+                            <argLine>
+                                --add-opens=java.base/java.lang=ALL-UNNAMED
+                                --add-opens=java.base/java.lang.invoke=ALL-UNNAMED
+                                --add-opens=java.base/java.io=ALL-UNNAMED
+                                --add-opens=java.base/java.net=ALL-UNNAMED
+                                --add-opens=java.base/java.nio=ALL-UNNAMED
+                                --add-opens=java.base/java.util=ALL-UNNAMED
+                                --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
+                                --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+                                --add-opens=java.base/sun.net.www.protocol.jar=ALL-UNNAMED
+                                --add-opens=java.base/sun.nio.cs=ALL-UNNAMED
+                            </argLine>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                        <configuration>
+                            <!--
+                                Connector tests that cannot run on Spark 4, see the README.
+                                The latest Scala 2.13 build of elasticsearch-spark calls
+                                Dataset.sqlContext() that Spark 4 removed, and MongoDBSpec refers
+                                to the mongo-spark 2.x/3.x provider class that no longer exists.
+                            -->
+                            <excludes>
+                                <exclude>**/ElasticSearchSpec.scala</exclude>
+                                <exclude>**/MongoDBSpec.scala</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <build>

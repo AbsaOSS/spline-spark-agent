@@ -21,6 +21,7 @@ import za.co.absa.spline.harvester.SparkLineageInitializer
 
 object BigQueryExample extends SparkApp("BigQuery Job") {
 
+  import spark.implicits._
   SparkLineageInitializer.enableLineageTracking(spark)
 
   private val InputBQTable = "bigquery-public-data:baseball.games_post_wide"

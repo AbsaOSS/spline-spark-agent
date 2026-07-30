@@ -16,7 +16,7 @@
 
 package za.co.absa.spline
 
-import org.apache.spark.sql.{SQLContext, SQLImplicits, SparkSession}
+import org.apache.spark.sql.SparkSession
 
 /**
  * The class represents skeleton of a example application and looks after initialization of SparkSession, etc
@@ -31,7 +31,7 @@ abstract class SparkApp
   master: String = "local[*]",
   conf: Seq[(String, String)] = Nil,
   tags: Seq[String] = Nil
-) extends SQLImplicits with App {
+) extends App {
 
   private val sparkBuilder =
     SparkSession.builder()
@@ -47,6 +47,4 @@ abstract class SparkApp
    * A Spark session.
    */
   val spark: SparkSession = sparkBuilder.getOrCreate()
-
-  protected override def _sqlContext: SQLContext = spark.sqlContext // NOSONAR
 }

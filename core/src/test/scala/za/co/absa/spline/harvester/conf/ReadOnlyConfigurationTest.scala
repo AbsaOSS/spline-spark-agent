@@ -58,8 +58,8 @@ trait ReadOnlyConfigurationTest extends AnyFunSuite with Matchers {
   }
 
   test("isEmpty") {
-    givenConf isEmpty() shouldBe false
-    emptyConf isEmpty() shouldBe true
+    givenConf.isEmpty() shouldBe false
+    emptyConf.isEmpty() shouldBe true
   }
 
   test("getKeys") {

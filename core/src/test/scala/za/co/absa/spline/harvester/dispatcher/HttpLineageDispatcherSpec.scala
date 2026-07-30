@@ -32,7 +32,6 @@ import za.co.absa.spline.harvester.exception.SplineInitializationException
 import za.co.absa.spline.producer.model.ExecutionEvent
 
 import java.util.UUID
-import javax.ws.rs.core.MediaType
 import scala.collection.JavaConverters._
 
 class HttpLineageDispatcherSpec extends AnyFlatSpec with MockitoSugar {
@@ -100,7 +99,7 @@ class HttpLineageDispatcherSpec extends AnyFlatSpec with MockitoSugar {
 
     verify(eventsEndpointMock).post(
       anyString(),
-      ArgumentMatchers.eq(MediaType.APPLICATION_JSON),
+      ArgumentMatchers.eq(RestEndpoint.MediaTypeApplicationJson),
       ArgumentMatchers.eq(false)
     )
   }

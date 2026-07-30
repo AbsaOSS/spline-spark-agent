@@ -127,4 +127,36 @@ class SQLCommandsSpec extends AsyncFlatSpec
         }
       }
     }
+
+  it should "capture lineage of 'CREATE TABLE ... USING`" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in
+    withIsolatedSparkSession(_.enableHiveSupport) { implicit spark =>
+      withLineageTracking { captor =>
+        for {
+          (plan, _) <- captor.lineageOf(
+            spark.sql("CREATE TABLE dataSourceTable (id INT, name STRING) USING parquet"))
+        } yield {
+          plan.operations.write.name shouldBe "CreateDataSourceTableCommand"
+          plan.operations.write.outputSource should endWith("/datasourcetable")
+          plan.operations.write.append shouldBe false
+          plan.operations.reads shouldBe empty
+        }
+      }
+    }
+
+  it should "capture lineage of a bare 'CREATE TABLE`" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in
+    withIsolatedSparkSession(_.enableHiveSupport) { implicit spark =>
+      withLineageTracking { captor =>
+        for {
+          (plan, _) <- captor.lineageOf(
+            spark.sql("CREATE TABLE bareTable (id INT, name STRING)"))
+        } yield {
+          // a CreateTableCommand up to Spark 3.5, and a CreateDataSourceTableCommand since
+          // Spark 4 dropped spark.sql.legacy.createHiveTableByDefault
+          plan.operations.write.name should (be("CreateTableCommand") or be("CreateDataSourceTableCommand"))
+          plan.operations.write.outputSource should endWith("/baretable")
+          plan.operations.write.append shouldBe false
+          plan.operations.reads shouldBe empty
+        }
+      }
+    }
 }

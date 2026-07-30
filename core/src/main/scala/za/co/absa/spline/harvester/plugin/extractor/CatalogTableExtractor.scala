@@ -29,8 +29,8 @@ import za.co.absa.spline.harvester.qualifier.PathQualifier
 class CatalogTableExtractor(catalog: Catalog, pathQualifier: PathQualifier) {
 
   def asTableURI(tableIdentifier: TableIdentifier): String = {
-    val TableIdentifier(tableName, maybeTableDatabase) = tableIdentifier
-    val databaseName = maybeTableDatabase getOrElse catalog.currentDatabase
+    val tableName = tableIdentifier.table
+    val databaseName = tableIdentifier.database getOrElse catalog.currentDatabase
     val databaseLocation = catalog.getDatabase(databaseName).locationUri.stripSuffix("/")
     s"$databaseLocation/${tableName.toLowerCase}"
   }

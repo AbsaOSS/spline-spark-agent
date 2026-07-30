@@ -31,6 +31,7 @@ import scala.util.Random
  */
 object GitHub738Job extends SparkApp("GitHub spline-738") with Logging {
 
+  import spark.implicits._
   import za.co.absa.spline.harvester.SparkLineageInitializer._
 
   spark.enableLineageTracking()
