@@ -19,8 +19,6 @@ package za.co.absa.spline.harvester.dispatcher.modelmapper
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import za.co.absa.spline.commons.lang.extensions.NonOptionExtension._
-import za.co.absa.spline.commons.lang.extensions.TraversableExtension._
 import za.co.absa.spline.harvester.ModelConstants.ExecutionPlanExtra
 import za.co.absa.spline.harvester.dispatcher.openlineage.model.facet.column.ColumnLineageDatasetFacet
 import za.co.absa.spline.harvester.dispatcher.openlineage.model.facet.schema.SchemaDatasetFacet
@@ -97,18 +95,28 @@ class OpenLineageModelMapperSpec
           params = Map.empty,
           extra = Map.empty
         ),
-        reads = Seq(ReadOperation(
-          inputSources = Seq("file:/data/input/batch/wikidata.csv"),
-          id = "op-2",
-          name = "Read Operation",
-          output = Seq(inputAttr1.id, inputAttr2.id, passThroughAttr.id),
-          params = Map.empty,
-          extra = Map.empty
-        )),
+        reads = Seq(
+          ReadOperation(
+            inputSources = Seq("file:/data/input/batch/wikidata.csv"),
+            id = "op-2",
+            name = "Read Operation",
+            output = Seq(inputAttr1.id, passThroughAttr.id),
+            params = Map.empty,
+            extra = Map.empty
+          ),
+          ReadOperation(
+            inputSources = Seq("file:/data/input/batch/other.csv"),
+            id = "op-3",
+            name = "Read Operation",
+            output = Seq(inputAttr2.id),
+            params = Map.empty,
+            extra = Map.empty
+          )
+        ),
         other = Seq(DataOperation(
           id = "op-1",
           name = "Data Operation",
-          childIds = Seq("op-2"),
+          childIds = Seq("op-2", "op-3"),
           output = Seq(outputAttr.id, passThroughAttr.id),
           params = Map.empty,
           extra = Map.empty
@@ -162,17 +170,21 @@ class OpenLineageModelMapperSpec
     completeEvent.eventTime shouldBe "2026-07-28T16:00Z"
     completeEvent.job shouldBe Job("local", "Foo Plan", None)
 
-    val inputDataset = completeEvent.inputs.get(0)
-    inputDataset.namespace shouldBe "file"
-    inputDataset.name shouldBe "/data/input/batch/wikidata.csv"
+    val input1Dataset = completeEvent.inputs.get.find(_.name == "/data/input/batch/wikidata.csv").get
+    input1Dataset.namespace shouldBe "file"
 
-    val inSchemaFacet = inputDataset.facets.get("schema").asInstanceOf[SchemaDatasetFacet]
-    inSchemaFacet.fields(0).name shouldEqual "inA"
-    inSchemaFacet.fields(0).`type`.get shouldEqual "StringType"
-    inSchemaFacet.fields(1).name shouldEqual "inB"
-    inSchemaFacet.fields(1).`type`.get shouldEqual "StringType"
-    inSchemaFacet.fields(2).name shouldEqual "passThrough"
-    inSchemaFacet.fields(2).`type`.get shouldEqual "IntegerType"
+    val in1SchemaFacet = input1Dataset.facets.get("schema").asInstanceOf[SchemaDatasetFacet]
+    in1SchemaFacet.fields(0).name shouldEqual "inA"
+    in1SchemaFacet.fields(0).`type`.get shouldEqual "StringType"
+    in1SchemaFacet.fields(1).name shouldEqual "passThrough"
+    in1SchemaFacet.fields(1).`type`.get shouldEqual "IntegerType"
+
+    val input2Dataset = completeEvent.inputs.get.find(_.name == "/data/input/batch/other.csv").get
+    input2Dataset.namespace shouldBe "file"
+
+    val in2SchemaFacet = input2Dataset.facets.get("schema").asInstanceOf[SchemaDatasetFacet]
+    in2SchemaFacet.fields(0).name shouldEqual "inB"
+    in2SchemaFacet.fields(0).`type`.get shouldEqual "StringType"
 
     val outputDataset = completeEvent.outputs.get(0)
     outputDataset.namespace shouldBe "file"
@@ -191,7 +203,7 @@ class OpenLineageModelMapperSpec
     inAField.name shouldEqual "/data/input/batch/wikidata.csv"
     val inBField = outCLineage.inputFields.find(_.field == "inB").get
     inBField.namespace shouldBe "file"
-    inBField.name shouldEqual "/data/input/batch/wikidata.csv"
+    inBField.name shouldEqual "/data/input/batch/other.csv"
 
     lineageFacet.fields("passThrough") should not be null
     val passThroughLineage = lineageFacet.fields("passThrough")
