@@ -43,14 +43,32 @@ class OpenLineageUriMapperSpec
 
   it should "convert jdbc postgresql uri" in {
     val (namespace, name) = mapper.uriToNamespaceAndName("jdbc:postgresql://localhost:5433/postgres:bar1")
-    namespace should be("postgresql://localhost:5433")
-    name should be("/postgres:bar1")
+    namespace should be("postgres://localhost:5433")
+    name should be("postgres.bar1")
   }
 
   it should "convert postgresql uri" in {
     val (namespace, name) = mapper.uriToNamespaceAndName("postgresql://localhost:5433/postgres:bar1")
-    namespace should be("postgresql://localhost:5433")
-    name should be("/postgres:bar1")
+    namespace should be("postgres://localhost:5433")
+    name should be("postgres.bar1")
+  }
+
+  it should "convert postgres uri" in {
+    val (namespace, name) = mapper.uriToNamespaceAndName("postgres://localhost:5433/postgres:bar1")
+    namespace should be("postgres://localhost:5433")
+    name should be("postgres.bar1")
+  }
+
+  it should "convert s3a uri" in {
+    val (namespace, name) = mapper.uriToNamespaceAndName("s3a://test-data-bukcet/edm-etl/FOO_20250511.txt")
+    namespace should be("s3://test-data-bukcet")
+    name should be("edm-etl/FOO_20250511.txt")
+  }
+
+  it should "convert s3 uri" in {
+    val (namespace, name) = mapper.uriToNamespaceAndName("s3://test-data-bukcet/edm-etl/FOO_20250511.txt")
+    namespace should be("s3://test-data-bukcet")
+    name should be("edm-etl/FOO_20250511.txt")
   }
 
 }
