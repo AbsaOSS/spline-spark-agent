@@ -162,12 +162,12 @@ class OpenLineageModelMapperSpec
 
     val startEvent = dtos(0)
     startEvent.eventType.get shouldEqual OpenLineageModelMapper.EventType.Start
-    startEvent.eventTime shouldBe "2026-07-28T15:59Z"
+    startEvent.eventTime shouldBe "2026-07-28T15:59:00Z"
     startEvent.job shouldBe Job("local", "Foo Plan", None)
 
     val completeEvent = dtos(1)
     completeEvent.eventType.get shouldEqual OpenLineageModelMapper.EventType.Complete
-    completeEvent.eventTime shouldBe "2026-07-28T16:00Z"
+    completeEvent.eventTime shouldBe "2026-07-28T16:00:00Z"
     completeEvent.job shouldBe Job("local", "Foo Plan", None)
 
     val input1Dataset = completeEvent.inputs.get.find(_.name == "/data/input/batch/wikidata.csv").get

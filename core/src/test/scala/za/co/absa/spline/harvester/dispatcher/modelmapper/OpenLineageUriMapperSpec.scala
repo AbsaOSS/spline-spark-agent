@@ -60,14 +60,14 @@ class OpenLineageUriMapperSpec
   }
 
   it should "convert s3a uri" in {
-    val (namespace, name) = mapper.uriToNamespaceAndName("s3a://test-data-bukcet/edm-etl/FOO_20250511.txt")
-    namespace should be("s3://test-data-bukcet")
+    val (namespace, name) = mapper.uriToNamespaceAndName("s3a://test-data-bucket/edm-etl/FOO_20250511.txt")
+    namespace should be("s3://test-data-bucket")
     name should be("edm-etl/FOO_20250511.txt")
   }
 
   it should "convert s3 uri" in {
-    val (namespace, name) = mapper.uriToNamespaceAndName("s3://test-data-bukcet/edm-etl/FOO_20250511.txt")
-    namespace should be("s3://test-data-bukcet")
+    val (namespace, name) = mapper.uriToNamespaceAndName("s3://test-data-bucket/edm-etl/FOO_20250511.txt")
+    namespace should be("s3://test-data-bucket")
     name should be("edm-etl/FOO_20250511.txt")
   }
 

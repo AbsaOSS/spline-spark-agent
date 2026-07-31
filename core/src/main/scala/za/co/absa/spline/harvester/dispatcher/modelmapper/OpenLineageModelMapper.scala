@@ -28,7 +28,8 @@ import za.co.absa.spline.harvester.dispatcher.openlineage.model.openlineage.v2_0
 import za.co.absa.spline.model.dt.DataType
 import za.co.absa.spline.producer.model._
 
-import java.time.{Duration, Instant, ZoneOffset, ZonedDateTime}
+import java.time.format.DateTimeFormatter
+import java.time.{Duration, Instant}
 import java.util.UUID
 import scala.annotation.tailrec
 
@@ -57,7 +58,7 @@ class OpenLineageModelMapper(
 
     val eventStart = RunEvent(
       eventType = EventType.Start.toOption,
-      eventTime = toEventTime(startTime),
+      eventTime = RFC_3339_DATE_TIME_FORMATTER.format(startTime),
       run = Run(runId = runId, facets = None),
       job = job,
       inputs = None,
@@ -68,7 +69,7 @@ class OpenLineageModelMapper(
 
     val eventCompleted = RunEvent(
       eventType = event.error.map(_ => EventType.Fail).orElse(EventType.Complete.toOption),
-      eventTime = toEventTime(completeTime),
+      eventTime = RFC_3339_DATE_TIME_FORMATTER.format(completeTime),
       run = Run(runId = runId, facets = None),
       job = job,
       inputs = plan.operations.reads
@@ -81,9 +82,6 @@ class OpenLineageModelMapper(
 
     Seq(eventStart, eventCompleted)
   }
-
-  private def toEventTime(instant: Instant): String =
-    ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).toString
 
   private def createInputDataset(op: ReadOperation, source: String): InputDataset = {
     val (namespace, name) = OpenLineageUriMapper.uriToNamespaceAndName(source)
@@ -268,4 +266,6 @@ object OpenLineageModelMapper {
     val Transformation = "TRANSFORMATION"
     val Aggregation = "AGGREGATION"
   }
+
+  val RFC_3339_DATE_TIME_FORMATTER = DateTimeFormatter.ISO_INSTANT
 }
