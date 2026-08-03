@@ -16,8 +16,6 @@
 
 package za.co.absa.spline.harvester.dispatcher.openlineage.model.openlineage.v2_0_2
 
-import java.util.Date
-
 /**
  * @param eventTime the time the event occurred at
  * @param producer URI identifying the producer of this metadata. For example this could be a git url with a given tag or sha for example: '''https://github.com/OpenLineage/OpenLineage/blob/v1-0-0/client'''
@@ -29,7 +27,7 @@ import java.util.Date
  * @param outputs The set of **output** datasets.
  */
 case class RunEvent (
-  eventTime: Date,
+  eventTime: String,
   producer: String,
   schemaURL: String,
   eventType: Option[String],

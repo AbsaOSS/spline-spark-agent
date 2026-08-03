@@ -21,14 +21,19 @@ import java.net.URI
 object OpenLineageUriMapper {
 
   def uriToNamespaceAndName(uriString: String): (String, String) = {
-    val uri = URI.create(preProcessUri(uriString))
-    val namespace = Seq(Option(uri.getScheme), Option(uri.getAuthority)).flatten.mkString("://")
-    val name = Option(uri.getPath).getOrElse("")
-
-    (namespace, name)
+    val uri = URI.create(uriString)
+    uri.getScheme match {
+      case "jdbc" => uriToNamespaceAndName(uriString.stripPrefix("jdbc:"))
+      case "postgresql" | "postgres" => (
+        s"postgres://${uri.getAuthority}",
+        uri.getPath.stripPrefix("/").replaceAll(":", ".")
+      )
+      case "s3" | "s3a" => (s"s3://${uri.getHost}", uri.getPath.stripPrefix("/"))
+      case _ => (
+        Seq(Option(uri.getScheme), Option(uri.getAuthority)).flatten.mkString("://"),
+        Option(uri.getPath).getOrElse("")
+      )
+    }
   }
-
-  private def preProcessUri(uri: String): String =
-    uri.stripPrefix("jdbc:")
 
 }
