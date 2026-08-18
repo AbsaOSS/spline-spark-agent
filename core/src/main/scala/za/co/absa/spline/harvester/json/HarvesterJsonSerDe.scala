@@ -17,11 +17,11 @@
 package za.co.absa.spline.harvester.json
 
 
-import za.co.absa.shaded.jackson.annotation.JsonInclude
-import za.co.absa.shaded.jackson.core.JsonGenerator
-import za.co.absa.shaded.jackson.core.util.{DefaultIndenter, DefaultPrettyPrinter}
-import za.co.absa.shaded.jackson.databind.{ObjectMapper, SerializationFeature}
-import za.co.absa.shaded.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.util.{DefaultIndenter, DefaultPrettyPrinter}
+import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
 object HarvesterJsonSerDe {
 
