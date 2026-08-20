@@ -26,14 +26,13 @@ import za.co.absa.spline.harvester.dispatcher.httpdispatcher.rest.RestEndpoint._
 
 import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPOutputStream
-import javax.ws.rs.HttpMethod
 
 class RestEndpoint(val request: HttpRequest, val authConfig: Configuration) {
 
   private val authenticationContext: Authentication = Authentication.fromConfig(authConfig)
 
   def head(): HttpResponse[String] = authenticationContext.authenticate(httpRequest = request, authConfig = authConfig)
-    .method(HttpMethod.HEAD)
+    .method(HttpMethodHead)
     .asString
 
   def post(data: String, contentType: String, enableRequestCompression: Boolean): HttpResponse[String] = {
@@ -54,6 +53,10 @@ class RestEndpoint(val request: HttpRequest, val authConfig: Configuration) {
 }
 
 object RestEndpoint {
+  // inlined from javax.ws.rs, which Spark 4 no longer provides
+  val MediaTypeApplicationJson: String = "application/json"
+  private val HttpMethodHead: String = "HEAD"
+
   private val GzipCompressionLengthThreshold: Int = 2048
 
   private def gzipContent(bytes: Array[Byte]): Array[Byte] = {

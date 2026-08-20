@@ -28,6 +28,7 @@ import javax.annotation.Priority
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.util.Try
+import scala.util.control.Exception.catching
 import scala.util.control.NonFatal
 
 class AutoDiscoveryPluginRegistry(
@@ -45,7 +46,12 @@ class AutoDiscoveryPluginRegistry(
         c = o.getClass
         t <- getAllSuperclasses(c).asScala ++ getAllInterfaces(c).asScala :+ c
       } yield t.asInstanceOf[Class[_]] -> o
-    typedInjectables.groupBy(_._1).mapValues(_.map(_._2))
+    typedInjectables
+      .groupBy { case (injectableType, _) => injectableType }
+      .map { case (injectableType, entries) =>
+        injectableType -> entries.map { case (_, injectable) => injectable }
+      }
+      .toMap
   }
 
   private val allPlugins: Seq[Plugin] = {
@@ -114,7 +120,7 @@ object AutoDiscoveryPluginRegistry extends Logging {
       scanResult <- ARM.managed(classGraph.scan)
       cls <- scanResult
         .getClassesImplementing(classOf[Plugin].getName)
-        .loadClasses.asScala.asInstanceOf[Seq[Class[Plugin]]]
+        .loadClasses.asScala.toSeq.asInstanceOf[Seq[Class[Plugin]]]
     } yield {
       logDebug(s"Discovered plugin: $cls")
       cls
@@ -126,12 +132,25 @@ object AutoDiscoveryPluginRegistry extends Logging {
       key <- conf.getKeys.asScala.toSeq
       if key.endsWith(s".$EnabledConfProperty") // Looking for keys ending with ".enabled", since plugins must be explicitly enabled
       className = key.dropRight(EnabledConfProperty.length + 1) // Dropping ".enabled" to get plugin class name
-      cls = Class.forName(className)
+      // a configured plugin or one of its optional dependencies may be absent
+      cls <- tryLoadClass(className)
       if classOf[Plugin].isAssignableFrom(cls)
     } yield {
       logDebug(s"Found registered plugin: $cls")
       cls.asInstanceOf[Class[Plugin]]
     }
+  }
+
+  private def tryLoadClass(className: String): Option[Class[_]] =
+    tryLoadClass(className, Class.forName(className))
+
+  private[registry] def tryLoadClass(className: String, loadClass: => Class[_]): Option[Class[_]] = {
+    val maybeClass: Option[Class[_]] =
+      catching(classOf[ClassNotFoundException], classOf[NoClassDefFoundError]).opt(loadClass)
+    if (maybeClass.isEmpty) {
+      logWarning(s"Configured plugin class is not available, skipping: $className")
+    }
+    maybeClass
   }
 
   private def priorityOf(c: Class[Plugin]): Int =

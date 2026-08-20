@@ -21,6 +21,7 @@ import za.co.absa.spline.SparkApp
 
 object Example3Job extends SparkApp("Example 3") {
 
+
   import org.apache.spark.sql._
   import org.apache.spark.sql.functions._
   import za.co.absa.spline.harvester.SparkLineageInitializer._

@@ -222,7 +222,7 @@ object LineageHarvester {
   private type HarvestResult = Option[(ExecutionPlan, ExecutionEvent)]
 
   private def getExecutedReadWriteMetrics(executedPlan: SparkPlan): (Metrics, Metrics) = {
-    def getNodeMetrics(node: SparkPlan): Metrics = node.metrics.mapValues(_.value)
+    def getNodeMetrics(node: SparkPlan): Metrics = node.metrics.map { case (k, v) => k -> v.value }
 
     val cumulatedReadMetrics: Metrics = {
       @scala.annotation.tailrec

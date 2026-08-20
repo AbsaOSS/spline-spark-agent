@@ -28,7 +28,6 @@ import za.co.absa.spline.harvester.dispatcher.modelmapper.ModelMapper
 import za.co.absa.spline.harvester.exception.SplineInitializationException
 import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
-import javax.ws.rs.core.MediaType
 import scala.util.Try
 import scala.util.control.NonFatal
 
@@ -83,7 +82,7 @@ class HttpLineageDispatcher(restClient: RestClient, apiVersionOption: Option[Ver
     logTrace(s"sendJson $url : \n${json.asPrettyJson}")
 
     val contentType =
-      if (apiVersion == ProducerApiVersion.V1) MediaType.APPLICATION_JSON
+      if (apiVersion == ProducerApiVersion.V1) RestEndpoint.MediaTypeApplicationJson
       else s"application/vnd.absa.spline.producer.v${apiVersion.asString}+json"
 
     try {

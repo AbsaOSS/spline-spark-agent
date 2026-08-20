@@ -32,6 +32,9 @@
     <properties>
         <docker.imageName>spline-spark-agent</docker.imageName>
         <delta.artifactId>delta-core_${scala.binary.version}</delta.artifactId>
+        <!-- overridden in the spark-4.0 profile, the cross-built connector stops at Spark 3.5 -->
+        <bigquery.artifactId>spark-bigquery-with-dependencies_${scala.binary.version}</bigquery.artifactId>
+        <bigquery.version>0.22.1</bigquery.version>
     </properties>
 
     <dependencies>
@@ -75,8 +78,8 @@
         </dependency>
         <dependency>
             <groupId>com.google.cloud.spark</groupId>
-            <artifactId>spark-bigquery-with-dependencies_${scala.binary.version}</artifactId>
-            <version>0.22.1</version>
+            <artifactId>${bigquery.artifactId}</artifactId>
+            <version>${bigquery.version}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -158,6 +161,15 @@
             <id>spark-3.5</id>
             <properties>
                 <delta.artifactId>delta-spark_${scala.binary.version}</delta.artifactId>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>spark-4.0</id>
+            <properties>
+                <delta.artifactId>delta-spark_${scala.binary.version}</delta.artifactId>
+                <bigquery.artifactId>spark-4.0-bigquery</bigquery.artifactId>
+                <bigquery.version>0.44.2</bigquery.version>
             </properties>
         </profile>
     </profiles>

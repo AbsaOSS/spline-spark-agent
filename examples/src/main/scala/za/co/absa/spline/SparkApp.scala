@@ -16,7 +16,10 @@
 
 package za.co.absa.spline
 
-import org.apache.spark.sql.{SQLContext, SQLImplicits, SparkSession}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DatasetHolder, Encoder, SQLContext, SQLImplicits, SparkSession}
+
+import scala.language.implicitConversions
 
 /**
  * The class represents skeleton of a example application and looks after initialization of SparkSession, etc
@@ -48,5 +51,13 @@ abstract class SparkApp
    */
   val spark: SparkSession = sparkBuilder.getOrCreate()
 
-  protected override def _sqlContext: SQLContext = spark.sqlContext // NOSONAR
+  protected def _sqlContext: SQLContext = spark.sqlContext // NOSONAR
+
+  protected def session: SparkSession = spark // NOSONAR
+
+  override implicit def localSeqToDatasetHolder[T: Encoder](s: Seq[T]): DatasetHolder[T] =
+    spark.implicits.localSeqToDatasetHolder(s)
+
+  override implicit def rddToDatasetHolder[T: Encoder](rdd: RDD[T]): DatasetHolder[T] =
+    spark.implicits.rddToDatasetHolder(rdd)
 }
