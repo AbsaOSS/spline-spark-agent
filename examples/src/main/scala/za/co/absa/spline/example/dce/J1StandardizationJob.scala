@@ -24,7 +24,6 @@ object J1StandardizationJob
     tags = Seq("dce")
   ) {
 
-  import spark.implicits._
   import org.apache.spark.sql.functions._
   import za.co.absa.spline.harvester.SparkLineageInitializer._
 

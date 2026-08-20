@@ -20,7 +20,6 @@ import za.co.absa.spline.SparkApp
 
 object Example2Job extends SparkApp("Example 2") {
 
-  import spark.implicits._
 
   import org.apache.spark.sql._
   import za.co.absa.spline.harvester.SparkLineageInitializer._

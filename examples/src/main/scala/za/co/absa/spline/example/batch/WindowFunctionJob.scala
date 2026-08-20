@@ -25,7 +25,6 @@ import za.co.absa.spline.SparkApp
  */
 object WindowFunctionJob extends SparkApp("Window Function Job") {
 
-  import spark.implicits._
   import org.apache.spark.sql._
   import org.apache.spark.sql.expressions._
   import org.apache.spark.sql.functions._

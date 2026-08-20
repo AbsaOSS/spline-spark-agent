@@ -20,7 +20,6 @@ import za.co.absa.spline.SparkApp
 
 object MyOtherCJob extends SparkApp("Other Job C") {
 
-  import spark.implicits._
   import za.co.absa.spline.harvester.SparkLineageInitializer._
 
   spark.enableLineageTracking()

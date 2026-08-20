@@ -21,7 +21,6 @@ import za.co.absa.spline.SparkApp
 
 object Example4RDDJob extends SparkApp("Read from RDD") {
 
-  import spark.implicits._
   import org.apache.spark.sql._
   import za.co.absa.spline.harvester.SparkLineageInitializer._
 

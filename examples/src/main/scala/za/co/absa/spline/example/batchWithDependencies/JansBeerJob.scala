@@ -25,7 +25,6 @@ object JansBeerJob
     tags = Seq("beer")
   ) {
 
-  import spark.implicits._
   import org.apache.spark.sql._
   import org.apache.spark.sql.functions._
 

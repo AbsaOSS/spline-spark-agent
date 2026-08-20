@@ -17,6 +17,7 @@
 package za.co.absa.spline.harvester.dispatcher.modelmapper
 
 import org.mockito.Mockito._
+import org.scalatest.OptionValues._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
@@ -229,7 +230,7 @@ class ModelMapperV10Spec
       extraInfo = Map.empty
     )
 
-    val actualParams = mapper.toDTO(planEntity).get.operations.write.params.get
+    val actualParams = mapper.toDTO(planEntity).value.operations.write.params.value
 
     // a lazily mapped view neither converts the nested ref nor equals a Map
     actualParams("outer") shouldEqual Map(
