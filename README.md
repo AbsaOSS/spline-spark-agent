@@ -267,6 +267,7 @@ By default, the `HttpLineageDispatcher` is used, that sends the lineage data to 
 Available dispatchers:
 
 - `HttpLineageDispatcher` - sends lineage to an HTTP endpoint
+- `HttpOpenLineageDispatcher` - sends lineage to an HTTP endpoint in OpenLineage format
 - `KafkaLineageDispatcher` - sends lineage to a Kafka topic
 - `ConsoleLineageDispatcher` - writes lineage to the console
 - `LoggingLineageDispatcher` - logs lineage using the Spark logger
@@ -328,6 +329,17 @@ Example: AWS Rest API key header can be set like this:
 
 ```properties
 spline.lineageDispatcher.http.header.X-API-Key=USER_API_KEY
+```
+
+#### Using the Http Open Lineage Dispatcher
+
+The `HttpOpenLineageDispatcher` is used to send lineage data to an HTTP endpoint in OpenLineage format
+(see [OpenLineage](https://openlineage.io/) for details).
+
+```properties
+spline.lineageDispatcher=httpOpenLineage
+spline.lineageDispatcher.httpOpenLineage.api.url=http://localhost:5000/api/v1
+spline.lineageDispatcher.httpOpenLineage.namespace=my-namespace
 ```
 
 #### Using the Fallback Dispatcher
