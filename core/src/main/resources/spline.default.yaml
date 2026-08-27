@@ -156,8 +156,7 @@ spline:
       timeout.read: 20000
       disableSslValidation: false
       namespace: default
-      # URL of the open lineage accepting REST endpoint
-
+      # Base URL of an OpenLineage API endpoint (no trailing "/"; the dispatcher appends "/lineage")
       api.url:
       # Authentication config
       authentication:

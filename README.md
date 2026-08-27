@@ -338,7 +338,7 @@ The `HttpOpenLineageDispatcher` is used to send lineage data to an HTTP endpoint
 
 ```properties
 spline.lineageDispatcher=httpOpenLineage
-spline.lineageDispatcher.httpOpenLineage.api.url=http://localhost:5000/api/v1
+spline.lineageDispatcher.httpOpenLineage.api.url=http://localhost:5000/api/v1  # base URL (no trailing "/"); dispatcher appends "/lineage"
 spline.lineageDispatcher.httpOpenLineage.namespace=my-namespace
 ```
 
