@@ -156,9 +156,7 @@ spline:
       timeout.read: 20000
       disableSslValidation: false
       namespace: default
-      # Spline Producer API version
-      apiVersion: "1.2"
-      # Base URL of the Spline Producer REST API endpoint
+      # Base URL of an OpenLineage API endpoint (no trailing "/"; the dispatcher appends "/lineage")
       api.url:
       # Authentication config
       authentication:
