@@ -98,8 +98,10 @@ object GraphImplicits {
             val ord = g.NodeOrdering((a, b) => idOrdering.compare(selfIdFn(a.value), selfIdFn(b.value)))
             b ++= res.withLayerOrdering(ord).toOuter
             b.result()
-          case Left(cycleNode) =>
-            throw new IllegalArgumentException(s"Expected DAG but a cycle was detected on the node ID: ${selfIdFn(cycleNode.toOuter)}")
+          // scala-graph 1.13 reports a TopologicalSortFailure holding the candidate cycle nodes
+          // instead of the offending node itself, so the message just renders whatever it gets
+          case Left(failure) =>
+            throw new IllegalArgumentException(s"Expected DAG but a cycle was detected: $failure")
         }
       }
   }

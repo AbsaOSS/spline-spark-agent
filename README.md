@@ -67,12 +67,32 @@ versions is dropped, we'll increment the _Major_ version component.
 
 ### Spark / Scala version compatibility matrix
 
-|                        |         Scala 2.11         | Scala 2.12 |
-|------------------------|:--------------------------:|:----------:|
-| **Spark 2.2**          | (no SQL; no codeless init) |  &mdash;   |
-| **Spark 2.3**          |     (no Delta support)     |  &mdash;   |
-| **Spark 2.4**          |            Yes             |    Yes     |
-| **Spark 3.0 or newer** |          &mdash;           |    Yes     |
+|                        |         Scala 2.11         | Scala 2.12 | Scala 2.13 |
+|------------------------|:--------------------------:|:----------:|:----------:|
+| **Spark 2.2**          | (no SQL; no codeless init) |  &mdash;   |  &mdash;   |
+| **Spark 2.3**          |     (no Delta support)     |  &mdash;   |  &mdash;   |
+| **Spark 2.4**          |            Yes             |    Yes     |  &mdash;   |
+| **Spark 3.0 – 3.5**    |          &mdash;           |    Yes     |  &mdash;   |
+| **Spark 4.0**          |          &mdash;           |  &mdash;   |    Yes     |
+
+Spark 4.0 requires Java 17 or 21, the earlier versions run on Java 8 and 11 as before.
+
+**Note**: The MongoDB plugin is not available in the Scala 2.13 build. It uses the mongo-spark
+2.x/3.x API, which was never released for Scala 2.13, and the 10.x line dropped it. MongoDB
+sources should still be captured by the generic DataSource V2 plugin, which mongo-spark 10.x
+is based on. For the same reason, and because the current Elasticsearch connector doesn't
+support Spark 4 either, the MongoDB and Elasticsearch integration tests are excluded from
+the `spark-4.0` profile.
+
+**Note**: on Spark 4.0 the `agent-core` artifact additionally requires `javax.annotation:javax.annotation-api`
+on the classpath. The plugins are annotated with `javax.annotation.Priority`, which used to come with
+`jakarta.annotation-api` 1.x, while Spark 4 ships the 2.x line where that class is `jakarta.annotation.Priority`
+instead. Without it no plugin can be loaded. The bundle already carries it.
+
+**Note**: `$js` expressions in the [Metadata Collecting Filter](#filters) rules don't work on
+Java 15 and newer, which no longer bundle a JavaScript engine. A template containing one fails
+to evaluate, and the entire filter it belongs to is then skipped with a warning in the log.
+Use `$env`, `$jvm` or plain values instead.
 
 <a id="usage"></a>
 
@@ -138,6 +158,10 @@ The same approach works for `spark-submit` and `spark-shell` commands.
 
 **Note**: all Spline properties set via Spark conf should be prefixed with `spark.` prefix in order to be visible to the Spline agent.  
 See [Configuration](#configuration) section for details.
+
+**Spark 4.0 Note**: the agent reads its default configuration from its own jar using Scala reflection,
+which the Java module system blocks unless the following option is added to the driver JVM:
+`--add-opens=java.base/sun.net.www.protocol.jar=ALL-UNNAMED`
 
 <a id="initialization-programmatic"></a>
 
@@ -615,6 +639,7 @@ You can see how to produce unimplemented commands in `za.co.absa.spline.harveste
 
 ### Implemented
 
+- `CreateDataSourceTableCommand`  (org.apache.spark.sql.execution.command)
 - `CreateDataSourceTableAsSelectCommand`  (org.apache.spark.sql.execution.command)
 - `CreateHiveTableAsSelectCommand`  (org.apache.spark.sql.hive.execution)
 - `CreateTableCommand`  (org.apache.spark.sql.execution.command)
@@ -633,7 +658,6 @@ You can see how to produce unimplemented commands in `za.co.absa.spline.harveste
 - `AlterTableChangeColumnCommand`  (org.apache.spark.sql.execution.command)
 - `AlterTableRenameCommand`  (org.apache.spark.sql.execution.command)
 - `AlterTableSetLocationCommand`  (org.apache.spark.sql.execution.command)
-- `CreateDataSourceTableCommand`  (org.apache.spark.sql.execution.command)
 - `CreateDatabaseCommand`  (org.apache.spark.sql.execution.command)
 - `CreateTableLikeCommand`  (org.apache.spark.sql.execution.command)
 - `DropDatabaseCommand`  (org.apache.spark.sql.execution.command)
@@ -782,7 +806,8 @@ Spline will pick it up automatically.
 
 ### Building for different Scala and Spark versions
 
-**Note:** The project requires Java version 1.8 (strictly) and [Apache Maven](https://maven.apache.org/) for building.
+**Note:** The project requires [Apache Maven](https://maven.apache.org/) and a JDK matching the
+target Spark version: Java 1.8 (strictly) for Spark 2.2 – 3.5, and Java 17 for Spark 4.0.
 
 Check the build environment:
 
@@ -790,7 +815,7 @@ Check the build environment:
 mvn --version
 ```
 
-Verify that Maven is configured to run on Java 1.8. For example:
+Verify that Maven is configured to run on the expected Java version. For example:
 
 ```
 Apache Maven 3.6.3 (Red Hat 3.6.3-8)
@@ -800,8 +825,11 @@ Java version: 1.8.0_302, vendor: Red Hat, Inc., runtime: /usr/lib/jvm/java-1.8.0
 
 There are several maven profiles that makes it easy to build the project with different versions of Spark and Scala.
 
-- Scala profiles: `scala-2.11`, `scala-2.12` (default)
-- Spark profiles: `spark-2.2`, `spark-2.3`, `spark-2.4` (default), `spark-3.0`, `spark-3.1`, `spark-3.2`, `spark-3.3`
+- Scala profiles: `scala-2.11`, `scala-2.12` (default), `scala-2.13`
+- Spark profiles: `spark-2.2`, `spark-2.3`, `spark-2.4` (default), `spark-3.0`, `spark-3.1`, `spark-3.2`, `spark-3.3`, `spark-3.4`, `spark-3.5`, `spark-4.0`
+
+Spark 4.0 exists only for Scala 2.13 and Scala 2.13 is only supported together with it, so those two
+profiles always go together.
 
 For example, to build an agent for Spark 2.4 and Scala 2.11:
 
@@ -811,6 +839,16 @@ mvn scala-cross-build:change-version -Pscala-2.11
 
 # now you can build for Scala 2.11
 mvn clean install -Pscala-2.11,spark-2.4
+```
+
+Building for Spark 4.0 additionally needs a few modules opened, as the swagger-codegen plugin
+reflects into the JDK internals:
+
+```shell
+export MAVEN_OPTS="--add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED"
+
+mvn scala-cross-build:change-version -Pscala-2.13
+mvn clean install -Pscala-2.13,spark-4.0
 ```
 
 ### Build docker image

@@ -19,7 +19,7 @@ package za.co.absa.spline.harvester.plugin.embedded
 import org.apache.spark.sql.SaveMode.{Append, Overwrite}
 import org.apache.spark.sql.catalyst.catalog.{CatalogStorageFormat, HiveTableRelation}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import org.apache.spark.sql.execution.command.{CreateDataSourceTableAsSelectCommand, CreateTableCommand, DropTableCommand}
+import org.apache.spark.sql.execution.command.{CreateDataSourceTableAsSelectCommand, CreateDataSourceTableCommand, CreateTableCommand, DropTableCommand}
 import org.apache.spark.sql.execution.datasources.{HadoopFsRelation, InsertIntoDataSourceCommand, InsertIntoHadoopFsRelationCommand, LogicalRelation}
 import org.apache.spark.sql.hive.execution.{CreateHiveTableAsSelectCommand, InsertIntoHiveTable}
 import org.apache.spark.sql.{SaveMode, SparkSession}
@@ -106,6 +106,12 @@ class SQLPlugin(
       WriteNodeInfo(sourceId, Overwrite, dtc, Map.empty)
 
     case (_, ctc: CreateTableCommand) =>
+      val sourceId = extractor.asTableSourceId(ctc.table)
+      WriteNodeInfo(sourceId, Overwrite, ctc, Map.empty)
+
+    // since Spark 4 a bare CREATE TABLE resolves to this instead of CreateTableCommand,
+    // as spark.sql.legacy.createHiveTableByDefault no longer exists
+    case (_, ctc: CreateDataSourceTableCommand) =>
       val sourceId = extractor.asTableSourceId(ctc.table)
       WriteNodeInfo(sourceId, Overwrite, ctc, Map.empty)
   }

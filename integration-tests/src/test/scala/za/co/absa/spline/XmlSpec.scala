@@ -17,11 +17,13 @@
 
 package za.co.absa.spline
 
+import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row}
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.spline.commons.io.{TempDirectory, TempFile}
+import za.co.absa.spline.commons.version.Version._
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
 
@@ -33,6 +35,13 @@ class XmlSpec extends AsyncFlatSpec
   private val baseFile = TempFile("file1", ".xml", pathOnly = false).deleteOnExit()
   private val filePath = baseFile.asString
   private val fileUri = baseFile.toURI
+
+  // spark-xml collides with the built-in XML data source Spark 4 added under the same short
+  // name, so the built-in one is used there instead. XMLPlugin only matches the spark-xml
+  // relation, so it isn't covered on Spark 4.
+  private val xmlFormat =
+    if (ver"$SPARK_VERSION" >= ver"4.0.0") "org.apache.spark.sql.execution.datasources.xml.XmlFileFormat"
+    else "xml"
 
   it should "support Xml files as a source" in
     withNewSparkSession { implicit spark =>
@@ -47,7 +56,7 @@ class XmlSpec extends AsyncFlatSpec
           (plan1, _) <- captor.lineageOf {
             testData
               .write
-              .format("xml")
+              .format(xmlFormat)
               .option("rootTag", "cities")
               .option("rowTag", "city")
               .mode("overwrite")
@@ -57,7 +66,7 @@ class XmlSpec extends AsyncFlatSpec
           (plan2, _) <- captor.lineageOf {
             val df = spark
               .read
-              .format("xml")
+              .format(xmlFormat)
               .option("rowTag", "city")
               .load(filePath)
 

@@ -65,7 +65,6 @@ object PluggableWriteCommandExtractor extends Logging {
     classOf[AlterTableChangeColumnCommand],
     classOf[AlterTableRenameCommand],
     classOf[AlterTableSetLocationCommand],
-    classOf[CreateDataSourceTableCommand],
     classOf[CreateDatabaseCommand],
     classOf[CreateTableLikeCommand],
     classOf[DropDatabaseCommand],

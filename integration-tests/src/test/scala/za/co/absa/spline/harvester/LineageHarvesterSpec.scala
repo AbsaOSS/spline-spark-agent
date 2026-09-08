@@ -36,6 +36,7 @@ import za.co.absa.spline.test.fixture.spline.SplineFixture
 import za.co.absa.spline.test.fixture.{SparkDatabaseFixture, SparkFixture}
 
 import java.util.UUID
+import javax.script.ScriptEngineManager
 import scala.concurrent.Future
 import scala.language.reflectiveCalls
 import scala.util.Try
@@ -376,10 +377,12 @@ class LineageHarvesterSpec extends AsyncFlatSpec
 
           val df = spark.createDataset(Seq(TestRow(1, 2.3, "text")))
 
+          // USING hive is required since Spark 4, as spark.sql.legacy.createHiveTableByDefault
+          // no longer exists, otherwise this wouldn't be a Hive CTAS anymore
           for {
             (plan1, _) <- captor.lineageOf {
               df.createOrReplaceTempView("tempView")
-              spark.sql("CREATE TABLE users_sales AS SELECT i, d, s FROM tempView ")
+              spark.sql("CREATE TABLE users_sales USING hive AS SELECT i, d, s FROM tempView ")
             }
             // Spark 3.4+ is creating 2 commands for this CTAS here so we need to ignore one
             // We only want the one that is from CreateHiveTableAsSelectCommand
@@ -421,6 +424,8 @@ class LineageHarvesterSpec extends AsyncFlatSpec
     }
 
   it should "collect user extra metadata" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
+    assume(new ScriptEngineManager().getEngineByMimeType("text/javascript") != null, "no JavaScript engine available on this JVM")
+
     val injectRules =
       """
         |{

@@ -65,7 +65,7 @@
         <dependency>
             <groupId>org.scalaj</groupId>
             <artifactId>scalaj-http_${scala.binary.version}</artifactId>
-            <version>2.4.1</version>
+            <version>${scalaj-http.version}</version>
         </dependency>
         <dependency>
             <groupId>io.github.classgraph</groupId>
@@ -75,7 +75,7 @@
         <dependency>
             <groupId>org.scala-graph</groupId>
             <artifactId>graph-core_${scala.binary.version}</artifactId>
-            <version>1.12.5</version>
+            <version>${scala-graph.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.uuid</groupId>
@@ -160,6 +160,67 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>scala-2.13</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                        <configuration>
+                            <!--
+                                MongoPlugin uses the mongo-spark 2.x/3.x API that was never released
+                                for Scala 2.13, and the 10.x line dropped it. Being DataSource V2 based,
+                                mongo-spark 10.x should still be covered by the DataSourceV2Plugin.
+                            -->
+                            <excludes>
+                                <exclude>**/plugin/embedded/MongoPlugin.scala</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!--
+            The Core module is normally compiled against Spark 2.4 (see the `spark.version`
+            property above). Spark 2.4 has no Scala 2.13 build, so the Spark 4 artifact is
+            compiled against Spark 4 itself. This is sound because the _2.13 artifact only
+            ever runs on Spark 4.
+        -->
+        <profile>
+            <id>spark-4.0</id>
+            <properties>
+                <spark.version>${spark-40.version}</spark.version>
+                <cassandra-connector.version>3.5.1</cassandra-connector.version>
+            </properties>
+            <dependencies>
+                <!--
+                    the plugins are annotated with javax.annotation.Priority, which Spark 4 no
+                    longer brings in itself - without this it is only reachable through Parquet
+                -->
+                <dependency>
+                    <groupId>javax.annotation</groupId>
+                    <artifactId>javax.annotation-api</artifactId>
+                    <version>1.3.2</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.cerveada</groupId>
+                        <artifactId>scalatest-maven-plugin</artifactId>
+                        <configuration>
+                            <argLine>--add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED</argLine>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <build>
         <resources>

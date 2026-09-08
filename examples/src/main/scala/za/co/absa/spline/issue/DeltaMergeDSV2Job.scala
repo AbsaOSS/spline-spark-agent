@@ -28,6 +28,7 @@ object DeltaMergeDSV2Job extends SparkApp(
     ("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension"),
     ("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"))
 ) {
+
   val path = TempDirectory().deleteOnExit().path
 
   import za.co.absa.spline.harvester.SparkLineageInitializer._

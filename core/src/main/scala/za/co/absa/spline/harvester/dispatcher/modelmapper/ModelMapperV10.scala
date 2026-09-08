@@ -120,12 +120,12 @@ object ModelMapperV10 extends ModelMapper[v1_0.ExecutionPlan, v1_0.ExecutionEven
       def convert(x: Any): Any = x match {
         case Some(v) => convert(v)
         case xs: Seq[_] => xs.map(convert)
-        case ys: Map[_, _] => ys.mapValues(convert)
+        case ys: Map[_, _] => ys.map { case (k, v) => k -> convert(v) }
         case ref: AttrOrExprRef => refToV1Expression(ref)
         case _ => x
       }
 
-      params.mapValues(convert)
+      params.map { case (k, v) => k -> convert(v) }
     }
 
     def refToV1Expression(ref: AttrOrExprRef): Map[String, Any] = ref match {

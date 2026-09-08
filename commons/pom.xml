@@ -38,7 +38,7 @@
         <dependency>
             <groupId>org.scala-graph</groupId>
             <artifactId>graph-core_${scala.binary.version}</artifactId>
-            <version>1.12.5</version>
+            <version>${scala-graph.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -58,4 +58,21 @@
         </dependency>
 
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>scala-2.13</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.cerveada</groupId>
+                        <artifactId>scalatest-maven-plugin</artifactId>
+                        <configuration>
+                            <argLine>--add-opens=java.base/java.lang=ALL-UNNAMED</argLine>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

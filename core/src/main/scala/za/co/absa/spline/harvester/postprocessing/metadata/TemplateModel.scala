@@ -21,6 +21,7 @@ import za.co.absa.spline.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.postprocessing.metadata.EvaluableNames._
 
 import javax.script.ScriptEngine
+import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
 class DataTemplate(val extra: Map[String, Any], val labels: Map[String, Any]) extends Logging {
@@ -107,10 +108,18 @@ case class JsEval(jsEngine: ScriptEngine, js: String) extends Evaluable {
     bindings.foreach { case (k, v) => jsBindings.put(k, v) }
 
     jsEngine.eval(js, jsBindings) match {
-      case `_: ScriptObjectMirror`(som) if som.isArray => som.to(classOf[Array[Any]]).toSeq
+      case `_: ScriptObjectMirror`(som) if isJsArray(som) => jsArrayValues(som)
       case som: Array[_] => som.toSeq
       case v => v
     }
+  }
+
+  private def isJsArray(som: AnyRef): Boolean =
+    som.getClass.getMethod("isArray").invoke(som) == java.lang.Boolean.TRUE
+
+  private def jsArrayValues(som: AnyRef): Seq[Any] = {
+    val values = som.getClass.getMethod("values").invoke(som).asInstanceOf[java.util.Collection[Any]]
+    values.asScala.toSeq
   }
 }
 
@@ -119,5 +128,6 @@ object EvaluableNames {
   val EnvVar = "$env"
   val JsEval = "$js"
 
-  object `_: ScriptObjectMirror` extends SafeTypeMatchingExtractor(classOf[jdk.nashorn.api.scripting.ScriptObjectMirror])
+  // matched by name, not type, as Nashorn was removed from JDK 15 and newer
+  object `_: ScriptObjectMirror` extends SafeTypeMatchingExtractor[AnyRef]("jdk.nashorn.api.scripting.ScriptObjectMirror")
 }

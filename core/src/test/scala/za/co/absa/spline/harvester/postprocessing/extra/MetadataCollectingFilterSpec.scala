@@ -29,6 +29,7 @@ import za.co.absa.spline.harvester.{HarvestingContext, IdGeneratorsBundle}
 import za.co.absa.spline.producer.model._
 
 import java.util.UUID
+import javax.script.ScriptEngineManager
 
 class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matchers with MockitoSugar {
 
@@ -56,9 +57,14 @@ class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matc
   private val eventExtra = Map("foo" -> "a", "bar" -> false, "baz" -> Seq(1, 2, 3))
   private val ee = ExecutionEvent(UUID.randomUUID(), Map.empty, 66L, None, None, None, eventExtra)
 
+  // JDK 15 dropped Nashorn, and no JavaScript engine is bundled since then
+  private def assumeJsEngineAvailable(): Unit =
+    assume(new ScriptEngineManager().getEngineByMimeType("text/javascript") != null, "no JavaScript engine available on this JVM")
+
   behavior of "ExtraMetadataCollectingFilter"
 
   it should "parse and replace all variables with values" in {
+    assumeJsEngineAvailable()
     val configString =
       """
         |{
@@ -101,6 +107,7 @@ class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matc
   }
 
   it should "support extra in Write" in {
+    assumeJsEngineAvailable()
     val configString =
       """
         |{
@@ -128,6 +135,7 @@ class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matc
 
 
   it should "support labels" in {
+    assumeJsEngineAvailable()
     val configString =
       """
         |{
@@ -184,6 +192,7 @@ class MetadataCollectingFilterSpec extends AnyFlatSpec with EnvFixture with Matc
   }
 
   it should "handle json nesting" in {
+    assumeJsEngineAvailable()
     val configString =
       """
         |{
