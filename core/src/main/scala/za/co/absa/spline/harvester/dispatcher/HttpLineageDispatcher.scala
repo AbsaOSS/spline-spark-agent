@@ -67,14 +67,32 @@ class HttpLineageDispatcher(restClient: RestClient, apiVersionOption: Option[Ver
   override def name = "Http"
 
   override def send(plan: ExecutionPlan): Unit = {
-    for (execPlanDTO <- modelMapper.toDTO(plan)) {
-      sendJson(execPlanDTO.toJson, executionPlansEndpoint)
+    try {
+      for (execPlanDTO <- modelMapper.toDTO(plan)) {
+        try sendJson(execPlanDTO.toJson, executionPlansEndpoint)
+        catch {
+          case NonFatal(e) =>
+            logError(s"Failed to send execution plan ${plan.id} over HTTP. Spark job result is not affected.", e)
+        }
+      }
+    } catch {
+      case NonFatal(e) =>
+        logError(s"Failed to convert execution plan ${plan.id} for HTTP dispatch. Spark job result is not affected.", e)
     }
   }
 
   override def send(event: ExecutionEvent): Unit = {
-    for (eventDTO <- modelMapper.toDTO(event)) {
-      sendJson(Seq(eventDTO).toJson, executionEventsEndpoint)
+    try {
+      for (eventDTO <- modelMapper.toDTO(event)) {
+        try sendJson(Seq(eventDTO).toJson, executionEventsEndpoint)
+        catch {
+          case NonFatal(e) =>
+            logError(s"Failed to send execution event for plan ${event.planId} over HTTP. Spark job result is not affected.", e)
+        }
+      }
+    } catch {
+      case NonFatal(e) =>
+        logError(s"Failed to convert execution event for plan ${event.planId} for HTTP dispatch. Spark job result is not affected.", e)
     }
   }
 

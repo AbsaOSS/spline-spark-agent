@@ -40,7 +40,11 @@ class FallbackLineageDispatcher(primaryDispatcher: LineageDispatcher, fallbackDi
     catch {
       case e if NonFatal(e) =>
         logError("Error when sending ExecutionPlan, will try to use fallback dispatcher next", e)
-        fallbackDispatcher.send(plan)
+        try fallbackDispatcher.send(plan)
+        catch {
+          case fallbackError if NonFatal(fallbackError) =>
+            logError("Fallback dispatcher also failed when sending ExecutionPlan. Spark job result is not affected.", fallbackError)
+        }
     }
 
   override def send(event: ExecutionEvent): Unit =
@@ -48,7 +52,11 @@ class FallbackLineageDispatcher(primaryDispatcher: LineageDispatcher, fallbackDi
     catch {
       case e if NonFatal(e) =>
         logError("Error when sending ExecutionEvent, will try to use fallback dispatcher next", e)
-        fallbackDispatcher.send(event)
+        try fallbackDispatcher.send(event)
+        catch {
+          case fallbackError if NonFatal(fallbackError) =>
+            logError("Fallback dispatcher also failed when sending ExecutionEvent. Spark job result is not affected.", fallbackError)
+        }
     }
 }
 

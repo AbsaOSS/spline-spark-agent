@@ -69,7 +69,7 @@ object SplineAgent extends Logging {
     val readCommandExtractor = new PluggableReadCommandExtractor(pluginRegistry, dataSourceFormatResolver)
 
     new SplineAgent {
-      def handle(funcName: FuncName, qe: QueryExecution, result: Either[Throwable, Duration]): Unit = withErrorHandling {
+      def handle(funcName: FuncName, qe: QueryExecution, result: Either[Throwable, Duration]): Unit = withErrorHandling() {
         val idGenerators = new IdGeneratorsBundle(execPlanUUIDGeneratorFactory)
         val harvestingContext = new HarvestingContext(funcName, qe.analyzed, Some(qe.executedPlan), session, idGenerators)
         val postProcessor = new PostProcessor(filters, harvestingContext)
@@ -91,17 +91,21 @@ object SplineAgent extends Logging {
           .harvest(result)
           .foreach({
             case (plan, event) =>
-              lineageDispatcher.send(plan)
-              lineageDispatcher.send(event)
+              withErrorHandling("execution plan dispatch") {
+                lineageDispatcher.send(plan)
+              }
+              withErrorHandling("execution event dispatch") {
+                lineageDispatcher.send(event)
+              }
           })
       }
 
-      private def withErrorHandling(body: => Unit): Unit = {
+      private def withErrorHandling(stage: String = "lineage processing")(body: => Unit): Unit = {
         try body
         catch {
           case NonFatal(e) =>
             val ctx = session.sparkContext
-            logError(s"Unexpected error occurred during lineage processing for application: ${ctx.appName} #${ctx.applicationId}", e)
+            logError(s"Unexpected error occurred during $stage for application: ${ctx.appName} #${ctx.applicationId}", e)
         }
       }
     }

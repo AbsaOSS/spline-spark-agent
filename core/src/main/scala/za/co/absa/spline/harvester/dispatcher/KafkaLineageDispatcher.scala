@@ -27,6 +27,8 @@ import za.co.absa.spline.harvester.dispatcher.kafkadispatcher._
 import za.co.absa.spline.harvester.dispatcher.modelmapper.ModelMapper
 import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
 
+import scala.util.control.NonFatal
+
 /**
  * KafkaLineageDispatcher is responsible for sending the lineage data to spline gateway through kafka
  */
@@ -59,14 +61,32 @@ class KafkaLineageDispatcher(
   private val modelMapper = ModelMapper.forApiVersion(apiVersion)
 
   override def send(plan: ExecutionPlan): Unit = {
-    for (planDTO <- modelMapper.toDTO(plan)) {
-      planRecordSender.send(planDTO.toJson, plan.id.get)
+    try {
+      for (planDTO <- modelMapper.toDTO(plan)) {
+        try planRecordSender.send(planDTO.toJson, plan.id.get)
+        catch {
+          case NonFatal(e) =>
+            logError(s"Failed to send execution plan ${plan.id} to Kafka. Spark job result is not affected.", e)
+        }
+      }
+    } catch {
+      case NonFatal(e) =>
+        logError(s"Failed to convert execution plan ${plan.id} for Kafka dispatch. Spark job result is not affected.", e)
     }
   }
 
   override def send(event: ExecutionEvent): Unit = {
-    for (eventDTO <- modelMapper.toDTO(event)) {
-      eventRecordSender.send(eventDTO.toJson, event.planId)
+    try {
+      for (eventDTO <- modelMapper.toDTO(event)) {
+        try eventRecordSender.send(eventDTO.toJson, event.planId)
+        catch {
+          case NonFatal(e) =>
+            logError(s"Failed to send execution event for plan ${event.planId} to Kafka. Spark job result is not affected.", e)
+        }
+      }
+    } catch {
+      case NonFatal(e) =>
+        logError(s"Failed to convert execution event for plan ${event.planId} for Kafka dispatch. Spark job result is not affected.", e)
     }
   }
 

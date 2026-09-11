@@ -44,15 +44,19 @@ class CompositeLineageDispatcher(val delegatees: Seq[LineageDispatcher], failOnE
   }
 
   private def delegate(call: LineageDispatcher => Unit): Unit = {
-    delegatees.foreach(withErrorHandling(call))
-  }
+    val failures = delegatees.flatMap { disp =>
+      try {
+        call(disp)
+        None
+      } catch {
+        case NonFatal(e) =>
+          logWarning(s"Proceeding after an error occurred in an underlying dispatcher: ${disp.getClass.getName}", e)
+          Some(e)
+      }
+    }
 
-  private def withErrorHandling(call: LineageDispatcher => Unit): LineageDispatcher => Unit = { disp =>
-    try call(disp)
-    catch {
-      case NonFatal(e) =>
-        if (failOnErrors) throw e
-        else logWarning(s"Proceeding after an error occurred in an underlying dispatcher: ${disp.getClass.getName}", e)
+    if (failOnErrors) {
+      failures.headOption.foreach(e => throw e)
     }
   }
 }
