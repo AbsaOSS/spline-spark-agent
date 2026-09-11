@@ -83,7 +83,7 @@
 
         <!-- Spark -->
 
-        <spark.version>${spark-24.version}</spark.version>
+        <spark.version>${spark-33.version}</spark.version>
         <spark-22.version>2.2.3</spark-22.version>
         <spark-23.version>2.3.4</spark-23.version>
         <spark-24.version>2.4.8</spark-24.version>
@@ -471,6 +471,11 @@
                 <groupId>org.mongodb.spark</groupId>
                 <artifactId>mongo-spark-connector_${scala.binary.version}</artifactId>
                 <version>2.4.1</version>
+            </dependency>
+            <dependency>
+                <groupId>net.snowflake</groupId>
+                <artifactId>spark-snowflake_${scala.binary.version}</artifactId>
+                <version>2.16.0-spark_3.3</version>
             </dependency>
             <dependency>
                 <groupId>org.elasticsearch</groupId>
