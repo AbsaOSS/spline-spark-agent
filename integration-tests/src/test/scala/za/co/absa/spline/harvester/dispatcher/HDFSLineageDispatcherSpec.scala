@@ -26,7 +26,7 @@ import za.co.absa.spline.commons.version.Version._
 import za.co.absa.spline.harvester.json.HarvesterJsonSerDe.impl._
 import za.co.absa.spline.test.fixture.SparkFixture
 import za.co.absa.spline.test.fixture.spline.SplineFixture
-
+import org.apache.spark.sql.SparkSession
 import java.io.File
 
 class HDFSLineageDispatcherSpec
@@ -37,15 +37,21 @@ class HDFSLineageDispatcherSpec
 
   behavior of "HDFSLineageDispatcher"
 
-  it should "save lineage file to a filesystem" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
+  val lineageDispatcherConfigKeyName = "spark.spline.lineageDispatcher"
+  val lineageDispatcherConfigValueName = "hdfs"
+  val lineageDispatcherConfigClassNameKeyName = s"$lineageDispatcherConfigKeyName.$lineageDispatcherConfigValueName.className"
+  val lineageDispatcherConfigCustomLineagePathKeyName = s"$lineageDispatcherConfigKeyName.$lineageDispatcherConfigValueName.customLineagePath"
+  val destFilePathExtension = ".parquet"
+
+  it should "save lineage file to a filesystem in DEFAULT mode" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
     withIsolatedSparkSession(_
-      .config("spark.spline.lineageDispatcher", "hdfs")
-      .config("spark.spline.lineageDispatcher.hdfs.className", classOf[HDFSLineageDispatcher].getName)
+      .config(lineageDispatcherConfigKeyName, lineageDispatcherConfigValueName)
+      .config(lineageDispatcherConfigClassNameKeyName, classOf[HDFSLineageDispatcher].getName)
     ) { implicit spark =>
       withLineageTracking { captor =>
         import spark.implicits._
         val dummyDF = Seq((1, 2)).toDF
-        val destPath = TempDirectory("spline_", ".parquet", pathOnly = true).deleteOnExit()
+        val destPath = TempDirectory("spline_", destFilePathExtension, pathOnly = true).deleteOnExit()
 
         for {
           (_, _) <- captor.lineageOf(dummyDF.write.save(destPath.asString))
@@ -58,6 +64,108 @@ class HDFSLineageDispatcherSpec
           lineageJson should contain key "executionPlan"
           lineageJson should contain key "executionEvent"
           lineageJson("executionPlan")("id") should equal(lineageJson("executionEvent")("planId"))
+        }
+      }
+    }
+  }
+
+  Seq(
+    ("without customLineagePath config", None),
+    ("with empty string customLineagePath", Some("")),
+    ("with whitespace-only customLineagePath", Some("   "))
+  ).foreach { case (scenarioDesc, customPathValue) =>
+    it should s"use DEFAULT mode $scenarioDesc" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
+      val builder = (b: SparkSession.Builder) => {
+        val configured = b
+          .config(lineageDispatcherConfigKeyName, lineageDispatcherConfigValueName)
+          .config(lineageDispatcherConfigClassNameKeyName, classOf[HDFSLineageDispatcher].getName)
+        customPathValue.fold(configured)(path => configured.config(lineageDispatcherConfigCustomLineagePathKeyName, path))
+      }
+      
+      withIsolatedSparkSession(builder) { implicit spark =>
+        withLineageTracking { captor =>
+          import spark.implicits._
+          val dummyDF = Seq((1, 2)).toDF
+          val destPath = TempDirectory("spline_", destFilePathExtension, pathOnly = true).deleteOnExit()
+
+          for {
+            (_, _) <- captor.lineageOf(dummyDF.write.save(destPath.asString))
+          } yield {
+            val lineageFile = new File(destPath.asString, "_LINEAGE")
+            lineageFile.exists should be(true)
+            lineageFile.length should be > 0L
+
+            val lineageJson = readFileToString(lineageFile, "UTF-8").fromJson[Map[String, Map[String, _]]]
+            lineageJson should contain key "executionPlan"
+            lineageJson should contain key "executionEvent"
+            lineageJson("executionPlan")("id") should equal(lineageJson("executionEvent")("planId"))
+          }
+        }
+      }
+    }
+  }
+
+  it should "save lineage files in a custom lineage path" taggedAs ignoreIf(ver"$SPARK_VERSION" < ver"2.3") in {
+    val centralizedPath = TempDirectory("spline_centralized").deleteOnExit()
+    centralizedPath.delete()
+    
+    withIsolatedSparkSession(_
+      .config(lineageDispatcherConfigKeyName, lineageDispatcherConfigValueName)
+      .config(lineageDispatcherConfigClassNameKeyName, classOf[HDFSLineageDispatcher].getName)
+      .config(lineageDispatcherConfigCustomLineagePathKeyName, centralizedPath.asString)
+    ) { implicit spark =>
+      withLineageTracking { captor =>
+        import spark.implicits._
+        
+        // Test with multiple data writes to verify unique filenames
+        val dummyDF1 = Seq((1, 2)).toDF
+        val dummyDF2 = Seq((3, 4)).toDF
+        val destPath1 = TempDirectory("spline_1_", destFilePathExtension, pathOnly = true).deleteOnExit()
+        val destPath2 = TempDirectory("spline_2_", destFilePathExtension, pathOnly = true).deleteOnExit()
+
+        for {
+          (_, _) <- captor.lineageOf(dummyDF1.write.save(destPath1.asString))
+          (_, _) <- captor.lineageOf(dummyDF2.write.save(destPath2.asString))
+        } yield {
+          val centralizedDir = new File(centralizedPath.asString)
+          centralizedDir.exists should be(true)
+          centralizedDir.isDirectory should be(true)
+
+          val appId = spark.sparkContext.applicationId
+
+          val lineageFiles = Option(centralizedDir.listFiles()).getOrElse(Array.empty[File])
+          val lineageFilesOnly = lineageFiles.filter(f => f.isFile && !f.getName.endsWith(".crc"))
+          lineageFilesOnly.length should be(2)
+
+          // Verify naming convention aligns with centralized lineage pattern (timestamp_planId_appId)
+          // Format: {timestamp}_{planId}_{appId}
+          // Example: 2025-10-12_14-30-45-123_550e8400-e29b-41d4-a716-446655440000_app-20251012143045-0001
+          val filenamePattern = """\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}-\d{3}_.+_.+"""
+          lineageFilesOnly.foreach { file =>
+            val name = file.getName
+            withClue(s"Lineage filename '$name' should follow the timestamp_planId_appId pattern") {
+              name.matches(filenamePattern) shouldBe true
+            }
+            // Verify the appId appears in the filename (ends with appId)
+            withClue(s"Lineage filename '$name' should end with application ID '$appId'") {
+              name.endsWith(appId) shouldBe true
+            }
+
+          }
+
+          // Verify each file has the correct format and content
+          lineageFilesOnly.foreach { lineageFile =>
+            val lineageJson = readFileToString(lineageFile, "UTF-8").fromJson[Map[String, Map[String, _]]]
+            lineageJson should contain key "executionPlan"
+            lineageJson should contain key "executionEvent"
+          }
+
+          // Verify no lineage files in destination directories
+          val dest1Files = Option(new File(destPath1.asString).listFiles()).getOrElse(Array.empty[File])
+          val dest2Files = Option(new File(destPath2.asString).listFiles()).getOrElse(Array.empty[File])
+          
+          dest1Files.exists(_.getName.contains("_LINEAGE")) should be(false)
+          dest2Files.exists(_.getName.contains("_LINEAGE")) should be(false)
         }
       }
     }

@@ -146,7 +146,28 @@ spline:
       fileBufferSize: 4096
       # file/directory permissions, provided as umask string, either in octal or symbolic format
       filePermissions: 777
-
+      customLineagePath:
+      # OPTIONAL: Custom path for centralized lineage storage.
+      # If left empty, null, or not specified → DEFAULT MODE: lineage written alongside target data files
+      # If set to a path → CENTRALIZED MODE: all lineage written to this location with unique filenames
+      #
+      # CENTRALIZED MODE filename format: {timestamp}_{planId}_{appId}
+      # - timestamp: Human-readable UTC timestamp (yyyy-MM-dd_HH-mm-ss-SSS) for natural chronological sorting and easy filtering
+      #   Example: 2025-10-12_14-30-45-123
+      # - planId: Execution plan UUID for guaranteed uniqueness (prevents collisions from concurrent writes)
+      #   Example: 550e8400-e29b-41d4-a716-446655440000
+      # - appId: Spark application ID for traceability to specific runs (correlates with Spark UI, logs, monitoring)
+      #   Example: app-20251012143045-0001
+      #
+      # Examples:
+      # - Local: customLineagePath: /my/centralized/lineage
+      #   Output: /my/centralized/lineage/2025-10-12_14-30-45-123_550e8400-e29b-41d4-a716-446655440000_app-20251012143045-0001
+      # - S3: customLineagePath: s3://my-bucket/lineage
+      #   Output: s3://my-bucket/lineage/2025-10-12_14-30-45-123_550e8400-e29b-41d4-a716-446655440000_app-20251012143045-0001
+      # - GCS: customLineagePath: gs://my-bucket/lineage
+      #   Output: gs://my-bucket/lineage/2025-10-12_14-30-45-123_550e8400-e29b-41d4-a716-446655440000_app-20251012143045-0001
+      # - HDFS: customLineagePath: hdfs://cluster/lineage
+      #   Output: hdfs://cluster/lineage/2025-10-12_14-30-45-123_550e8400-e29b-41d4-a716-446655440000_app-20251012143045-0001
     # -------------------------------------------
     # Open Lineage HTTP dispatcher
     # -------------------------------------------
