@@ -134,7 +134,7 @@ private[spline] class SparkLineageInitializer(sparkSession: SparkSession) extend
       logInfo("initialization aborted")
       None
     }
-    else withErrorHandling {
+    else withErrorHandling(bom.initFailureHandlingMode) {
       if (isCodelessInit)
         Some(createListener(bom))
       else
@@ -171,11 +171,11 @@ private[spline] class SparkLineageInitializer(sparkSession: SparkSession) extend
     }
   }
 
-  private def withErrorHandling(body: => Option[QueryExecutionListener]) = {
+  private def withErrorHandling(initFailureMode: InitFailureHandlingMode)(body: => Option[QueryExecutionListener]) = {
     try {
       body
     } catch {
-      case NonFatal(e) =>
+      case NonFatal(e) if initFailureMode == InitFailureHandlingMode.LOG =>
         logError(s"Spline initialization failed! Spark Lineage tracking is DISABLED.", e)
         None
     }

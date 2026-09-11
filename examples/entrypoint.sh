@@ -21,6 +21,7 @@ exec ./run.sh \
     -Dspline.lineageDispatcher=http \
     -Dspline.lineageDispatcher.http.producer.url="$SPLINE_PRODUCER_URL" \
     -Dspline.lineageDispatcher.http.disableSslValidation="$DISABLE_SSL_VALIDATION" \
+    -Dspline.onInitFailure="$ON_INIT_FAILURE" \
     -Dspline.mode="$SPLINE_MODE" \
     -Dhttp.proxyHost="$HTTP_PROXY_HOST" \
     -Dhttp.proxyPort="$HTTP_PROXY_PORT" \
