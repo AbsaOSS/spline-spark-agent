@@ -22,6 +22,9 @@
 
 DEFAULT_SCALA_VERSION=2.12
 SCALA_VERSIONS=(2.11 2.12)
+if [ -n "${JAVA17_HOME:-}" ]; then
+  SCALA_VERSIONS+=(2.13)
+fi
 
 BASE_DIR=$(dirname "$0")
 MODULE_DIRS=$(find "$BASE_DIR" -type f -name "pom.xml" -printf '%h\n')
@@ -33,8 +36,11 @@ print_title() {
   echo "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░"
 }
 
-cross_build() {
+cross_build() (
   bin_ver=$1
+  if [ "$bin_ver" = "2.13" ]; then
+    export JAVA_HOME="$JAVA17_HOME"
+  fi
 
   # pre-cleaning
   for dir in $MODULE_DIRS; do
@@ -42,20 +48,20 @@ cross_build() {
   done
 
   print_title "Switching to Scala $bin_ver"
-  $MVN_EXEC scala-cross-build:change-version -Pscala-"$bin_ver"
+  $MVN_EXEC scala-cross-build:change-version -Pscala-"$bin_ver",all-modules || exit 1
 
   print_title "Building with Scala $bin_ver"
   $MVN_EXEC install -Pscala-"$bin_ver" -DskipTests -T 1C || exit 1
-}
+)
 
 # -------------------------------------------------------------------------------
 
 for v in "${SCALA_VERSIONS[@]}"; do
-  cross_build "$v"
+  cross_build "$v" || exit 1
 done
 
 print_title "Restoring POM-files"
-$MVN_EXEC scala-cross-build:change-version -Pscala-"${DEFAULT_SCALA_VERSION}"
+$MVN_EXEC scala-cross-build:change-version -Pscala-"${DEFAULT_SCALA_VERSION}",all-modules || exit 1
 
 # remove backup files
 for dir in $MODULE_DIRS; do

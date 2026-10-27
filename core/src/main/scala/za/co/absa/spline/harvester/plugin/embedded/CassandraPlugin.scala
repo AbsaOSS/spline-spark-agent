@@ -56,7 +56,7 @@ object CassandraPlugin {
 
   private object `_: CassandraSourceRelation` extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.cassandra.CassandraSourceRelation")
 
-  private object CassandraSourceExtractor extends SafeTypeMatchingExtractor(classOf[org.apache.spark.sql.cassandra.DefaultSource])
+  private object CassandraSourceExtractor extends SafeTypeMatchingExtractor[AnyRef]("org.apache.spark.sql.cassandra.DefaultSource")
 
   private def asSourceId(keyspace: String, table: String) = SourceIdentifier(Some("cassandra"), s"cassandra:$keyspace:$table")
 

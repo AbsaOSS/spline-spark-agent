@@ -27,7 +27,7 @@ object ArrayExtension {
     /**
      * @see [[TraversableOnceOps.distinctBy]]
      */
-    def distinctBy[B](f: A => B)(implicit ct: ClassTag[A]): Array[A] = (xs: Seq[A]).distinctBy(f).toArray
+    def distinctBy[B](f: A => B)(implicit ct: ClassTag[A]): Array[A] = xs.toSeq.distinctBy(f).toArray
 
   }
 

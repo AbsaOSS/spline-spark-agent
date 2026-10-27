@@ -45,7 +45,7 @@ class AutoDiscoveryPluginRegistry(
         c = o.getClass
         t <- getAllSuperclasses(c).asScala ++ getAllInterfaces(c).asScala :+ c
       } yield t.asInstanceOf[Class[_]] -> o
-    typedInjectables.groupBy(_._1).mapValues(_.map(_._2))
+    typedInjectables.groupBy(_._1).mapValues(_.map(_._2)).toMap
   }
 
   private val allPlugins: Seq[Plugin] = {
@@ -114,7 +114,7 @@ object AutoDiscoveryPluginRegistry extends Logging {
       scanResult <- ARM.managed(classGraph.scan)
       cls <- scanResult
         .getClassesImplementing(classOf[Plugin].getName)
-        .loadClasses.asScala.asInstanceOf[Seq[Class[Plugin]]]
+        .loadClasses(classOf[Plugin]).asScala.toSeq
     } yield {
       logDebug(s"Discovered plugin: $cls")
       cls

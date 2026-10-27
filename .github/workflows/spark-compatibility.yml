@@ -1,0 +1,75 @@
+# Copyright 2026 ABSA Group Limited
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Spark compatibility
+on:
+  pull_request:
+  push:
+    branches: [develop]
+
+permissions:
+  contents: read
+
+jobs:
+  spark-4:
+    name: Spark ${{ matrix.spark }} / Java ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        spark: ['4.0', '4.1']
+        java: ['17', '21']
+    env:
+      SPARK_LOCAL_IP: 127.0.0.1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+      - name: Select Scala 2.13
+        run: mvn -B -ntp scala-cross-build:change-version -Pscala-2.13,all-modules
+      - name: Verify shaded bundle on Spark Classic
+        run: mvn -B -ntp clean verify -Pscala-2.13,spark-${{ matrix.spark }}
+
+  legacy:
+    name: Spark ${{ matrix.spark }} / Scala ${{ matrix.scala }} / Java 8
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - scala: '2.11'
+            spark: '2.4'
+          - scala: '2.12'
+            spark: '3.5'
+    env:
+      SPARK_LOCAL_IP: 127.0.0.1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+          cache: maven
+      - name: Select Scala version
+        run: mvn -B -ntp scala-cross-build:change-version -Pscala-${{ matrix.scala }},all-modules
+      - name: Verify legacy core
+        run: mvn -B -ntp clean install -Pscala-${{ matrix.scala }},spark-${{ matrix.spark }} -pl core -am
+      - name: Verify initialization and file/Excel lineage
+        if: matrix.scala == '2.12'
+        run: >-
+          mvn -B -ntp test -Pscala-2.12,spark-3.5 -pl integration-tests
+          -Dsuites=za.co.absa.spline.harvester.SparkLineageInitializerSpec,za.co.absa.spline.FileFormatSpec,za.co.absa.spline.ExcelSpec

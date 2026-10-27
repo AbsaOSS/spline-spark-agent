@@ -49,7 +49,6 @@ import za.co.absa.spline.producer.model.{ExecutionEvent, ExecutionPlan}
  *
  *
  */
-@throws[SplineInitializationException]
 trait LineageDispatcher extends NamedEntity {
   def send(plan: ExecutionPlan): Unit
   def send(event: ExecutionEvent): Unit

@@ -16,8 +16,6 @@
 
 package za.co.absa.spline.harvester.plugin.embedded
 
-import com.mongodb.spark.config.ReadConfig
-import com.mongodb.spark.rdd.MongoRDD
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.spline.commons.reflect.ReflectionUtils.extractValue
@@ -40,11 +38,12 @@ class MongoPlugin
 
   override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: MongoRelation`(mongr), _) =>
-      val mongoRDD = extractValue[MongoRDD[_]](mongr, "mongoRDD")
-      val readConfig = extractValue[ReadConfig](mongoRDD, "readConfig")
-      val database = readConfig.databaseName
-      val collection = readConfig.collectionName
-      val connectionUrl = readConfig.connectionString.getOrElse(sys.error("Unable to extract MongoDB connection URL"))
+      val mongoRDD = extractValue[AnyRef](mongr, "mongoRDD")
+      val readConfig = extractValue[AnyRef](mongoRDD, "readConfig")
+      val database = extractValue[String](readConfig, "databaseName")
+      val collection = extractValue[String](readConfig, "collectionName")
+      val connectionUrl = extractValue[Option[String]](readConfig, "connectionString")
+        .getOrElse(sys.error("Unable to extract MongoDB connection URL"))
       ReadNodeInfo(asSourceId(connectionUrl, database, collection), Map.empty)
   }
 
@@ -61,7 +60,7 @@ object MongoPlugin {
 
   private object `_: MongoRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.mongodb.spark.sql.MongoRelation")
 
-  private object MongoDBSourceExtractor extends SafeTypeMatchingExtractor(classOf[com.mongodb.spark.sql.DefaultSource])
+  private object MongoDBSourceExtractor extends SafeTypeMatchingExtractor[AnyRef]("com.mongodb.spark.sql.DefaultSource")
 
   private def asSourceId(connectionUrl: String, database: String, collection: String) =
     SourceIdentifier(Some("mongodb"), s"$connectionUrl/$database.$collection")

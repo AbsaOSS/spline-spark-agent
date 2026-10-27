@@ -38,7 +38,12 @@
         <dependency>
             <groupId>org.scala-graph</groupId>
             <artifactId>graph-core_${scala.binary.version}</artifactId>
-            <version>1.12.5</version>
+            <version>${graph-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang.modules</groupId>
+            <artifactId>scala-collection-compat_${scala.binary.version}</artifactId>
+            <version>2.11.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -58,4 +63,18 @@
         </dependency>
 
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>scala-2.13</id>
+            <dependencies>
+                <!-- Pin the runtime baseline in the resolved publication POM. -->
+                <dependency>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-library</artifactId>
+                    <version>${scala.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 </project>

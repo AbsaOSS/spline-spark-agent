@@ -20,7 +20,7 @@ import scalax.collection.Graph
 import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef.EdgeAssoc
 
-import scala.collection.generic.CanBuildFrom
+import scala.collection.compat._
 import scala.language.higherKinds
 
 object GraphImplicits {
@@ -56,7 +56,7 @@ object GraphImplicits {
     )(implicit
       nim: DAGNodeIdMapping[Node, Id],
       idOrdering: Ordering[Id] = IdOrdering.none[Id],
-      cbf: CanBuildFrom[M[Node], Node, M[Node]]
+      cbf: BuildFrom[M[Node], Node, M[Node]]
     ): M[Node] = {
       sortedTopologicallyBy(nim.selfId, nim.refIds, reverse)
     }
@@ -67,12 +67,12 @@ object GraphImplicits {
       reverse: Boolean = false
     )(implicit
       idOrdering: Ordering[Id] = IdOrdering.none[Id],
-      cbf: CanBuildFrom[M[Node], Node, M[Node]]
+      cbf: BuildFrom[M[Node], Node, M[Node]]
     ): M[Node] =
       if (xs.size < 2) {
         // nothing to sort
         // return a clone instead of `xs` for semantic consistency reasons when a mutable collection is used
-        (cbf.apply(xs) ++= xs).result()
+        (cbf.newBuilder(xs) ++= xs).result()
 
       } else {
         val itemById = xs.map(op => selfIdFn(op) -> op).toMap
@@ -94,7 +94,7 @@ object GraphImplicits {
 
         sortResult match {
           case Right(res) =>
-            val b = cbf(xs)
+            val b = cbf.newBuilder(xs)
             val ord = g.NodeOrdering((a, b) => idOrdering.compare(selfIdFn(a.value), selfIdFn(b.value)))
             b ++= res.withLayerOrdering(ord).toOuter
             b.result()

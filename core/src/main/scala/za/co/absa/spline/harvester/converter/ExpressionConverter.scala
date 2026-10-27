@@ -188,7 +188,7 @@ object ExpressionConverter {
         if !IgnoredSparkExprPropNames(p)
         if !IgnoredSparkExprPropTypes(v.getClass)
         if !isChildExpression(v)
-        w <- ValueDecomposer.decompose(v, Unit)
+        w <- ValueDecomposer.decompose(v, ())
       } yield p -> w
 
     renderedParams

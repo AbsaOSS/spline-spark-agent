@@ -18,7 +18,6 @@ package za.co.absa.spline.harvester.plugin.embedded
 
 import org.apache.spark.sql.execution.datasources.{LogicalRelation, SaveIntoDataSourceCommand}
 import org.apache.spark.sql.sources.BaseRelation
-import org.elasticsearch.spark.cfg.SparkSettings
 import za.co.absa.spline.commons.reflect.ReflectionUtils.extractValue
 import za.co.absa.spline.commons.reflect.extractors.SafeTypeMatchingExtractor
 import za.co.absa.spline.harvester.builder.SourceIdentifier
@@ -27,6 +26,7 @@ import za.co.absa.spline.harvester.plugin.embedded.ElasticSearchPlugin._
 import za.co.absa.spline.harvester.plugin.{BaseRelationProcessing, Plugin, RelationProviderProcessing}
 
 import javax.annotation.Priority
+import scala.language.reflectiveCalls
 
 
 @Priority(Precedence.Normal)
@@ -64,6 +64,10 @@ class ElasticSearchPlugin
 }
 
 object ElasticSearchPlugin {
+
+  private type SparkSettings = {
+    def getProperty(name: String): String
+  }
 
   private object `_: org.elasticsearch.spark.sql.ElasticsearchRelation`
     extends SafeTypeMatchingExtractor[AnyRef]("org.elasticsearch.spark.sql.ElasticsearchRelation")

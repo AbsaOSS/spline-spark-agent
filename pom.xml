@@ -84,6 +84,7 @@
         <!-- Spark -->
 
         <spark.version>${spark-24.version}</spark.version>
+        <spark.bundle.version>4.0</spark.bundle.version>
         <spark-22.version>2.2.3</spark-22.version>
         <spark-23.version>2.3.4</spark-23.version>
         <spark-24.version>2.4.8</spark-24.version>
@@ -93,6 +94,8 @@
         <spark-33.version>3.3.4</spark-33.version>
         <spark-34.version>3.4.3</spark-34.version>
         <spark-35.version>3.5.1</spark-35.version>
+        <spark-40.version>4.0.0</spark-40.version>
+        <spark-41.version>4.1.0</spark-41.version>
 
         <!-- Delta -->
 
@@ -142,6 +145,14 @@
 
         <scala_2.11.version>2.11.12</scala_2.11.version>
         <scala_2.12.version>2.12.17</scala_2.12.version>
+        <scala_2.13.version>2.13.17</scala_2.13.version>
+
+        <scala-maven-plugin.version>4.5.0</scala-maven-plugin.version>
+        <graph-core.version>1.12.5</graph-core.version>
+        <kafka-clients.version>2.4.1</kafka-clients.version>
+        <scalaj-http.version>2.4.1</scalaj-http.version>
+        <swagger-codegen.version>3.0.21</swagger-codegen.version>
+        <commons-lang3.version>3.9</commons-lang3.version>
 
         <!-- Controlled by `scala-cross-build` plugin -->
         <scala.version>2.12.17</scala.version>
@@ -158,8 +169,6 @@
     <modules>
         <module>commons</module>
         <module>core</module>
-        <module>examples</module>
-        <module>integration-tests</module>
     </modules>
 
     <build>
@@ -271,7 +280,7 @@
                 <plugin>
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
-                    <version>4.5.0</version>
+                    <version>${scala-maven-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>com.github.cerveada</groupId>
@@ -493,7 +502,7 @@
             <dependency>
                 <groupId>org.apache.kafka</groupId>
                 <artifactId>kafka-clients</artifactId>
-                <version>2.4.1</version>
+                <version>${kafka-clients.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.embeddedkafka</groupId>
@@ -516,7 +525,7 @@
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
-                <version>3.9</version>
+                <version>${commons-lang3.version}</version>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
@@ -610,6 +619,17 @@
 
     <profiles>
         <profile>
+            <id>legacy-modules</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <modules>
+                <module>examples</module>
+                <module>integration-tests</module>
+            </modules>
+        </profile>
+
+        <profile>
             <id>all-modules</id>
             <activation>
                 <property>
@@ -617,6 +637,8 @@
                 </property>
             </activation>
             <modules>
+                <module>examples</module>
+                <module>integration-tests</module>
                 <module>bundle-2.2</module>
                 <module>bundle-2.3</module>
                 <module>bundle-2.4</module>
@@ -626,6 +648,9 @@
                 <module>bundle-3.3</module>
                 <module>bundle-3.4</module>
                 <module>bundle-3.5</module>
+                <module>bundle-4.0</module>
+                <module>bundle-4.1</module>
+                <module>bundle-tests</module>
             </modules>
         </profile>
 
@@ -638,6 +663,8 @@
                 <scala.version>${scala_2.11.version}</scala.version>
             </properties>
             <modules>
+                <module>examples</module>
+                <module>integration-tests</module>
                 <module>bundle-2.2</module>
                 <module>bundle-2.3</module>
                 <module>bundle-2.4</module>
@@ -651,6 +678,8 @@
                 <scala.version>${scala_2.12.version}</scala.version>
             </properties>
             <modules>
+                <module>examples</module>
+                <module>integration-tests</module>
                 <module>bundle-2.4</module>
                 <module>bundle-3.0</module>
                 <module>bundle-3.1</module>
@@ -661,6 +690,143 @@
             </modules>
         </profile>
 
+        <profile>
+            <id>scala-2.13</id>
+            <properties>
+                <scala.binary.version>2.13</scala.binary.version>
+                <scala.version>${scala_2.13.version}</scala.version>
+                <java.version>17</java.version>
+                <scala-maven-plugin.version>4.9.2</scala-maven-plugin.version>
+                <graph-core.version>1.13.5</graph-core.version>
+                <scalaj-http.version>2.4.2</scalaj-http.version>
+                <swagger-codegen.version>3.0.68</swagger-codegen.version>
+                <commons-lang3.version>3.17.0</commons-lang3.version>
+                <spark.version>${spark-40.version}</spark.version>
+                <spark.bundle.version>4.0</spark.bundle.version>
+                <kafka-clients.version>3.9.1</kafka-clients.version>
+                <slf4j.version>2.0.16</slf4j.version>
+                <scalatest.argLine.extra>
+                    --add-opens=java.base/java.lang=ALL-UNNAMED
+                    --add-opens=java.base/java.lang.invoke=ALL-UNNAMED
+                    --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
+                    --add-opens=java.base/java.io=ALL-UNNAMED
+                    --add-opens=java.base/java.net=ALL-UNNAMED
+                    --add-opens=java.base/java.nio=ALL-UNNAMED
+                    --add-opens=java.base/java.util=ALL-UNNAMED
+                    --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
+                    --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED
+                    --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+                    --add-opens=java.base/sun.nio.cs=ALL-UNNAMED
+                    --add-opens=java.base/sun.security.action=ALL-UNNAMED
+                    --add-opens=java.base/sun.util.calendar=ALL-UNNAMED
+                    --add-opens=java.security.jgss/sun.security.krb5=ALL-UNNAMED
+                </scalatest.argLine.extra>
+            </properties>
+            <modules>
+                <module>bundle-4.0</module>
+                <module>bundle-4.1</module>
+                <module>bundle-tests</module>
+            </modules>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <version>3.5.0</version>
+                        <executions>
+                            <execution>
+                                <id>spark-4-build-requirements</id>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <requireJavaVersion>
+                                            <version>[17,)</version>
+                                        </requireJavaVersion>
+                                        <requireProperty>
+                                            <property>project.artifactId</property>
+                                            <regex>.+_2\.13</regex>
+                                            <regexMessage>Run scala-cross-build:change-version -Pscala-2.13,all-modules before building.</regexMessage>
+                                        </requireProperty>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>flatten-maven-plugin</artifactId>
+                        <version>1.6.0</version>
+                        <configuration>
+                            <flattenMode>oss</flattenMode>
+                            <embedBuildProfileDependencies>true</embedBuildProfileDependencies>
+                            <updatePomFile>true</updatePomFile>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <flattenedPomFilename>flattened-pom.xml</flattenedPomFilename>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>scala-2.13-published-pom</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>flatten</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-jar-plugin</artifactId>
+                            <configuration>
+                                <forceCreation>true</forceCreation>
+                            </configuration>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-shade-plugin</artifactId>
+                            <configuration>
+                                <minimizeJar>false</minimizeJar>
+                                <artifactSet>
+                                    <excludes>
+                                        <exclude>org.apache.spark:*</exclude>
+                                        <exclude>org.apache.hadoop:*</exclude>
+                                        <exclude>org.scala-lang:*</exclude>
+                                        <exclude>org.slf4j:*</exclude>
+                                        <exclude>org.apache.commons:commons-lang3</exclude>
+                                        <exclude>commons-io:commons-io</exclude>
+                                        <exclude>commons-codec:commons-codec</exclude>
+                                    </excludes>
+                                </artifactSet>
+                                <filters combine.children="append">
+                                    <filter>
+                                        <artifact>*:*</artifact>
+                                        <excludes>
+                                            <exclude>META-INF/*.SF</exclude>
+                                            <exclude>META-INF/*.RSA</exclude>
+                                            <exclude>META-INF/*.DSA</exclude>
+                                        </excludes>
+                                    </filter>
+                                </filters>
+                                <relocations combine.children="append">
+                                    <relocation>
+                                        <pattern>org.yaml.snakeyaml</pattern>
+                                        <shadedPattern>za.co.absa.spline.shaded.org.yaml.snakeyaml</shadedPattern>
+                                    </relocation>
+                                </relocations>
+                                <transformers>
+                                    <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                </transformers>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+
         <!-- Spark profiles -->
 
         <profile>
@@ -669,6 +835,10 @@
                 <spark.version>${spark-22.version}</spark.version>
                 <delta.version>${delta-2x.version}</delta.version>
             </properties>
+            <modules>
+                <module>examples</module>
+                <module>integration-tests</module>
+            </modules>
             <dependencies>
                 <dependency>
                     <groupId>com.databricks</groupId>
@@ -713,6 +883,10 @@
                 <spark.version>${spark-23.version}</spark.version>
                 <delta.version>${delta-2x.version}</delta.version>
             </properties>
+            <modules>
+                <module>examples</module>
+                <module>integration-tests</module>
+            </modules>
             <dependencies>
                 <dependency>
                     <groupId>com.databricks</groupId>
@@ -753,6 +927,10 @@
                 <delta.version>${delta-2x.version}</delta.version>
                 <cassandra-connector.version>${cassandra-connector-24.version}</cassandra-connector.version>
             </properties>
+            <modules>
+                <module>examples</module>
+                <module>integration-tests</module>
+            </modules>
             <dependencyManagement>
                 <dependencies>
                     <dependency>
@@ -775,6 +953,10 @@
                 <spark-excel.version>${spark-excel-30.version}</spark-excel.version>
                 <cassandra-connector.version>${cassandra-connector-30.version}</cassandra-connector.version>
             </properties>
+            <modules>
+                <module>examples</module>
+                <module>integration-tests</module>
+            </modules>
             <dependencyManagement>
                 <dependencies>
                     <dependency>
@@ -797,6 +979,10 @@
                 <spark-excel.version>${spark-excel-31.version}</spark-excel.version>
                 <cassandra-connector.version>${cassandra-connector-31.version}</cassandra-connector.version>
             </properties>
+            <modules>
+                <module>examples</module>
+                <module>integration-tests</module>
+            </modules>
             <dependencyManagement>
                 <dependencies>
                     <dependency>
@@ -819,6 +1005,10 @@
                 <spark-excel.version>${spark-excel-32.version}</spark-excel.version>
                 <cassandra-connector.version>${cassandra-connector-32.version}</cassandra-connector.version>
             </properties>
+            <modules>
+                <module>examples</module>
+                <module>integration-tests</module>
+            </modules>
             <dependencyManagement>
                 <dependencies>
                     <dependency>
@@ -841,6 +1031,10 @@
                 <spark-excel.version>${spark-excel-33.version}</spark-excel.version>
                 <cassandra-connector.version>${cassandra-connector-33.version}</cassandra-connector.version>
             </properties>
+            <modules>
+                <module>examples</module>
+                <module>integration-tests</module>
+            </modules>
             <dependencyManagement>
                 <dependencies>
                     <dependency>
@@ -863,6 +1057,10 @@
                 <spark-excel.version>${spark-excel-34.version}</spark-excel.version>
                 <cassandra-connector.version>${cassandra-connector-34.version}</cassandra-connector.version>
             </properties>
+            <modules>
+                <module>examples</module>
+                <module>integration-tests</module>
+            </modules>
             <dependencyManagement>
                 <dependencies>
                     <dependency>
@@ -886,6 +1084,49 @@
                 <spark-excel.version>${spark-excel-35.version}</spark-excel.version>
                 <cassandra-connector.version>${cassandra-connector-35.version}</cassandra-connector.version>
             </properties>
+            <modules>
+                <module>examples</module>
+                <module>integration-tests</module>
+            </modules>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.spark</groupId>
+                        <artifactId>spark-parent_${scala.binary.version}</artifactId>
+                        <version>${spark.version}</version>
+                        <type>pom</type>
+                        <scope>import</scope>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+        </profile>
+
+        <profile>
+            <id>spark-4.0</id>
+            <properties>
+                <spark.version>${spark-40.version}</spark.version>
+                <spark.bundle.version>4.0</spark.bundle.version>
+            </properties>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.spark</groupId>
+                        <artifactId>spark-parent_${scala.binary.version}</artifactId>
+                        <version>${spark.version}</version>
+                        <type>pom</type>
+                        <scope>import</scope>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+        </profile>
+
+        <profile>
+            <id>spark-4.1</id>
+            <properties>
+                <spark.version>${spark-41.version}</spark.version>
+                <spark.bundle.version>4.1</spark.bundle.version>
+                <commons-lang3.version>3.19.0</commons-lang3.version>
+            </properties>
             <dependencyManagement>
                 <dependencies>
                     <dependency>
@@ -903,6 +1144,10 @@
 
         <profile>
             <id>binary-compat-check</id>
+            <modules>
+                <module>examples</module>
+                <module>integration-tests</module>
+            </modules>
             <build>
                 <plugins>
                     <plugin>

@@ -29,7 +29,10 @@ object ARM {
   def using[T <: Closeable, U](resource: => T)(body: T => U): U = {
     val res = resource
     try body(res)
-    finally res.close()
+    finally res match {
+      case closeable: AutoCloseable => closeable.close()
+      case _ => res.close()
+    }
   }
 
   /**

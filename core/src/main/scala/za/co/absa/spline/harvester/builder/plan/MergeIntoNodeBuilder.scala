@@ -44,7 +44,7 @@ class MergeIntoNodeBuilder
         trgAttrName -> exprToRefConverter.convert(srcExpr)
       })
       .groupBy { case (attrName, _) => attrName }
-      .mapValues(_.map({ case (_, ref) => ref }).distinct)
+      .mapValues(_.map({ case (_, ref) => ref }).distinct).toMap
 
   private lazy val syntheticFunctionalExprs: Seq[FunctionalExpression] = trgAttrs.map(buildFunctionalExpression)
 

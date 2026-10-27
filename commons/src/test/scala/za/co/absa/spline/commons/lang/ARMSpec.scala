@@ -58,6 +58,12 @@ class ARMSpec extends AnyFlatSpec
     verify(Resource.get).close()
   }
 
+  it should "close JAR input streams without reflective access to JDK internals" in {
+    val stream = classOf[org.scalatest.Suite].getResourceAsStream("Suite.class")
+    using(stream)(_.read()) should be(0xca)
+    assertThrows[java.io.IOException](stream.read())
+  }
+
   "ARM.managed(res)" should "support monadic style" in {
     for (managedResource <- managed(Resource.init)) {
       managedResource should be theSameInstanceAs Resource.get

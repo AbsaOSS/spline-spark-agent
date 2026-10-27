@@ -16,7 +16,7 @@
 
 package za.co.absa.spline.commons.lang.extensions
 
-import scala.collection.generic.CanBuildFrom
+import scala.collection.compat._
 import scala.collection.mutable
 
 object TraversableOnceExtension {
@@ -34,9 +34,9 @@ object TraversableOnceExtension {
      * @return a new sequence of elements which projection (obtained by applying the function `f`)
      *         are the first occurrence of every other elements' projection of this sequence.
      */
-    def distinctBy[B](f: A => B)(implicit cbf: CanBuildFrom[M[A], A, M[A]]): M[A] = {
+    def distinctBy[B](f: A => B)(implicit cbf: BuildFrom[M[A], A, M[A]]): M[A] = {
       val seen = mutable.Set.empty[B]
-      val b = cbf(xs)
+      val b = cbf.newBuilder(xs)
       for (x <- xs) {
         val y = f(x)
         if (!seen(y)) {

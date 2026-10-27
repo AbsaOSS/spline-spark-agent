@@ -16,7 +16,6 @@
 
 package za.co.absa.spline.harvester.plugin.embedded
 
-import com.crealytics.spark.excel.{DefaultSource, ExcelRelation}
 import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.sources.BaseRelation
 import za.co.absa.spline.commons.reflect.ReflectionUtils.extractValue
@@ -40,13 +39,12 @@ class ExcelPlugin(pathQualifier: PathQualifier)
 
   override def baseRelationProcessor: PartialFunction[(BaseRelation, LogicalRelation), ReadNodeInfo] = {
     case (`_: ExcelRelation`(exr), _) =>
-      val excelRelation = exr.asInstanceOf[ExcelRelation]
-      val workbookReader = excelRelation.workbookReader
+      val workbookReader = extractValue[AnyRef](exr, "workbookReader")
       val inputStream = extractValue[() => InputStream](workbookReader, "inputStreamProvider")()
       val path = extractValue[org.apache.hadoop.fs.Path](inputStream, "file")
       val qualifiedPath = pathQualifier.qualify(path.toString)
       val sourceId = asSourceId(qualifiedPath)
-      val params = extractExcelParams(excelRelation) + ("header" -> excelRelation.header.toString)
+      val params = extractExcelParams(exr) + ("header" -> extractValue[Boolean](exr, "header").toString)
       ReadNodeInfo(sourceId, params)
   }
 
@@ -59,10 +57,10 @@ object ExcelPlugin {
 
   private object `_: ExcelRelation` extends SafeTypeMatchingExtractor[AnyRef]("com.crealytics.spark.excel.ExcelRelation")
 
-  private object `_: excel.DefaultSource` extends SafeTypeMatchingExtractor(classOf[DefaultSource])
+  private object `_: excel.DefaultSource` extends SafeTypeMatchingExtractor[AnyRef]("com.crealytics.spark.excel.DefaultSource")
 
-  private def extractExcelParams(excelRelation: ExcelRelation): Map[String, Any] = {
-    val locator = excelRelation.dataLocator
+  private def extractExcelParams(excelRelation: AnyRef): Map[String, Any] = {
+    val locator = extractValue[AnyRef](excelRelation, "dataLocator")
 
     def extract(fieldName: String) =
       Try(extractValue[Any](locator, fieldName))

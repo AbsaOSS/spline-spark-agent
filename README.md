@@ -67,12 +67,17 @@ versions is dropped, we'll increment the _Major_ version component.
 
 ### Spark / Scala version compatibility matrix
 
-|                        |         Scala 2.11         | Scala 2.12 |
-|------------------------|:--------------------------:|:----------:|
-| **Spark 2.2**          | (no SQL; no codeless init) |  &mdash;   |
-| **Spark 2.3**          |     (no Delta support)     |  &mdash;   |
-| **Spark 2.4**          |            Yes             |    Yes     |
-| **Spark 3.0 or newer** |          &mdash;           |    Yes     |
+|                        |         Scala 2.11         | Scala 2.12 | Scala 2.13 |
+|------------------------|:--------------------------:|:----------:|:----------:|
+| **Spark 2.2**          | (no SQL; no codeless init) |  &mdash;   |  &mdash;   |
+| **Spark 2.3**          |     (no Delta support)     |  &mdash;   |  &mdash;   |
+| **Spark 2.4**          |            Yes             |    Yes     |  &mdash;   |
+| **Spark 3.0 - 3.5**    |          &mdash;           |    Yes     |  &mdash;   |
+| **Spark 4.0 - 4.1**    |          &mdash;           |  &mdash;   |    Yes     |
+
+Spark 4 support is for **Spark Classic**, using Java 17 or 21. Spark Connect is not supported: the agent runs in the driver and
+requires the Classic query execution listener API. The Spark 4 bundles cover built-in file sources/sinks and include the Kafka lineage
+dispatcher; the availability of a third-party connector plugin does not imply that its connector has been ported or tested on Spark 4.
 
 <a id="usage"></a>
 
@@ -106,6 +111,14 @@ For example, if you have Spark 2.4.4 pre-built with Scala 2.12.10 then select th
 ```
 spark-2.4-spline-agent-bundle_2.12.jar
 ```
+
+For Spark 4.0 or 4.1, select `spark-4.0-spline-agent-bundle_2.13` or `spark-4.1-spline-agent-bundle_2.13`, respectively,
+in the same `za.co.absa.spline.agent.spark` Maven group. These bundles use Spark-provided Scala, Spark, Hadoop, logging and common
+utility libraries rather than bundling conflicting copies. The listener and dispatcher class names are unchanged.
+
+The bundles still contain third-party `scala/*` classes from `graph-core` collection helpers and `scala-collection-compat`
+package objects; these are not classes from `scala-library`. Shaded-JAR tests check that these class resources do not overlap
+the selected Spark runtime.
 
 **AWS Glue Note**: dependency on `org.yaml:snakeyaml:1.33` is **missing** in Glue flavour of Spark. Please add this dependency on the classpath.
 
@@ -782,7 +795,8 @@ Spline will pick it up automatically.
 
 ### Building for different Scala and Spark versions
 
-**Note:** The project requires Java version 1.8 (strictly) and [Apache Maven](https://maven.apache.org/) for building.
+**Note:** Scala 2.11/2.12 builds require Java 8. Scala 2.13 / Spark 4 builds require Java 17 or newer and
+[Apache Maven](https://maven.apache.org/). Java 17 and 21 are covered by the Spark 4 CI matrix.
 
 Check the build environment:
 
@@ -790,7 +804,7 @@ Check the build environment:
 mvn --version
 ```
 
-Verify that Maven is configured to run on Java 1.8. For example:
+For a Scala 2.11/2.12 build, verify that Maven is configured to run on Java 1.8. For example:
 
 ```
 Apache Maven 3.6.3 (Red Hat 3.6.3-8)
@@ -800,18 +814,54 @@ Java version: 1.8.0_302, vendor: Red Hat, Inc., runtime: /usr/lib/jvm/java-1.8.0
 
 There are several maven profiles that makes it easy to build the project with different versions of Spark and Scala.
 
-- Scala profiles: `scala-2.11`, `scala-2.12` (default)
-- Spark profiles: `spark-2.2`, `spark-2.3`, `spark-2.4` (default), `spark-3.0`, `spark-3.1`, `spark-3.2`, `spark-3.3`
+- Scala profiles: `scala-2.11`, `scala-2.12` (default), `scala-2.13`
+- Spark profiles: `spark-2.2`, `spark-2.3`, `spark-2.4` (default), `spark-3.0`, `spark-3.1`, `spark-3.2`, `spark-3.3`, `spark-3.4`, `spark-3.5`, `spark-4.0`, `spark-4.1`
 
 For example, to build an agent for Spark 2.4 and Scala 2.11:
 
 ```shell
 # Change Scala version in pom.xml.
-mvn scala-cross-build:change-version -Pscala-2.11
+mvn scala-cross-build:change-version -Pscala-2.11,all-modules
 
 # now you can build for Scala 2.11
 mvn clean install -Pscala-2.11,spark-2.4
 ```
+
+To build and test the Spark 4 bundles, first select a Java 17+ `JAVA_HOME`, then switch the Scala version:
+
+```shell
+mvn scala-cross-build:change-version -Pscala-2.13,all-modules
+mvn clean verify -Pscala-2.13,spark-4.0
+mvn clean verify -Pscala-2.13,spark-4.1
+```
+
+The Scala 2.13 profile builds both bundles and `bundle-tests`, without the legacy connector-heavy examples and integration-test
+modules. `bundle-tests` runs against the actual shaded JAR, covering codeless/child-session and programmatic initialization,
+V1 Parquet, forced built-in Parquet DSv2 read/write nodes and column lineage, explicit-provider SQL CTAS lineage, and Kafka
+plan/event serialization. It does not require an external Spline server
+or Kafka broker. Core is compiled against Spark 4.0 and exercised on the selected Spark 4 runtime.
+
+Spark's `DataFrameWriter` falls back to V1 for file writes even when Parquet is excluded from
+`spark.sql.sources.useV1SourceList`. The DSv2 regression therefore explicitly executes Spark's native `AppendData` command
+against a built-in `ParquetTable`, checking the actual V2 read/write logical nodes, output data and dispatched lineage.
+
+Scala 2.13 builds publish resolved POMs from `target/flattened-pom.xml`, so consumers do not need to activate the build profiles
+to resolve the Spark 4 baseline and Scala 2.13 dependency versions. The bundle's already shaded dependencies are optional and
+its Spark-provided Scala/logging dependencies are marked `provided`.
+
+Use `all-modules` for the version-change goal so that inactive modules' parent coordinates remain aligned. Omit it from
+Scala-specific build commands. For a Spark 4 release build with `-Drelease`, which activates the full module catalog,
+select `-pl bundle-4.0,bundle-4.1 -am` to avoid building legacy modules against Scala 2.13.
+
+The JARs are produced in `bundle-4.0/target/` and `bundle-4.1/target/`. Before returning to Scala 2.11/2.12, switch the POMs back
+and clean the selected modules to avoid reusing classes compiled for a different Scala binary version:
+
+```shell
+mvn scala-cross-build:change-version -Pscala-2.12,all-modules
+```
+
+The local `build-all.sh` helper retains its Java 8 Scala 2.11/2.12 builds. Set `JAVA17_HOME` to a Java 17+ installation to also
+build Scala 2.13 / Spark 4, while leaving `JAVA_HOME` set to Java 8 for the legacy builds.
 
 ### Build docker image
 
